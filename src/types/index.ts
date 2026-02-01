@@ -54,9 +54,18 @@ export interface Session {
   location: string;
   property_type: PropertyType;
   condition: Condition;
-  selected_market_profile_id?: string;
+  selected_market_profile_id?: string; // Legacy - now also supports market scenario IDs
+  market_scenario_id?: string; // New: reference to market scenario
+  market_scenario_overrides?: {
+    demandLevel?: 'low' | 'medium' | 'high';
+    competitionLevel?: 'low' | 'medium' | 'high';
+    pricingSensitivity?: 'low' | 'medium' | 'high';
+  };
   seller_inputs?: SellerInputs;
   buyer_inputs?: BuyerInputs;
+  // Deliverable tracking
+  share_link_created?: boolean;
+  pdf_exported?: boolean;
   created_at: string;
   updated_at: string;
 }
