@@ -151,15 +151,18 @@ const SellerReport = () => {
         >
           {/* Report content for PDF export */}
           <div id="report-export" className="space-y-6">
-            {/* Prepared For/By Header Block */}
-            <ReportHeader
-              reportType="Seller"
-              clientName={session.client_name}
-              snapshotTimestamp={snapshotTimestamp}
-            />
+            {/* Prepared For/By Header Block - hidden in PDF (rendered by jsPDF) */}
+            <div className="pdf-section pdf-header-section">
+              <ReportHeader
+                reportType="Seller"
+                clientName={session.client_name}
+                snapshotTimestamp={snapshotTimestamp}
+                showTimestamp={false}
+              />
+            </div>
 
             {/* Property Overview */}
-            <Card className="pdf-avoid-break">
+            <Card className="pdf-section pdf-avoid-break">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Target className="h-5 w-5 text-accent" />
@@ -195,7 +198,7 @@ const SellerReport = () => {
             </Card>
 
             {/* Inputs Chosen */}
-            <Card className="pdf-avoid-break">
+            <Card className="pdf-section pdf-avoid-break">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <TrendingUp className="h-5 w-5 text-accent" />
@@ -204,15 +207,15 @@ const SellerReport = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-1">List Price</p>
                     <p className="text-xl font-serif font-bold">{formatCurrency(inputs.seller_selected_list_price)}</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-1">Timeframe</p>
                     <p className="text-xl font-serif font-bold">{inputs.desired_timeframe} days</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-1">Strategy</p>
                     <p className="text-xl font-serif font-bold">{inputs.strategy_preference}</p>
                   </div>
@@ -227,7 +230,7 @@ const SellerReport = () => {
             </Card>
 
             {/* Market Snapshot */}
-            <Card className="pdf-avoid-break overflow-hidden">
+            <Card className="pdf-section pdf-avoid-break overflow-hidden">
               <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -241,15 +244,15 @@ const SellerReport = () => {
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-6 rounded-xl border-2 border-border/50 hover:border-accent/30 transition-colors">
+                  <div className="text-center p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-3">30 Days</p>
                     <LikelihoodBadge band={likelihood30} />
                   </div>
-                  <div className="text-center p-6 rounded-xl border-2 border-border/50 hover:border-accent/30 transition-colors">
+                  <div className="text-center p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-3">60 Days</p>
                     <LikelihoodBadge band={likelihood60} />
                   </div>
-                  <div className="text-center p-6 rounded-xl border-2 border-border/50 hover:border-accent/30 transition-colors">
+                  <div className="text-center p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-3">90 Days</p>
                     <LikelihoodBadge band={likelihood90} />
                   </div>
@@ -258,7 +261,7 @@ const SellerReport = () => {
             </Card>
 
             {/* Tradeoff Summary */}
-            <Card className="pdf-avoid-break">
+            <Card className="pdf-section pdf-avoid-break">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg">Tradeoff Summary</CardTitle>
               </CardHeader>
@@ -290,7 +293,7 @@ const SellerReport = () => {
             </Card>
 
             {/* Important Notice */}
-            <div className="pdf-avoid-break flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
+            <div className="pdf-section pdf-avoid-break flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
               <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
               <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
             </div>
