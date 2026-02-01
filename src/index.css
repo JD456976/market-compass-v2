@@ -186,21 +186,50 @@
   transition: none !important;
   -webkit-font-smoothing: antialiased !important;
   text-rendering: geometricPrecision !important;
-  line-height: 1.4 !important;
+  line-height: 1.35 !important;
+  box-sizing: border-box !important;
 }
 
 .pdf-export * {
   transform: none !important;
   filter: none !important;
   transition: none !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+  box-sizing: border-box !important;
 }
 
-.pdf-export .card-elevated {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+/* Remove heavy shadows for cleaner export and smaller file size */
+.pdf-export .card-elevated,
+.pdf-export [class*="shadow"],
+.pdf-export [class*="Card"] {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Ensure stat tiles have consistent alignment */
+.pdf-export .rounded-xl {
+  box-shadow: none !important;
+}
+
+/* Normalize text alignment in cells */
+.pdf-export .text-center {
+  text-align: center !important;
+}
+
+.pdf-export .font-serif {
+  line-height: 1.2 !important;
+}
+
+/* Hide the on-screen header during export since PDF has its own header */
+.pdf-export > .pdf-avoid-break:first-child {
+  display: none !important;
 }
 
 .pdf-avoid-break {
   break-inside: avoid !important;
   page-break-inside: avoid !important;
+}
+
+/* Hide action buttons during export (safety net) */
+.pdf-export .report-actions,
+.pdf-export button {
+  display: none !important;
 }

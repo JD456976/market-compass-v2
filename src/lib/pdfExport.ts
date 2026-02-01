@@ -34,9 +34,9 @@ export async function exportReportToPdf(
   // Get the computed width of the element
   const elementWidth = element.offsetWidth;
 
-  // Capture the element as a high-quality canvas
+  // Capture the element as canvas with optimized settings for file size
   const canvas = await html2canvas(element, {
-    scale: Math.max(3, window.devicePixelRatio),
+    scale: 2, // Reduced from 3 for smaller file size while maintaining readability
     useCORS: true,
     logging: false,
     backgroundColor: '#FFFFFF',
@@ -126,7 +126,7 @@ export async function exportReportToPdf(
   // Calculate total pages needed
   const totalPages = Math.ceil(imgHeight / availableHeight);
 
-  // Add image content with multi-page support
+  // Add image content with multi-page support using JPEG compression
   const pixelsPerMm = canvas.width / imgWidth;
   let sourceY = 0;
 
@@ -156,9 +156,9 @@ export async function exportReportToPdf(
         canvas.width, Math.ceil(sliceHeightPx)
       );
 
-      // Use PNG for sharper text (no JPEG compression artifacts)
-      const sliceData = sliceCanvas.toDataURL('image/png', 1.0);
-      pdf.addImage(sliceData, 'PNG', margin, currentY, imgWidth, sliceHeight);
+      // Use JPEG with compression for smaller file size
+      const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.75);
+      pdf.addImage(sliceData, 'JPEG', margin, currentY, imgWidth, sliceHeight, undefined, 'FAST');
     }
 
     sourceY += sliceHeightPx;

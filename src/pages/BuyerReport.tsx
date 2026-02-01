@@ -158,162 +158,164 @@ const BuyerReport = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="space-y-6"
-          id="report-export"
         >
-          {/* Prepared For/By Header Block */}
-          <ReportHeader
-            reportType="Buyer"
-            clientName={session.client_name}
-            snapshotTimestamp={snapshotTimestamp}
-          />
+          {/* Report content for PDF export */}
+          <div id="report-export" className="space-y-6">
+            {/* Prepared For/By Header Block */}
+            <ReportHeader
+              reportType="Buyer"
+              clientName={session.client_name}
+              snapshotTimestamp={snapshotTimestamp}
+            />
 
-          {/* Offer Overview */}
-          <Card className="pdf-avoid-break">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Target className="h-5 w-5 text-accent" />
-                Offer Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Client</p>
-                  <p className="font-medium">{session.client_name}</p>
+            {/* Offer Overview */}
+            <Card className="pdf-avoid-break">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Target className="h-5 w-5 text-accent" />
+                  Offer Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Client</p>
+                    <p className="font-medium">{session.client_name}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Location</p>
+                    <p className="font-medium">{session.location}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Property Type</p>
+                    <p className="font-medium">{session.property_type}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Condition</p>
+                    <p className="font-medium">{session.condition}</p>
+                  </div>
+                  {marketProfile && (
+                    <div className="md:col-span-2 space-y-1">
+                      <p className="text-sm text-muted-foreground">Market Profile</p>
+                      <p className="font-medium">{marketProfile.label}</p>
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Location</p>
-                  <p className="font-medium">{session.location}</p>
+              </CardContent>
+            </Card>
+
+            {/* Offer Details */}
+            <Card className="pdf-avoid-break">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <TrendingUp className="h-5 w-5 text-accent" />
+                  Offer Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                  <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                    <p className="text-sm text-muted-foreground mb-1">Offer Price</p>
+                    <p className="text-lg font-serif font-bold">{formatCurrency(inputs.offer_price)}</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                    <p className="text-sm text-muted-foreground mb-1">Financing</p>
+                    <p className="text-lg font-serif font-bold">{inputs.financing_type}</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                    <p className="text-sm text-muted-foreground mb-1">Down Payment</p>
+                    <p className="text-lg font-serif font-bold">{inputs.down_payment_percent}</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                    <p className="text-sm text-muted-foreground mb-1">Closing</p>
+                    <p className="text-lg font-serif font-bold">{inputs.closing_timeline} days</p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Property Type</p>
-                  <p className="font-medium">{session.property_type}</p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-muted/50">
+                    <p className="text-sm text-muted-foreground mb-1">Contingencies</p>
+                    <p className="font-medium">{inputs.contingencies.length > 0 ? inputs.contingencies.join(', ') : 'None'}</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-muted/50">
+                    <p className="text-sm text-muted-foreground mb-1">Buyer Preference</p>
+                    <p className="font-medium">{inputs.buyer_preference}</p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Condition</p>
-                  <p className="font-medium">{session.condition}</p>
-                </div>
-                {marketProfile && (
-                  <div className="md:col-span-2 space-y-1">
-                    <p className="text-sm text-muted-foreground">Market Profile</p>
-                    <p className="font-medium">{marketProfile.label}</p>
+                {inputs.notes && (
+                  <div className="mt-4 p-4 rounded-xl bg-muted/50">
+                    <p className="text-sm text-muted-foreground mb-1">Notes</p>
+                    <p className="text-sm">{inputs.notes}</p>
                   </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Offer Details */}
-          <Card className="pdf-avoid-break">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <TrendingUp className="h-5 w-5 text-accent" />
-                Offer Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                  <p className="text-sm text-muted-foreground mb-1">Offer Price</p>
-                  <p className="text-lg font-serif font-bold">{formatCurrency(inputs.offer_price)}</p>
+            {/* Acceptance Likelihood */}
+            <Card className="pdf-avoid-break overflow-hidden">
+              <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Clock className="h-5 w-5 text-accent" />
+                    Offer Acceptance Likelihood
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Market snapshot as of: {new Date(snapshotTimestamp).toLocaleString()}
+                  </p>
                 </div>
-                <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                  <p className="text-sm text-muted-foreground mb-1">Financing</p>
-                  <p className="text-lg font-serif font-bold">{inputs.financing_type}</p>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="flex justify-center">
+                  <div className="text-center p-8 rounded-xl border-2 border-accent/30 bg-accent/5 min-w-[200px]">
+                    <p className="text-sm text-muted-foreground mb-3">Likelihood of Acceptance</p>
+                    <LikelihoodBadge band={acceptanceLikelihood} />
+                  </div>
                 </div>
-                <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                  <p className="text-sm text-muted-foreground mb-1">Down Payment</p>
-                  <p className="text-lg font-serif font-bold">{inputs.down_payment_percent}</p>
-                </div>
-                <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                  <p className="text-sm text-muted-foreground mb-1">Closing</p>
-                  <p className="text-lg font-serif font-bold">{inputs.closing_timeline} days</p>
-                </div>
-              </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-muted/50">
-                  <p className="text-sm text-muted-foreground mb-1">Contingencies</p>
-                  <p className="font-medium">{inputs.contingencies.length > 0 ? inputs.contingencies.join(', ') : 'None'}</p>
-                </div>
-                <div className="p-4 rounded-xl bg-muted/50">
-                  <p className="text-sm text-muted-foreground mb-1">Buyer Preference</p>
-                  <p className="font-medium">{inputs.buyer_preference}</p>
-                </div>
-              </div>
-              {inputs.notes && (
-                <div className="mt-4 p-4 rounded-xl bg-muted/50">
-                  <p className="text-sm text-muted-foreground mb-1">Notes</p>
-                  <p className="text-sm">{inputs.notes}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Acceptance Likelihood */}
-          <Card className="pdf-avoid-break overflow-hidden">
-            <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
-              <div className="flex items-center justify-between">
+            {/* Risk Tradeoff */}
+            <Card className="pdf-avoid-break">
+              <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Clock className="h-5 w-5 text-accent" />
-                  Offer Acceptance Likelihood
+                  <ShieldAlert className="h-5 w-5 text-accent" />
+                  Risk Tradeoff Analysis
                 </CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  Market snapshot as of: {new Date(snapshotTimestamp).toLocaleString()}
-                </p>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="flex justify-center">
-                <div className="text-center p-8 rounded-xl border-2 border-accent/30 bg-accent/5 min-w-[200px]">
-                  <p className="text-sm text-muted-foreground mb-3">Likelihood of Acceptance</p>
-                  <LikelihoodBadge band={acceptanceLikelihood} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Risk Tradeoff */}
-          <Card className="pdf-avoid-break">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <ShieldAlert className="h-5 w-5 text-accent" />
-                Risk Tradeoff Analysis
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="text-center p-6 rounded-xl border-2 border-border/50">
-                  <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-                    <AlertTriangle className="h-6 w-6 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="text-center p-6 rounded-xl border-2 border-border/50">
+                    <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                      <AlertTriangle className="h-6 w-6 text-destructive" />
+                    </div>
+                    <p className="font-medium mb-2">Risk of Losing Home</p>
+                    <RiskBadge band={riskOfLosingHome} />
+                    <p className="text-xs text-muted-foreground mt-3">
+                      Lower aggressive offers increase this risk
+                    </p>
                   </div>
-                  <p className="font-medium mb-2">Risk of Losing Home</p>
-                  <RiskBadge band={riskOfLosingHome} />
-                  <p className="text-xs text-muted-foreground mt-3">
-                    Lower aggressive offers increase this risk
-                  </p>
-                </div>
-                <div className="text-center p-6 rounded-xl border-2 border-border/50">
-                  <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
-                    <TrendingUp className="h-6 w-6 text-amber-600" />
+                  <div className="text-center p-6 rounded-xl border-2 border-border/50">
+                    <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
+                      <TrendingUp className="h-6 w-6 text-amber-600" />
+                    </div>
+                    <p className="font-medium mb-2">Risk of Overpaying</p>
+                    <RiskBadge band={riskOfOverpaying} />
+                    <p className="text-xs text-muted-foreground mt-3">
+                      Higher aggressive offers increase this risk
+                    </p>
                   </div>
-                  <p className="font-medium mb-2">Risk of Overpaying</p>
-                  <RiskBadge band={riskOfOverpaying} />
-                  <p className="text-xs text-muted-foreground mt-3">
-                    Higher aggressive offers increase this risk
-                  </p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Important Notice */}
-          <div className="pdf-avoid-break flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
-            <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-            <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
+            {/* Important Notice */}
+            <div className="pdf-avoid-break flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
+              <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+              <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
+            </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex flex-wrap gap-4 pt-4">
+          {/* Actions - OUTSIDE report-export container */}
+          <div className="flex flex-wrap gap-4 pt-4 report-actions">
             <Link to="/buyer">
               <Button variant="outline" size="lg">
                 <ArrowLeft className="mr-2 h-4 w-4" />
