@@ -260,6 +260,42 @@ const SellerReport = () => {
               </CardContent>
             </Card>
 
+            {/* What This Means */}
+            <Card className="pdf-section pdf-avoid-break">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">What This Means</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {likelihood30 === 'High' 
+                    ? 'Your listing is well-positioned for a quick sale. The combination of your list price and market conditions tends to attract buyer interest early.'
+                    : likelihood30 === 'Moderate'
+                    ? 'Initial buyer activity may take time to build. Properties in this range often see increased interest as market exposure grows over 60–90 days.'
+                    : 'At the current list price, early buyer activity may be limited. This often occurs when pricing is positioned at the higher end of comparable properties.'}
+                </p>
+                <div>
+                  <p className="font-medium text-sm mb-2">If your goal is to increase certainty:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
+                    {inputs.strategy_preference === 'Maximize price' && (
+                      <li>Consider a balanced strategy that may attract more buyers sooner</li>
+                    )}
+                    {inputs.strategy_preference !== 'Prioritize speed' && (
+                      <li>A more competitive list price often generates faster buyer interest</li>
+                    )}
+                    {inputs.desired_timeframe === '30' && likelihood30 !== 'High' && (
+                      <li>Extending your desired timeframe may align better with current market conditions</li>
+                    )}
+                    {(inputs.desired_timeframe !== '30' || likelihood30 === 'High') && inputs.strategy_preference !== 'Maximize price' && (
+                      <li>Adjusting your pricing strategy may help optimize your timeline</li>
+                    )}
+                  </ul>
+                </div>
+                <p className="text-sm text-muted-foreground italic">
+                  <span className="font-medium not-italic">Tradeoff to consider:</span> Prioritizing a faster sale often means accepting a lower final price, while holding for maximum price may extend time on market.
+                </p>
+              </CardContent>
+            </Card>
+
             {/* Tradeoff Summary */}
             <Card className="pdf-section pdf-avoid-break">
               <CardHeader className="pb-4">

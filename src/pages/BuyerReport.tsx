@@ -276,6 +276,42 @@ const BuyerReport = () => {
               </CardContent>
             </Card>
 
+            {/* What This Means */}
+            <Card className="pdf-section pdf-avoid-break">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">What This Means</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {acceptanceLikelihood === 'High' 
+                    ? 'Your offer terms are well-aligned with seller expectations. Strong financing and favorable terms tend to make offers more competitive in the current market.'
+                    : acceptanceLikelihood === 'Moderate'
+                    ? 'Your offer may face competition from other buyers. Sellers often weigh multiple factors including price, contingencies, and closing timeline when evaluating offers.'
+                    : 'At the current offer terms, acceptance may be less certain. This often occurs when contingencies or financing create perceived risk for the seller.'}
+                </p>
+                <div>
+                  <p className="font-medium text-sm mb-2">If your goal is to increase certainty:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
+                    {inputs.contingencies.length > 0 && inputs.contingencies[0] !== 'None' && (
+                      <li>Reducing contingencies often makes offers more attractive to sellers</li>
+                    )}
+                    {(inputs.closing_timeline === '31-45' || inputs.closing_timeline === '45+') && (
+                      <li>A shorter closing timeline may signal stronger buyer readiness</li>
+                    )}
+                    {inputs.financing_type !== 'Cash' && (
+                      <li>Strengthening financing terms or increasing down payment tends to reduce seller concerns</li>
+                    )}
+                    {inputs.buyer_preference !== 'Must win' && (
+                      <li>Adjusting your offer price may improve competitive positioning</li>
+                    )}
+                  </ul>
+                </div>
+                <p className="text-sm text-muted-foreground italic">
+                  <span className="font-medium not-italic">Tradeoff to consider:</span> More aggressive terms may increase acceptance likelihood but also raise the risk of overpaying, while conservative offers protect value but may result in losing the home.
+                </p>
+              </CardContent>
+            </Card>
+
             {/* Risk Tradeoff */}
             <Card className="pdf-section pdf-avoid-break">
               <CardHeader className="pb-4">
