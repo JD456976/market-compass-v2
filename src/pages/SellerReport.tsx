@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, Clock } from 'lucide-react';
+import { ArrowLeft, Save, Clock, Building2, Target, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Session, SellerReportData, LikelihoodBand } from '@/types';
 import { saveSession, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport } from '@/lib/scoring';
@@ -11,8 +12,13 @@ import { calculateSellerReport } from '@/lib/scoring';
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
-  const variant = band === 'High' ? 'default' : band === 'Moderate' ? 'secondary' : 'outline';
-  return <Badge variant={variant} className="text-sm">{band}</Badge>;
+  if (band === 'High') {
+    return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">High</Badge>;
+  }
+  if (band === 'Moderate') {
+    return <Badge variant="warning" className="px-4 py-1.5 text-sm font-medium">Moderate</Badge>;
+  }
+  return <Badge variant="outline" className="px-4 py-1.5 text-sm font-medium">Low</Badge>;
 }
 
 const SellerReport = () => {
@@ -53,121 +59,195 @@ const SellerReport = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <div className="flex items-center gap-4 mb-8">
-          <Link to="/seller">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold">Seller Report</h1>
-        </div>
-
-        {/* Property Overview */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Property Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="grid md:grid-cols-2 gap-4 text-sm">
-            <div><span className="font-medium">Client:</span> {session.client_name}</div>
-            <div><span className="font-medium">Location:</span> {session.location}</div>
-            <div><span className="font-medium">Property Type:</span> {session.property_type}</div>
-            <div><span className="font-medium">Condition:</span> {session.condition}</div>
-            {marketProfile && (
-              <div className="md:col-span-2">
-                <span className="font-medium">Market Profile:</span> {marketProfile.label}
+      {/* Header */}
+      <div className="hero-gradient text-primary-foreground">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center gap-4">
+            <Link to="/seller">
+              <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/20">
+                <Building2 className="h-5 w-5 text-accent" />
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <div>
+                <h1 className="text-2xl font-serif font-bold">Seller Report</h1>
+                <p className="text-sm text-primary-foreground/70">{session.client_name} • {session.location}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {/* Inputs Chosen */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Inputs Chosen</CardTitle>
-          </CardHeader>
-          <CardContent className="grid md:grid-cols-2 gap-4 text-sm">
-            <div><span className="font-medium">List Price:</span> {formatCurrency(inputs.seller_selected_list_price)}</div>
-            <div><span className="font-medium">Desired Timeframe:</span> {inputs.desired_timeframe} days</div>
-            <div><span className="font-medium">Strategy:</span> {inputs.strategy_preference}</div>
-            {inputs.notes && (
-              <div className="md:col-span-2"><span className="font-medium">Notes:</span> {inputs.notes}</div>
-            )}
-          </CardContent>
-        </Card>
+      <div className="container mx-auto px-4 py-8 max-w-3xl -mt-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="space-y-6"
+        >
+          {/* Property Overview */}
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="h-5 w-5 text-accent" />
+                Property Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Client</p>
+                  <p className="font-medium">{session.client_name}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Location</p>
+                  <p className="font-medium">{session.location}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Property Type</p>
+                  <p className="font-medium">{session.property_type}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Condition</p>
+                  <p className="font-medium">{session.condition}</p>
+                </div>
+                {marketProfile && (
+                  <div className="md:col-span-2 space-y-1">
+                    <p className="text-sm text-muted-foreground">Market Profile</p>
+                    <p className="font-medium">{marketProfile.label}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Market Snapshot */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Market Snapshot
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Generated: {new Date(snapshotTimestamp).toLocaleString()}
-            </p>
-            
-            <div className="space-y-4">
-              <h4 className="font-semibold">Sale Likelihood by Timeframe</h4>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="p-4 border rounded-lg">
-                  <div className="text-lg font-bold mb-2">30 Days</div>
+          {/* Inputs Chosen */}
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <TrendingUp className="h-5 w-5 text-accent" />
+                Listing Strategy
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                  <p className="text-sm text-muted-foreground mb-1">List Price</p>
+                  <p className="text-xl font-serif font-bold">{formatCurrency(inputs.seller_selected_list_price)}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                  <p className="text-sm text-muted-foreground mb-1">Timeframe</p>
+                  <p className="text-xl font-serif font-bold">{inputs.desired_timeframe} days</p>
+                </div>
+                <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                  <p className="text-sm text-muted-foreground mb-1">Strategy</p>
+                  <p className="text-xl font-serif font-bold">{inputs.strategy_preference}</p>
+                </div>
+              </div>
+              {inputs.notes && (
+                <div className="mt-4 p-4 rounded-xl bg-muted/50">
+                  <p className="text-sm text-muted-foreground mb-1">Notes</p>
+                  <p className="text-sm">{inputs.notes}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Market Snapshot */}
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Clock className="h-5 w-5 text-accent" />
+                  Sale Likelihood Analysis
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(snapshotTimestamp).toLocaleString()}
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-6 rounded-xl border-2 border-border/50 hover:border-accent/30 transition-colors">
+                  <p className="text-sm text-muted-foreground mb-3">30 Days</p>
                   <LikelihoodBadge band={likelihood30} />
                 </div>
-                <div className="p-4 border rounded-lg">
-                  <div className="text-lg font-bold mb-2">60 Days</div>
+                <div className="text-center p-6 rounded-xl border-2 border-border/50 hover:border-accent/30 transition-colors">
+                  <p className="text-sm text-muted-foreground mb-3">60 Days</p>
                   <LikelihoodBadge band={likelihood60} />
                 </div>
-                <div className="p-4 border rounded-lg">
-                  <div className="text-lg font-bold mb-2">90 Days</div>
+                <div className="text-center p-6 rounded-xl border-2 border-border/50 hover:border-accent/30 transition-colors">
+                  <p className="text-sm text-muted-foreground mb-3">90 Days</p>
                   <LikelihoodBadge band={likelihood90} />
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Tradeoff Summary */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Tradeoff Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm space-y-2">
-            <p>
-              <span className="font-medium">Price vs. Time:</span>{' '}
-              {inputs.strategy_preference === 'Maximize price' 
-                ? 'Prioritizing maximum price may extend time on market.'
-                : inputs.strategy_preference === 'Prioritize speed'
-                ? 'Prioritizing speed may require competitive pricing.'
-                : 'Balanced approach aims to optimize both price and timing.'}
-            </p>
-            <p>
-              <span className="font-medium">Certainty:</span>{' '}
-              At the current list price of {formatCurrency(inputs.seller_selected_list_price)}, 
-              the likelihood of sale increases over time as market exposure grows.
-            </p>
-          </CardContent>
-        </Card>
+          {/* Tradeoff Summary */}
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg">Tradeoff Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-3 p-4 rounded-xl bg-secondary/50">
+                <TrendingUp className="h-5 w-5 text-accent mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium mb-1">Price vs. Time</p>
+                  <p className="text-sm text-muted-foreground">
+                    {inputs.strategy_preference === 'Maximize price' 
+                      ? 'Prioritizing maximum price may extend time on market.'
+                      : inputs.strategy_preference === 'Prioritize speed'
+                      ? 'Prioritizing speed may require competitive pricing.'
+                      : 'Balanced approach aims to optimize both price and timing.'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3 p-4 rounded-xl bg-secondary/50">
+                <CheckCircle2 className="h-5 w-5 text-accent mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium mb-1">Certainty</p>
+                  <p className="text-sm text-muted-foreground">
+                    At the current list price of {formatCurrency(inputs.seller_selected_list_price)}, 
+                    the likelihood of sale increases over time as market exposure grows.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Important Notice */}
-        <Card className="mb-6 border-muted">
-          <CardContent className="pt-6">
-            <p className="text-xs text-muted-foreground italic">{IMPORTANT_NOTICE}</p>
-          </CardContent>
-        </Card>
+          {/* Important Notice */}
+          <div className="flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
+            <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
+          </div>
 
-        {/* Actions */}
-        <div className="flex gap-4">
-          <Link to="/seller">
-            <Button variant="outline">Back</Button>
-          </Link>
-          <Button onClick={handleSave} disabled={saved}>
-            <Save className="mr-2 h-4 w-4" />
-            {saved ? 'Session Saved' : 'Save Session'}
-          </Button>
-        </div>
+          {/* Actions */}
+          <div className="flex gap-4 pt-4">
+            <Link to="/seller">
+              <Button variant="outline" size="lg">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+            </Link>
+            <Button onClick={handleSave} disabled={saved} size="lg" variant={saved ? "secondary" : "accent"}>
+              {saved ? (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Session Saved
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Session
+                </>
+              )}
+            </Button>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
