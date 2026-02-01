@@ -12,6 +12,16 @@ import { getSessionById, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { ReportHeader } from '@/components/ReportHeader';
 import { formatLocation } from '@/lib/utils';
+import { ForceClientMode } from '@/contexts/ClientModeContext';
+import { 
+  getTitle, 
+  buyerWhatThisMeans, 
+  sellerWhatThisMeans,
+  buyerRiskDescriptions,
+  tradeoffDescriptions,
+  buyerSuggestions,
+  sellerSuggestions
+} from '@/lib/clientLanguage';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
   if (band === 'High') {
@@ -35,11 +45,15 @@ function RiskBadge({ band }: { band: LikelihoodBand }) {
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
-const SharedReport = () => {
+const SharedReportContent = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [session, setSession] = useState<Session | null>(null);
   const [marketProfile, setMarketProfile] = useState<MarketProfile | undefined>(undefined);
   const [notFound, setNotFound] = useState(false);
+
+  // Always use client mode language for shared reports
+  const isClientMode = true;
+  const mode = 'client';
 
   useEffect(() => {
     if (!sessionId) {
@@ -87,6 +101,22 @@ const SharedReport = () => {
   const reportData = isSeller 
     ? calculateSellerReport(session, marketProfile)
     : calculateBuyerReport(session, marketProfile);
+
+  // Get mode-appropriate text for buyer
+  const buyerAcceptance = !isSeller && 'acceptanceLikelihood' in reportData ? reportData.acceptanceLikelihood : 'Moderate';
+  const buyerWhatThisMeansText = buyerAcceptance === 'High' 
+    ? buyerWhatThisMeans[mode].high
+    : buyerAcceptance === 'Moderate'
+    ? buyerWhatThisMeans[mode].moderate
+    : buyerWhatThisMeans[mode].low;
+
+  // Get mode-appropriate text for seller
+  const sellerLikelihood30 = isSeller && 'likelihood30' in reportData ? reportData.likelihood30 : 'Moderate';
+  const sellerWhatThisMeansText = sellerLikelihood30 === 'High' 
+    ? sellerWhatThisMeans[mode].high
+    : sellerLikelihood30 === 'Moderate'
+    ? sellerWhatThisMeans[mode].moderate
+    : sellerWhatThisMeans[mode].low;
 
   return (
     <div className="min-h-screen bg-background">
@@ -203,7 +233,7 @@ const SharedReport = () => {
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Clock className="h-5 w-5 text-accent" />
-                      Sale Likelihood Analysis
+                      {getTitle('saleLikelihood', isClientMode)}
                     </CardTitle>
                     <p className="text-xs text-muted-foreground">
                       Market snapshot as of: {new Date(reportData.snapshotTimestamp).toLocaleString()}
@@ -229,6 +259,21 @@ const SharedReport = () => {
                       </>
                     )}
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* What This Means - Seller */}
+              <Card>
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">{getTitle('whatThisMeans', isClientMode)}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {sellerWhatThisMeansText}
+                  </p>
+                  <p className="text-sm text-muted-foreground italic">
+                    <span className="font-medium not-italic">Tradeoff to consider:</span> {tradeoffDescriptions[mode].sellerPriceVsTime}
+                  </p>
                 </CardContent>
               </Card>
             </>
@@ -278,7 +323,7 @@ const SharedReport = () => {
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Clock className="h-5 w-5 text-accent" />
-                      Offer Acceptance Likelihood
+                      {getTitle('acceptanceLikelihood', isClientMode)}
                     </CardTitle>
                     <p className="text-xs text-muted-foreground">
                       Market snapshot as of: {new Date(reportData.snapshotTimestamp).toLocaleString()}
@@ -297,12 +342,27 @@ const SharedReport = () => {
                 </CardContent>
               </Card>
 
+              {/* What This Means - Buyer */}
+              <Card>
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">{getTitle('whatThisMeans', isClientMode)}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {buyerWhatThisMeansText}
+                  </p>
+                  <p className="text-sm text-muted-foreground italic">
+                    <span className="font-medium not-italic">Tradeoff to consider:</span> {tradeoffDescriptions[mode].buyerMain}
+                  </p>
+                </CardContent>
+              </Card>
+
               {'riskOfLosingHome' in reportData && (
                 <Card>
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <ShieldAlert className="h-5 w-5 text-accent" />
-                      Risk Tradeoff Analysis
+                      {getTitle('riskTradeoff', isClientMode)}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -311,15 +371,25 @@ const SharedReport = () => {
                         <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
                           <AlertTriangle className="h-6 w-6 text-destructive" />
                         </div>
-                        <p className="font-medium mb-2">Risk of Losing Home</p>
+                        <p className="font-medium mb-2">{getTitle('riskOfLosingHome', isClientMode)}</p>
                         <RiskBadge band={reportData.riskOfLosingHome} />
+                        <p className="text-xs text-muted-foreground mt-3">
+                          {reportData.riskOfLosingHome === 'High' || reportData.riskOfLosingHome === 'Moderate'
+                            ? buyerRiskDescriptions[mode].losingHomeHigh
+                            : buyerRiskDescriptions[mode].losingHomeLow}
+                        </p>
                       </div>
                       <div className="text-center p-6 rounded-xl border-2 border-border/50">
                         <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
                           <TrendingUp className="h-6 w-6 text-amber-600" />
                         </div>
-                        <p className="font-medium mb-2">Risk of Overpaying</p>
+                        <p className="font-medium mb-2">{getTitle('riskOfOverpaying', isClientMode)}</p>
                         <RiskBadge band={reportData.riskOfOverpaying} />
+                        <p className="text-xs text-muted-foreground mt-3">
+                          {reportData.riskOfOverpaying === 'High' || reportData.riskOfOverpaying === 'Moderate'
+                            ? buyerRiskDescriptions[mode].overpayingHigh
+                            : buyerRiskDescriptions[mode].overpayingLow}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -339,5 +409,12 @@ const SharedReport = () => {
     </div>
   );
 };
+
+// Wrap with ForceClientMode to ensure client language is always used
+const SharedReport = () => (
+  <ForceClientMode>
+    <SharedReportContent />
+  </ForceClientMode>
+);
 
 export default SharedReport;

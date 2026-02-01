@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, Clock, Building2, Target, TrendingUp, AlertCircle, CheckCircle2, FileDown, Share2 } from 'lucide-react';
+import { ArrowLeft, Save, Clock, Building2, Target, TrendingUp, AlertCircle, CheckCircle2, FileDown, Share2, FileText } from 'lucide-react';
 import { Session, SellerReportData, LikelihoodBand } from '@/types';
 import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport } from '@/lib/scoring';
@@ -12,6 +12,25 @@ import { useToast } from '@/hooks/use-toast';
 import { exportReportToPdf } from '@/lib/pdfExport';
 import { ReportHeader } from '@/components/ReportHeader';
 import { formatLocation } from '@/lib/utils';
+import { ModeSwitcher } from '@/components/ModeSwitcher';
+import { useClientMode } from '@/contexts/ClientModeContext';
+import { createTemplateFromSession, saveTemplate } from '@/lib/templates';
+import { 
+  getTitle, 
+  sellerWhatThisMeans, 
+  tradeoffDescriptions,
+  sellerSuggestions 
+} from '@/lib/clientLanguage';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -28,8 +47,11 @@ function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
 const SellerReport = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isClientMode } = useClientMode();
   const [reportData, setReportData] = useState<SellerReportData | null>(null);
   const [saved, setSaved] = useState(false);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
 
   useEffect(() => {
     const sessionData = sessionStorage.getItem('current_session');
@@ -70,6 +92,27 @@ const SellerReport = () => {
     }
   };
 
+  const handleSaveAsTemplate = () => {
+    if (!reportData || !templateName.trim()) return;
+    
+    try {
+      const template = createTemplateFromSession(reportData.session, templateName.trim());
+      saveTemplate(template);
+      setTemplateDialogOpen(false);
+      setTemplateName('');
+      toast({
+        title: "Template saved",
+        description: `Template "${templateName}" has been created.`,
+      });
+    } catch {
+      toast({
+        title: "Could not save template",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleExportPdf = async () => {
     if (!reportData) return;
     try {
@@ -94,7 +137,6 @@ const SellerReport = () => {
   const handleShareLink = () => {
     if (!reportData) return;
     try {
-      // Always save before sharing to ensure the session is in localStorage
       upsertSession(reportData.session);
       const url = `${window.location.origin}/share/${reportData.session.id}`;
       navigator.clipboard.writeText(url);
@@ -119,26 +161,37 @@ const SellerReport = () => {
   const formatCurrency = (value: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
 
+  // Get mode-appropriate text
+  const mode = isClientMode ? 'client' : 'agent';
+  const whatThisMeansText = likelihood30 === 'High' 
+    ? sellerWhatThisMeans[mode].high
+    : likelihood30 === 'Moderate'
+    ? sellerWhatThisMeans[mode].moderate
+    : sellerWhatThisMeans[mode].low;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="hero-gradient text-primary-foreground">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
-            <Link to="/seller">
-              <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent/20">
-                <Building2 className="h-5 w-5 text-accent" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-serif font-bold">Seller Report</h1>
-                <p className="text-sm text-primary-foreground/70">{session.client_name} • {formatLocation(session.location)}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link to="/seller">
+                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-accent/20">
+                  <Building2 className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-serif font-bold">Seller Report</h1>
+                  <p className="text-sm text-primary-foreground/70">{session.client_name} • {formatLocation(session.location)}</p>
+                </div>
               </div>
             </div>
+            <ModeSwitcher className="bg-primary-foreground/10 rounded-lg px-3 py-2" />
           </div>
         </div>
       </div>
@@ -151,8 +204,8 @@ const SellerReport = () => {
           className="space-y-6"
         >
           {/* Report content for PDF export */}
-          <div id="report-export" className="space-y-6">
-            {/* Prepared For/By Header Block - hidden in PDF (rendered by jsPDF) */}
+          <div id="report-export" className={`space-y-6 ${isClientMode ? 'client-mode' : ''}`}>
+            {/* Prepared For/By Header Block */}
             <div className="pdf-section pdf-header-section">
               <ReportHeader
                 reportType="Seller"
@@ -228,8 +281,8 @@ const SellerReport = () => {
                     <p className="text-sm">{inputs.client_notes || inputs.notes}</p>
                   </div>
                 )}
-                {/* Agent Notes - hidden from PDF/Share */}
-                {inputs.agent_notes && (
+                {/* Agent Notes - hidden from PDF/Share and client mode */}
+                {inputs.agent_notes && !isClientMode && (
                   <div className="mt-4 p-4 rounded-xl bg-secondary/30 border border-border/50 pdf-hide-agent-notes">
                     <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
                       Agent Notes <span className="text-xs">(Private)</span>
@@ -246,7 +299,7 @@ const SellerReport = () => {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Clock className="h-5 w-5 text-accent" />
-                    Sale Likelihood Analysis
+                    {getTitle('saleLikelihood', isClientMode)}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">
                     Market snapshot as of: {new Date(snapshotTimestamp).toLocaleString()}
@@ -274,35 +327,31 @@ const SellerReport = () => {
             {/* What This Means */}
             <Card className="pdf-section pdf-avoid-break">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg">What This Means</CardTitle>
+                <CardTitle className="text-lg">{getTitle('whatThisMeans', isClientMode)}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  {likelihood30 === 'High' 
-                    ? 'Your listing is well-positioned for a quick sale. The combination of your list price and market conditions tends to attract buyer interest early.'
-                    : likelihood30 === 'Moderate'
-                    ? 'Initial buyer activity may take time to build. Properties in this range often see increased interest as market exposure grows over 60–90 days.'
-                    : 'At the current list price, early buyer activity may be limited. This often occurs when pricing is positioned at the higher end of comparable properties.'}
+                  {whatThisMeansText}
                 </p>
                 <div>
                   <p className="font-medium text-sm mb-2">If your goal is to increase certainty:</p>
                   <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
                     {inputs.strategy_preference === 'Maximize price' && (
-                      <li>Consider a balanced strategy that may attract more buyers sooner</li>
+                      <li>{sellerSuggestions[mode].strategy}</li>
                     )}
                     {inputs.strategy_preference !== 'Prioritize speed' && (
-                      <li>A more competitive list price often generates faster buyer interest</li>
+                      <li>{sellerSuggestions[mode].price}</li>
                     )}
                     {inputs.desired_timeframe === '30' && likelihood30 !== 'High' && (
-                      <li>Extending your desired timeframe may align better with current market conditions</li>
+                      <li>{sellerSuggestions[mode].timeframe}</li>
                     )}
                     {(inputs.desired_timeframe !== '30' || likelihood30 === 'High') && inputs.strategy_preference !== 'Maximize price' && (
-                      <li>Adjusting your pricing strategy may help optimize your timeline</li>
+                      <li>{sellerSuggestions[mode].pricing}</li>
                     )}
                   </ul>
                 </div>
                 <p className="text-sm text-muted-foreground italic">
-                  <span className="font-medium not-italic">Tradeoff to consider:</span> Prioritizing a faster sale often means accepting a lower final price, while holding for maximum price may extend time on market.
+                  <span className="font-medium not-italic">Tradeoff to consider:</span> {tradeoffDescriptions[mode].sellerPriceVsTime}
                 </p>
               </CardContent>
             </Card>
@@ -310,7 +359,7 @@ const SellerReport = () => {
             {/* Tradeoff Summary */}
             <Card className="pdf-section pdf-avoid-break">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Tradeoff Summary</CardTitle>
+                <CardTitle className="text-lg">{getTitle('tradeoffSummary', isClientMode)}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-3 p-4 rounded-xl bg-secondary/50">
@@ -367,6 +416,10 @@ const SellerReport = () => {
                 </>
               )}
             </Button>
+            <Button onClick={() => setTemplateDialogOpen(true)} size="lg" variant="outline">
+              <FileText className="mr-2 h-4 w-4" />
+              Save as Template
+            </Button>
             <Button onClick={handleExportPdf} size="lg" variant="outline">
               <FileDown className="mr-2 h-4 w-4" />
               Export PDF
@@ -378,6 +431,33 @@ const SellerReport = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Save as Template Dialog */}
+      <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save as Template</DialogTitle>
+            <DialogDescription>
+              Create a reusable template from this session's settings. Client name and location will not be saved.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="templateName">Template Name</Label>
+              <Input
+                id="templateName"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="e.g., Quick Sale, Maximum Value..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTemplateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveAsTemplate} disabled={!templateName.trim()}>Save Template</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
