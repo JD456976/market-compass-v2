@@ -11,8 +11,8 @@ import SellerFlow from "./pages/SellerFlow";
 import BuyerFlow from "./pages/BuyerFlow";
 import SellerReport from "./pages/SellerReport";
 import BuyerReport from "./pages/BuyerReport";
-import SavedSessions from "./pages/SavedSessions";
-import ClientDeliverables from "./pages/ClientDeliverables";
+import DraftAnalyses from "./pages/DraftAnalyses";
+import SharedReports from "./pages/SharedReports";
 import SharedReport from "./pages/SharedReport";
 import CompareSessions from "./pages/CompareSessions";
 import ClientComparisonReport from "./pages/ClientComparisonReport";
@@ -38,8 +38,12 @@ const App = () => (
             <Route path="/seller/report" element={<SellerReport />} />
             <Route path="/buyer" element={<BuyerFlow />} />
             <Route path="/buyer/report" element={<BuyerReport />} />
-            <Route path="/saved-sessions" element={<SavedSessions />} />
-            <Route path="/client-deliverables" element={<ClientDeliverables />} />
+            {/* Draft Analyses (internal working sessions) */}
+            <Route path="/drafts" element={<DraftAnalyses />} />
+            <Route path="/saved-sessions" element={<DraftAnalyses />} /> {/* Legacy redirect */}
+            {/* Shared Reports (read-only log of shared/exported) */}
+            <Route path="/shared-reports" element={<SharedReports />} />
+            <Route path="/client-deliverables" element={<SharedReports />} /> {/* Legacy redirect */}
             <Route path="/compare" element={<CompareSessions />} />
             <Route path="/compare/client" element={<ClientComparisonReport />} />
             <Route path="/agent-profile" element={<AgentProfile />} />

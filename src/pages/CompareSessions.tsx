@@ -64,7 +64,7 @@ const CompareSessions = () => {
 
   useEffect(() => {
     if (!sessionIdA || !sessionIdB) {
-      navigate('/saved-sessions');
+      navigate('/drafts');
       return;
     }
 
@@ -72,7 +72,7 @@ const CompareSessions = () => {
     const loadedB = getSessionById(sessionIdB);
 
     if (!loadedA || !loadedB) {
-      navigate('/saved-sessions');
+      navigate('/drafts');
       return;
     }
 
@@ -130,8 +130,8 @@ const CompareSessions = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
-              <Link to="/saved-sessions">
-                <Button variant="ghost" size="icon" className="rounded-full">
+              <Link to="/drafts">
+                <Button variant="ghost" size="icon" className="rounded-full min-h-[44px] min-w-[44px]">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               </Link>
@@ -248,11 +248,19 @@ const CompareSessions = () => {
                     valueA={!isSellerA && sessionA.buyer_inputs ? sessionA.buyer_inputs.financing_type : '—'} 
                     valueB={!isSellerB && sessionB.buyer_inputs ? sessionB.buyer_inputs.financing_type : '—'} 
                   />
-                  <CompareCell 
-                    label="Down Payment" 
-                    valueA={!isSellerA && sessionA.buyer_inputs ? sessionA.buyer_inputs.down_payment_percent : '—'} 
-                    valueB={!isSellerB && sessionB.buyer_inputs ? sessionB.buyer_inputs.down_payment_percent : '—'} 
-                  />
+                  {/* Only show Down Payment if not Cash */}
+                  {((!isSellerA && sessionA.buyer_inputs?.financing_type !== 'Cash') || 
+                    (!isSellerB && sessionB.buyer_inputs?.financing_type !== 'Cash')) && (
+                    <CompareCell 
+                      label="Down Payment" 
+                      valueA={!isSellerA && sessionA.buyer_inputs && sessionA.buyer_inputs.financing_type !== 'Cash' 
+                        ? sessionA.buyer_inputs.down_payment_percent 
+                        : '—'} 
+                      valueB={!isSellerB && sessionB.buyer_inputs && sessionB.buyer_inputs.financing_type !== 'Cash' 
+                        ? sessionB.buyer_inputs.down_payment_percent 
+                        : '—'} 
+                    />
+                  )}
                   <CompareCell 
                     label="Closing Timeline" 
                     valueA={!isSellerA && sessionA.buyer_inputs ? `${sessionA.buyer_inputs.closing_timeline} days` : '—'} 

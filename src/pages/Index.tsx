@@ -123,16 +123,16 @@ const Index = () => {
               Market Scenarios
             </Button>
           </Link>
-          <Link to="/saved-sessions">
+          <Link to="/drafts">
             <Button variant="outline" size="lg" className="min-w-[180px]">
               <FolderOpen className="mr-2 h-4 w-4" />
-              Saved Sessions
+              Draft Analyses
             </Button>
           </Link>
-          <Link to="/client-deliverables">
+          <Link to="/shared-reports">
             <Button variant="outline" size="lg" className="min-w-[180px]">
               <Send className="mr-2 h-4 w-4" />
-              Client Deliverables
+              Shared Reports
             </Button>
           </Link>
           <Link to="/templates">
