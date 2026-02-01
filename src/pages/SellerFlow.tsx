@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, Building2, MapPin, Home, Sparkles, DollarSign } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, Home, Sparkles, DollarSign } from 'lucide-react';
 import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference, MarketProfile } from '@/types';
 import { loadMarketProfiles, generateId } from '@/lib/storage';
+import { LocationAutocomplete } from '@/components/LocationAutocomplete';
+import { MarketProfileTooltip } from '@/components/MarketProfileTooltip';
 
 const SellerFlow = () => {
   const navigate = useNavigate();
@@ -123,16 +125,12 @@ const SellerFlow = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="location">Location <span className="text-destructive">*</span></Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="location"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      placeholder="Seattle, WA"
-                      className={`h-11 pl-10 ${attempted && !location.trim() ? 'border-destructive' : ''}`}
-                    />
-                  </div>
+                  <LocationAutocomplete
+                    value={location}
+                    onChange={setLocation}
+                    placeholder="Seattle, WA"
+                    hasError={attempted && !location.trim()}
+                  />
                   {attempted && !location.trim() && (
                     <p className="text-xs text-destructive">Location is required</p>
                   )}
@@ -166,7 +164,10 @@ const SellerFlow = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Market Profile <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+                <Label className="flex items-center">
+                  Market Profile <span className="text-muted-foreground text-xs ml-1">(Optional)</span>
+                  <MarketProfileTooltip />
+                </Label>
                 <Select value={selectedProfileId ?? "__none__"} onValueChange={(v) => setSelectedProfileId(v === "__none__" ? undefined : v)}>
                   <SelectTrigger className="h-11"><SelectValue placeholder="Select a market profile..." /></SelectTrigger>
                   <SelectContent>
@@ -264,11 +265,6 @@ const SellerFlow = () => {
               Generate Report
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-          </div>
-
-          {/* Debug line - temporary */}
-          <div className="mt-2 text-xs text-muted-foreground font-mono bg-muted/50 p-2 rounded">
-            Button disabled: {(!isValid).toString()} | Missing required: [{missingFields.join(', ') || 'none'}]
           </div>
         </motion.div>
       </div>

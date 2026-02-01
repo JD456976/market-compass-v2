@@ -10,6 +10,7 @@ import BuyerFlow from "./pages/BuyerFlow";
 import SellerReport from "./pages/SellerReport";
 import BuyerReport from "./pages/BuyerReport";
 import SavedSessions from "./pages/SavedSessions";
+import SharedReport from "./pages/SharedReport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/buyer" element={<BuyerFlow />} />
           <Route path="/buyer/report" element={<BuyerReport />} />
           <Route path="/saved-sessions" element={<SavedSessions />} />
+          <Route path="/share/:sessionId" element={<SharedReport />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
