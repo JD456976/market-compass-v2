@@ -205,16 +205,36 @@
   display: none !important;
 }
 
-/* Stat tiles alignment stabilization */
+/* Stat tiles alignment stabilization for PDF export */
 .pdf-export .pdf-stat-tile {
   display: block !important;
   text-align: center !important;
   padding: 16px !important;
+  line-height: 1.4 !important;
 }
 
 .pdf-export .pdf-stat-tile p {
-  margin: 0 !important;
+  display: block !important;
+  margin: 0 0 4px 0 !important;
   text-align: center !important;
+  line-height: 1.4 !important;
+}
+
+.pdf-export .pdf-stat-tile p:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Ensure label text is consistent */
+.pdf-export .pdf-stat-tile .text-sm {
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+}
+
+/* Ensure value text is consistent */
+.pdf-export .pdf-stat-tile .text-lg,
+.pdf-export .pdf-stat-tile .text-xl {
+  font-size: 16px !important;
+  line-height: 1.4 !important;
 }
 
 .pdf-avoid-break {
