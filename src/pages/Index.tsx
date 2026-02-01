@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Compass, Users, Building2, FolderOpen, ChevronRight, MapPin } from 'lucide-react';
+import { Compass, Users, Building2, FolderOpen, ChevronRight, MapPin, User } from 'lucide-react';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -127,6 +127,12 @@ const Index = () => {
             <Button variant="outline" size="lg" className="min-w-[220px]">
               <FolderOpen className="mr-2 h-4 w-4" />
               Saved Sessions
+            </Button>
+          </Link>
+          <Link to="/agent-profile">
+            <Button variant="outline" size="lg" className="min-w-[220px]">
+              <User className="mr-2 h-4 w-4" />
+              Agent Profile
             </Button>
           </Link>
         </motion.div>

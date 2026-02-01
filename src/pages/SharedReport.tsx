@@ -69,7 +69,7 @@ const SharedReport = () => {
             <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-serif font-bold mb-2">Report Not Available</h2>
             <p className="text-muted-foreground mb-6">
-              This report is not available on this device.
+              No report was found on this device. Open the report on the device where it was created, then click Share Link again.
             </p>
             <Link to="/">
               <Button variant="outline">Go to Home</Button>
