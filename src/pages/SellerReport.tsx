@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, Clock, Building2, Target, TrendingUp, AlertCircle, CheckCircle2, FileDown, Share2, FileText } from 'lucide-react';
+import { ArrowLeft, Save, Clock, Building2, Target, TrendingUp, AlertCircle, CheckCircle2, FileDown, Share2, FileText, Pencil } from 'lucide-react';
 import { Session, SellerReportData, LikelihoodBand } from '@/types';
 import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport } from '@/lib/scoring';
@@ -39,6 +39,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DraftEditorSheet } from '@/components/DraftEditorSheet';
+import { LikelihoodBar, TradeoffMatrix, getSellerTradeoffPosition, MetricIcon } from '@/components/ClientVisuals';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -60,6 +62,7 @@ const SellerReport = () => {
   const [saved, setSaved] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
 
   useEffect(() => {
     const sessionData = sessionStorage.getItem('current_session');
@@ -185,6 +188,22 @@ const SellerReport = () => {
     ? sellerWhatThisMeans[mode].moderate
     : sellerWhatThisMeans[mode].low;
 
+  // Get tradeoff position for client visual
+  const tradeoffPosition = getSellerTradeoffPosition(
+    inputs.strategy_preference,
+    inputs.desired_timeframe
+  );
+
+  const handleDraftUpdate = (updatedSession: Session) => {
+    const updatedData = calculateSellerReport(updatedSession, marketProfile);
+    setReportData(updatedData);
+    sessionStorage.setItem('current_session', JSON.stringify(updatedSession));
+    setSaved(false);
+    toast({
+      title: "Draft updated",
+      description: "Your changes have been applied.",
+    });
+  };
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -325,25 +344,49 @@ const SellerReport = () => {
               <CardContent className="pt-6">
                 <div className="grid grid-cols-3 gap-4 likelihood-cards-mobile">
                   <div className="text-center p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
-                    <p className="text-sm text-muted-foreground mb-3">30 Days</p>
+                    <p className="text-sm text-muted-foreground mb-3 flex items-center justify-center gap-1">
+                      <MetricIcon type="timeline" className="h-3 w-3" />
+                      30 Days
+                    </p>
                     <div className="flex items-center justify-center gap-1 flex-wrap">
                       <LikelihoodBadge band={likelihood30} />
                       {!isClientMode && <ConfidenceRange band={likelihood30} />}
                     </div>
+                    {isClientMode && (
+                      <div className="mt-3 px-1">
+                        <LikelihoodBar band={likelihood30} showLabels={false} />
+                      </div>
+                    )}
                   </div>
                   <div className="text-center p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
-                    <p className="text-sm text-muted-foreground mb-3">60 Days</p>
+                    <p className="text-sm text-muted-foreground mb-3 flex items-center justify-center gap-1">
+                      <MetricIcon type="timeline" className="h-3 w-3" />
+                      60 Days
+                    </p>
                     <div className="flex items-center justify-center gap-1 flex-wrap">
                       <LikelihoodBadge band={likelihood60} />
                       {!isClientMode && <ConfidenceRange band={likelihood60} />}
                     </div>
+                    {isClientMode && (
+                      <div className="mt-3 px-1">
+                        <LikelihoodBar band={likelihood60} showLabels={false} />
+                      </div>
+                    )}
                   </div>
                   <div className="text-center p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
-                    <p className="text-sm text-muted-foreground mb-3">90 Days</p>
+                    <p className="text-sm text-muted-foreground mb-3 flex items-center justify-center gap-1">
+                      <MetricIcon type="timeline" className="h-3 w-3" />
+                      90 Days
+                    </p>
                     <div className="flex items-center justify-center gap-1 flex-wrap">
                       <LikelihoodBadge band={likelihood90} />
                       {!isClientMode && <ConfidenceRange band={likelihood90} />}
                     </div>
+                    {isClientMode && (
+                      <div className="mt-3 px-1">
+                        <LikelihoodBar band={likelihood90} showLabels={false} />
+                      </div>
+                    )}
                   </div>
                 </div>
                 {/* Agent-only explanations */}
@@ -468,6 +511,13 @@ const SellerReport = () => {
               <FileText className="mr-2 h-4 w-4" />
               Template
             </Button>
+            {/* Agent-only: Edit Draft */}
+            {!isClientMode && (
+              <Button onClick={() => setEditSheetOpen(true)} size="lg" variant="outline" className="min-h-[44px]">
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Draft
+              </Button>
+            )}
             {/* Share/Export only visible in Client mode */}
             {isClientMode && (
               <>
@@ -482,6 +532,28 @@ const SellerReport = () => {
               </>
             )}
           </div>
+
+          {/* Client mode: Tradeoff Matrix */}
+          {isClientMode && (
+            <Card className="pdf-section pdf-avoid-break">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-1.5">
+                  <MetricIcon type="tradeoff" />
+                  Position Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <TradeoffMatrix 
+                  positions={[{ position: tradeoffPosition }]}
+                  xAxis={{ left: 'Speed', right: 'Price' }}
+                  yAxis={{ top: 'Certainty', bottom: 'Flexibility' }}
+                />
+                <p className="text-[10px] text-center text-muted-foreground mt-3">
+                  Current listing strategy positioning
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
       </div>
 
@@ -511,6 +583,14 @@ const SellerReport = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Draft Editor Sheet - Agent Mode Only */}
+      <DraftEditorSheet
+        session={session}
+        open={editSheetOpen}
+        onOpenChange={setEditSheetOpen}
+        onSave={handleDraftUpdate}
+      />
     </div>
   );
 };
