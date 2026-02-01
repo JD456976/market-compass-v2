@@ -11,6 +11,7 @@ import {
 import { Session, LikelihoodBand, MarketProfile } from '@/types';
 import { getSessionById, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
+import { ReportHeader } from '@/components/ReportHeader';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
   if (band === 'High') {
@@ -120,6 +121,12 @@ const SharedReport = () => {
           transition={{ duration: 0.4 }}
           className="space-y-6"
         >
+          {/* Prepared For/By Header Block */}
+          <ReportHeader
+            reportType={isSeller ? 'Seller' : 'Buyer'}
+            clientName={session.client_name}
+            snapshotTimestamp={reportData.snapshotTimestamp}
+          />
           {/* Overview Card */}
           <Card>
             <CardHeader className="pb-4">
