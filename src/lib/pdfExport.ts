@@ -7,6 +7,7 @@ interface ExportOptions {
   clientName: string;
   reportType: 'Seller' | 'Buyer';
   snapshotTimestamp?: string;
+  isClientMode?: boolean;
 }
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
@@ -64,6 +65,15 @@ export async function exportReportToPdf(
   // Add is-exporting class to body for CSS overrides
   document.body.classList.add('is-exporting');
   element.classList.add('pdf-export');
+  
+  // If in client mode, ensure agent-only content is hidden
+  if (options.isClientMode) {
+    element.classList.add('client-mode');
+    element.classList.remove('agent-mode');
+  } else {
+    element.classList.add('agent-mode');
+    element.classList.remove('client-mode');
+  }
 
   try {
     // Wait for styles to apply
@@ -237,5 +247,7 @@ export async function exportReportToPdf(
     // Always clean up classes
     document.body.classList.remove('is-exporting');
     element.classList.remove('pdf-export');
+    element.classList.remove('client-mode');
+    element.classList.remove('agent-mode');
   }
 }

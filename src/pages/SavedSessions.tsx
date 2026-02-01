@@ -207,7 +207,7 @@ const SavedSessions = () => {
                   </div>
                   <h3 className="font-serif text-xl font-semibold mb-2">No saved sessions yet</h3>
                   <p className="text-muted-foreground mb-6">Generate a report and click Save Session.</p>
-                  <div className="flex gap-4 justify-center">
+                  <div className="flex gap-4 justify-center saved-sessions-empty-buttons pb-safe">
                     <Link to="/seller">
                       <Button variant="outline">
                         <Building2 className="mr-2 h-4 w-4" />

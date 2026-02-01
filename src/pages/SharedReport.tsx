@@ -19,8 +19,6 @@ import {
   sellerWhatThisMeans,
   buyerRiskDescriptions,
   tradeoffDescriptions,
-  buyerSuggestions,
-  sellerSuggestions
 } from '@/lib/clientLanguage';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
@@ -51,7 +49,7 @@ const SharedReportContent = () => {
   const [marketProfile, setMarketProfile] = useState<MarketProfile | undefined>(undefined);
   const [notFound, setNotFound] = useState(false);
 
-  // Always use client mode language for shared reports
+  // Always use client mode language for shared reports - NO TOGGLE
   const isClientMode = true;
   const mode = 'client';
 
@@ -120,7 +118,7 @@ const SharedReportContent = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Shared Report Banner */}
+      {/* Shared Report Banner - NO navigation buttons */}
       <div className="bg-muted border-b border-border">
         <div className="container mx-auto px-4 py-2">
           <p className="text-sm text-center text-muted-foreground">
@@ -129,7 +127,7 @@ const SharedReportContent = () => {
         </div>
       </div>
 
-      {/* Header */}
+      {/* Header - NO toggle, NO navigation */}
       <div className="hero-gradient text-primary-foreground">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-3">
@@ -157,16 +155,17 @@ const SharedReportContent = () => {
             clientName={session.client_name}
             snapshotTimestamp={reportData.snapshotTimestamp}
           />
+
           {/* Overview Card */}
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Target className="h-5 w-5 text-accent" />
-                {isSeller ? 'Property Overview' : 'Offer Overview'}
+                {isSeller ? getTitle('propertyOverview', isClientMode) : getTitle('offerOverview', isClientMode)}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-4 report-info-block">
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Client</p>
                   <p className="font-medium">{session.client_name}</p>
@@ -200,11 +199,11 @@ const SharedReportContent = () => {
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <TrendingUp className="h-5 w-5 text-accent" />
-                    Listing Strategy
+                    {getTitle('listingStrategy', isClientMode)}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 likelihood-cards-mobile">
                     <div className="p-4 rounded-xl bg-secondary/50 text-center">
                       <p className="text-sm text-muted-foreground mb-1">List Price</p>
                       <p className="text-xl font-serif font-bold">{formatCurrency(session.seller_inputs.seller_selected_list_price)}</p>
@@ -218,7 +217,7 @@ const SharedReportContent = () => {
                       <p className="text-xl font-serif font-bold">{session.seller_inputs.strategy_preference}</p>
                     </div>
                   </div>
-                  {/* Only show client notes - never agent notes */}
+                  {/* Only show client notes - NEVER agent notes */}
                   {(session.seller_inputs.client_notes || session.seller_inputs.notes) && (
                     <div className="mt-4 p-4 rounded-xl bg-muted/50">
                       <p className="text-sm text-muted-foreground mb-1">Notes</p>
@@ -230,7 +229,7 @@ const SharedReportContent = () => {
 
               <Card className="overflow-hidden">
                 <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 section-header-mobile">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Clock className="h-5 w-5 text-accent" />
                       {getTitle('saleLikelihood', isClientMode)}
@@ -241,7 +240,7 @@ const SharedReportContent = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3 gap-4 likelihood-cards-mobile">
                     {'likelihood30' in reportData && (
                       <>
                         <div className="text-center p-6 rounded-xl border-2 border-border/50">
@@ -286,11 +285,11 @@ const SharedReportContent = () => {
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <TrendingUp className="h-5 w-5 text-accent" />
-                    Offer Details
+                    {getTitle('offerDetails', isClientMode)}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 likelihood-cards-mobile">
                     <div className="p-4 rounded-xl bg-secondary/50 text-center">
                       <p className="text-sm text-muted-foreground mb-1">Offer Price</p>
                       <p className="text-lg font-serif font-bold">{formatCurrency(session.buyer_inputs.offer_price)}</p>
@@ -308,7 +307,7 @@ const SharedReportContent = () => {
                       <p className="text-lg font-serif font-bold">{session.buyer_inputs.closing_timeline} days</p>
                     </div>
                   </div>
-                  {/* Only show client notes - never agent notes */}
+                  {/* Only show client notes - NEVER agent notes */}
                   {(session.buyer_inputs.client_notes || session.buyer_inputs.notes) && (
                     <div className="mt-4 p-4 rounded-xl bg-muted/50">
                       <p className="text-sm text-muted-foreground mb-1">Notes</p>
@@ -320,7 +319,7 @@ const SharedReportContent = () => {
 
               <Card className="overflow-hidden">
                 <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 section-header-mobile">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Clock className="h-5 w-5 text-accent" />
                       {getTitle('acceptanceLikelihood', isClientMode)}
