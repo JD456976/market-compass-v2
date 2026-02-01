@@ -264,7 +264,7 @@ const BuyerFlow = () => {
                 )}
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className={`grid gap-4 ${financingType === 'Cash' ? 'md:grid-cols-1' : 'md:grid-cols-2'}`}>
                 <div className="space-y-2">
                   <Label>Financing Type</Label>
                   <Select value={financingType} onValueChange={(v: FinancingType) => setFinancingType(v)}>
@@ -278,17 +278,19 @@ const BuyerFlow = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Down Payment</Label>
-                  <Select value={downPayment} onValueChange={(v: DownPaymentPercent) => setDownPayment(v)}>
-                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="<10">Less than 10%</SelectItem>
-                      <SelectItem value="10-19">10-19%</SelectItem>
-                      <SelectItem value="20+">20% or more</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {financingType !== 'Cash' && (
+                  <div className="space-y-2">
+                    <Label>Down Payment</Label>
+                    <Select value={downPayment} onValueChange={(v: DownPaymentPercent) => setDownPayment(v)}>
+                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="<10">Less than 10%</SelectItem>
+                        <SelectItem value="10-19">10-19%</SelectItem>
+                        <SelectItem value="20+">20% or more</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -74,48 +74,86 @@ export function calculateBuyerReport(
   
   let score = getMarketModifiers(marketProfile) + getConditionModifier(session.condition);
   
-  // financing: Cash(+2), Conventional(+1), FHA/VA(0)
-  if (inputs.financing_type === 'Cash') score += 2;
-  else if (inputs.financing_type === 'Conventional') score += 1;
+  const isCash = inputs.financing_type === 'Cash';
+  const hasMinimalContingencies = inputs.contingencies.includes('None') || 
+    inputs.contingencies.length === 0 ||
+    (inputs.contingencies.length === 1 && inputs.contingencies[0] === 'Inspection');
+  const hasFastClose = inputs.closing_timeline === '<21' || inputs.closing_timeline === '21-30';
   
-  // down_payment: 20+(+1), 10–19(0), <10(-1)
-  if (inputs.down_payment_percent === '20+') score += 1;
-  else if (inputs.down_payment_percent === '<10') score -= 1;
+  // financing: Cash(+3), Conventional(+1), FHA/VA(0)
+  // Cash gets higher bonus to help reach High likelihood
+  if (isCash) {
+    score += 3;
+  } else if (inputs.financing_type === 'Conventional') {
+    score += 1;
+  }
+  
+  // down_payment: Only applies if NOT cash
+  // 20+(+1), 10–19(0), <10(-1)
+  if (!isCash) {
+    if (inputs.down_payment_percent === '20+') score += 1;
+    else if (inputs.down_payment_percent === '<10') score -= 1;
+  }
   
   // contingencies: None(+2), Inspection only(+1), Financing(0), Appraisal(-1), Home sale(-2)
+  // Reduced penalty when cash or fast close is present
   if (inputs.contingencies.includes('None') || inputs.contingencies.length === 0) {
     score += 2;
   } else if (inputs.contingencies.length === 1 && inputs.contingencies[0] === 'Inspection') {
     score += 1;
   } else if (inputs.contingencies.includes('Home sale')) {
-    score -= 2;
+    // Reduce penalty if cash or fast close offsets
+    score -= (isCash || hasFastClose) ? 1 : 2;
   } else if (inputs.contingencies.includes('Appraisal')) {
     score -= 1;
   }
   
-  // closing: <21(+1), 21–30(+1), 31–45(0), 45+(-1)
-  if (inputs.closing_timeline === '<21' || inputs.closing_timeline === '21-30') {
+  // closing: <21(+2), 21–30(+1), 31–45(0), 45+(-1)
+  // Faster close gets higher bonus
+  if (inputs.closing_timeline === '<21') {
+    score += 2;
+  } else if (inputs.closing_timeline === '21-30') {
     score += 1;
   } else if (inputs.closing_timeline === '45+') {
     score -= 1;
   }
   
-  // Calculate risk bands based on buyer preference
+  // Calculate acceptance likelihood with expanded thresholds
+  // Low: ≤0, Moderate: 1-4, High: ≥5
+  let acceptanceLikelihood: LikelihoodBand;
+  if (score <= 0) {
+    acceptanceLikelihood = 'Low';
+  } else if (score >= 5) {
+    acceptanceLikelihood = 'High';
+  } else {
+    acceptanceLikelihood = 'Moderate';
+  }
+  
+  // Calculate risk bands based on buyer preference AND offer strength
   let riskOfLosingHome: LikelihoodBand;
   let riskOfOverpaying: LikelihoodBand;
   
-  const acceptanceLikelihood = scoreToBand(score);
-  
-  // Risk relationship based on preference
+  // Risk relationship based on preference, adjusted by offer strength
   if (inputs.buyer_preference === 'Must win') {
     riskOfLosingHome = 'Low';
-    riskOfOverpaying = 'High';
+    // High acceptance + must win = higher overpaying risk
+    riskOfOverpaying = acceptanceLikelihood === 'High' ? 'High' : 'Moderate';
   } else if (inputs.buyer_preference === 'Price-protective') {
-    riskOfLosingHome = 'High';
+    // Low acceptance + price-protective = higher losing risk
+    riskOfLosingHome = acceptanceLikelihood === 'Low' ? 'High' : 'Moderate';
     riskOfOverpaying = 'Low';
   } else {
-    riskOfLosingHome = 'Moderate';
-    riskOfOverpaying = 'Moderate';
+    // Balanced: risks depend on offer strength
+    if (acceptanceLikelihood === 'High') {
+      riskOfLosingHome = 'Low';
+      riskOfOverpaying = 'Moderate';
+    } else if (acceptanceLikelihood === 'Low') {
+      riskOfLosingHome = 'Moderate';
+      riskOfOverpaying = 'Low';
+    } else {
+      riskOfLosingHome = 'Moderate';
+      riskOfOverpaying = 'Moderate';
+    }
   }
   
   return {
