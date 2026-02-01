@@ -52,7 +52,21 @@ const SellerFlow = () => {
     navigate('/seller/report');
   };
 
-  const isValid = clientName && location && listPrice;
+  // Compute missing required fields
+  const missingFields: string[] = [];
+  if (!clientName.trim()) missingFields.push('client_name');
+  if (!location.trim()) missingFields.push('location');
+  if (!listPrice || parseFloat(listPrice) <= 0) missingFields.push('list_price');
+  // property_type, condition, timeframe, strategy all have defaults so they're always valid
+  
+  const isValid = missingFields.length === 0;
+  const [attempted, setAttempted] = useState(false);
+
+  const onGenerateReport = () => {
+    setAttempted(true);
+    if (!isValid) return;
+    handleGenerate();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,8 +115,11 @@ const SellerFlow = () => {
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
                     placeholder="John Smith"
-                    className="h-11"
+                    className={`h-11 ${attempted && !clientName.trim() ? 'border-destructive' : ''}`}
                   />
+                  {attempted && !clientName.trim() && (
+                    <p className="text-xs text-destructive">Client name is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="location">Location <span className="text-destructive">*</span></Label>
@@ -113,9 +130,12 @@ const SellerFlow = () => {
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       placeholder="Seattle, WA"
-                      className="h-11 pl-10"
+                      className={`h-11 pl-10 ${attempted && !location.trim() ? 'border-destructive' : ''}`}
                     />
                   </div>
+                  {attempted && !location.trim() && (
+                    <p className="text-xs text-destructive">Location is required</p>
+                  )}
                 </div>
               </div>
 
@@ -179,9 +199,12 @@ const SellerFlow = () => {
                     value={listPrice}
                     onChange={(e) => setListPrice(e.target.value)}
                     placeholder="500,000"
-                    className="h-11 pl-10"
+                    className={`h-11 pl-10 ${attempted && (!listPrice || parseFloat(listPrice) <= 0) ? 'border-destructive' : ''}`}
                   />
                 </div>
+                {attempted && (!listPrice || parseFloat(listPrice) <= 0) && (
+                  <p className="text-xs text-destructive">List price is required</p>
+                )}
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
@@ -223,16 +246,30 @@ const SellerFlow = () => {
             </CardContent>
           </Card>
 
-          <Button 
-            onClick={handleGenerate} 
-            className="w-full" 
-            size="lg" 
-            disabled={!isValid}
-            variant="accent"
-          >
-            Generate Report
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          {/* Validation message */}
+          {attempted && !isValid && (
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
+              Please complete required fields to generate the report.
+            </div>
+          )}
+
+          <div className="relative z-10 pointer-events-auto">
+            <Button 
+              type="button"
+              onClick={onGenerateReport} 
+              className="w-full" 
+              size="lg" 
+              variant="accent"
+            >
+              Generate Report
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Debug line - temporary */}
+          <div className="mt-2 text-xs text-muted-foreground font-mono bg-muted/50 p-2 rounded">
+            Button disabled: {(!isValid).toString()} | Missing required: [{missingFields.join(', ') || 'none'}]
+          </div>
         </motion.div>
       </div>
     </div>

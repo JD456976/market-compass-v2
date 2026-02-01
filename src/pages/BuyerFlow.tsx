@@ -82,7 +82,22 @@ const BuyerFlow = () => {
     navigate('/buyer/report');
   };
 
-  const isValid = clientName && location && offerPrice;
+  // Compute missing required fields
+  const missingFields: string[] = [];
+  if (!clientName.trim()) missingFields.push('client_name');
+  if (!location.trim()) missingFields.push('location');
+  if (!offerPrice || parseFloat(offerPrice) <= 0) missingFields.push('offer_price');
+  if (contingencies.length === 0) missingFields.push('contingencies');
+  // property_type, condition, financing_type, closing_timeline, buyer_preference all have defaults
+  
+  const isValid = missingFields.length === 0;
+  const [attempted, setAttempted] = useState(false);
+
+  const onGenerateReport = () => {
+    setAttempted(true);
+    if (!isValid) return;
+    handleGenerate();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -131,8 +146,11 @@ const BuyerFlow = () => {
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
                     placeholder="Jane Doe"
-                    className="h-11"
+                    className={`h-11 ${attempted && !clientName.trim() ? 'border-destructive' : ''}`}
                   />
+                  {attempted && !clientName.trim() && (
+                    <p className="text-xs text-destructive">Client name is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="location">Location <span className="text-destructive">*</span></Label>
@@ -143,9 +161,12 @@ const BuyerFlow = () => {
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       placeholder="Seattle, WA"
-                      className="h-11 pl-10"
+                      className={`h-11 pl-10 ${attempted && !location.trim() ? 'border-destructive' : ''}`}
                     />
                   </div>
+                  {attempted && !location.trim() && (
+                    <p className="text-xs text-destructive">Location is required</p>
+                  )}
                 </div>
               </div>
 
@@ -209,9 +230,12 @@ const BuyerFlow = () => {
                     value={offerPrice}
                     onChange={(e) => setOfferPrice(e.target.value)}
                     placeholder="500,000"
-                    className="h-11 pl-10"
+                    className={`h-11 pl-10 ${attempted && (!offerPrice || parseFloat(offerPrice) <= 0) ? 'border-destructive' : ''}`}
                   />
                 </div>
+                {attempted && (!offerPrice || parseFloat(offerPrice) <= 0) && (
+                  <p className="text-xs text-destructive">Offer price is required</p>
+                )}
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
@@ -253,10 +277,10 @@ const BuyerFlow = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3">
-                <Label>Contingencies</Label>
+                <Label>Contingencies <span className="text-destructive">*</span></Label>
                 <div className="grid grid-cols-2 gap-4">
                   {contingencyOptions.map((opt) => (
-                    <div key={opt.value} className="flex items-center space-x-3 p-3 rounded-lg border border-border/50 hover:border-accent/30 transition-colors">
+                    <div key={opt.value} className={`flex items-center space-x-3 p-3 rounded-lg border hover:border-accent/30 transition-colors ${attempted && contingencies.length === 0 ? 'border-destructive' : 'border-border/50'}`}>
                       <Checkbox
                         id={opt.value}
                         checked={contingencies.includes(opt.value)}
@@ -268,6 +292,9 @@ const BuyerFlow = () => {
                     </div>
                   ))}
                 </div>
+                {attempted && contingencies.length === 0 && (
+                  <p className="text-xs text-destructive">Select at least one contingency option</p>
+                )}
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
@@ -310,16 +337,30 @@ const BuyerFlow = () => {
             </CardContent>
           </Card>
 
-          <Button 
-            onClick={handleGenerate} 
-            className="w-full" 
-            size="lg" 
-            disabled={!isValid}
-            variant="accent"
-          >
-            Generate Report
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          {/* Validation message */}
+          {attempted && !isValid && (
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
+              Please complete required fields to generate the report.
+            </div>
+          )}
+
+          <div className="relative z-10 pointer-events-auto">
+            <Button 
+              type="button"
+              onClick={onGenerateReport} 
+              className="w-full" 
+              size="lg" 
+              variant="accent"
+            >
+              Generate Report
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Debug line - temporary */}
+          <div className="mt-2 text-xs text-muted-foreground font-mono bg-muted/50 p-2 rounded">
+            Button disabled: {(!isValid).toString()} | Missing required: [{missingFields.join(', ') || 'none'}]
+          </div>
         </motion.div>
       </div>
     </div>
