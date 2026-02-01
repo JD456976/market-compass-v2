@@ -4,11 +4,12 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, Clock, Building2, Target, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Clock, Building2, Target, TrendingUp, AlertCircle, CheckCircle2, FileDown, Share2 } from 'lucide-react';
 import { Session, SellerReportData, LikelihoodBand } from '@/types';
 import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport } from '@/lib/scoring';
 import { useToast } from '@/hooks/use-toast';
+import { exportReportToPdf } from '@/lib/pdfExport';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -67,6 +68,34 @@ const SellerReport = () => {
     }
   };
 
+  const handleExportPdf = async () => {
+    try {
+      await exportReportToPdf('report-export', {
+        clientName: session.client_name,
+        reportType: 'Seller',
+      });
+      toast({
+        title: "PDF exported",
+        description: "Your report has been downloaded.",
+      });
+    } catch {
+      toast({
+        title: "PDF export failed",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareLink = () => {
+    const url = `${window.location.origin}/share/${session.id}`;
+    navigator.clipboard.writeText(url);
+    toast({
+      title: "Link copied",
+      description: "Share link has been copied to clipboard.",
+    });
+  };
+
   if (!reportData) return null;
 
   const { session, marketProfile, likelihood30, likelihood60, likelihood90, snapshotTimestamp } = reportData;
@@ -105,6 +134,7 @@ const SellerReport = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="space-y-6"
+          id="report-export"
         >
           {/* Property Overview */}
           <Card>
@@ -183,7 +213,7 @@ const SellerReport = () => {
                   Sale Likelihood Analysis
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(snapshotTimestamp).toLocaleString()}
+                  Market snapshot as of: {new Date(snapshotTimestamp).toLocaleString()}
                 </p>
               </div>
             </CardHeader>
@@ -244,7 +274,7 @@ const SellerReport = () => {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-wrap gap-4 pt-4">
             <Link to="/seller">
               <Button variant="outline" size="lg">
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -263,6 +293,14 @@ const SellerReport = () => {
                   Save Session
                 </>
               )}
+            </Button>
+            <Button onClick={handleExportPdf} size="lg" variant="outline">
+              <FileDown className="mr-2 h-4 w-4" />
+              Export PDF
+            </Button>
+            <Button onClick={handleShareLink} size="lg" variant="outline">
+              <Share2 className="mr-2 h-4 w-4" />
+              Share Link
             </Button>
           </div>
         </motion.div>
