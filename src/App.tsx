@@ -13,6 +13,8 @@ import BuyerReport from "./pages/BuyerReport";
 import SavedSessions from "./pages/SavedSessions";
 import SharedReport from "./pages/SharedReport";
 import CompareSessions from "./pages/CompareSessions";
+import ClientComparisonReport from "./pages/ClientComparisonReport";
+import SharedComparisonReport from "./pages/SharedComparisonReport";
 import AgentProfile from "./pages/AgentProfile";
 import Templates from "./pages/Templates";
 import NotFound from "./pages/NotFound";
@@ -35,9 +37,11 @@ const App = () => (
             <Route path="/buyer/report" element={<BuyerReport />} />
             <Route path="/saved-sessions" element={<SavedSessions />} />
             <Route path="/compare" element={<CompareSessions />} />
+            <Route path="/compare/client" element={<ClientComparisonReport />} />
             <Route path="/agent-profile" element={<AgentProfile />} />
             <Route path="/templates" element={<Templates />} />
             <Route path="/share/:sessionId" element={<SharedReport />} />
+            <Route path="/share/compare" element={<SharedComparisonReport />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

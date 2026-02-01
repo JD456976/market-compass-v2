@@ -5,9 +5,15 @@ import { toast } from '@/hooks/use-toast';
 
 interface ExportOptions {
   clientName: string;
-  reportType: 'Seller' | 'Buyer';
+  reportType: 'Seller' | 'Buyer' | 'Comparison';
   snapshotTimestamp?: string;
   isClientMode?: boolean;
+}
+
+interface ComparisonExportOptions {
+  clientName: string;
+  optionALabel: string;
+  optionBLabel: string;
 }
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
@@ -250,4 +256,16 @@ export async function exportReportToPdf(
     element.classList.remove('client-mode');
     element.classList.remove('agent-mode');
   }
+}
+
+export async function exportComparisonToPdf(
+  elementId: string,
+  options: ComparisonExportOptions
+): Promise<void> {
+  // Reuse the main export function with comparison-specific settings
+  await exportReportToPdf(elementId, {
+    clientName: options.clientName,
+    reportType: 'Comparison',
+    isClientMode: true, // Comparison reports are always client-facing
+  });
 }
