@@ -17,6 +17,13 @@ import { useClientMode } from '@/contexts/ClientModeContext';
 import { createTemplateFromSession, saveTemplate } from '@/lib/templates';
 import { AgentTakeaways } from '@/components/AgentTakeaways';
 import { 
+  ConfidenceRange, 
+  WhyThisResult, 
+  WhatWouldChange,
+  getAcceptanceFactors,
+  getImprovementSuggestions 
+} from '@/components/AgentExplanations';
+import { 
   getTitle, 
   buyerWhatThisMeans, 
   buyerRiskDescriptions, 
@@ -134,6 +141,10 @@ const BuyerReport = () => {
         snapshotTimestamp: reportData.snapshotTimestamp,
         isClientMode,
       });
+      // Mark as exported and save
+      const updatedSession = { ...reportData.session, pdf_exported: true };
+      upsertSession(updatedSession);
+      setReportData({ ...reportData, session: updatedSession });
       toast({
         title: "PDF exported",
         description: "Your report has been downloaded.",
@@ -150,7 +161,10 @@ const BuyerReport = () => {
   const handleShareLink = () => {
     if (!reportData) return;
     try {
-      upsertSession(reportData.session);
+      // Mark as shared and save
+      const updatedSession = { ...reportData.session, share_link_created: true };
+      upsertSession(updatedSession);
+      setReportData({ ...reportData, session: updatedSession });
       const url = `${window.location.origin}/share/${reportData.session.id}`;
       navigator.clipboard.writeText(url);
       toast({
@@ -281,7 +295,7 @@ const BuyerReport = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 likelihood-cards-mobile">
+                <div className={`grid ${inputs.financing_type === 'Cash' ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'} gap-4 mb-4 likelihood-cards-mobile`}>
                   <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-1">Offer Price</p>
                     <p className="text-lg font-serif font-bold">{formatCurrency(inputs.offer_price)}</p>
@@ -290,10 +304,13 @@ const BuyerReport = () => {
                     <p className="text-sm text-muted-foreground mb-1">Financing</p>
                     <p className="text-lg font-serif font-bold">{inputs.financing_type}</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
-                    <p className="text-sm text-muted-foreground mb-1">Down Payment</p>
-                    <p className="text-lg font-serif font-bold">{inputs.down_payment_percent}</p>
-                  </div>
+                  {/* Hide Down Payment for Cash offers */}
+                  {inputs.financing_type !== 'Cash' && (
+                    <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                      <p className="text-sm text-muted-foreground mb-1">Down Payment</p>
+                      <p className="text-lg font-serif font-bold">{inputs.down_payment_percent}</p>
+                    </div>
+                  )}
                   <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-1">Closing</p>
                     <p className="text-lg font-serif font-bold">{inputs.closing_timeline} days</p>
@@ -345,9 +362,26 @@ const BuyerReport = () => {
                 <div className="flex justify-center">
                   <div className="text-center p-8 rounded-xl border-2 border-accent/30 bg-accent/5 min-w-[200px] pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-3">Likelihood of Acceptance</p>
-                    <LikelihoodBadge band={acceptanceLikelihood} />
+                    <div className="flex items-center justify-center gap-1">
+                      <LikelihoodBadge band={acceptanceLikelihood} />
+                      {!isClientMode && <ConfidenceRange band={acceptanceLikelihood} />}
+                    </div>
+                    {/* Agent-only explanations */}
+                    {!isClientMode && (
+                      <div className="mt-4 text-left pdf-hide-agent-notes">
+                        <WhyThisResult 
+                          band={acceptanceLikelihood} 
+                          factors={getAcceptanceFactors(session, acceptanceLikelihood)} 
+                        />
+                        <WhatWouldChange suggestions={getImprovementSuggestions(session, acceptanceLikelihood)} />
+                      </div>
+                    )}
                   </div>
                 </div>
+                {/* Likelihood explainer footer */}
+                <p className="text-xs text-center text-muted-foreground mt-4">
+                  Likelihood reflects price, financing strength, contingencies, and market conditions.
+                </p>
               </CardContent>
             </Card>
 
@@ -436,38 +470,43 @@ const BuyerReport = () => {
           </div>
 
           {/* Actions - OUTSIDE report-export container */}
-          <div className="flex flex-wrap gap-4 pt-4 report-actions">
+          <div className="flex flex-wrap gap-3 pt-4 report-actions">
             <Link to="/buyer">
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" className="min-h-[44px]">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
               </Button>
             </Link>
-            <Button onClick={handleSave} disabled={saved} size="lg" variant={saved ? "secondary" : "accent"}>
+            <Button onClick={handleSave} disabled={saved} size="lg" variant={saved ? "secondary" : "accent"} className="min-h-[44px]">
               {saved ? (
                 <>
                   <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Session Saved
+                  Saved
                 </>
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  Save Session
+                  Save Draft
                 </>
               )}
             </Button>
-            <Button onClick={() => setTemplateDialogOpen(true)} size="lg" variant="outline">
+            <Button onClick={() => setTemplateDialogOpen(true)} size="lg" variant="outline" className="min-h-[44px]">
               <FileText className="mr-2 h-4 w-4" />
-              Save as Template
+              Template
             </Button>
-            <Button onClick={handleExportPdf} size="lg" variant="outline">
-              <FileDown className="mr-2 h-4 w-4" />
-              Export PDF
-            </Button>
-            <Button onClick={handleShareLink} size="lg" variant="outline">
-              <Share2 className="mr-2 h-4 w-4" />
-              Share Link
-            </Button>
+            {/* Share/Export only visible in Client mode */}
+            {isClientMode && (
+              <>
+                <Button onClick={handleExportPdf} size="lg" variant="outline" className="min-h-[44px]">
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Export PDF
+                </Button>
+                <Button onClick={handleShareLink} size="lg" variant="accent" className="min-h-[44px]">
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share
+                </Button>
+              </>
+            )}
           </div>
         </motion.div>
       </div>

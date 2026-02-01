@@ -1,7 +1,5 @@
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { useClientMode } from '@/contexts/ClientModeContext';
-import { Users, Briefcase } from 'lucide-react';
+import { Briefcase, Users } from 'lucide-react';
 
 interface ModeSwitcherProps {
   className?: string;
@@ -11,30 +9,44 @@ export function ModeSwitcher({ className }: ModeSwitcherProps) {
   const { mode, setMode, isClientMode } = useClientMode();
 
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      <div className="flex items-center gap-2">
-        <Briefcase className={`h-4 w-4 transition-colors ${!isClientMode ? 'text-primary' : 'text-muted-foreground'}`} />
-        <Label 
-          htmlFor="mode-switch" 
-          className={`text-sm cursor-pointer transition-colors ${!isClientMode ? 'text-foreground font-medium' : 'text-muted-foreground'}`}
-        >
-          Agent
-        </Label>
-      </div>
-      <Switch
-        id="mode-switch"
-        checked={isClientMode}
-        onCheckedChange={(checked) => setMode(checked ? 'client' : 'agent')}
-      />
-      <div className="flex items-center gap-2">
-        <Label 
-          htmlFor="mode-switch" 
-          className={`text-sm cursor-pointer transition-colors ${isClientMode ? 'text-foreground font-medium' : 'text-muted-foreground'}`}
-        >
-          Client
-        </Label>
-        <Users className={`h-4 w-4 transition-colors ${isClientMode ? 'text-accent' : 'text-muted-foreground'}`} />
-      </div>
+    <div className={`flex items-center ${className}`}>
+      {/* Agent Button */}
+      <button
+        type="button"
+        onClick={() => setMode('agent')}
+        aria-pressed={!isClientMode}
+        className={`
+          flex items-center gap-2 px-4 py-2.5 rounded-l-lg font-medium text-sm
+          transition-all duration-200 min-h-[44px] min-w-[100px] justify-center
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+          ${!isClientMode 
+            ? 'bg-primary-foreground text-primary shadow-sm' 
+            : 'bg-transparent text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10'
+          }
+        `}
+      >
+        <Briefcase className="h-4 w-4" />
+        <span>Agent</span>
+      </button>
+      
+      {/* Client Button */}
+      <button
+        type="button"
+        onClick={() => setMode('client')}
+        aria-pressed={isClientMode}
+        className={`
+          flex items-center gap-2 px-4 py-2.5 rounded-r-lg font-medium text-sm
+          transition-all duration-200 min-h-[44px] min-w-[100px] justify-center
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+          ${isClientMode 
+            ? 'bg-accent text-accent-foreground shadow-sm' 
+            : 'bg-transparent text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10'
+          }
+        `}
+      >
+        <Users className="h-4 w-4" />
+        <span>Client</span>
+      </button>
     </div>
   );
 }

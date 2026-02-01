@@ -319,22 +319,43 @@ body.is-exporting .client-mode .pdf-hide-agent-notes {
   }
 }
 
-/* B5: SavedSessions empty state - mobile button layout and safe area */
+/* B5: Mobile button layout and safe area */
 @media (max-width: 480px) {
-  .saved-sessions-empty-buttons {
+  .saved-sessions-empty-buttons,
+  .drafts-empty-buttons {
     flex-direction: column !important;
     width: 100%;
   }
   
-  .saved-sessions-empty-buttons > * {
+  .saved-sessions-empty-buttons > *,
+  .drafts-empty-buttons > * {
     width: 100%;
   }
   
-  .saved-sessions-empty-buttons a {
+  .saved-sessions-empty-buttons a,
+  .drafts-empty-buttons a {
     width: 100%;
   }
   
-  .saved-sessions-empty-buttons button {
+  .saved-sessions-empty-buttons button,
+  .drafts-empty-buttons button {
+    width: 100%;
+  }
+  
+  /* Ensure report actions wrap nicely on mobile */
+  .report-actions {
+    flex-direction: column;
+  }
+  
+  .report-actions > * {
+    width: 100%;
+  }
+  
+  .report-actions a {
+    width: 100%;
+  }
+  
+  .report-actions button {
     width: 100%;
   }
 }
