@@ -1,4 +1,4 @@
-import { Session, SellerReportData, BuyerReportData, LikelihoodBand, BuyerInputs, SellerInputs } from '@/types';
+import { Session, SellerReportData, BuyerReportData } from '@/types';
 
 export interface ComparisonOption {
   session: Session;
@@ -49,7 +49,7 @@ export function generateOptionLabel(session: Session, optionLetter: 'A' | 'B'): 
       return `Option ${optionLetter}: More Competitive`;
     }
     if (buyer_preference === 'Price-protective') {
-      return `Option ${optionLetter}: More Conservative`;
+      return `Option ${optionLetter}: Risk-Averse Offer`;
     }
     if (contingencies.length === 0 || contingencies.includes('None')) {
       return `Option ${optionLetter}: Streamlined Terms`;
@@ -63,8 +63,38 @@ export function generateOptionLabel(session: Session, optionLetter: 'A' | 'B'): 
   return `Option ${optionLetter}`;
 }
 
-// Helper description for conservative offer
-export const CONSERVATIVE_OFFER_DESCRIPTION = "This option prioritizes buyer safeguards through contingencies, which can reduce risk but may lower competitiveness.";
+// Strategy descriptions for each option type
+export function getStrategyDescription(session: Session): string {
+  if (session.session_type === 'Seller' && session.seller_inputs) {
+    const { strategy_preference } = session.seller_inputs;
+    if (strategy_preference === 'Prioritize speed') {
+      return 'Prioritizes a faster sale by accepting competitive offers quickly.';
+    }
+    if (strategy_preference === 'Maximize price') {
+      return 'Focuses on achieving the highest possible sale price, even if it takes longer.';
+    }
+    return 'Balances timing and price to find the right offer.';
+  }
+  
+  if (session.session_type === 'Buyer' && session.buyer_inputs) {
+    const { buyer_preference, contingencies } = session.buyer_inputs;
+    if (buyer_preference === 'Must win') {
+      return 'Prioritizes winning the home by presenting a strong, competitive offer.';
+    }
+    if (buyer_preference === 'Price-protective') {
+      return 'Focuses on price discipline and protecting against overpaying.';
+    }
+    if (contingencies.length >= 3) {
+      return 'Includes multiple safeguards to reduce buyer risk, which may affect competitiveness.';
+    }
+    if (contingencies.length === 0 || contingencies.includes('None')) {
+      return 'Minimizes contingencies to strengthen the offer in competitive situations.';
+    }
+    return 'Balances offer strength with reasonable protections.';
+  }
+  
+  return 'A balanced approach to the transaction.';
+}
 
 // Analyze characteristics from session and report data
 function analyzeCharacteristics(session: Session, report: SellerReportData | BuyerReportData): ComparisonOption['characteristics'] {
@@ -171,15 +201,9 @@ export function validateSessionForComparison(session: Session): string[] {
   return errors;
 }
 
-// Get description for option label (for conservative offer)
-function getOptionLabelDescription(session: Session): string | undefined {
-  if (session.session_type === 'Buyer' && session.buyer_inputs) {
-    const { contingencies } = session.buyer_inputs;
-    if (contingencies.length >= 3) {
-      return CONSERVATIVE_OFFER_DESCRIPTION;
-    }
-  }
-  return undefined;
+// Get strategy description for option label
+function getOptionStrategyDescription(session: Session): string {
+  return getStrategyDescription(session);
 }
 
 // Build comparison options from sessions and reports
@@ -194,7 +218,7 @@ export function buildComparisonOptions(
       session: sessionA,
       report: reportA,
       label: generateOptionLabel(sessionA, 'A'),
-      labelDescription: getOptionLabelDescription(sessionA),
+      labelDescription: getOptionStrategyDescription(sessionA),
       characteristics: analyzeCharacteristics(sessionA, reportA),
       validationErrors: validateSessionForComparison(sessionA),
     },
@@ -202,7 +226,7 @@ export function buildComparisonOptions(
       session: sessionB,
       report: reportB,
       label: generateOptionLabel(sessionB, 'B'),
-      labelDescription: getOptionLabelDescription(sessionB),
+      labelDescription: getOptionStrategyDescription(sessionB),
       characteristics: analyzeCharacteristics(sessionB, reportB),
       validationErrors: validateSessionForComparison(sessionB),
     },
@@ -286,6 +310,8 @@ export function generateFitGuidance(option: ComparisonOption): string[] {
   } else if (characteristics.timeline === 'More flexible') {
     fits.push('Value flexibility in timing');
     fits.push('Are comfortable with a longer process');
+  } else {
+    fits.push('Seek a balance between speed and flexibility');
   }
   
   if (characteristics.competitivePosture === 'Aggressive') {
@@ -293,14 +319,19 @@ export function generateFitGuidance(option: ComparisonOption): string[] {
   } else if (characteristics.competitivePosture === 'Conservative') {
     fits.push('Value price discipline');
     fits.push('Are comfortable with potential trade-offs');
+  } else {
+    fits.push('Want a balanced approach to pricing');
   }
   
   if (characteristics.certainty === 'Higher') {
     fits.push('Prefer more predictable outcomes');
+  } else if (characteristics.certainty === 'Lower') {
+    fits.push('Can accept some uncertainty for potential gain');
   }
   
-  // Return at most 3 unique fits
-  return [...new Set(fits)].slice(0, 3);
+  // Return at most 3 unique fits, with fallback if somehow empty
+  const uniqueFits = [...new Set(fits)].slice(0, 3);
+  return uniqueFits.length > 0 ? uniqueFits : ['Have discussed priorities with their agent'];
 }
 
 // Get client notes from session (excluding agent notes)

@@ -68,17 +68,21 @@ function OptionFitCard({ option }: { option: ComparisonOption }) {
         {option.labelDescription && (
           <p className="text-xs text-muted-foreground mt-1">{option.labelDescription}</p>
         )}
-        <p className="text-sm text-muted-foreground">Tends to fit clients who:</p>
+        <p className="text-sm text-muted-foreground mt-2">Tends to fit clients who:</p>
       </CardHeader>
       <CardContent>
-        <ul className="space-y-2">
-          {fits.map((fit, index) => (
-            <li key={index} className="flex items-start gap-2 text-sm">
-              <Users className="h-4 w-4 text-accent mt-0.5 shrink-0" />
-              <span>{fit}</span>
-            </li>
-          ))}
-        </ul>
+        {fits.length > 0 ? (
+          <ul className="space-y-2">
+            {fits.map((fit, index) => (
+              <li key={index} className="flex items-start gap-2 text-sm">
+                <Users className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+                <span>{fit}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground italic">Have discussed priorities with their agent</p>
+        )}
       </CardContent>
     </Card>
   );
@@ -176,8 +180,10 @@ const SharedComparisonReport = () => {
 
   const clientNotesA = getClientNotes(sessionA);
   const clientNotesB = getClientNotes(sessionB);
-  const hasNotes = clientNotesA || clientNotesB;
   const snapshotTimestamp = new Date().toLocaleString();
+  
+  // For client-facing "Prepared for" header, use first non-empty client name
+  const preparedForName = sessionA.client_name?.trim() || sessionB.client_name?.trim() || 'Client';
 
   return (
     <div className="min-h-screen bg-background">
@@ -209,7 +215,7 @@ const SharedComparisonReport = () => {
         >
           {/* Header */}
           <ReportHeader
-            clientName={sessionA.client_name || sessionB.client_name || 'Client'}
+            clientName={preparedForName}
             snapshotTimestamp={snapshotTimestamp}
             reportType="Comparison"
           />
@@ -227,16 +233,15 @@ const SharedComparisonReport = () => {
             </CardContent>
           </Card>
 
-          {/* Option Labels */}
+          {/* Option Labels - No client names inside cards */}
           <div className="grid grid-cols-2 gap-4">
             <Card className="border-primary/20">
               <CardContent className="p-4 text-center">
                 <Scale className="h-6 w-6 mx-auto mb-2 text-primary" />
                 <h3 className="font-serif font-semibold">{optionA.label}</h3>
                 {optionA.labelDescription && (
-                  <p className="text-xs text-muted-foreground mt-1 italic">{optionA.labelDescription}</p>
+                  <p className="text-xs text-muted-foreground mt-2">{optionA.labelDescription}</p>
                 )}
-                <p className="text-xs text-muted-foreground mt-1">{displayValue(sessionA.client_name)}</p>
               </CardContent>
             </Card>
             <Card className="border-primary/20">
@@ -244,9 +249,8 @@ const SharedComparisonReport = () => {
                 <Scale className="h-6 w-6 mx-auto mb-2 text-primary" />
                 <h3 className="font-serif font-semibold">{optionB.label}</h3>
                 {optionB.labelDescription && (
-                  <p className="text-xs text-muted-foreground mt-1 italic">{optionB.labelDescription}</p>
+                  <p className="text-xs text-muted-foreground mt-2">{optionB.labelDescription}</p>
                 )}
-                <p className="text-xs text-muted-foreground mt-1">{displayValue(sessionB.client_name)}</p>
               </CardContent>
             </Card>
           </div>
@@ -291,28 +295,37 @@ const SharedComparisonReport = () => {
             </div>
           </div>
 
-          {/* Notes (if any) */}
-          {hasNotes && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Notes discussed with your agent</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {clientNotesA && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">{optionA.label}</p>
+          {/* Notes - Always show with placeholder if empty */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Notes discussed with your agent</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">{optionA.label}</p>
+                  {clientNotesA ? (
                     <p className="text-sm">{clientNotesA}</p>
-                  </div>
-                )}
-                {clientNotesB && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">{optionB.label}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">No notes were added for this option.</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">{optionB.label}</p>
+                  {clientNotesB ? (
                     <p className="text-sm">{clientNotesB}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">No notes were added for this option.</p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Likelihood Explainer */}
+          <p className="text-xs text-muted-foreground text-center">
+            Likelihood reflects price, financing strength, contingencies, and market conditions.
+          </p>
 
           {/* Difference Legend */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
