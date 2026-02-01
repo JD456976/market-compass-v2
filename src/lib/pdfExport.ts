@@ -25,13 +25,36 @@ export async function exportReportToPdf(
     ? new Date(options.snapshotTimestamp).toLocaleString()
     : new Date().toLocaleString();
 
+  // Add PDF export class for stable styling
+  element.classList.add('pdf-export');
+  
+  // Wait for styles to apply
+  await new Promise(resolve => setTimeout(resolve, 100));
+
+  // Get the computed width of the element
+  const elementWidth = element.offsetWidth;
+
   // Capture the element as a high-quality canvas
   const canvas = await html2canvas(element, {
-    scale: 2,
+    scale: Math.max(3, window.devicePixelRatio),
     useCORS: true,
     logging: false,
     backgroundColor: '#FFFFFF',
+    windowWidth: elementWidth,
+    onclone: (clonedDoc) => {
+      const clonedElement = clonedDoc.getElementById(elementId);
+      if (clonedElement) {
+        clonedElement.style.width = '794px';
+        clonedElement.style.maxWidth = '794px';
+        clonedElement.style.margin = '0 auto';
+        clonedElement.style.padding = '24px';
+        clonedElement.style.background = '#ffffff';
+      }
+    }
   });
+
+  // Remove PDF export class
+  element.classList.remove('pdf-export');
 
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pageWidth = 210;
@@ -59,9 +82,16 @@ export async function exportReportToPdf(
   // Prepared for/by lines
   pdf.setFontSize(10);
   pdf.setTextColor(60, 60, 60);
-  pdf.text(`Prepared for: ${clientDisplay}`, margin, currentY);
+  
+  // Prepared for with bold client name
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('Prepared for: ', margin, currentY);
+  const preparedForWidth = pdf.getTextWidth('Prepared for: ');
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(clientDisplay, margin + preparedForWidth, currentY);
   currentY += 5;
   
+  pdf.setFont('helvetica', 'normal');
   pdf.text(`Prepared by: ${agentProfile.agent_name}, ${agentProfile.brokerage_name}`, margin, currentY);
   currentY += 5;
   
@@ -112,7 +142,7 @@ export async function exportReportToPdf(
     // Create a slice of the canvas
     const sliceCanvas = document.createElement('canvas');
     sliceCanvas.width = canvas.width;
-    sliceCanvas.height = sliceHeightPx;
+    sliceCanvas.height = Math.ceil(sliceHeightPx);
     const ctx = sliceCanvas.getContext('2d');
 
     if (ctx) {
@@ -121,12 +151,13 @@ export async function exportReportToPdf(
       ctx.drawImage(
         canvas,
         0, sourceY,
-        canvas.width, sliceHeightPx,
+        canvas.width, Math.ceil(sliceHeightPx),
         0, 0,
-        canvas.width, sliceHeightPx
+        canvas.width, Math.ceil(sliceHeightPx)
       );
 
-      const sliceData = sliceCanvas.toDataURL('image/png');
+      // Use PNG for sharper text (no JPEG compression artifacts)
+      const sliceData = sliceCanvas.toDataURL('image/png', 1.0);
       pdf.addImage(sliceData, 'PNG', margin, currentY, imgWidth, sliceHeight);
     }
 

@@ -10,6 +10,7 @@ import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport } from '@/lib/scoring';
 import { useToast } from '@/hooks/use-toast';
 import { exportReportToPdf } from '@/lib/pdfExport';
+import { ReportHeader } from '@/components/ReportHeader';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -149,8 +150,15 @@ const SellerReport = () => {
           className="space-y-6"
           id="report-export"
         >
+          {/* Prepared For/By Header Block */}
+          <ReportHeader
+            reportType="Seller"
+            clientName={session.client_name}
+            snapshotTimestamp={snapshotTimestamp}
+          />
+
           {/* Property Overview */}
-          <Card>
+          <Card className="pdf-avoid-break">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Target className="h-5 w-5 text-accent" />
@@ -186,7 +194,7 @@ const SellerReport = () => {
           </Card>
 
           {/* Inputs Chosen */}
-          <Card>
+          <Card className="pdf-avoid-break">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <TrendingUp className="h-5 w-5 text-accent" />
@@ -218,7 +226,7 @@ const SellerReport = () => {
           </Card>
 
           {/* Market Snapshot */}
-          <Card className="overflow-hidden">
+          <Card className="pdf-avoid-break overflow-hidden">
             <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -249,7 +257,7 @@ const SellerReport = () => {
           </Card>
 
           {/* Tradeoff Summary */}
-          <Card>
+          <Card className="pdf-avoid-break">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg">Tradeoff Summary</CardTitle>
             </CardHeader>
@@ -281,7 +289,7 @@ const SellerReport = () => {
           </Card>
 
           {/* Important Notice */}
-          <div className="flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
+          <div className="pdf-avoid-break flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
             <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
             <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
           </div>
