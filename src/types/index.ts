@@ -30,7 +30,9 @@ export interface SellerInputs {
   seller_selected_list_price: number;
   desired_timeframe: DesiredTimeframe;
   strategy_preference: StrategyPreference;
-  notes?: string;
+  notes?: string; // Legacy field - maps to client_notes
+  agent_notes?: string;
+  client_notes?: string;
 }
 
 export interface BuyerInputs {
@@ -40,7 +42,9 @@ export interface BuyerInputs {
   contingencies: Contingency[];
   closing_timeline: ClosingTimeline;
   buyer_preference: BuyerPreference;
-  notes?: string;
+  notes?: string; // Legacy field - maps to client_notes
+  agent_notes?: string;
+  client_notes?: string;
 }
 
 export interface Session {
