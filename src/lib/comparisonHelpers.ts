@@ -1,15 +1,17 @@
-import { Session, SellerReportData, BuyerReportData, LikelihoodBand } from '@/types';
+import { Session, SellerReportData, BuyerReportData, LikelihoodBand, BuyerInputs, SellerInputs } from '@/types';
 
 export interface ComparisonOption {
   session: Session;
   report: SellerReportData | BuyerReportData;
   label: string; // e.g., "Option A: Faster Timeline"
+  labelDescription?: string; // Helper description for certain labels
   characteristics: {
     timeline: 'Faster' | 'More flexible' | 'Standard';
     certainty: 'Higher' | 'Moderate' | 'Lower';
     competitivePosture: 'Aggressive' | 'Balanced' | 'Conservative';
     primaryRisk: string;
   };
+  validationErrors?: string[]; // Missing required fields
 }
 
 export interface ComparisonTableRow {
@@ -53,13 +55,16 @@ export function generateOptionLabel(session: Session, optionLetter: 'A' | 'B'): 
       return `Option ${optionLetter}: Streamlined Terms`;
     }
     if (contingencies.length >= 3) {
-      return `Option ${optionLetter}: Full Protection`;
+      return `Option ${optionLetter}: Conservative Offer`;
     }
     return `Option ${optionLetter}: Balanced Offer`;
   }
   
   return `Option ${optionLetter}`;
 }
+
+// Helper description for conservative offer
+export const CONSERVATIVE_OFFER_DESCRIPTION = "This option prioritizes buyer safeguards through contingencies, which can reduce risk but may lower competitiveness.";
 
 // Analyze characteristics from session and report data
 function analyzeCharacteristics(session: Session, report: SellerReportData | BuyerReportData): ComparisonOption['characteristics'] {
@@ -142,6 +147,41 @@ function analyzeCharacteristics(session: Session, report: SellerReportData | Buy
   };
 }
 
+// Validate session has required fields for comparison
+export function validateSessionForComparison(session: Session): string[] {
+  const errors: string[] = [];
+  
+  if (!session.client_name?.trim()) errors.push('Client name');
+  if (!session.location?.trim()) errors.push('Location');
+  
+  if (session.session_type === 'Buyer' && session.buyer_inputs) {
+    const inputs = session.buyer_inputs;
+    if (!inputs.offer_price || inputs.offer_price <= 0) errors.push('Offer price');
+    if (!inputs.financing_type) errors.push('Financing type');
+    if (inputs.financing_type !== 'Cash' && !inputs.down_payment_percent) errors.push('Down payment');
+    if (!inputs.contingencies || inputs.contingencies.length === 0) errors.push('Contingencies');
+    if (!inputs.closing_timeline) errors.push('Closing timeline');
+  }
+  
+  if (session.session_type === 'Seller' && session.seller_inputs) {
+    const inputs = session.seller_inputs;
+    if (!inputs.seller_selected_list_price || inputs.seller_selected_list_price <= 0) errors.push('List price');
+  }
+  
+  return errors;
+}
+
+// Get description for option label (for conservative offer)
+function getOptionLabelDescription(session: Session): string | undefined {
+  if (session.session_type === 'Buyer' && session.buyer_inputs) {
+    const { contingencies } = session.buyer_inputs;
+    if (contingencies.length >= 3) {
+      return CONSERVATIVE_OFFER_DESCRIPTION;
+    }
+  }
+  return undefined;
+}
+
 // Build comparison options from sessions and reports
 export function buildComparisonOptions(
   sessionA: Session,
@@ -154,13 +194,17 @@ export function buildComparisonOptions(
       session: sessionA,
       report: reportA,
       label: generateOptionLabel(sessionA, 'A'),
+      labelDescription: getOptionLabelDescription(sessionA),
       characteristics: analyzeCharacteristics(sessionA, reportA),
+      validationErrors: validateSessionForComparison(sessionA),
     },
     optionB: {
       session: sessionB,
       report: reportB,
       label: generateOptionLabel(sessionB, 'B'),
+      labelDescription: getOptionLabelDescription(sessionB),
       characteristics: analyzeCharacteristics(sessionB, reportB),
+      validationErrors: validateSessionForComparison(sessionB),
     },
   };
 }

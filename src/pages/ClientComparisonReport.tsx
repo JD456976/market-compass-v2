@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, FileDown, Share2, Clock, Shield, Scale, Target, TrendingUp, Info, Users } from 'lucide-react';
+import { ArrowLeft, FileDown, Share2, Clock, Shield, Scale, Target, TrendingUp, Info, Users, AlertCircle } from 'lucide-react';
 import { Session, SellerReportData, BuyerReportData } from '@/types';
 import { getSessionById, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
@@ -31,12 +31,22 @@ const iconMap = {
   trending: TrendingUp,
 };
 
+// Display "Not specified" for missing values
+function displayValue(value: string | undefined | null): string {
+  if (!value || value.trim() === '') return 'Not specified';
+  return value;
+}
+
 function ComparisonTableRowComponent({ row, optionALabel, optionBLabel }: { 
   row: ComparisonTableRow; 
   optionALabel: string;
   optionBLabel: string;
 }) {
   const Icon = iconMap[row.icon];
+  const optionADisplay = displayValue(row.optionA);
+  const optionBDisplay = displayValue(row.optionB);
+  const isAMissing = optionADisplay === 'Not specified';
+  const isBMissing = optionBDisplay === 'Not specified';
   
   return (
     <div className={`grid grid-cols-3 gap-4 py-4 border-b border-border/30 last:border-0 ${row.isDifferent ? 'bg-accent/5' : ''}`}>
@@ -44,8 +54,12 @@ function ComparisonTableRowComponent({ row, optionALabel, optionBLabel }: {
         <Icon className="h-4 w-4 text-accent shrink-0" />
         <span>{row.category}</span>
       </div>
-      <div className="text-sm font-medium text-center">{row.optionA}</div>
-      <div className="text-sm font-medium text-center">{row.optionB}</div>
+      <div className={`text-sm font-medium text-center ${isAMissing ? 'text-muted-foreground italic' : ''}`}>
+        {optionADisplay}
+      </div>
+      <div className={`text-sm font-medium text-center ${isBMissing ? 'text-muted-foreground italic' : ''}`}>
+        {optionBDisplay}
+      </div>
     </div>
   );
 }
@@ -57,6 +71,9 @@ function OptionFitCard({ option }: { option: ComparisonOption }) {
     <Card className="border-border/50">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-medium">{option.label}</CardTitle>
+        {option.labelDescription && (
+          <p className="text-xs text-muted-foreground mt-1">{option.labelDescription}</p>
+        )}
         <p className="text-sm text-muted-foreground">Tends to fit clients who:</p>
       </CardHeader>
       <CardContent>
@@ -144,8 +161,20 @@ const ClientComparisonReport = () => {
     setNarrative(generateTradeoffNarrative(builtA, builtB));
   }, [sessionIdA, sessionIdB, navigate]);
 
+  // Check for validation errors
+  const hasValidationErrors = optionA?.validationErrors?.length || optionB?.validationErrors?.length;
+
   const handleExportPdf = async () => {
     if (!sessionA || !sessionB || !optionA || !optionB) return;
+    
+    if (hasValidationErrors) {
+      toast({
+        title: "Cannot export",
+        description: "Please complete all required fields before exporting.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const clientName = sessionA.client_name || sessionB.client_name || 'Client';
     await exportComparisonToPdf('comparison-report-content', {
@@ -157,6 +186,15 @@ const ClientComparisonReport = () => {
 
   const handleShare = () => {
     if (!sessionIdA || !sessionIdB) return;
+    
+    if (hasValidationErrors) {
+      toast({
+        title: "Cannot share",
+        description: "Please complete all required fields before sharing.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const shareUrl = `${window.location.origin}/share/compare?a=${sessionIdA}&b=${sessionIdB}`;
     navigator.clipboard.writeText(shareUrl);
@@ -226,6 +264,35 @@ const ClientComparisonReport = () => {
               />
             </div>
 
+            {/* Validation Warning */}
+            {hasValidationErrors && (
+              <div className="pdf-section">
+                <Card className="border-destructive/30 bg-destructive/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+                      <div>
+                        <h3 className="font-semibold text-sm mb-1">Missing Information</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Some fields are incomplete. Please update the sessions before sharing or exporting.
+                        </p>
+                        {optionA.validationErrors && optionA.validationErrors.length > 0 && (
+                          <p className="text-xs text-destructive mt-2">
+                            {optionA.label}: {optionA.validationErrors.join(', ')}
+                          </p>
+                        )}
+                        {optionB.validationErrors && optionB.validationErrors.length > 0 && (
+                          <p className="text-xs text-destructive mt-1">
+                            {optionB.label}: {optionB.validationErrors.join(', ')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
             {/* PDF Section: Framing Block */}
             <div className="pdf-section">
               <Card className="border-accent/30 bg-accent/5">
@@ -248,14 +315,20 @@ const ClientComparisonReport = () => {
                   <CardContent className="p-4 text-center">
                     <Scale className="h-6 w-6 mx-auto mb-2 text-primary" />
                     <h3 className="font-serif font-semibold">{optionA.label}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">{sessionA.client_name}</p>
+                    {optionA.labelDescription && (
+                      <p className="text-xs text-muted-foreground mt-1 italic">{optionA.labelDescription}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">{displayValue(sessionA.client_name)}</p>
                   </CardContent>
                 </Card>
                 <Card className="border-primary/20">
                   <CardContent className="p-4 text-center">
                     <Scale className="h-6 w-6 mx-auto mb-2 text-primary" />
                     <h3 className="font-serif font-semibold">{optionB.label}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">{sessionB.client_name}</p>
+                    {optionB.labelDescription && (
+                      <p className="text-xs text-muted-foreground mt-1 italic">{optionB.labelDescription}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">{displayValue(sessionB.client_name)}</p>
                   </CardContent>
                 </Card>
               </div>
@@ -315,7 +388,7 @@ const ClientComparisonReport = () => {
               <div className="pdf-section">
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Notes</CardTitle>
+                    <CardTitle className="text-lg">Notes discussed with your agent</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {clientNotesA && (

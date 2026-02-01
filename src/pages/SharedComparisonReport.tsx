@@ -29,8 +29,18 @@ const iconMap = {
   trending: TrendingUp,
 };
 
+// Display "Not specified" for missing values
+function displayValue(value: string | undefined | null): string {
+  if (!value || value.trim() === '') return 'Not specified';
+  return value;
+}
+
 function ComparisonTableRowComponent({ row }: { row: ComparisonTableRow }) {
   const Icon = iconMap[row.icon];
+  const optionADisplay = displayValue(row.optionA);
+  const optionBDisplay = displayValue(row.optionB);
+  const isAMissing = optionADisplay === 'Not specified';
+  const isBMissing = optionBDisplay === 'Not specified';
   
   return (
     <div className={`grid grid-cols-3 gap-4 py-4 border-b border-border/30 last:border-0 ${row.isDifferent ? 'bg-accent/5' : ''}`}>
@@ -38,8 +48,12 @@ function ComparisonTableRowComponent({ row }: { row: ComparisonTableRow }) {
         <Icon className="h-4 w-4 text-accent shrink-0" />
         <span>{row.category}</span>
       </div>
-      <div className="text-sm font-medium text-center">{row.optionA}</div>
-      <div className="text-sm font-medium text-center">{row.optionB}</div>
+      <div className={`text-sm font-medium text-center ${isAMissing ? 'text-muted-foreground italic' : ''}`}>
+        {optionADisplay}
+      </div>
+      <div className={`text-sm font-medium text-center ${isBMissing ? 'text-muted-foreground italic' : ''}`}>
+        {optionBDisplay}
+      </div>
     </div>
   );
 }
@@ -51,6 +65,9 @@ function OptionFitCard({ option }: { option: ComparisonOption }) {
     <Card className="border-border/50">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-medium">{option.label}</CardTitle>
+        {option.labelDescription && (
+          <p className="text-xs text-muted-foreground mt-1">{option.labelDescription}</p>
+        )}
         <p className="text-sm text-muted-foreground">Tends to fit clients who:</p>
       </CardHeader>
       <CardContent>
@@ -216,14 +233,20 @@ const SharedComparisonReport = () => {
               <CardContent className="p-4 text-center">
                 <Scale className="h-6 w-6 mx-auto mb-2 text-primary" />
                 <h3 className="font-serif font-semibold">{optionA.label}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{sessionA.client_name}</p>
+                {optionA.labelDescription && (
+                  <p className="text-xs text-muted-foreground mt-1 italic">{optionA.labelDescription}</p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">{displayValue(sessionA.client_name)}</p>
               </CardContent>
             </Card>
             <Card className="border-primary/20">
               <CardContent className="p-4 text-center">
                 <Scale className="h-6 w-6 mx-auto mb-2 text-primary" />
                 <h3 className="font-serif font-semibold">{optionB.label}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{sessionB.client_name}</p>
+                {optionB.labelDescription && (
+                  <p className="text-xs text-muted-foreground mt-1 italic">{optionB.labelDescription}</p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">{displayValue(sessionB.client_name)}</p>
               </CardContent>
             </Card>
           </div>
@@ -272,7 +295,7 @@ const SharedComparisonReport = () => {
           {hasNotes && (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Notes</CardTitle>
+                <CardTitle className="text-lg">Notes discussed with your agent</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {clientNotesA && (
