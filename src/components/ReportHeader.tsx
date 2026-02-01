@@ -1,7 +1,7 @@
 import { loadAgentProfile } from '@/lib/agentProfile';
 
 interface ReportHeaderProps {
-  reportType: 'Seller' | 'Buyer';
+  reportType: 'Seller' | 'Buyer' | 'Comparison';
   clientName: string;
   snapshotTimestamp: string;
   showTimestamp?: boolean;

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, GitCompare, Building2, Users, Target, TrendingUp, Clock, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, GitCompare, Building2, Users, Target, TrendingUp, Clock, ShieldAlert, AlertTriangle, FileText, Eye } from 'lucide-react';
 import { Session, LikelihoodBand, SellerReportData, BuyerReportData } from '@/types';
 import { getSessionById, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
@@ -103,6 +103,17 @@ const CompareSessions = () => {
   const formatCurrency = (value: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
 
+  // Get agent notes from session
+  const getAgentNotes = (session: Session): string | undefined => {
+    if (session.session_type === 'Seller' && session.seller_inputs) {
+      return session.seller_inputs.agent_notes;
+    }
+    if (session.session_type === 'Buyer' && session.buyer_inputs) {
+      return session.buyer_inputs.agent_notes;
+    }
+    return undefined;
+  };
+
   if (!sessionA || !sessionB || !reportA || !reportB) {
     return null;
   }
@@ -117,21 +128,29 @@ const CompareSessions = () => {
       {/* Header */}
       <div className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link to="/saved-sessions">
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <GitCompare className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-serif font-bold">Compare Sessions</h1>
-                <p className="text-sm text-muted-foreground">Side-by-side analysis</p>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              <Link to="/saved-sessions">
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <GitCompare className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-serif font-bold">Compare Sessions</h1>
+                  <p className="text-sm text-muted-foreground">Side-by-side analysis (Agent View)</p>
+                </div>
               </div>
             </div>
+            <Link to={`/compare/client?a=${sessionIdA}&b=${sessionIdB}`}>
+              <Button variant="default" size="sm">
+                <FileText className="h-4 w-4 mr-2" />
+                Create Client Comparison
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
@@ -327,6 +346,32 @@ const CompareSessions = () => {
                   valueA={<RiskBadge band={reportA.riskOfOverpaying} />}
                   valueB={<RiskBadge band={reportB.riskOfOverpaying} />}
                 />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Agent Notes (Agent Compare only) */}
+          {(getAgentNotes(sessionA) || getAgentNotes(sessionB)) && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Eye className="h-5 w-5 text-accent" />
+                  Agent Notes (Internal Only)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {getAgentNotes(sessionA) && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">{sessionA.client_name}</p>
+                    <p className="text-sm">{getAgentNotes(sessionA)}</p>
+                  </div>
+                )}
+                {getAgentNotes(sessionB) && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">{sessionB.client_name}</p>
+                    <p className="text-sm">{getAgentNotes(sessionB)}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
