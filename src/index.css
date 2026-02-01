@@ -187,45 +187,53 @@
   -webkit-font-smoothing: antialiased !important;
   text-rendering: geometricPrecision !important;
   line-height: 1.35 !important;
-  box-sizing: border-box !important;
 }
 
 .pdf-export * {
-  transform: none !important;
-  filter: none !important;
-  transition: none !important;
   box-sizing: border-box !important;
+  transform: none !important;
+  transition: none !important;
 }
 
-/* Remove heavy shadows for cleaner export and smaller file size */
-.pdf-export .card-elevated,
-.pdf-export [class*="shadow"],
+.pdf-export .card,
 .pdf-export [class*="Card"] {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Ensure stat tiles have consistent alignment */
-.pdf-export .rounded-xl {
-  box-shadow: none !important;
-}
-
-/* Normalize text alignment in cells */
-.pdf-export .text-center {
-  text-align: center !important;
-}
-
-.pdf-export .font-serif {
-  line-height: 1.2 !important;
-}
-
-/* Hide the on-screen header during export since PDF has its own header */
-.pdf-export > .pdf-avoid-break:first-child {
+/* Hide header section in PDF export since jsPDF renders its own header */
+.pdf-export .pdf-header-section {
   display: none !important;
+}
+
+/* Stat tiles alignment stabilization */
+.pdf-export .pdf-stat-tile {
+  display: block !important;
+  text-align: center !important;
+  padding: 16px !important;
+}
+
+.pdf-export .pdf-stat-tile p {
+  margin: 0 !important;
+  text-align: center !important;
 }
 
 .pdf-avoid-break {
   break-inside: avoid !important;
   page-break-inside: avoid !important;
+}
+
+.pdf-section {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
+/* is-exporting body class for extra safety */
+body.is-exporting .report-actions {
+  display: none !important;
+}
+
+body.is-exporting #report-export button {
+  display: none !important;
 }
 
 /* Hide action buttons during export (safety net) */

@@ -25,48 +25,52 @@ export async function exportReportToPdf(
     ? new Date(options.snapshotTimestamp).toLocaleString()
     : new Date().toLocaleString();
 
-  // Add PDF export class for stable styling
+  // Add is-exporting class to body for CSS overrides
+  document.body.classList.add('is-exporting');
   element.classList.add('pdf-export');
   
   // Wait for styles to apply
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise(resolve => setTimeout(resolve, 150));
 
-  // Get the computed width of the element
-  const elementWidth = element.offsetWidth;
-
-  // Capture the element as canvas with optimized settings for file size
-  const canvas = await html2canvas(element, {
-    scale: 2, // Reduced from 3 for smaller file size while maintaining readability
-    useCORS: true,
-    logging: false,
-    backgroundColor: '#FFFFFF',
-    windowWidth: elementWidth,
-    onclone: (clonedDoc) => {
-      const clonedElement = clonedDoc.getElementById(elementId);
-      if (clonedElement) {
-        clonedElement.style.width = '794px';
-        clonedElement.style.maxWidth = '794px';
-        clonedElement.style.margin = '0 auto';
-        clonedElement.style.padding = '24px';
-        clonedElement.style.background = '#ffffff';
-      }
-    }
-  });
-
-  // Remove PDF export class
-  element.classList.remove('pdf-export');
-
+  // Get all pdf-section elements
+  const sections = element.querySelectorAll('.pdf-section');
+  
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pageWidth = 210;
   const pageHeight = 297;
   const margin = 12.7; // ~0.5 inch margin
   const contentWidth = pageWidth - margin * 2;
   
-  // Calculate header height
-  const headerStartY = margin;
-  let currentY = headerStartY;
+  // Calculate header height for page 1
+  const headerHeight = 45; // Approximate height for header block
+  const footerHeight = 18;
+  const availableHeightPage1 = pageHeight - margin - headerHeight - footerHeight;
+  const availableHeightOther = pageHeight - margin - footerHeight - 5;
 
-  // PDF Header
+  // Render all sections to canvas
+  const sectionCanvases: HTMLCanvasElement[] = [];
+  
+  for (const section of Array.from(sections)) {
+    const canvas = await html2canvas(section as HTMLElement, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#FFFFFF',
+      windowWidth: 794,
+    });
+    sectionCanvases.push(canvas);
+  }
+
+  // Remove export classes
+  document.body.classList.remove('is-exporting');
+  element.classList.remove('pdf-export');
+
+  // Add header to page 1
+  let currentY = margin;
+  let currentPage = 1;
+  const pageContents: { page: number; y: number }[] = [];
+
+  // PDF Header on page 1
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(30, 30, 30);
@@ -83,7 +87,6 @@ export async function exportReportToPdf(
   pdf.setFontSize(10);
   pdf.setTextColor(60, 60, 60);
   
-  // Prepared for with bold client name
   pdf.setFont('helvetica', 'normal');
   pdf.text('Prepared for: ', margin, currentY);
   const preparedForWidth = pdf.getTextWidth('Prepared for: ');
@@ -95,7 +98,6 @@ export async function exportReportToPdf(
   pdf.text(`Prepared by: ${agentProfile.agent_name}, ${agentProfile.brokerage_name}`, margin, currentY);
   currentY += 5;
   
-  // Contact line
   let contactLine = `Contact: ${agentProfile.phone} • ${agentProfile.email}`;
   if (agentProfile.website) {
     contactLine += ` • ${agentProfile.website}`;
@@ -103,7 +105,6 @@ export async function exportReportToPdf(
   pdf.text(contactLine, margin, currentY);
   currentY += 5;
   
-  // License line (if present)
   if (agentProfile.license) {
     pdf.text(`License: ${agentProfile.license}`, margin, currentY);
     currentY += 5;
@@ -115,55 +116,35 @@ export async function exportReportToPdf(
   pdf.line(margin, currentY, pageWidth - margin, currentY);
   currentY += 8;
 
-  const headerHeight = currentY - headerStartY;
-  const footerHeight = 20;
-  const availableHeight = pageHeight - headerHeight - footerHeight - margin;
+  // Track pages for numbering
+  let totalPages = 1;
 
-  // Scale image to fit content width
-  const imgWidth = contentWidth;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-  // Calculate total pages needed
-  const totalPages = Math.ceil(imgHeight / availableHeight);
-
-  // Add image content with multi-page support using JPEG compression
-  const pixelsPerMm = canvas.width / imgWidth;
-  let sourceY = 0;
-
-  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-    if (pageNum > 1) {
+  // Add each section, checking page space
+  for (let i = 0; i < sectionCanvases.length; i++) {
+    const canvas = sectionCanvases[i];
+    const imgWidth = contentWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    
+    const availableHeight = currentPage === 1 ? availableHeightPage1 - (currentY - margin - headerHeight) : availableHeightOther - (currentY - margin);
+    
+    // Check if section fits on current page
+    if (imgHeight > availableHeight && currentY > margin + (currentPage === 1 ? headerHeight : 5)) {
+      // Add new page
+      currentPage++;
+      totalPages++;
       pdf.addPage();
       currentY = margin + 5;
     }
+    
+    // Add section image using JPEG compression
+    const imgData = canvas.toDataURL('image/jpeg', 0.75);
+    pdf.addImage(imgData, 'JPEG', margin, currentY, imgWidth, imgHeight, undefined, 'FAST');
+    currentY += imgHeight + 4; // 4mm gap between sections
+  }
 
-    const sliceHeight = Math.min(availableHeight, imgHeight - (pageNum - 1) * availableHeight);
-    const sliceHeightPx = sliceHeight * pixelsPerMm;
-
-    // Create a slice of the canvas
-    const sliceCanvas = document.createElement('canvas');
-    sliceCanvas.width = canvas.width;
-    sliceCanvas.height = Math.ceil(sliceHeightPx);
-    const ctx = sliceCanvas.getContext('2d');
-
-    if (ctx) {
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
-      ctx.drawImage(
-        canvas,
-        0, sourceY,
-        canvas.width, Math.ceil(sliceHeightPx),
-        0, 0,
-        canvas.width, Math.ceil(sliceHeightPx)
-      );
-
-      // Use JPEG with compression for smaller file size
-      const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.75);
-      pdf.addImage(sliceData, 'JPEG', margin, currentY, imgWidth, sliceHeight, undefined, 'FAST');
-    }
-
-    sourceY += sliceHeightPx;
-
-    // Add footer to each page
+  // Add footers to all pages
+  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+    pdf.setPage(pageNum);
     const footerY = pageHeight - margin;
     
     // Page number
@@ -171,7 +152,7 @@ export async function exportReportToPdf(
     pdf.setTextColor(100, 100, 100);
     pdf.text(`Page ${pageNum} of ${totalPages}`, pageWidth / 2, footerY - 10, { align: 'center' });
     
-    // Disclaimer (smaller text)
+    // Disclaimer
     pdf.setFontSize(6);
     pdf.setTextColor(130, 130, 130);
     const disclaimerLines = pdf.splitTextToSize(IMPORTANT_NOTICE, contentWidth);

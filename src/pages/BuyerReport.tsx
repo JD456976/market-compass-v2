@@ -161,15 +161,18 @@ const BuyerReport = () => {
         >
           {/* Report content for PDF export */}
           <div id="report-export" className="space-y-6">
-            {/* Prepared For/By Header Block */}
-            <ReportHeader
-              reportType="Buyer"
-              clientName={session.client_name}
-              snapshotTimestamp={snapshotTimestamp}
-            />
+            {/* Prepared For/By Header Block - hidden in PDF (rendered by jsPDF) */}
+            <div className="pdf-section pdf-header-section">
+              <ReportHeader
+                reportType="Buyer"
+                clientName={session.client_name}
+                snapshotTimestamp={snapshotTimestamp}
+                showTimestamp={false}
+              />
+            </div>
 
             {/* Offer Overview */}
-            <Card className="pdf-avoid-break">
+            <Card className="pdf-section pdf-avoid-break">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Target className="h-5 w-5 text-accent" />
@@ -205,7 +208,7 @@ const BuyerReport = () => {
             </Card>
 
             {/* Offer Details */}
-            <Card className="pdf-avoid-break">
+            <Card className="pdf-section pdf-avoid-break">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <TrendingUp className="h-5 w-5 text-accent" />
@@ -214,19 +217,19 @@ const BuyerReport = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-1">Offer Price</p>
                     <p className="text-lg font-serif font-bold">{formatCurrency(inputs.offer_price)}</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-1">Financing</p>
                     <p className="text-lg font-serif font-bold">{inputs.financing_type}</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-1">Down Payment</p>
                     <p className="text-lg font-serif font-bold">{inputs.down_payment_percent}</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-1">Closing</p>
                     <p className="text-lg font-serif font-bold">{inputs.closing_timeline} days</p>
                   </div>
@@ -251,7 +254,7 @@ const BuyerReport = () => {
             </Card>
 
             {/* Acceptance Likelihood */}
-            <Card className="pdf-avoid-break overflow-hidden">
+            <Card className="pdf-section pdf-avoid-break overflow-hidden">
               <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -265,7 +268,7 @@ const BuyerReport = () => {
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="flex justify-center">
-                  <div className="text-center p-8 rounded-xl border-2 border-accent/30 bg-accent/5 min-w-[200px]">
+                  <div className="text-center p-8 rounded-xl border-2 border-accent/30 bg-accent/5 min-w-[200px] pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-3">Likelihood of Acceptance</p>
                     <LikelihoodBadge band={acceptanceLikelihood} />
                   </div>
@@ -274,7 +277,7 @@ const BuyerReport = () => {
             </Card>
 
             {/* Risk Tradeoff */}
-            <Card className="pdf-avoid-break">
+            <Card className="pdf-section pdf-avoid-break">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <ShieldAlert className="h-5 w-5 text-accent" />
@@ -283,7 +286,7 @@ const BuyerReport = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div className="text-center p-6 rounded-xl border-2 border-border/50">
+                  <div className="text-center p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
                     <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
                       <AlertTriangle className="h-6 w-6 text-destructive" />
                     </div>
@@ -293,7 +296,7 @@ const BuyerReport = () => {
                       Lower aggressive offers increase this risk
                     </p>
                   </div>
-                  <div className="text-center p-6 rounded-xl border-2 border-border/50">
+                  <div className="text-center p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
                     <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
                       <TrendingUp className="h-6 w-6 text-amber-600" />
                     </div>
@@ -308,7 +311,7 @@ const BuyerReport = () => {
             </Card>
 
             {/* Important Notice */}
-            <div className="pdf-avoid-break flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
+            <div className="pdf-section pdf-avoid-break flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
               <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
               <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
             </div>
