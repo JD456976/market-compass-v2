@@ -16,6 +16,7 @@ import {
 import { loadMarketProfiles, generateId } from '@/lib/storage';
 import { LocationAutocomplete } from '@/components/LocationAutocomplete';
 import { MarketProfileTooltip } from '@/components/MarketProfileTooltip';
+import { SessionTemplate } from '@/lib/templates';
 
 const contingencyOptions: { value: Contingency; label: string }[] = [
   { value: 'Inspection', label: 'Inspection' },
@@ -45,6 +46,28 @@ const BuyerFlow = () => {
 
   useEffect(() => {
     setMarketProfiles(loadMarketProfiles());
+    
+    // Check for prefill template
+    const templateData = sessionStorage.getItem('prefill_template');
+    if (templateData) {
+      try {
+        const template: SessionTemplate = JSON.parse(templateData);
+        if (template.session_type === 'Buyer') {
+          setPropertyType(template.property_type);
+          setCondition(template.condition);
+          if (template.buyer_defaults) {
+            setFinancingType(template.buyer_defaults.financing_type);
+            setDownPayment(template.buyer_defaults.down_payment_percent);
+            setContingencies(template.buyer_defaults.contingencies);
+            setClosingTimeline(template.buyer_defaults.closing_timeline);
+            setBuyerPreference(template.buyer_defaults.buyer_preference);
+          }
+        }
+        sessionStorage.removeItem('prefill_template');
+      } catch {
+        // Ignore parse errors
+      }
+    }
   }, []);
 
   const handleContingencyChange = (contingency: Contingency, checked: boolean) => {

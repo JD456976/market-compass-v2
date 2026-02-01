@@ -12,6 +12,7 @@ import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference,
 import { loadMarketProfiles, generateId } from '@/lib/storage';
 import { LocationAutocomplete } from '@/components/LocationAutocomplete';
 import { MarketProfileTooltip } from '@/components/MarketProfileTooltip';
+import { SessionTemplate, getTemplateById } from '@/lib/templates';
 
 const SellerFlow = () => {
   const navigate = useNavigate();
@@ -30,6 +31,25 @@ const SellerFlow = () => {
 
   useEffect(() => {
     setMarketProfiles(loadMarketProfiles());
+    
+    // Check for prefill template
+    const templateData = sessionStorage.getItem('prefill_template');
+    if (templateData) {
+      try {
+        const template: SessionTemplate = JSON.parse(templateData);
+        if (template.session_type === 'Seller') {
+          setPropertyType(template.property_type);
+          setCondition(template.condition);
+          if (template.seller_defaults) {
+            setTimeframe(template.seller_defaults.desired_timeframe);
+            setStrategy(template.seller_defaults.strategy_preference);
+          }
+        }
+        sessionStorage.removeItem('prefill_template');
+      } catch {
+        // Ignore parse errors
+      }
+    }
   }, []);
 
   const handleGenerate = () => {

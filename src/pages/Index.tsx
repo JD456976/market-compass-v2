@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Compass, Users, Building2, FolderOpen, ChevronRight, MapPin, User } from 'lucide-react';
+import { Compass, Users, Building2, FolderOpen, ChevronRight, MapPin, User, FileText } from 'lucide-react';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -112,25 +112,31 @@ const Index = () => {
 
         {/* Secondary Links */}
         <motion.div 
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          className="flex flex-wrap items-center justify-center gap-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
           <Link to="/market-profiles">
-            <Button variant="outline" size="lg" className="min-w-[220px]">
+            <Button variant="outline" size="lg" className="min-w-[180px]">
               <MapPin className="mr-2 h-4 w-4" />
               Market Profiles
             </Button>
           </Link>
           <Link to="/saved-sessions">
-            <Button variant="outline" size="lg" className="min-w-[220px]">
+            <Button variant="outline" size="lg" className="min-w-[180px]">
               <FolderOpen className="mr-2 h-4 w-4" />
               Saved Sessions
             </Button>
           </Link>
+          <Link to="/templates">
+            <Button variant="outline" size="lg" className="min-w-[180px]">
+              <FileText className="mr-2 h-4 w-4" />
+              Templates
+            </Button>
+          </Link>
           <Link to="/agent-profile">
-            <Button variant="outline" size="lg" className="min-w-[220px]">
+            <Button variant="outline" size="lg" className="min-w-[180px]">
               <User className="mr-2 h-4 w-4" />
               Agent Profile
             </Button>

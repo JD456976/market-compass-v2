@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, Clock, Users, Target, TrendingUp, AlertCircle, CheckCircle2, AlertTriangle, ShieldAlert, FileDown, Share2 } from 'lucide-react';
+import { ArrowLeft, Save, Clock, Users, Target, TrendingUp, AlertCircle, CheckCircle2, AlertTriangle, ShieldAlert, FileDown, Share2, FileText } from 'lucide-react';
 import { Session, BuyerReportData, LikelihoodBand } from '@/types';
 import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateBuyerReport } from '@/lib/scoring';
@@ -12,6 +12,26 @@ import { useToast } from '@/hooks/use-toast';
 import { exportReportToPdf } from '@/lib/pdfExport';
 import { ReportHeader } from '@/components/ReportHeader';
 import { formatLocation } from '@/lib/utils';
+import { ModeSwitcher } from '@/components/ModeSwitcher';
+import { useClientMode } from '@/contexts/ClientModeContext';
+import { createTemplateFromSession, saveTemplate } from '@/lib/templates';
+import { 
+  getTitle, 
+  buyerWhatThisMeans, 
+  buyerRiskDescriptions, 
+  tradeoffDescriptions,
+  buyerSuggestions 
+} from '@/lib/clientLanguage';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -38,8 +58,11 @@ function RiskBadge({ band }: { band: LikelihoodBand }) {
 const BuyerReport = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isClientMode } = useClientMode();
   const [reportData, setReportData] = useState<BuyerReportData | null>(null);
   const [saved, setSaved] = useState(false);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
 
   useEffect(() => {
     const sessionData = sessionStorage.getItem('current_session');
@@ -80,6 +103,27 @@ const BuyerReport = () => {
     }
   };
 
+  const handleSaveAsTemplate = () => {
+    if (!reportData || !templateName.trim()) return;
+    
+    try {
+      const template = createTemplateFromSession(reportData.session, templateName.trim());
+      saveTemplate(template);
+      setTemplateDialogOpen(false);
+      setTemplateName('');
+      toast({
+        title: "Template saved",
+        description: `Template "${templateName}" has been created.`,
+      });
+    } catch {
+      toast({
+        title: "Could not save template",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleExportPdf = async () => {
     if (!reportData) return;
     try {
@@ -104,7 +148,6 @@ const BuyerReport = () => {
   const handleShareLink = () => {
     if (!reportData) return;
     try {
-      // Always save before sharing to ensure the session is in localStorage
       upsertSession(reportData.session);
       const url = `${window.location.origin}/share/${reportData.session.id}`;
       navigator.clipboard.writeText(url);
@@ -129,26 +172,45 @@ const BuyerReport = () => {
   const formatCurrency = (value: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
 
+  // Get mode-appropriate text
+  const mode = isClientMode ? 'client' : 'agent';
+  const whatThisMeansText = acceptanceLikelihood === 'High' 
+    ? buyerWhatThisMeans[mode].high
+    : acceptanceLikelihood === 'Moderate'
+    ? buyerWhatThisMeans[mode].moderate
+    : buyerWhatThisMeans[mode].low;
+
+  const losingHomeDesc = riskOfLosingHome === 'High' || riskOfLosingHome === 'Moderate'
+    ? buyerRiskDescriptions[mode].losingHomeHigh
+    : buyerRiskDescriptions[mode].losingHomeLow;
+
+  const overpayingDesc = riskOfOverpaying === 'High' || riskOfOverpaying === 'Moderate'
+    ? buyerRiskDescriptions[mode].overpayingHigh
+    : buyerRiskDescriptions[mode].overpayingLow;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="hero-gradient text-primary-foreground">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
-            <Link to="/buyer">
-              <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent/20">
-                <Users className="h-5 w-5 text-accent" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-serif font-bold">Buyer Report</h1>
-                <p className="text-sm text-primary-foreground/70">{session.client_name} • {formatLocation(session.location)}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link to="/buyer">
+                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-accent/20">
+                  <Users className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-serif font-bold">Buyer Report</h1>
+                  <p className="text-sm text-primary-foreground/70">{session.client_name} • {formatLocation(session.location)}</p>
+                </div>
               </div>
             </div>
+            <ModeSwitcher className="bg-primary-foreground/10 rounded-lg px-3 py-2" />
           </div>
         </div>
       </div>
@@ -161,8 +223,8 @@ const BuyerReport = () => {
           className="space-y-6"
         >
           {/* Report content for PDF export */}
-          <div id="report-export" className="space-y-6">
-            {/* Prepared For/By Header Block - hidden in PDF (rendered by jsPDF) */}
+          <div id="report-export" className={`space-y-6 ${isClientMode ? 'client-mode' : ''}`}>
+            {/* Prepared For/By Header Block */}
             <div className="pdf-section pdf-header-section">
               <ReportHeader
                 reportType="Buyer"
@@ -252,8 +314,8 @@ const BuyerReport = () => {
                     <p className="text-sm">{inputs.client_notes || inputs.notes}</p>
                   </div>
                 )}
-                {/* Agent Notes - hidden from PDF/Share */}
-                {inputs.agent_notes && (
+                {/* Agent Notes - hidden from PDF/Share and client mode */}
+                {inputs.agent_notes && !isClientMode && (
                   <div className="mt-4 p-4 rounded-xl bg-secondary/30 border border-border/50 pdf-hide-agent-notes">
                     <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
                       Agent Notes <span className="text-xs">(Private)</span>
@@ -270,7 +332,7 @@ const BuyerReport = () => {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Clock className="h-5 w-5 text-accent" />
-                    Offer Acceptance Likelihood
+                    {getTitle('acceptanceLikelihood', isClientMode)}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">
                     Market snapshot as of: {new Date(snapshotTimestamp).toLocaleString()}
@@ -290,35 +352,31 @@ const BuyerReport = () => {
             {/* What This Means */}
             <Card className="pdf-section pdf-avoid-break">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg">What This Means</CardTitle>
+                <CardTitle className="text-lg">{getTitle('whatThisMeans', isClientMode)}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  {acceptanceLikelihood === 'High' 
-                    ? 'Your offer terms are well-aligned with seller expectations. Strong financing and favorable terms tend to make offers more competitive in the current market.'
-                    : acceptanceLikelihood === 'Moderate'
-                    ? 'Your offer may face competition from other buyers. Sellers often weigh multiple factors including price, contingencies, and closing timeline when evaluating offers.'
-                    : 'At the current offer terms, acceptance may be less certain. This often occurs when contingencies or financing create perceived risk for the seller.'}
+                  {whatThisMeansText}
                 </p>
                 <div>
                   <p className="font-medium text-sm mb-2">If your goal is to increase certainty:</p>
                   <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
                     {inputs.contingencies.length > 0 && inputs.contingencies[0] !== 'None' && (
-                      <li>Reducing contingencies often makes offers more attractive to sellers</li>
+                      <li>{buyerSuggestions[mode].contingencies}</li>
                     )}
                     {(inputs.closing_timeline === '31-45' || inputs.closing_timeline === '45+') && (
-                      <li>A shorter closing timeline may signal stronger buyer readiness</li>
+                      <li>{buyerSuggestions[mode].timeline}</li>
                     )}
                     {inputs.financing_type !== 'Cash' && (
-                      <li>Strengthening financing terms or increasing down payment tends to reduce seller concerns</li>
+                      <li>{buyerSuggestions[mode].financing}</li>
                     )}
                     {inputs.buyer_preference !== 'Must win' && (
-                      <li>Adjusting your offer price may improve competitive positioning</li>
+                      <li>{buyerSuggestions[mode].price}</li>
                     )}
                   </ul>
                 </div>
                 <p className="text-sm text-muted-foreground italic">
-                  <span className="font-medium not-italic">Tradeoff to consider:</span> More aggressive terms may increase acceptance likelihood but also raise the risk of overpaying, while conservative offers protect value but may result in losing the home.
+                  <span className="font-medium not-italic">Tradeoff to consider:</span> {tradeoffDescriptions[mode].buyerMain}
                 </p>
               </CardContent>
             </Card>
@@ -328,7 +386,7 @@ const BuyerReport = () => {
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <ShieldAlert className="h-5 w-5 text-accent" />
-                  Risk Tradeoff Analysis
+                  {getTitle('riskTradeoff', isClientMode)}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -337,20 +395,20 @@ const BuyerReport = () => {
                     <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
                       <AlertTriangle className="h-6 w-6 text-destructive" />
                     </div>
-                    <p className="font-medium mb-2">Risk of Losing Home</p>
+                    <p className="font-medium mb-2">{getTitle('riskOfLosingHome', isClientMode)}</p>
                     <RiskBadge band={riskOfLosingHome} />
                     <p className="text-xs text-muted-foreground mt-3">
-                      Lower aggressive offers increase this risk
+                      {losingHomeDesc}
                     </p>
                   </div>
                   <div className="text-center p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
                     <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
                       <TrendingUp className="h-6 w-6 text-amber-600" />
                     </div>
-                    <p className="font-medium mb-2">Risk of Overpaying</p>
+                    <p className="font-medium mb-2">{getTitle('riskOfOverpaying', isClientMode)}</p>
                     <RiskBadge band={riskOfOverpaying} />
                     <p className="text-xs text-muted-foreground mt-3">
-                      Higher aggressive offers increase this risk
+                      {overpayingDesc}
                     </p>
                   </div>
                 </div>
@@ -385,6 +443,10 @@ const BuyerReport = () => {
                 </>
               )}
             </Button>
+            <Button onClick={() => setTemplateDialogOpen(true)} size="lg" variant="outline">
+              <FileText className="mr-2 h-4 w-4" />
+              Save as Template
+            </Button>
             <Button onClick={handleExportPdf} size="lg" variant="outline">
               <FileDown className="mr-2 h-4 w-4" />
               Export PDF
@@ -396,6 +458,33 @@ const BuyerReport = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Save as Template Dialog */}
+      <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save as Template</DialogTitle>
+            <DialogDescription>
+              Create a reusable template from this session's settings. Client name and location will not be saved.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="templateName">Template Name</Label>
+              <Input
+                id="templateName"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="e.g., First-Time Buyer, Cash Offer..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTemplateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveAsTemplate} disabled={!templateName.trim()}>Save Template</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
