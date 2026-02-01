@@ -3,63 +3,91 @@ import { MarketProfile, Session } from '@/types';
 const SESSIONS_KEY = 'reality_engine_sessions';
 const MARKET_PROFILES_KEY = 'reality_engine_market_profiles';
 
-// Sessions
-export function getSessions(): Session[] {
-  const data = localStorage.getItem(SESSIONS_KEY);
-  return data ? JSON.parse(data) : [];
+// Safe JSON parse with fallback to empty array
+function safeParseArray<T>(data: string | null): T[] {
+  if (!data) return [];
+  try {
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
-export function saveSession(session: Session): void {
-  const sessions = getSessions();
+// Sessions
+export function loadSessions(): Session[] {
+  return safeParseArray<Session>(localStorage.getItem(SESSIONS_KEY));
+}
+
+export function upsertSession(session: Session): void {
+  const sessions = loadSessions();
+  const now = new Date().toISOString();
   const existingIndex = sessions.findIndex(s => s.id === session.id);
   
+  const sessionToSave: Session = {
+    ...session,
+    created_at: existingIndex >= 0 ? sessions[existingIndex].created_at : (session.created_at || now),
+    updated_at: now,
+  };
+  
   if (existingIndex >= 0) {
-    sessions[existingIndex] = { ...session, updated_at: new Date().toISOString() };
+    sessions[existingIndex] = sessionToSave;
   } else {
-    sessions.push({ ...session, updated_at: new Date().toISOString() });
+    sessions.push(sessionToSave);
   }
   
   localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
 }
 
 export function deleteSession(id: string): void {
-  const sessions = getSessions().filter(s => s.id !== id);
+  const sessions = loadSessions().filter(s => s.id !== id);
   localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
 }
 
 export function getSessionById(id: string): Session | undefined {
-  return getSessions().find(s => s.id === id);
+  return loadSessions().find(s => s.id === id);
 }
 
 // Market Profiles
-export function getMarketProfiles(): MarketProfile[] {
-  const data = localStorage.getItem(MARKET_PROFILES_KEY);
-  return data ? JSON.parse(data) : [];
+export function loadMarketProfiles(): MarketProfile[] {
+  return safeParseArray<MarketProfile>(localStorage.getItem(MARKET_PROFILES_KEY));
 }
 
-export function saveMarketProfile(profile: MarketProfile): void {
-  const profiles = getMarketProfiles();
+export function upsertMarketProfile(profile: MarketProfile): void {
+  const profiles = loadMarketProfiles();
+  const now = new Date().toISOString();
   const existingIndex = profiles.findIndex(p => p.id === profile.id);
   
+  const profileToSave: MarketProfile = {
+    ...profile,
+    updated_at: now,
+  };
+  
   if (existingIndex >= 0) {
-    profiles[existingIndex] = { ...profile, updated_at: new Date().toISOString() };
+    profiles[existingIndex] = profileToSave;
   } else {
-    profiles.push({ ...profile, updated_at: new Date().toISOString() });
+    profiles.push(profileToSave);
   }
   
   localStorage.setItem(MARKET_PROFILES_KEY, JSON.stringify(profiles));
 }
 
 export function deleteMarketProfile(id: string): void {
-  const profiles = getMarketProfiles().filter(p => p.id !== id);
+  const profiles = loadMarketProfiles().filter(p => p.id !== id);
   localStorage.setItem(MARKET_PROFILES_KEY, JSON.stringify(profiles));
 }
 
 export function getMarketProfileById(id: string): MarketProfile | undefined {
-  return getMarketProfiles().find(p => p.id === id);
+  return loadMarketProfiles().find(p => p.id === id);
 }
 
 // UUID generator
 export function generateId(): string {
   return crypto.randomUUID();
 }
+
+// Legacy aliases for backward compatibility
+export const getSessions = loadSessions;
+export const saveSession = upsertSession;
+export const getMarketProfiles = loadMarketProfiles;
+export const saveMarketProfile = upsertMarketProfile;

@@ -13,7 +13,7 @@ import {
   Session, PropertyType, Condition, FinancingType, 
   DownPaymentPercent, Contingency, ClosingTimeline, BuyerPreference, MarketProfile 
 } from '@/types';
-import { getMarketProfiles, generateId } from '@/lib/storage';
+import { loadMarketProfiles, generateId } from '@/lib/storage';
 
 const contingencyOptions: { value: Contingency; label: string }[] = [
   { value: 'Inspection', label: 'Inspection' },
@@ -41,7 +41,7 @@ const BuyerFlow = () => {
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
-    setMarketProfiles(getMarketProfiles());
+    setMarketProfiles(loadMarketProfiles());
   }, []);
 
   const handleContingencyChange = (contingency: Contingency, checked: boolean) => {
