@@ -7,30 +7,39 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, Building2, Home, Sparkles, DollarSign } from 'lucide-react';
-import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference, MarketProfile } from '@/types';
-import { loadMarketProfiles, generateId } from '@/lib/storage';
+import { Slider } from '@/components/ui/slider';
+import { ArrowLeft, ArrowRight, Building2, Home, Sparkles, DollarSign, RotateCcw } from 'lucide-react';
+import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference } from '@/types';
+import { generateId } from '@/lib/storage';
 import { LocationAutocomplete } from '@/components/LocationAutocomplete';
-import { MarketProfileTooltip } from '@/components/MarketProfileTooltip';
-import { SessionTemplate, getTemplateById } from '@/lib/templates';
+import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
+import { SessionTemplate } from '@/lib/templates';
+import { loadMarketScenarios, MarketScenario, getMarketScenarioById } from '@/lib/marketScenarios';
 
 const SellerFlow = () => {
   const navigate = useNavigate();
-  const [marketProfiles, setMarketProfiles] = useState<MarketProfile[]>([]);
+  const [marketScenarios, setMarketScenarios] = useState<MarketScenario[]>([]);
+  const [appliedTemplate, setAppliedTemplate] = useState<SessionTemplate | null>(null);
   
   const [clientName, setClientName] = useState('');
   const [location, setLocation] = useState('');
   const [propertyType, setPropertyType] = useState<PropertyType>('SFH');
   const [condition, setCondition] = useState<Condition>('Maintained');
-  const [selectedProfileId, setSelectedProfileId] = useState<string | undefined>(undefined);
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string | undefined>(undefined);
   const [listPrice, setListPrice] = useState<string>('');
   const [timeframe, setTimeframe] = useState<DesiredTimeframe>('60');
   const [strategy, setStrategy] = useState<StrategyPreference>('Balanced');
   const [agentNotes, setAgentNotes] = useState('');
   const [clientNotes, setClientNotes] = useState('');
+  
+  // Scenario overrides
+  const [showOverrides, setShowOverrides] = useState(false);
+  const [demandOverride, setDemandOverride] = useState<'low' | 'medium' | 'high' | undefined>(undefined);
+  const [competitionOverride, setCompetitionOverride] = useState<'low' | 'medium' | 'high' | undefined>(undefined);
+  const [pricingOverride, setPricingOverride] = useState<'low' | 'medium' | 'high' | undefined>(undefined);
 
   useEffect(() => {
-    setMarketProfiles(loadMarketProfiles());
+    setMarketScenarios(loadMarketScenarios());
     
     // Check for prefill template
     const templateData = sessionStorage.getItem('prefill_template');
@@ -38,8 +47,15 @@ const SellerFlow = () => {
       try {
         const template: SessionTemplate = JSON.parse(templateData);
         if (template.session_type === 'Seller') {
+          setAppliedTemplate(template);
           setPropertyType(template.property_type);
           setCondition(template.condition);
+          if (template.market_scenario_id) {
+            setSelectedScenarioId(template.market_scenario_id);
+          }
+          if (template.notes_boilerplate) {
+            setClientNotes(template.notes_boilerplate);
+          }
           if (template.seller_defaults) {
             setTimeframe(template.seller_defaults.desired_timeframe);
             setStrategy(template.seller_defaults.strategy_preference);
@@ -52,6 +68,25 @@ const SellerFlow = () => {
     }
   }, []);
 
+  const handleResetToTemplate = () => {
+    if (!appliedTemplate) return;
+    setPropertyType(appliedTemplate.property_type);
+    setCondition(appliedTemplate.condition);
+    if (appliedTemplate.market_scenario_id) {
+      setSelectedScenarioId(appliedTemplate.market_scenario_id);
+    }
+    if (appliedTemplate.notes_boilerplate) {
+      setClientNotes(appliedTemplate.notes_boilerplate);
+    }
+    if (appliedTemplate.seller_defaults) {
+      setTimeframe(appliedTemplate.seller_defaults.desired_timeframe);
+      setStrategy(appliedTemplate.seller_defaults.strategy_preference);
+    }
+    setDemandOverride(undefined);
+    setCompetitionOverride(undefined);
+    setPricingOverride(undefined);
+  };
+
   const handleGenerate = () => {
     const session: Session = {
       id: generateId(),
@@ -60,7 +95,12 @@ const SellerFlow = () => {
       location,
       property_type: propertyType,
       condition,
-      selected_market_profile_id: selectedProfileId || undefined,
+      market_scenario_id: selectedScenarioId || undefined,
+      market_scenario_overrides: (demandOverride || competitionOverride || pricingOverride) ? {
+        demandLevel: demandOverride,
+        competitionLevel: competitionOverride,
+        pricingSensitivity: pricingOverride,
+      } : undefined,
       seller_inputs: {
         seller_selected_list_price: parseFloat(listPrice) || 0,
         desired_timeframe: timeframe,
@@ -81,7 +121,6 @@ const SellerFlow = () => {
   if (!clientName.trim()) missingFields.push('client_name');
   if (!location.trim()) missingFields.push('location');
   if (!listPrice || parseFloat(listPrice) <= 0) missingFields.push('list_price');
-  // property_type, condition, timeframe, strategy all have defaults so they're always valid
   
   const isValid = missingFields.length === 0;
   const [attempted, setAttempted] = useState(false);
@@ -92,26 +131,36 @@ const SellerFlow = () => {
     handleGenerate();
   };
 
+  const selectedScenario = selectedScenarioId ? getMarketScenarioById(selectedScenarioId) : undefined;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link to="/">
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Building2 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-serif font-bold">Seller Analysis</h1>
-                <p className="text-sm text-muted-foreground">Analyze listing strategy and sale likelihood</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link to="/">
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Building2 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-serif font-bold">Seller Analysis</h1>
+                  <p className="text-sm text-muted-foreground">Analyze listing strategy and sale likelihood</p>
+                </div>
               </div>
             </div>
+            {appliedTemplate && (
+              <Button variant="ghost" size="sm" onClick={handleResetToTemplate}>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Reset to Template
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -187,19 +236,75 @@ const SellerFlow = () => {
 
               <div className="space-y-2">
                 <Label className="flex items-center">
-                  Market Profile <span className="text-muted-foreground text-xs ml-1">(Optional)</span>
-                  <MarketProfileTooltip />
+                  Market Scenario <span className="text-muted-foreground text-xs ml-1">(Optional)</span>
+                  <MarketScenarioTooltip />
                 </Label>
-                <Select value={selectedProfileId ?? "__none__"} onValueChange={(v) => setSelectedProfileId(v === "__none__" ? undefined : v)}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Select a market profile..." /></SelectTrigger>
+                <Select value={selectedScenarioId ?? "__none__"} onValueChange={(v) => setSelectedScenarioId(v === "__none__" ? undefined : v)}>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="Select a market scenario..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">None</SelectItem>
-                    {marketProfiles.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.label} - {p.location}</SelectItem>
+                    {marketScenarios.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {selectedScenario && (
+                  <p className="text-xs text-muted-foreground mt-1">{selectedScenario.summary}</p>
+                )}
               </div>
+
+              {selectedScenarioId && (
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowOverrides(!showOverrides)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
+                  >
+                    {showOverrides ? 'Hide' : 'Adjust'} scenario for this session
+                  </button>
+                  
+                  {showOverrides && (
+                    <div className="grid md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+                      <div className="space-y-2">
+                        <Label className="text-xs">Demand Level</Label>
+                        <Select value={demandOverride || "__default__"} onValueChange={(v) => setDemandOverride(v === "__default__" ? undefined : v as 'low' | 'medium' | 'high')}>
+                          <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Default" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__default__">Default</SelectItem>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Competition</Label>
+                        <Select value={competitionOverride || "__default__"} onValueChange={(v) => setCompetitionOverride(v === "__default__" ? undefined : v as 'low' | 'medium' | 'high')}>
+                          <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Default" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__default__">Default</SelectItem>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Pricing Sensitivity</Label>
+                        <Select value={pricingOverride || "__default__"} onValueChange={(v) => setPricingOverride(v === "__default__" ? undefined : v as 'low' | 'medium' | 'high')}>
+                          <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Default" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__default__">Default</SelectItem>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 

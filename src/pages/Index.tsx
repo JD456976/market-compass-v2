@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Compass, Users, Building2, FolderOpen, ChevronRight, MapPin, User, FileText } from 'lucide-react';
+import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send } from 'lucide-react';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -117,16 +117,22 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          <Link to="/market-profiles">
+          <Link to="/market-scenarios">
             <Button variant="outline" size="lg" className="min-w-[180px]">
-              <MapPin className="mr-2 h-4 w-4" />
-              Market Profiles
+              <TrendingUp className="mr-2 h-4 w-4" />
+              Market Scenarios
             </Button>
           </Link>
           <Link to="/saved-sessions">
             <Button variant="outline" size="lg" className="min-w-[180px]">
               <FolderOpen className="mr-2 h-4 w-4" />
               Saved Sessions
+            </Button>
+          </Link>
+          <Link to="/client-deliverables">
+            <Button variant="outline" size="lg" className="min-w-[180px]">
+              <Send className="mr-2 h-4 w-4" />
+              Client Deliverables
             </Button>
           </Link>
           <Link to="/templates">

@@ -6,11 +6,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ClientModeProvider } from "@/contexts/ClientModeContext";
 import Index from "./pages/Index";
 import MarketProfiles from "./pages/MarketProfiles";
+import MarketScenarios from "./pages/MarketScenarios";
 import SellerFlow from "./pages/SellerFlow";
 import BuyerFlow from "./pages/BuyerFlow";
 import SellerReport from "./pages/SellerReport";
 import BuyerReport from "./pages/BuyerReport";
 import SavedSessions from "./pages/SavedSessions";
+import ClientDeliverables from "./pages/ClientDeliverables";
 import SharedReport from "./pages/SharedReport";
 import CompareSessions from "./pages/CompareSessions";
 import ClientComparisonReport from "./pages/ClientComparisonReport";
@@ -31,11 +33,13 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/market-profiles" element={<MarketProfiles />} />
+            <Route path="/market-scenarios" element={<MarketScenarios />} />
             <Route path="/seller" element={<SellerFlow />} />
             <Route path="/seller/report" element={<SellerReport />} />
             <Route path="/buyer" element={<BuyerFlow />} />
             <Route path="/buyer/report" element={<BuyerReport />} />
             <Route path="/saved-sessions" element={<SavedSessions />} />
+            <Route path="/client-deliverables" element={<ClientDeliverables />} />
             <Route path="/compare" element={<CompareSessions />} />
             <Route path="/compare/client" element={<ClientComparisonReport />} />
             <Route path="/agent-profile" element={<AgentProfile />} />
