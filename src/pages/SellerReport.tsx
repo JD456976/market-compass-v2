@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, Clock, Building2, Target, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Session, SellerReportData, LikelihoodBand } from '@/types';
-import { saveSession, getMarketProfileById } from '@/lib/storage';
+import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport } from '@/lib/scoring';
+import { useToast } from '@/hooks/use-toast';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -23,6 +24,7 @@ function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
 
 const SellerReport = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [reportData, setReportData] = useState<SellerReportData | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -33,19 +35,35 @@ const SellerReport = () => {
       return;
     }
     
-    const session: Session = JSON.parse(sessionData);
-    const marketProfile = session.selected_market_profile_id 
-      ? getMarketProfileById(session.selected_market_profile_id) 
-      : undefined;
-    
-    const data = calculateSellerReport(session, marketProfile);
-    setReportData(data);
+    try {
+      const session: Session = JSON.parse(sessionData);
+      const marketProfile = session.selected_market_profile_id 
+        ? getMarketProfileById(session.selected_market_profile_id) 
+        : undefined;
+      
+      const data = calculateSellerReport(session, marketProfile);
+      setReportData(data);
+    } catch {
+      navigate('/seller');
+    }
   }, [navigate]);
 
   const handleSave = () => {
-    if (reportData) {
-      saveSession(reportData.session);
+    if (!reportData) return;
+    
+    try {
+      upsertSession(reportData.session);
       setSaved(true);
+      toast({
+        title: "Session saved",
+        description: "Your seller session has been saved successfully.",
+      });
+    } catch {
+      toast({
+        title: "Could not save session",
+        description: "There was an error saving your session. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

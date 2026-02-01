@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ArrowLeft, Plus, Pencil, Trash2, MapPin, TrendingUp, Clock, Users2, Shield } from 'lucide-react';
 import { MarketProfile, PropertyType, SaleToList, TypicalDOM, MultipleOffersFrequency, ContingencyTolerance } from '@/types';
-import { getMarketProfiles, saveMarketProfile, deleteMarketProfile, generateId } from '@/lib/storage';
+import { loadMarketProfiles, upsertMarketProfile, deleteMarketProfile, generateId } from '@/lib/storage';
 
 const emptyProfile: Omit<MarketProfile, 'id' | 'updated_at'> = {
   label: '',
@@ -28,7 +28,7 @@ const MarketProfiles = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
-    setProfiles(getMarketProfiles());
+    setProfiles(loadMarketProfiles());
   }, []);
 
   const handleSave = () => {
@@ -37,8 +37,8 @@ const MarketProfiles = () => {
       id: editingProfile?.id || generateId(),
       updated_at: new Date().toISOString(),
     };
-    saveMarketProfile(profile);
-    setProfiles(getMarketProfiles());
+    upsertMarketProfile(profile);
+    setProfiles(loadMarketProfiles());
     setDialogOpen(false);
     setEditingProfile(null);
     setFormData(emptyProfile);
@@ -61,7 +61,7 @@ const MarketProfiles = () => {
   const handleDelete = (id: string) => {
     if (confirm('Delete this market profile?')) {
       deleteMarketProfile(id);
-      setProfiles(getMarketProfiles());
+      setProfiles(loadMarketProfiles());
     }
   };
 

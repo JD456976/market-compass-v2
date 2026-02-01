@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, ArrowRight, Building2, MapPin, Home, Sparkles, DollarSign } from 'lucide-react';
 import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference, MarketProfile } from '@/types';
-import { getMarketProfiles, generateId } from '@/lib/storage';
+import { loadMarketProfiles, generateId } from '@/lib/storage';
 
 const SellerFlow = () => {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ const SellerFlow = () => {
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
-    setMarketProfiles(getMarketProfiles());
+    setMarketProfiles(loadMarketProfiles());
   }, []);
 
   const handleGenerate = () => {

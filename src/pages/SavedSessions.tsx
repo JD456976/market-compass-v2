@@ -2,22 +2,36 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Eye, Copy, Trash2, Building2, Users, FolderOpen, Calendar } from 'lucide-react';
 import { Session } from '@/types';
-import { getSessions, saveSession, deleteSession, generateId } from '@/lib/storage';
+import { loadSessions, upsertSession, deleteSession, generateId } from '@/lib/storage';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const SavedSessions = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    loadSessions();
+    refreshSessions();
   }, []);
 
-  const loadSessions = () => {
-    const allSessions = getSessions().sort(
+  const refreshSessions = () => {
+    const allSessions = loadSessions().sort(
       (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
     );
     setSessions(allSessions);
@@ -33,22 +47,38 @@ const SavedSessions = () => {
   };
 
   const handleDuplicate = (session: Session) => {
+    const now = new Date().toISOString();
     const duplicated: Session = {
       ...session,
       id: generateId(),
       client_name: `${session.client_name} (Copy)`,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
     };
-    saveSession(duplicated);
-    loadSessions();
+    upsertSession(duplicated);
+    refreshSessions();
+    toast({
+      title: "Session duplicated",
+      description: `Created a copy of "${session.client_name}"`,
+    });
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Delete this session?')) {
-      deleteSession(id);
-      loadSessions();
+  const handleDeleteClick = (id: string) => {
+    setSessionToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (sessionToDelete) {
+      deleteSession(sessionToDelete);
+      refreshSessions();
+      toast({
+        title: "Session deleted",
+        description: "The session has been removed.",
+      });
     }
+    setDeleteDialogOpen(false);
+    setSessionToDelete(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -99,7 +129,7 @@ const SavedSessions = () => {
                     <FolderOpen className="h-8 w-8 text-muted-foreground" />
                   </div>
                   <h3 className="font-serif text-xl font-semibold mb-2">No saved sessions yet</h3>
-                  <p className="text-muted-foreground mb-6">Create a Seller or Buyer report and save it to see it here.</p>
+                  <p className="text-muted-foreground mb-6">Generate a report and click Save Session.</p>
                   <div className="flex gap-4 justify-center">
                     <Link to="/seller">
                       <Button variant="outline">
@@ -168,7 +198,7 @@ const SavedSessions = () => {
                           <Button variant="ghost" size="icon" onClick={() => handleDuplicate(session)} title="Duplicate">
                             <Copy className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(session.id)} title="Delete">
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(session.id)} title="Delete">
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
@@ -181,6 +211,21 @@ const SavedSessions = () => {
           )}
         </AnimatePresence>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Session</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this session? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
