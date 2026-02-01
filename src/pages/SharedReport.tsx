@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { 
   Clock, Building2, Users, Target, TrendingUp, AlertCircle, 
-  AlertTriangle, ShieldAlert, Home
+  AlertTriangle, ShieldAlert
 } from 'lucide-react';
 import { Session, LikelihoodBand, MarketProfile } from '@/types';
 import { getSessionById, getMarketProfileById } from '@/lib/storage';
@@ -69,12 +68,12 @@ const SharedReport = () => {
           <CardContent className="pt-8 pb-6">
             <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-serif font-bold mb-2">Report Not Available</h2>
-            <p className="text-muted-foreground mb-6">
-              No report was found on this device. Open the report on the device where it was created, then click Share Link again.
+            <p className="text-muted-foreground mb-4">
+              No report was found on this device.
             </p>
-            <Link to="/">
-              <Button variant="outline">Go to Home</Button>
-            </Link>
+            <p className="text-xs text-muted-foreground">
+              Open the report on the device where it was created, then click Share Link again.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -320,15 +319,6 @@ const SharedReport = () => {
             <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
           </div>
 
-          {/* Back to Home */}
-          <div className="pt-4">
-            <Link to="/">
-              <Button variant="outline" size="lg">
-                <Home className="mr-2 h-4 w-4" />
-                Go to Home
-              </Button>
-            </Link>
-          </div>
         </motion.div>
       </div>
     </div>
