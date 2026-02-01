@@ -11,6 +11,7 @@ import { Session, LikelihoodBand, MarketProfile } from '@/types';
 import { getSessionById, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { ReportHeader } from '@/components/ReportHeader';
+import { formatLocation } from '@/lib/utils';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
   if (band === 'High') {
@@ -107,7 +108,7 @@ const SharedReport = () => {
             </div>
             <div>
               <h1 className="text-2xl font-serif font-bold">{isSeller ? 'Seller' : 'Buyer'} Report</h1>
-              <p className="text-sm text-primary-foreground/70">{session.client_name} • {session.location}</p>
+              <p className="text-sm text-primary-foreground/70">{session.client_name} • {formatLocation(session.location)}</p>
             </div>
           </div>
         </div>
@@ -142,7 +143,7 @@ const SharedReport = () => {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Location</p>
-                  <p className="font-medium">{session.location}</p>
+                  <p className="font-medium">{formatLocation(session.location)}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Property Type</p>

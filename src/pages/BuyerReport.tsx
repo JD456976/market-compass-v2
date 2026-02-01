@@ -11,6 +11,7 @@ import { calculateBuyerReport } from '@/lib/scoring';
 import { useToast } from '@/hooks/use-toast';
 import { exportReportToPdf } from '@/lib/pdfExport';
 import { ReportHeader } from '@/components/ReportHeader';
+import { formatLocation } from '@/lib/utils';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -145,7 +146,7 @@ const BuyerReport = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-serif font-bold">Buyer Report</h1>
-                <p className="text-sm text-primary-foreground/70">{session.client_name} • {session.location}</p>
+                <p className="text-sm text-primary-foreground/70">{session.client_name} • {formatLocation(session.location)}</p>
               </div>
             </div>
           </div>
@@ -187,7 +188,7 @@ const BuyerReport = () => {
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Location</p>
-                    <p className="font-medium">{session.location}</p>
+                    <p className="font-medium">{formatLocation(session.location)}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Property Type</p>
