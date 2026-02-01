@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, Clock, Users, Target, TrendingUp, AlertCircle, CheckCircle2, AlertTriangle, ShieldAlert, FileDown, Share2, FileText } from 'lucide-react';
+import { ArrowLeft, Save, Clock, Users, Target, TrendingUp, AlertCircle, CheckCircle2, AlertTriangle, ShieldAlert, FileDown, Share2, FileText, Pencil } from 'lucide-react';
 import { Session, BuyerReportData, LikelihoodBand } from '@/types';
 import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateBuyerReport } from '@/lib/scoring';
@@ -40,6 +40,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DraftEditorSheet } from '@/components/DraftEditorSheet';
+import { LikelihoodBar, TradeoffMatrix, getBuyerTradeoffPosition, MetricIcon } from '@/components/ClientVisuals';
+import { AgentLab, AgentLabTrigger } from '@/components/AgentLab';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -71,6 +74,8 @@ const BuyerReport = () => {
   const [saved, setSaved] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [labOpen, setLabOpen] = useState(false);
 
   useEffect(() => {
     const sessionData = sessionStorage.getItem('current_session');
@@ -203,6 +208,25 @@ const BuyerReport = () => {
   const overpayingDesc = riskOfOverpaying === 'High' || riskOfOverpaying === 'Moderate'
     ? buyerRiskDescriptions[mode].overpayingHigh
     : buyerRiskDescriptions[mode].overpayingLow;
+
+  // Get tradeoff position for client visual
+  const tradeoffPosition = getBuyerTradeoffPosition(
+    inputs.buyer_preference,
+    inputs.contingencies.length,
+    inputs.financing_type,
+    inputs.closing_timeline
+  );
+
+  const handleDraftUpdate = (updatedSession: Session) => {
+    const updatedData = calculateBuyerReport(updatedSession, marketProfile);
+    setReportData(updatedData);
+    sessionStorage.setItem('current_session', JSON.stringify(updatedSession));
+    setSaved(false);
+    toast({
+      title: "Draft updated",
+      description: "Your changes have been applied.",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -361,11 +385,20 @@ const BuyerReport = () => {
               <CardContent className="pt-6">
                 <div className="flex justify-center">
                   <div className="text-center p-8 rounded-xl border-2 border-accent/30 bg-accent/5 min-w-[200px] pdf-stat-tile">
-                    <p className="text-sm text-muted-foreground mb-3">Likelihood of Acceptance</p>
+                    <p className="text-sm text-muted-foreground mb-3 flex items-center justify-center gap-1.5">
+                      <MetricIcon type="certainty" className="h-3.5 w-3.5" />
+                      Likelihood of Acceptance
+                    </p>
                     <div className="flex items-center justify-center gap-1">
                       <LikelihoodBadge band={acceptanceLikelihood} />
                       {!isClientMode && <ConfidenceRange band={acceptanceLikelihood} />}
                     </div>
+                    {/* Client-mode visual: Likelihood Bar */}
+                    {isClientMode && (
+                      <div className="mt-4 px-2">
+                        <LikelihoodBar band={acceptanceLikelihood} />
+                      </div>
+                    )}
                     {/* Agent-only explanations */}
                     {!isClientMode && (
                       <div className="mt-4 text-left pdf-hide-agent-notes">
@@ -494,6 +527,16 @@ const BuyerReport = () => {
               <FileText className="mr-2 h-4 w-4" />
               Template
             </Button>
+            {/* Agent-only: Edit Draft and Lab */}
+            {!isClientMode && (
+              <>
+                <Button onClick={() => setEditSheetOpen(true)} size="lg" variant="outline" className="min-h-[44px]">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Draft
+                </Button>
+                <AgentLabTrigger onClick={() => setLabOpen(true)} />
+              </>
+            )}
             {/* Share/Export only visible in Client mode */}
             {isClientMode && (
               <>
@@ -508,6 +551,28 @@ const BuyerReport = () => {
               </>
             )}
           </div>
+
+          {/* Client mode: Tradeoff Matrix */}
+          {isClientMode && (
+            <Card className="pdf-section pdf-avoid-break">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-1.5">
+                  <MetricIcon type="tradeoff" />
+                  Position Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <TradeoffMatrix 
+                  positions={[{ position: tradeoffPosition }]}
+                  xAxis={{ left: 'Speed', right: 'Price' }}
+                  yAxis={{ top: 'Certainty', bottom: 'Flexibility' }}
+                />
+                <p className="text-[10px] text-center text-muted-foreground mt-3">
+                  Current offer positioning based on strategy and terms
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
       </div>
 
@@ -537,6 +602,23 @@ const BuyerReport = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Draft Editor Sheet - Agent Mode Only */}
+      <DraftEditorSheet
+        session={session}
+        open={editSheetOpen}
+        onOpenChange={setEditSheetOpen}
+        onSave={handleDraftUpdate}
+      />
+
+      {/* Agent Lab - Agent Mode Only */}
+      <AgentLab
+        session={session}
+        currentLikelihood={acceptanceLikelihood}
+        open={labOpen}
+        onOpenChange={setLabOpen}
+        onApply={handleDraftUpdate}
+      />
     </div>
   );
 };
