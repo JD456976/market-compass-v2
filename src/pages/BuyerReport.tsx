@@ -79,10 +79,12 @@ const BuyerReport = () => {
   };
 
   const handleExportPdf = async () => {
+    if (!reportData) return;
     try {
       await exportReportToPdf('report-export', {
-        clientName: session.client_name,
+        clientName: reportData.session.client_name,
         reportType: 'Buyer',
+        snapshotTimestamp: reportData.snapshotTimestamp,
       });
       toast({
         title: "PDF exported",
@@ -98,12 +100,23 @@ const BuyerReport = () => {
   };
 
   const handleShareLink = () => {
-    const url = `${window.location.origin}/share/${session.id}`;
-    navigator.clipboard.writeText(url);
-    toast({
-      title: "Link copied",
-      description: "Share link has been copied to clipboard.",
-    });
+    if (!reportData) return;
+    try {
+      // Always save before sharing to ensure the session is in localStorage
+      upsertSession(reportData.session);
+      const url = `${window.location.origin}/share/${reportData.session.id}`;
+      navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied",
+        description: "Share link has been copied to clipboard.",
+      });
+    } catch {
+      toast({
+        title: "Could not generate share link",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!reportData) return null;

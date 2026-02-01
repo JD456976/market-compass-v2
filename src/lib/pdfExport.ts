@@ -1,10 +1,14 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { loadAgentProfile } from './agentProfile';
 
 interface ExportOptions {
   clientName: string;
   reportType: 'Seller' | 'Buyer';
+  snapshotTimestamp?: string;
 }
+
+const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
 export async function exportReportToPdf(
   elementId: string,
@@ -15,77 +19,132 @@ export async function exportReportToPdf(
     throw new Error('Export element not found');
   }
 
+  const agentProfile = loadAgentProfile();
+  const clientDisplay = options.clientName?.trim() || 'Client';
+  const timestamp = options.snapshotTimestamp 
+    ? new Date(options.snapshotTimestamp).toLocaleString()
+    : new Date().toLocaleString();
+
   // Capture the element as a high-quality canvas
   const canvas = await html2canvas(element, {
     scale: 2,
     useCORS: true,
     logging: false,
-    backgroundColor: '#FFFBF5', // Match background color
+    backgroundColor: '#FFFFFF',
   });
 
-  const imgData = canvas.toDataURL('image/png');
-  const imgWidth = 210; // A4 width in mm
-  const pageHeight = 297; // A4 height in mm
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  
   const pdf = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = 210;
+  const pageHeight = 297;
   const margin = 12.7; // ~0.5 inch margin
-  const contentWidth = imgWidth - margin * 2;
-  const scaledImgHeight = (canvas.height * contentWidth) / canvas.width;
+  const contentWidth = pageWidth - margin * 2;
   
-  // Add "Prepared for" header
-  const clientDisplay = options.clientName?.trim() || 'Client';
-  pdf.setFontSize(12);
+  // Calculate header height
+  const headerStartY = margin;
+  let currentY = headerStartY;
+
+  // PDF Header
+  pdf.setFontSize(16);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(30, 30, 30);
+  pdf.text(`${options.reportType} Report`, margin, currentY + 5);
+  
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(100, 100, 100);
-  pdf.text(`Prepared for: ${clientDisplay}`, margin, margin + 5);
+  pdf.text(`Market snapshot as of: ${timestamp}`, pageWidth - margin, currentY + 5, { align: 'right' });
   
-  const headerHeight = 15;
-  let heightLeft = scaledImgHeight;
-  let position = margin + headerHeight;
+  currentY += 12;
+
+  // Prepared for/by lines
+  pdf.setFontSize(10);
+  pdf.setTextColor(60, 60, 60);
+  pdf.text(`Prepared for: ${clientDisplay}`, margin, currentY);
+  currentY += 5;
   
-  // Add image, handling multi-page if needed
-  const maxContentHeight = pageHeight - margin * 2 - headerHeight;
+  pdf.text(`Prepared by: ${agentProfile.agent_name}, ${agentProfile.brokerage_name}`, margin, currentY);
+  currentY += 5;
   
-  if (scaledImgHeight <= maxContentHeight) {
-    // Single page
-    pdf.addImage(imgData, 'PNG', margin, position, contentWidth, scaledImgHeight);
-  } else {
-    // Multi-page
-    let sourceY = 0;
-    const sourceWidth = canvas.width;
-    const pixelsPerMm = canvas.width / contentWidth;
-    
-    while (heightLeft > 0) {
-      const sliceHeight = Math.min(heightLeft, pageHeight - margin * 2 - (position === margin + headerHeight ? headerHeight : 0));
-      const sliceHeightPx = sliceHeight * pixelsPerMm;
-      
-      // Create a slice of the canvas
-      const sliceCanvas = document.createElement('canvas');
-      sliceCanvas.width = sourceWidth;
-      sliceCanvas.height = sliceHeightPx;
-      const ctx = sliceCanvas.getContext('2d');
-      
-      if (ctx) {
-        ctx.drawImage(
-          canvas,
-          0, sourceY,
-          sourceWidth, sliceHeightPx,
-          0, 0,
-          sourceWidth, sliceHeightPx
-        );
-        
-        const sliceData = sliceCanvas.toDataURL('image/png');
-        pdf.addImage(sliceData, 'PNG', margin, position, contentWidth, sliceHeight);
-      }
-      
-      heightLeft -= sliceHeight;
-      sourceY += sliceHeightPx;
-      
-      if (heightLeft > 0) {
-        pdf.addPage();
-        position = margin;
-      }
+  // Contact line
+  let contactLine = `Contact: ${agentProfile.phone} • ${agentProfile.email}`;
+  if (agentProfile.website) {
+    contactLine += ` • ${agentProfile.website}`;
+  }
+  pdf.text(contactLine, margin, currentY);
+  currentY += 5;
+  
+  // License line (if present)
+  if (agentProfile.license) {
+    pdf.text(`License: ${agentProfile.license}`, margin, currentY);
+    currentY += 5;
+  }
+  
+  // Add separator line
+  currentY += 3;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.line(margin, currentY, pageWidth - margin, currentY);
+  currentY += 8;
+
+  const headerHeight = currentY - headerStartY;
+  const footerHeight = 20;
+  const availableHeight = pageHeight - headerHeight - footerHeight - margin;
+
+  // Scale image to fit content width
+  const imgWidth = contentWidth;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  // Calculate total pages needed
+  const totalPages = Math.ceil(imgHeight / availableHeight);
+
+  // Add image content with multi-page support
+  const pixelsPerMm = canvas.width / imgWidth;
+  let sourceY = 0;
+
+  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+    if (pageNum > 1) {
+      pdf.addPage();
+      currentY = margin + 5;
     }
+
+    const sliceHeight = Math.min(availableHeight, imgHeight - (pageNum - 1) * availableHeight);
+    const sliceHeightPx = sliceHeight * pixelsPerMm;
+
+    // Create a slice of the canvas
+    const sliceCanvas = document.createElement('canvas');
+    sliceCanvas.width = canvas.width;
+    sliceCanvas.height = sliceHeightPx;
+    const ctx = sliceCanvas.getContext('2d');
+
+    if (ctx) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+      ctx.drawImage(
+        canvas,
+        0, sourceY,
+        canvas.width, sliceHeightPx,
+        0, 0,
+        canvas.width, sliceHeightPx
+      );
+
+      const sliceData = sliceCanvas.toDataURL('image/png');
+      pdf.addImage(sliceData, 'PNG', margin, currentY, imgWidth, sliceHeight);
+    }
+
+    sourceY += sliceHeightPx;
+
+    // Add footer to each page
+    const footerY = pageHeight - margin;
+    
+    // Page number
+    pdf.setFontSize(9);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text(`Page ${pageNum} of ${totalPages}`, pageWidth / 2, footerY - 10, { align: 'center' });
+    
+    // Disclaimer (smaller text)
+    pdf.setFontSize(6);
+    pdf.setTextColor(130, 130, 130);
+    const disclaimerLines = pdf.splitTextToSize(IMPORTANT_NOTICE, contentWidth);
+    pdf.text(disclaimerLines, margin, footerY - 4);
   }
 
   // Generate filename
