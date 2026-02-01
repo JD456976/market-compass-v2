@@ -15,6 +15,7 @@ import { formatLocation } from '@/lib/utils';
 import { ModeSwitcher } from '@/components/ModeSwitcher';
 import { useClientMode } from '@/contexts/ClientModeContext';
 import { createTemplateFromSession, saveTemplate } from '@/lib/templates';
+import { AgentTakeaways } from '@/components/AgentTakeaways';
 import { 
   getTitle, 
   sellerWhatThisMeans, 
@@ -120,6 +121,7 @@ const SellerReport = () => {
         clientName: reportData.session.client_name,
         reportType: 'Seller',
         snapshotTimestamp: reportData.snapshotTimestamp,
+        isClientMode,
       });
       toast({
         title: "PDF exported",
@@ -173,8 +175,8 @@ const SellerReport = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="hero-gradient text-primary-foreground">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-4 py-6 report-header-mobile">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
               <Link to="/seller">
                 <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
@@ -191,7 +193,7 @@ const SellerReport = () => {
                 </div>
               </div>
             </div>
-            <ModeSwitcher className="bg-primary-foreground/10 rounded-lg px-3 py-2" />
+            <ModeSwitcher className="bg-primary-foreground/10 rounded-lg px-3 py-2 self-end sm:self-auto" />
           </div>
         </div>
       </div>
@@ -204,7 +206,7 @@ const SellerReport = () => {
           className="space-y-6"
         >
           {/* Report content for PDF export */}
-          <div id="report-export" className={`space-y-6 ${isClientMode ? 'client-mode' : ''}`}>
+          <div id="report-export" className={`space-y-6 ${isClientMode ? 'client-mode' : 'agent-mode'}`}>
             {/* Prepared For/By Header Block */}
             <div className="pdf-section pdf-header-section">
               <ReportHeader
@@ -220,11 +222,11 @@ const SellerReport = () => {
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Target className="h-5 w-5 text-accent" />
-                  Property Overview
+                  {getTitle('propertyOverview', isClientMode)}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-4 report-info-block">
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Client</p>
                     <p className="font-medium">{session.client_name}</p>
@@ -256,11 +258,11 @@ const SellerReport = () => {
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <TrendingUp className="h-5 w-5 text-accent" />
-                  Listing Strategy
+                  {getTitle('listingStrategy', isClientMode)}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 likelihood-cards-mobile">
                   <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-1">List Price</p>
                     <p className="text-xl font-serif font-bold">{formatCurrency(inputs.seller_selected_list_price)}</p>
@@ -296,7 +298,7 @@ const SellerReport = () => {
             {/* Market Snapshot */}
             <Card className="pdf-section pdf-avoid-break overflow-hidden">
               <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 section-header-mobile">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Clock className="h-5 w-5 text-accent" />
                     {getTitle('saleLikelihood', isClientMode)}
@@ -307,7 +309,7 @@ const SellerReport = () => {
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-4 likelihood-cards-mobile">
                   <div className="text-center p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
                     <p className="text-sm text-muted-foreground mb-3">30 Days</p>
                     <LikelihoodBadge band={likelihood30} />
@@ -355,6 +357,15 @@ const SellerReport = () => {
                 </p>
               </CardContent>
             </Card>
+
+            {/* Agent Takeaways - Agent Mode Only */}
+            {!isClientMode && (
+              <AgentTakeaways
+                type="seller"
+                session={session}
+                likelihood30={likelihood30}
+              />
+            )}
 
             {/* Tradeoff Summary */}
             <Card className="pdf-section pdf-avoid-break">

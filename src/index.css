@@ -262,8 +262,79 @@ body.is-exporting #report-export button {
   display: none !important;
 }
 
-/* Hide agent notes in PDF export */
-.pdf-export .pdf-hide-agent-notes,
-body.is-exporting .pdf-hide-agent-notes {
+/* Hide agent notes in PDF export when in client mode */
+.pdf-export.client-mode .pdf-hide-agent-notes,
+body.is-exporting .client-mode .pdf-hide-agent-notes {
   display: none !important;
+}
+
+/* Mobile Responsive Fixes (≤480px) */
+@media (max-width: 480px) {
+  /* B1: Report header - prevent overlap and stack cleanly */
+  .report-header-mobile {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  /* B2: Section headers - stack title and timestamp */
+  .section-header-mobile {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.25rem;
+  }
+  
+  .section-header-mobile p {
+    text-align: left;
+    font-size: 0.65rem;
+  }
+  
+  /* B3: Likelihood cards - responsive grid */
+  .likelihood-cards-mobile {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  
+  .likelihood-cards-mobile > *:nth-child(3):last-child {
+    grid-column: 1 / -1;
+  }
+  
+  /* For 3-column grids that should stack on mobile */
+  .grid-cols-3.likelihood-cards-mobile {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .grid-cols-3.likelihood-cards-mobile > * {
+    padding: 1rem;
+  }
+  
+  /* B4: Prepared for/by block - prevent overflow */
+  .report-info-block p {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+  }
+  
+  /* ReportHeader mobile fixes */
+  .pdf-avoid-break.mb-6 p {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* B5: SavedSessions empty state - mobile button layout and safe area */
+@media (max-width: 480px) {
+  .saved-sessions-empty-buttons {
+    flex-direction: column !important;
+    width: 100%;
+  }
+  
+  .saved-sessions-empty-buttons > * {
+    width: 100%;
+  }
+  
+  .saved-sessions-empty-buttons a {
+    width: 100%;
+  }
+  
+  .saved-sessions-empty-buttons button {
+    width: 100%;
+  }
 }
