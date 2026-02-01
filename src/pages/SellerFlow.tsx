@@ -18,7 +18,7 @@ const SellerFlow = () => {
   const [location, setLocation] = useState('');
   const [propertyType, setPropertyType] = useState<PropertyType>('SFH');
   const [condition, setCondition] = useState<Condition>('Maintained');
-  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
+  const [selectedProfileId, setSelectedProfileId] = useState<string | undefined>(undefined);
   const [listPrice, setListPrice] = useState<string>('');
   const [timeframe, setTimeframe] = useState<DesiredTimeframe>('60');
   const [strategy, setStrategy] = useState<StrategyPreference>('Balanced');
@@ -120,10 +120,10 @@ const SellerFlow = () => {
 
             <div className="space-y-2">
               <Label>Market Profile (Optional)</Label>
-              <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
+              <Select value={selectedProfileId ?? "__none__"} onValueChange={(v) => setSelectedProfileId(v === "__none__" ? undefined : v)}>
                 <SelectTrigger><SelectValue placeholder="Select a market profile..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="__none__">None</SelectItem>
                   {marketProfiles.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.label} - {p.location}</SelectItem>
                   ))}

@@ -30,7 +30,7 @@ const BuyerFlow = () => {
   const [location, setLocation] = useState('');
   const [propertyType, setPropertyType] = useState<PropertyType>('SFH');
   const [condition, setCondition] = useState<Condition>('Maintained');
-  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
+  const [selectedProfileId, setSelectedProfileId] = useState<string | undefined>(undefined);
   const [offerPrice, setOfferPrice] = useState<string>('');
   const [financingType, setFinancingType] = useState<FinancingType>('Conventional');
   const [downPayment, setDownPayment] = useState<DownPaymentPercent>('20+');
@@ -149,10 +149,10 @@ const BuyerFlow = () => {
 
             <div className="space-y-2">
               <Label>Market Profile (Optional)</Label>
-              <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
+              <Select value={selectedProfileId ?? "__none__"} onValueChange={(v) => setSelectedProfileId(v === "__none__" ? undefined : v)}>
                 <SelectTrigger><SelectValue placeholder="Select a market profile..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="__none__">None</SelectItem>
                   {marketProfiles.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.label} - {p.location}</SelectItem>
                   ))}
