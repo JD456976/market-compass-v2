@@ -4,10 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Eye, Copy, Trash2, Building2, Users, FolderOpen, Calendar } from 'lucide-react';
+import { ArrowLeft, Eye, Copy, Trash2, Building2, Users, FolderOpen, Calendar, GitCompare, Check, X } from 'lucide-react';
 import { Session } from '@/types';
 import { loadSessions, upsertSession, deleteSession, generateId } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
+import { formatLocation } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,10 @@ const SavedSessions = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
+  
+  // Compare mode state
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedForCompare, setSelectedForCompare] = useState<string[]>([]);
 
   useEffect(() => {
     refreshSessions();
@@ -38,6 +43,10 @@ const SavedSessions = () => {
   };
 
   const handleOpen = (session: Session) => {
+    if (compareMode) {
+      toggleCompareSelection(session.id);
+      return;
+    }
     sessionStorage.setItem('current_session', JSON.stringify(session));
     if (session.session_type === 'Seller') {
       navigate('/seller/report');
@@ -81,6 +90,29 @@ const SavedSessions = () => {
     setSessionToDelete(null);
   };
 
+  const toggleCompareSelection = (id: string) => {
+    setSelectedForCompare(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(s => s !== id);
+      }
+      if (prev.length >= 2) {
+        return [prev[1], id]; // Keep last selected + new one
+      }
+      return [...prev, id];
+    });
+  };
+
+  const handleCompare = () => {
+    if (selectedForCompare.length === 2) {
+      navigate(`/compare?a=${selectedForCompare[0]}&b=${selectedForCompare[1]}`);
+    }
+  };
+
+  const exitCompareMode = () => {
+    setCompareMode(false);
+    setSelectedForCompare([]);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -96,22 +128,67 @@ const SavedSessions = () => {
       {/* Header */}
       <div className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link to="/">
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <FolderOpen className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-serif font-bold">Saved Sessions</h1>
-                <p className="text-sm text-muted-foreground">{sessions.length} session{sessions.length !== 1 ? 's' : ''} saved</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link to="/">
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <FolderOpen className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-serif font-bold">Saved Sessions</h1>
+                  <p className="text-sm text-muted-foreground">{sessions.length} session{sessions.length !== 1 ? 's' : ''} saved</p>
+                </div>
               </div>
             </div>
+            
+            {/* Compare Actions */}
+            {sessions.length >= 2 && (
+              <div className="flex items-center gap-2">
+                {compareMode ? (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={exitCompareMode}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={handleCompare}
+                      disabled={selectedForCompare.length !== 2}
+                      variant="accent"
+                    >
+                      <GitCompare className="mr-2 h-4 w-4" />
+                      Compare ({selectedForCompare.length}/2)
+                    </Button>
+                  </>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setCompareMode(true)}
+                  >
+                    <GitCompare className="mr-2 h-4 w-4" />
+                    Compare Sessions
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
+          
+          {/* Compare Mode Instructions */}
+          {compareMode && (
+            <div className="mt-3 p-3 bg-accent/10 rounded-lg text-sm text-muted-foreground">
+              Select two sessions to compare side-by-side
+            </div>
+          )}
         </div>
       </div>
 
@@ -153,60 +230,84 @@ const SavedSessions = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
-              {sessions.map((session, index) => (
-                <motion.div
-                  key={session.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Card className="group">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-xl ${session.session_type === 'Seller' ? 'bg-primary/10' : 'bg-accent/10'}`}>
-                            {session.session_type === 'Seller' ? (
-                              <Building2 className="h-6 w-6 text-primary" />
-                            ) : (
-                              <Users className="h-6 w-6 text-accent" />
+              {sessions.map((session, index) => {
+                const isSelected = selectedForCompare.includes(session.id);
+                
+                return (
+                  <motion.div
+                    key={session.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card 
+                      className={`group cursor-pointer transition-all ${
+                        compareMode 
+                          ? isSelected 
+                            ? 'ring-2 ring-accent border-accent' 
+                            : 'hover:border-accent/50'
+                          : ''
+                      }`}
+                      onClick={() => compareMode && toggleCompareSelection(session.id)}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            {compareMode && (
+                              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                isSelected 
+                                  ? 'bg-accent border-accent text-accent-foreground' 
+                                  : 'border-border'
+                              }`}>
+                                {isSelected && <Check className="h-4 w-4" />}
+                              </div>
                             )}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-3 mb-1">
-                              <h3 className="font-serif text-lg font-semibold">{session.client_name}</h3>
-                              <Badge variant={session.session_type === 'Seller' ? 'default' : 'accent'}>
-                                {session.session_type}
-                              </Badge>
+                            <div className={`p-3 rounded-xl ${session.session_type === 'Seller' ? 'bg-primary/10' : 'bg-accent/10'}`}>
+                              {session.session_type === 'Seller' ? (
+                                <Building2 className="h-6 w-6 text-primary" />
+                              ) : (
+                                <Users className="h-6 w-6 text-accent" />
+                              )}
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span>{session.location}</span>
-                              <span>•</span>
-                              <span>{session.property_type}</span>
-                              <span>•</span>
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {formatDate(session.updated_at)}
-                              </span>
+                            <div>
+                              <div className="flex items-center gap-3 mb-1">
+                                <h3 className="font-serif text-lg font-semibold">{session.client_name}</h3>
+                                <Badge variant={session.session_type === 'Seller' ? 'default' : 'accent'}>
+                                  {session.session_type}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <span>{formatLocation(session.location)}</span>
+                                <span>•</span>
+                                <span>{session.property_type}</span>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {formatDate(session.updated_at)}
+                                </span>
+                              </div>
                             </div>
                           </div>
+                          {!compareMode && (
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button variant="outline" size="sm" onClick={() => handleOpen(session)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Open
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDuplicate(session); }} title="Duplicate">
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeleteClick(session.id); }} title="Delete">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="outline" size="sm" onClick={() => handleOpen(session)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Open
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDuplicate(session)} title="Duplicate">
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(session.id)} title="Delete">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           )}
         </AnimatePresence>

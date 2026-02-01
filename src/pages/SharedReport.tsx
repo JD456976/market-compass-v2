@@ -188,6 +188,13 @@ const SharedReport = () => {
                       <p className="text-xl font-serif font-bold">{session.seller_inputs.strategy_preference}</p>
                     </div>
                   </div>
+                  {/* Only show client notes - never agent notes */}
+                  {(session.seller_inputs.client_notes || session.seller_inputs.notes) && (
+                    <div className="mt-4 p-4 rounded-xl bg-muted/50">
+                      <p className="text-sm text-muted-foreground mb-1">Notes</p>
+                      <p className="text-sm">{session.seller_inputs.client_notes || session.seller_inputs.notes}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -256,6 +263,13 @@ const SharedReport = () => {
                       <p className="text-lg font-serif font-bold">{session.buyer_inputs.closing_timeline} days</p>
                     </div>
                   </div>
+                  {/* Only show client notes - never agent notes */}
+                  {(session.buyer_inputs.client_notes || session.buyer_inputs.notes) && (
+                    <div className="mt-4 p-4 rounded-xl bg-muted/50">
+                      <p className="text-sm text-muted-foreground mb-1">Notes</p>
+                      <p className="text-sm">{session.buyer_inputs.client_notes || session.buyer_inputs.notes}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

@@ -261,3 +261,9 @@ body.is-exporting #report-export button {
 .pdf-export button {
   display: none !important;
 }
+
+/* Hide agent notes in PDF export */
+.pdf-export .pdf-hide-agent-notes,
+body.is-exporting .pdf-hide-agent-notes {
+  display: none !important;
+}

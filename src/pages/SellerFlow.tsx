@@ -25,7 +25,8 @@ const SellerFlow = () => {
   const [listPrice, setListPrice] = useState<string>('');
   const [timeframe, setTimeframe] = useState<DesiredTimeframe>('60');
   const [strategy, setStrategy] = useState<StrategyPreference>('Balanced');
-  const [notes, setNotes] = useState('');
+  const [agentNotes, setAgentNotes] = useState('');
+  const [clientNotes, setClientNotes] = useState('');
 
   useEffect(() => {
     setMarketProfiles(loadMarketProfiles());
@@ -44,7 +45,8 @@ const SellerFlow = () => {
         seller_selected_list_price: parseFloat(listPrice) || 0,
         desired_timeframe: timeframe,
         strategy_preference: strategy,
-        notes: notes || undefined,
+        agent_notes: agentNotes || undefined,
+        client_notes: clientNotes || undefined,
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -234,13 +236,25 @@ const SellerFlow = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Notes <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+                <Label htmlFor="clientNotes">Notes for Client <span className="text-muted-foreground text-xs">(Optional — included in PDF/Share)</span></Label>
                 <Textarea
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Any additional context about the property or client goals..."
-                  rows={3}
+                  id="clientNotes"
+                  value={clientNotes}
+                  onChange={(e) => setClientNotes(e.target.value)}
+                  placeholder="Notes visible to the client in exports and shared links..."
+                  rows={2}
+                  className="resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="agentNotes">Agent Notes <span className="text-muted-foreground text-xs">(Private — never shared)</span></Label>
+                <Textarea
+                  id="agentNotes"
+                  value={agentNotes}
+                  onChange={(e) => setAgentNotes(e.target.value)}
+                  placeholder="Private notes for your reference only..."
+                  rows={2}
                   className="resize-none"
                 />
               </div>

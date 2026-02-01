@@ -221,10 +221,20 @@ const SellerReport = () => {
                     <p className="text-xl font-serif font-bold">{inputs.strategy_preference}</p>
                   </div>
                 </div>
-                {inputs.notes && (
+                {/* Client Notes - visible in PDF/Share */}
+                {(inputs.client_notes || inputs.notes) && (
                   <div className="mt-4 p-4 rounded-xl bg-muted/50">
                     <p className="text-sm text-muted-foreground mb-1">Notes</p>
-                    <p className="text-sm">{inputs.notes}</p>
+                    <p className="text-sm">{inputs.client_notes || inputs.notes}</p>
+                  </div>
+                )}
+                {/* Agent Notes - hidden from PDF/Share */}
+                {inputs.agent_notes && (
+                  <div className="mt-4 p-4 rounded-xl bg-secondary/30 border border-border/50 pdf-hide-agent-notes">
+                    <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
+                      Agent Notes <span className="text-xs">(Private)</span>
+                    </p>
+                    <p className="text-sm">{inputs.agent_notes}</p>
                   </div>
                 )}
               </CardContent>
