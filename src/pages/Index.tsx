@@ -1,9 +1,12 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen } from 'lucide-react';
+import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, Settings } from 'lucide-react';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
+import { supabase } from '@/integrations/supabase/client';
+import { isAllowedAdmin } from '@/lib/adminConfig';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -20,6 +23,28 @@ const staggerContainer = {
 };
 
 const Index = () => {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email && isAllowedAdmin(session.user.email)) {
+        setIsAdmin(true);
+      }
+    };
+    checkAdmin();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      if (session?.user?.email && isAllowedAdmin(session.user.email)) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Agent Onboarding Modal */}
@@ -201,6 +226,15 @@ const Index = () => {
             <div className="flex items-center gap-2">
               <Compass className="h-4 w-4" />
               <span>Market Compass v0</span>
+              {isAdmin && (
+                <Link 
+                  to="/admin" 
+                  className="ml-2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                  title="Admin"
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                </Link>
+              )}
             </div>
             <p className="text-xs text-center max-w-md">
               Uses public market trend research and transaction logic. 
