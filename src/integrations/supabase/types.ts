@@ -53,6 +53,41 @@ export type Database = {
         }
         Relationships: []
       }
+      beta_activations: {
+        Row: {
+          activated_at: string
+          activation_source: string
+          code_id: string | null
+          device_id: string
+          email: string
+          id: string
+        }
+        Insert: {
+          activated_at?: string
+          activation_source: string
+          code_id?: string | null
+          device_id: string
+          email: string
+          id?: string
+        }
+        Update: {
+          activated_at?: string
+          activation_source?: string
+          code_id?: string | null
+          device_id?: string
+          email?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beta_activations_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "beta_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       beta_authorized_devices: {
         Row: {
           activated_at: string
@@ -91,18 +126,77 @@ export type Database = {
           },
         ]
       }
+      beta_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          created_by_admin_email: string
+          email: string
+          expires_at: string | null
+          id: string
+          issued_to: string | null
+          revoked_at: string | null
+          used_at: string | null
+          used_by_device_id: string | null
+          used_by_user_agent: string | null
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          created_by_admin_email: string
+          email: string
+          expires_at?: string | null
+          id?: string
+          issued_to?: string | null
+          revoked_at?: string | null
+          used_at?: string | null
+          used_by_device_id?: string | null
+          used_by_user_agent?: string | null
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          created_by_admin_email?: string
+          email?: string
+          expires_at?: string | null
+          id?: string
+          issued_to?: string | null
+          revoked_at?: string | null
+          used_at?: string | null
+          used_by_device_id?: string | null
+          used_by_user_agent?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_beta_access: {
+        Args: { p_device_id: string; p_email: string }
+        Returns: Json
+      }
       check_device_authorization: {
         Args: { p_device_id: string }
         Returns: Json
       }
       is_admin_user: { Args: never; Returns: boolean }
+      record_admin_activation: {
+        Args: { p_device_id: string; p_email: string }
+        Returns: Json
+      }
       redeem_beta_code: {
         Args: { p_code: string; p_device_id: string }
+        Returns: Json
+      }
+      validate_beta_code: {
+        Args: {
+          p_code_hash: string
+          p_device_id: string
+          p_email: string
+          p_user_agent?: string
+        }
         Returns: Json
       }
     }
