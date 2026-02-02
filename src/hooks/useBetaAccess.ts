@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getDeviceId } from '@/lib/deviceId';
+import { isAllowedAdmin } from '@/lib/adminConfig';
 
 type BetaStatus = 'loading' | 'authorized' | 'not_authorized' | 'revoked';
 
@@ -8,6 +9,7 @@ interface BetaAccessState {
   status: BetaStatus;
   label: string | null;
   deviceId: string;
+  isAdmin: boolean;
 }
 
 export function useBetaAccess() {
@@ -15,12 +17,25 @@ export function useBetaAccess() {
     status: 'loading',
     label: null,
     deviceId: '',
+    isAdmin: false,
   });
   const [isRedeeming, setIsRedeeming] = useState(false);
 
   const checkAuthorization = useCallback(async () => {
     const deviceId = getDeviceId();
     setState(prev => ({ ...prev, deviceId }));
+
+    // First check if user is an admin - admins bypass beta gate
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.email && isAllowedAdmin(session.user.email)) {
+      setState(prev => ({
+        ...prev,
+        status: 'authorized',
+        label: 'Admin',
+        isAdmin: true,
+      }));
+      return;
+    }
 
     try {
       const { data, error } = await supabase.rpc('check_device_authorization', {
