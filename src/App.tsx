@@ -23,22 +23,24 @@ import SharedComparisonReport from "./pages/SharedComparisonReport";
 import AgentProfile from "./pages/AgentProfile";
 import Templates from "./pages/Templates";
 import Admin from "./pages/Admin";
+import BetaAccess from "./pages/BetaAccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Routes that bypass beta gate (shared links and admin)
-const PUBLIC_ROUTES = ['/share/', '/admin'];
+// Routes that bypass beta gate (shared links, admin, and beta access page itself)
+const PUBLIC_ROUTES = ['/share/', '/admin', '/beta'];
 
 function AppRoutes() {
   const location = useLocation();
   
-  // Check if current route is public (shared links or admin)
+  // Check if current route is public (shared links, admin, or beta access)
   const isPublicRoute = PUBLIC_ROUTES.some(route => location.pathname.startsWith(route));
 
   const routes = (
     <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/beta" element={<BetaAccess />} />
       <Route path="/market-profiles" element={<MarketProfiles />} />
       <Route path="/market-scenarios" element={<MarketScenarios />} />
       <Route path="/market-data" element={<MarketData />} />

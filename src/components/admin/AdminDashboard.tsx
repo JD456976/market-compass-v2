@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
@@ -16,9 +15,10 @@ import {
   Clock,
   Ban
 } from 'lucide-react';
-import { CreateCodePanel } from './CreateCodePanel';
-import { CodesTable } from './CodesTable';
-import { DevicesTable } from './DevicesTable';
+import { Card, CardContent } from '@/components/ui/card';
+import { IssueCodePanel } from './IssueCodePanel';
+import { BetaCodesTable, BetaCode } from './BetaCodesTable';
+import { ActivationsTable, BetaActivation } from './ActivationsTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface AdminDashboardProps {
@@ -26,79 +26,33 @@ interface AdminDashboardProps {
   onSignOut: () => void;
 }
 
-export interface BetaCode {
-  id: string;
-  code: string;
-  status: 'active' | 'used' | 'revoked' | 'expired';
-  expires_at: string | null;
-  created_at: string;
-  created_by: string;
-  used_at: string | null;
-  used_by_device_id: string | null;
-  issued_to: string | null;
-  note: string | null;
-}
-
-export interface BetaDevice {
-  id: string;
-  device_id: string;
-  activated_at: string;
-  activated_via_code_id: string | null;
-  is_revoked: boolean;
-  revoked_at: string | null;
-  label: string | null;
-  code?: BetaCode;
-}
-
 export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
   const [codes, setCodes] = useState<BetaCode[]>([]);
-  const [devices, setDevices] = useState<BetaDevice[]>([]);
+  const [activations, setActivations] = useState<BetaActivation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showCreatePanel, setShowCreatePanel] = useState(false);
+  const [showIssuePanel, setShowIssuePanel] = useState(false);
   const { toast } = useToast();
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch codes
+      // Fetch codes from new table
       const { data: codesData, error: codesError } = await supabase
-        .from('beta_access_codes')
+        .from('beta_codes')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (codesError) throw codesError;
+      setCodes(codesData || []);
 
-      // Auto-expire past-due codes
-      const now = new Date();
-      const updatedCodes = (codesData || []).map(code => {
-        if (code.status === 'active' && code.expires_at && new Date(code.expires_at) < now) {
-          // Update in background
-          supabase
-            .from('beta_access_codes')
-            .update({ status: 'expired' })
-            .eq('id', code.id)
-            .then();
-          return { ...code, status: 'expired' as const };
-        }
-        return code;
-      }) as BetaCode[];
-
-      setCodes(updatedCodes);
-
-      // Fetch devices with their associated codes
-      const { data: devicesData, error: devicesError } = await supabase
-        .from('beta_authorized_devices')
-        .select('*, beta_access_codes(*)')
+      // Fetch activations
+      const { data: activationsData, error: activationsError } = await supabase
+        .from('beta_activations')
+        .select('*')
         .order('activated_at', { ascending: false });
 
-      if (devicesError) throw devicesError;
-
-      const processedDevices = (devicesData || []).map(device => ({
-        ...device,
-        code: device.beta_access_codes as BetaCode | undefined,
-      })) as BetaDevice[];
-
-      setDevices(processedDevices);
+      if (activationsError) throw activationsError;
+      setActivations(activationsData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -115,12 +69,20 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
     fetchData();
   }, []);
 
+  // Calculate stats from new data model
+  const getCodeStatus = (code: BetaCode): string => {
+    if (code.revoked_at) return 'revoked';
+    if (code.used_at) return 'used';
+    if (code.expires_at && new Date(code.expires_at) < new Date()) return 'expired';
+    return 'active';
+  };
+
   const stats = {
-    active: codes.filter(c => c.status === 'active').length,
-    used: codes.filter(c => c.status === 'used').length,
-    revoked: codes.filter(c => c.status === 'revoked').length,
-    expired: codes.filter(c => c.status === 'expired').length,
-    devices: devices.filter(d => !d.is_revoked).length,
+    active: codes.filter(c => getCodeStatus(c) === 'active').length,
+    used: codes.filter(c => getCodeStatus(c) === 'used').length,
+    revoked: codes.filter(c => getCodeStatus(c) === 'revoked').length,
+    expired: codes.filter(c => getCodeStatus(c) === 'expired').length,
+    activations: activations.length,
   };
 
   return (
@@ -217,25 +179,25 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
                   <Smartphone className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold">{stats.devices}</p>
-                  <p className="text-xs text-muted-foreground">Active Devices</p>
+                  <p className="text-2xl font-semibold">{stats.activations}</p>
+                  <p className="text-xs text-muted-foreground">Activations</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Create Code Panel */}
-        {showCreatePanel ? (
-          <CreateCodePanel 
-            userEmail={userEmail || ''} 
-            onClose={() => setShowCreatePanel(false)}
+        {/* Issue Code Panel */}
+        {showIssuePanel ? (
+          <IssueCodePanel 
+            adminEmail={userEmail || ''} 
+            onClose={() => setShowIssuePanel(false)}
             onCreated={fetchData}
           />
         ) : (
-          <Button onClick={() => setShowCreatePanel(true)} className="w-full md:w-auto">
+          <Button onClick={() => setShowIssuePanel(true)} className="w-full md:w-auto">
             <Plus className="h-4 w-4 mr-2" />
-            Generate Access Code
+            Issue Access Code
           </Button>
         )}
 
@@ -246,18 +208,18 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
               <KeyRound className="h-4 w-4 mr-2" />
               Access Codes ({codes.length})
             </TabsTrigger>
-            <TabsTrigger value="devices">
+            <TabsTrigger value="activations">
               <Smartphone className="h-4 w-4 mr-2" />
-              Devices ({devices.length})
+              Activations ({activations.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="codes">
-            <CodesTable codes={codes} onRefresh={fetchData} />
+            <BetaCodesTable codes={codes} onRefresh={fetchData} />
           </TabsContent>
 
-          <TabsContent value="devices">
-            <DevicesTable devices={devices} onRefresh={fetchData} />
+          <TabsContent value="activations">
+            <ActivationsTable activations={activations} />
           </TabsContent>
         </Tabs>
       </main>
