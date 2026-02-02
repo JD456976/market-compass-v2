@@ -159,6 +159,10 @@ export function MarketGrounding({
       <div className="flex items-start gap-2">
         <Compass className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
         <div className="space-y-1">
+          {/* Trust cue - always visible in agent mode */}
+          <p className="text-[10px] text-muted-foreground italic mb-1">
+            Analysis based on public market trends and transaction structure.
+          </p>
           <p className="text-xs font-medium text-foreground">
             Market assumptions based on {snapshot.sourceLabel.toLowerCase()} for {city}
             {!isGenericBaseline && <span className="text-muted-foreground">, updated {updatedDate}</span>}
@@ -172,7 +176,7 @@ export function MarketGrounding({
           </div>
           {isGenericBaseline && (
             <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1">
-              No specific data for this location. Using generic market baseline.
+              This town is outside the current Market Compass dataset. Baseline assumptions are being used.
             </p>
           )}
         </div>
