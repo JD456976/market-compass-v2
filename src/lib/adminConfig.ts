@@ -3,6 +3,7 @@
 
 export const ADMIN_EMAILS = [
   'jason.craig@chinattirealty.com',
+  'jdog45@gmail.com', // temporary development admin
 ] as const;
 
 export function isAllowedAdmin(email: string | undefined | null): boolean {
