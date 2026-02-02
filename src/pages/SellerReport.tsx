@@ -41,7 +41,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DraftEditorSheet } from '@/components/DraftEditorSheet';
 import { LikelihoodBar, TradeoffMatrix, getSellerTradeoffPosition, MetricIcon } from '@/components/ClientVisuals';
-import { getMarketSnapshotOrBaseline, MarketSnapshot, parseCityFromLocation } from '@/lib/marketSnapshots';
+import { getMarketSnapshotOrBaseline, MarketSnapshot, parseCityFromLocation, getMarketContext } from '@/lib/marketSnapshots';
 import { 
   MarketGrounding, 
   RealityAnchorNotes, 
@@ -50,6 +50,7 @@ import {
   getConsistencyIssues,
   getPrimaryLimitingFactor
 } from '@/components/RealityAnchors';
+import { RotateCcw } from 'lucide-react';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -230,6 +231,46 @@ const SellerReport = () => {
     toast({
       title: "Draft updated",
       description: "Your changes have been applied.",
+    });
+  };
+
+  // Reset to market baseline defaults (Agent-only)
+  const handleResetToBaseline = () => {
+    if (!marketSnapshot) return;
+    
+    const snapshot = marketSnapshot.snapshot;
+    const context = getMarketContext(snapshot);
+    
+    // Derive defaults from market context - properly typed
+    const baselineTimeframe: '30' | '60' | '90+' = context.speedContext === 'faster' 
+      ? '30' 
+      : context.speedContext === 'slower' 
+      ? '90+' 
+      : '60';
+    
+    const baselineStrategy: 'Maximize price' | 'Balanced' | 'Prioritize speed' = 
+      context.priceContext === 'above'
+        ? 'Balanced'
+        : context.priceContext === 'below'
+        ? 'Prioritize speed'
+        : 'Balanced';
+
+    const updatedInputs = {
+      ...inputs,
+      desired_timeframe: baselineTimeframe,
+      strategy_preference: baselineStrategy,
+    };
+
+    const updatedSession: Session = {
+      ...session,
+      seller_inputs: updatedInputs,
+      updated_at: new Date().toISOString(),
+    };
+
+    handleDraftUpdate(updatedSession);
+    toast({
+      title: "Reset to baseline",
+      description: "Strategy defaults derived from market conditions.",
     });
   };
   return (
@@ -512,9 +553,9 @@ const SellerReport = () => {
                     <p className="font-medium mb-1">Price vs. Time</p>
                     <p className="text-sm text-muted-foreground">
                       {inputs.strategy_preference === 'Maximize price' 
-                        ? 'Prioritizing maximum price may extend time on market.'
+                        ? 'Prioritizing maximum price tends to extend time on market.'
                         : inputs.strategy_preference === 'Prioritize speed'
-                        ? 'Prioritizing speed may require competitive pricing.'
+                        ? 'Prioritizing speed often requires more competitive pricing.'
                         : 'Balanced approach aims to optimize both price and timing.'}
                     </p>
                   </div>
@@ -525,7 +566,7 @@ const SellerReport = () => {
                     <p className="font-medium mb-1">Certainty</p>
                     <p className="text-sm text-muted-foreground">
                       At the current list price of {formatCurrency(inputs.seller_selected_list_price)}, 
-                      the likelihood of sale increases over time as market exposure grows.
+                      the likelihood of sale tends to increase over time as market exposure grows.
                     </p>
                   </div>
                 </div>
@@ -564,12 +605,18 @@ const SellerReport = () => {
               <FileText className="mr-2 h-4 w-4" />
               Template
             </Button>
-            {/* Agent-only: Edit Draft */}
+            {/* Agent-only: Edit Draft and Reset */}
             {!isClientMode && (
-              <Button onClick={() => setEditSheetOpen(true)} size="lg" variant="outline" className="min-h-[44px]">
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit Draft
-              </Button>
+              <>
+                <Button onClick={() => setEditSheetOpen(true)} size="lg" variant="outline" className="min-h-[44px]">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Draft
+                </Button>
+                <Button onClick={handleResetToBaseline} size="lg" variant="ghost" className="min-h-[44px] text-muted-foreground">
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Reset
+                </Button>
+              </>
             )}
             {/* Share/Export only visible in Client mode */}
             {isClientMode && (

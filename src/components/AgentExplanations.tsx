@@ -73,7 +73,7 @@ export function WhatWouldChange({ suggestions }: WhatWouldChangeProps) {
   );
 }
 
-// Helper to generate factors based on session data
+// Helper to generate factors based on session data - probabilistic language
 export function getAcceptanceFactors(session: Session, band: LikelihoodBand): string[] {
   const factors: string[] = [];
   const inputs = session.buyer_inputs;
@@ -82,27 +82,27 @@ export function getAcceptanceFactors(session: Session, band: LikelihoodBand): st
 
   // Positive factors
   if (inputs.financing_type === 'Cash') {
-    factors.push('Cash financing provides strongest offer position');
+    factors.push('Cash financing tends to provide the strongest offer position');
   }
   if (inputs.closing_timeline === '<21' || inputs.closing_timeline === '21-30') {
-    factors.push('Competitive closing timeline');
+    factors.push('Competitive closing timeline is typically favorable');
   }
   if (inputs.contingencies.length === 0 || inputs.contingencies.includes('None')) {
-    factors.push('No contingencies increases seller confidence');
+    factors.push('No contingencies tends to increase seller confidence');
   }
 
   // Negative factors
   if (inputs.contingencies.includes('Home sale')) {
-    factors.push('Home sale contingency significantly reduces certainty');
+    factors.push('Home sale contingency often significantly reduces certainty');
   }
   if (inputs.financing_type === 'FHA' || inputs.financing_type === 'VA') {
     factors.push('FHA/VA financing may require additional seller accommodations');
   }
   if (inputs.closing_timeline === '45+') {
-    factors.push('Extended closing timeline may concern sellers');
+    factors.push('Extended closing timeline can concern some sellers');
   }
   if (inputs.contingencies.length >= 3) {
-    factors.push('Multiple contingencies reduce offer competitiveness');
+    factors.push('Multiple contingencies tend to reduce offer competitiveness');
   }
 
   return factors.slice(0, 3); // Max 3 factors
@@ -115,13 +115,13 @@ export function getImprovementSuggestions(session: Session, band: LikelihoodBand
   if (!inputs || band === 'High') return suggestions;
 
   if (inputs.contingencies.length > 1) {
-    suggestions.push('Reducing contingencies would likely increase certainty.');
+    suggestions.push('Reducing contingencies tends to increase certainty.');
   }
   if (inputs.closing_timeline === '31-45' || inputs.closing_timeline === '45+') {
-    suggestions.push('Shortening the closing timeline could strengthen the offer.');
+    suggestions.push('Shortening the closing timeline may strengthen the offer.');
   }
   if (inputs.financing_type !== 'Cash' && inputs.down_payment_percent !== '20+') {
-    suggestions.push('A larger down payment signals stronger buyer commitment.');
+    suggestions.push('A larger down payment often signals stronger buyer commitment.');
   }
 
   return suggestions;
@@ -134,16 +134,16 @@ export function getSellerFactors(session: Session, band: LikelihoodBand): string
   if (!inputs) return factors;
 
   if (inputs.strategy_preference === 'Prioritize speed') {
-    factors.push('Speed-focused strategy may accept lower offers');
+    factors.push('Speed-focused strategy may be more likely to accept lower offers');
   }
   if (inputs.strategy_preference === 'Maximize price') {
-    factors.push('Price maximization may extend time on market');
+    factors.push('Price maximization approach tends to extend time on market');
   }
   if (inputs.desired_timeframe === '30') {
-    factors.push('Aggressive timeline requires competitive pricing');
+    factors.push('Aggressive timeline often requires competitive pricing');
   }
   if (session.condition === 'Renovated' || session.condition === 'Updated') {
-    factors.push('Property condition supports asking price');
+    factors.push('Property condition tends to support asking price');
   }
   if (session.condition === 'Dated') {
     factors.push('Property condition may limit buyer pool');
@@ -159,10 +159,10 @@ export function getSellerImprovementSuggestions(session: Session, band: Likeliho
   if (!inputs || band === 'High') return suggestions;
 
   if (inputs.strategy_preference === 'Maximize price') {
-    suggestions.push('A balanced approach could improve sale probability.');
+    suggestions.push('A balanced approach may improve sale probability.');
   }
   if (inputs.desired_timeframe === '30') {
-    suggestions.push('Extending the timeframe would provide more market exposure.');
+    suggestions.push('Extending the timeframe tends to provide more market exposure.');
   }
 
   return suggestions;

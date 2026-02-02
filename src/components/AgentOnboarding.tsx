@@ -191,7 +191,7 @@ export function AgentOnboarding({ onComplete, forceShow = false }: AgentOnboardi
   );
 }
 
-// Trigger button to re-open onboarding
+// Trigger button to re-open onboarding - matches other nav buttons
 export function OnboardingTrigger({ className }: { className?: string }) {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -199,9 +199,9 @@ export function OnboardingTrigger({ className }: { className?: string }) {
     <>
       <Button 
         variant="outline" 
-        size="sm" 
+        size="lg"
         onClick={() => setShowOnboarding(true)}
-        className={className}
+        className={`min-w-[160px] ${className || ''}`}
       >
         <Compass className="mr-2 h-4 w-4" />
         How It Works

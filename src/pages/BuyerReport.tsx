@@ -43,7 +43,7 @@ import { Label } from '@/components/ui/label';
 import { DraftEditorSheet } from '@/components/DraftEditorSheet';
 import { LikelihoodBar, TradeoffMatrix, getBuyerTradeoffPosition, MetricIcon } from '@/components/ClientVisuals';
 import { AgentLab, AgentLabTrigger } from '@/components/AgentLab';
-import { getMarketSnapshotOrBaseline, MarketSnapshot, parseCityFromLocation } from '@/lib/marketSnapshots';
+import { getMarketSnapshotOrBaseline, MarketSnapshot, parseCityFromLocation, getMarketContext, GENERIC_BASELINE } from '@/lib/marketSnapshots';
 import { 
   MarketGrounding, 
   RealityAnchorNotes, 
@@ -52,6 +52,7 @@ import {
   getConsistencyIssues,
   getPrimaryLimitingFactor
 } from '@/components/RealityAnchors';
+import { RotateCcw } from 'lucide-react';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -253,6 +254,50 @@ const BuyerReport = () => {
     toast({
       title: "Draft updated",
       description: "Your changes have been applied.",
+    });
+  };
+
+  // Reset to market baseline defaults (Agent-only)
+  const handleResetToBaseline = () => {
+    if (!marketSnapshot) return;
+    
+    const snapshot = marketSnapshot.snapshot;
+    const context = getMarketContext(snapshot);
+    
+    // Derive defaults from market context - properly typed
+    const baselineContingencies: ('Inspection' | 'Financing' | 'Appraisal' | 'Home sale' | 'None')[] = 
+      context.competitionContext === 'high' 
+        ? ['Inspection'] 
+        : ['Inspection', 'Financing'];
+    
+    const baselineTimeline: '<21' | '21-30' | '31-45' | '45+' = context.speedContext === 'faster' 
+      ? '21-30' 
+      : context.speedContext === 'slower' 
+      ? '45+' 
+      : '31-45';
+    
+    const baselinePreference: 'Must win' | 'Balanced' | 'Price-protective' = 
+      context.competitionContext === 'high'
+        ? 'Must win'
+        : 'Balanced';
+
+    const updatedInputs = {
+      ...inputs,
+      contingencies: baselineContingencies,
+      closing_timeline: baselineTimeline,
+      buyer_preference: baselinePreference,
+    };
+
+    const updatedSession: Session = {
+      ...session,
+      buyer_inputs: updatedInputs,
+      updated_at: new Date().toISOString(),
+    };
+
+    handleDraftUpdate(updatedSession);
+    toast({
+      title: "Reset to baseline",
+      description: "Strategy defaults derived from market conditions.",
     });
   };
 
@@ -580,12 +625,16 @@ const BuyerReport = () => {
               <FileText className="mr-2 h-4 w-4" />
               Template
             </Button>
-            {/* Agent-only: Edit Draft and Lab */}
+            {/* Agent-only: Edit Draft, Lab, and Reset */}
             {!isClientMode && (
               <>
                 <Button onClick={() => setEditSheetOpen(true)} size="lg" variant="outline" className="min-h-[44px]">
                   <Pencil className="mr-2 h-4 w-4" />
                   Edit Draft
+                </Button>
+                <Button onClick={handleResetToBaseline} size="lg" variant="ghost" className="min-h-[44px] text-muted-foreground">
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Reset
                 </Button>
                 <AgentLabTrigger onClick={() => setLabOpen(true)} />
               </>

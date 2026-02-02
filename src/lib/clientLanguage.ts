@@ -49,39 +49,39 @@ export const buyerRiskDescriptions = {
   },
 };
 
-// What This Means content (buyer)
+// What This Means content (buyer) - probabilistic language
 export const buyerWhatThisMeans = {
   agent: {
     high: 'Your offer terms are well-aligned with seller expectations. Strong financing and favorable terms tend to make offers more competitive in the current market.',
-    moderate: 'Your offer may face competition from other buyers. Sellers often weigh multiple factors including price, contingencies, and closing timeline when evaluating offers.',
-    low: 'At the current offer terms, acceptance may be less certain. This often occurs when contingencies or financing create perceived risk for the seller.',
+    moderate: 'Your offer is likely to face competition from other buyers. Sellers often weigh multiple factors including price, contingencies, and closing timeline when evaluating offers.',
+    low: 'At the current offer terms, acceptance tends to be less certain. This often occurs when contingencies or financing create perceived risk for the seller.',
   },
   client: {
     high: 'Your offer is well-positioned for serious consideration. The combination of your terms and timing aligns well with what sellers typically look for.',
-    moderate: 'Your offer has solid fundamentals. In competitive situations, sellers consider many factors including timing, terms, and overall fit.',
+    moderate: 'Your offer has solid fundamentals. In competitive situations, sellers tend to consider many factors including timing, terms, and overall fit.',
     low: 'There may be opportunities to strengthen your offer. Small adjustments to terms or timing can sometimes make a meaningful difference.',
   },
 };
 
-// What This Means content (seller)
+// What This Means content (seller) - probabilistic language
 export const sellerWhatThisMeans = {
   agent: {
-    high: 'Your listing is well-positioned for a quick sale. The combination of your list price and market conditions tends to attract buyer interest early.',
+    high: 'Your listing is well-positioned for a relatively quick sale. The combination of your list price and market conditions tends to attract buyer interest early.',
     moderate: 'Initial buyer activity may take time to build. Properties in this range often see increased interest as market exposure grows over 60–90 days.',
-    low: 'At the current list price, early buyer activity may be limited. This often occurs when pricing is positioned at the higher end of comparable properties.',
+    low: 'At the current list price, early buyer activity tends to be more limited. This often occurs when pricing is positioned at the higher end of comparable properties.',
   },
   client: {
-    high: 'Market conditions are favorable for your listing. Properties with similar positioning tend to generate strong interest from qualified buyers.',
+    high: 'Market conditions appear favorable for your listing. Properties with similar positioning tend to generate strong interest from qualified buyers.',
     moderate: 'Your listing is positioned to attract buyer interest over time. Market exposure typically builds momentum as more buyers become aware of the opportunity.',
     low: 'Your pricing strategy prioritizes value. This approach may take more time to find the right buyer, which can work well for sellers with flexibility.',
   },
 };
 
-// Tradeoff descriptions
+// Tradeoff descriptions - probabilistic language
 export const tradeoffDescriptions = {
   agent: {
-    buyerMain: 'More aggressive terms may increase acceptance likelihood but also raise the risk of overpaying, while conservative offers protect value but may result in losing the home.',
-    sellerPriceVsTime: 'Prioritizing a faster sale often means accepting a lower final price, while holding for maximum price may extend time on market.',
+    buyerMain: 'More aggressive terms tend to increase acceptance likelihood but may also raise the risk of overpaying, while conservative offers help protect value but can reduce competitiveness.',
+    sellerPriceVsTime: 'Prioritizing a faster sale often involves accepting a lower final price, while holding for maximum price may extend time on market.',
   },
   client: {
     buyerMain: 'Finding the right balance between competitiveness and value protection is key. Every market situation has its own dynamics to consider.',
