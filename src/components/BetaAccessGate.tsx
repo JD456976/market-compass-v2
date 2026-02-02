@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { getBetaAccessSession } from '@/lib/betaAccess';
+import { supabase } from '@/integrations/supabase/client';
+import { 
+  getBetaAccessSession, 
+  setBetaAccessSession,
+  isOwnerDevice, 
+  getDeviceId 
+} from '@/lib/betaAccess';
 
 interface BetaAccessGateProps {
   children: React.ReactNode;
@@ -14,16 +20,48 @@ export function BetaAccessGate({ children }: BetaAccessGateProps) {
   const location = useLocation();
 
   useEffect(() => {
-    const checkAccess = () => {
+    const checkAccess = async () => {
+      // First check if there's an existing session
       const session = getBetaAccessSession();
       
       if (session) {
         setHasAccess(true);
-      } else {
-        // Redirect to beta access page
-        navigate('/beta', { replace: true, state: { from: location.pathname } });
+        setIsChecking(false);
+        return;
       }
-      
+
+      // Check if this is an owner device (even if session was cleared)
+      if (isOwnerDevice()) {
+        const deviceId = getDeviceId();
+        
+        try {
+          const { data, error } = await supabase.rpc('check_owner_device', {
+            p_device_id: deviceId,
+          });
+
+          if (!error && data) {
+            const result = data as { is_owner: boolean; admin_email?: string };
+            
+            if (result.is_owner && result.admin_email) {
+              // Auto-restore admin session from owner device
+              setBetaAccessSession({
+                email: result.admin_email,
+                activatedAt: new Date().toISOString(),
+                deviceId,
+                role: 'admin',
+              });
+              setHasAccess(true);
+              setIsChecking(false);
+              return;
+            }
+          }
+        } catch (err) {
+          console.error('Owner device check failed:', err);
+        }
+      }
+
+      // No valid access - redirect to beta
+      navigate('/beta', { replace: true, state: { from: location.pathname } });
       setIsChecking(false);
     };
 
