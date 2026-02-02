@@ -115,34 +115,27 @@ export default function BetaAccess() {
         p_email: adminEmail,
         p_device_id: deviceId,
       });
-      
-      // Set local session
-      setBetaAccessSession({
-        email: adminEmail,
-        activatedAt: new Date().toISOString(),
-        deviceId,
-        role: 'admin',
-      });
-      
-      toast({
-        title: 'Welcome, Admin',
-        description: 'You have full access to Market Compass.',
-      });
-      
-      navigate('/', { replace: true });
     } catch (error) {
-      console.error('Admin bypass error:', error);
-      // Still grant access locally even if server call fails
-      setBetaAccessSession({
-        email: adminEmail,
-        activatedAt: new Date().toISOString(),
-        deviceId,
-        role: 'admin',
-      });
-      navigate('/', { replace: true });
-    } finally {
-      setIsLoading(false);
+      console.error('Admin activation recording failed:', error);
+      // Continue anyway - local session is sufficient
     }
+    
+    // Set local session as admin
+    setBetaAccessSession({
+      email: adminEmail,
+      activatedAt: new Date().toISOString(),
+      deviceId,
+      role: 'admin',
+    });
+    
+    toast({
+      title: 'Welcome, Admin',
+      description: 'Redirecting to admin dashboard...',
+    });
+    
+    // Redirect directly to admin area
+    navigate('/admin', { replace: true });
+    setIsLoading(false);
   };
 
   const handleCodeSubmit = async (e: React.FormEvent) => {

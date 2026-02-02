@@ -1,78 +1,46 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { isAllowedAdmin } from '@/lib/adminConfig';
-import { AdminLogin } from '@/components/admin/AdminLogin';
-import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { isAllowedAdmin } from '@/lib/adminConfig';
+import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { getBetaAccessSession, clearBetaAccessSession } from '@/lib/betaAccess';
 
-type AuthState = 'loading' | 'unauthenticated' | 'unauthorized' | 'authorized';
+type AuthState = 'loading' | 'unauthorized' | 'authorized';
 
 const Admin = () => {
   const [authState, setAuthState] = useState<AuthState>('loading');
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const checkAuth = () => {
+      const session = getBetaAccessSession();
       
       if (!session) {
-        setAuthState('unauthenticated');
+        // No session - redirect to beta access
+        navigate('/beta', { replace: true });
         return;
       }
 
-      const email = session.user.email;
-      setUserEmail(email || null);
+      const email = session.email;
+      setUserEmail(email);
 
-      if (isAllowedAdmin(email)) {
+      // Check if admin
+      if (session.role === 'admin' && isAllowedAdmin(email)) {
         setAuthState('authorized');
       } else {
+        // Not an admin - redirect to home
         setAuthState('unauthorized');
-        toast({
-          title: 'Not authorized',
-          description: 'Your account is not authorized to access admin.',
-          variant: 'destructive',
-        });
-        // Sign out unauthorized users
-        await supabase.auth.signOut();
-        setTimeout(() => setAuthState('unauthenticated'), 2000);
+        setTimeout(() => navigate('/', { replace: true }), 2000);
       }
     };
 
     checkAuth();
+  }, [navigate]);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        const email = session.user.email;
-        setUserEmail(email || null);
-        
-        if (isAllowedAdmin(email)) {
-          setAuthState('authorized');
-        } else {
-          setAuthState('unauthorized');
-          toast({
-            title: 'Not authorized',
-            description: 'Your account is not authorized to access admin.',
-            variant: 'destructive',
-          });
-          await supabase.auth.signOut();
-          setTimeout(() => setAuthState('unauthenticated'), 2000);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setAuthState('unauthenticated');
-        setUserEmail(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [toast]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setAuthState('unauthenticated');
+  const handleSignOut = () => {
+    clearBetaAccessSession();
+    navigate('/beta', { replace: true });
   };
 
   if (authState === 'loading') {
@@ -94,14 +62,10 @@ const Admin = () => {
           <p className="text-muted-foreground">
             {userEmail} is not authorized to access admin.
           </p>
-          <p className="text-sm text-muted-foreground">Signing out...</p>
+          <p className="text-sm text-muted-foreground">Redirecting...</p>
         </div>
       </div>
     );
-  }
-
-  if (authState === 'unauthenticated') {
-    return <AdminLogin />;
   }
 
   return <AdminDashboard userEmail={userEmail} onSignOut={handleSignOut} />;
