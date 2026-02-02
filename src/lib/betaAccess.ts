@@ -3,6 +3,8 @@
 
 const ACCESS_KEY = 'market_compass_access';
 const DEVICE_ID_KEY = 'market_compass_device_id';
+const OWNER_DEVICE_KEY = 'market_compass_owner_device';
+const OWNER_DEVICE_ID_KEY = 'market_compass_owner_device_id';
 
 export interface BetaAccessSession {
   email: string;
@@ -69,4 +71,23 @@ export function generateAccessCode(): string {
   }
   // Format as XXXX-XXXX for readability
   return `${code.slice(0, 4)}-${code.slice(4)}`;
+}
+
+// Owner device management
+export function isOwnerDevice(): boolean {
+  return localStorage.getItem(OWNER_DEVICE_KEY) === 'true';
+}
+
+export function getOwnerDeviceId(): string | null {
+  return localStorage.getItem(OWNER_DEVICE_ID_KEY);
+}
+
+export function setOwnerDevice(deviceId: string): void {
+  localStorage.setItem(OWNER_DEVICE_KEY, 'true');
+  localStorage.setItem(OWNER_DEVICE_ID_KEY, deviceId);
+}
+
+export function clearOwnerDevice(): void {
+  localStorage.removeItem(OWNER_DEVICE_KEY);
+  localStorage.removeItem(OWNER_DEVICE_ID_KEY);
 }

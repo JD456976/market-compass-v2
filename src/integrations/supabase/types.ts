@@ -168,6 +168,30 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_devices: {
+        Row: {
+          admin_email: string
+          created_at: string
+          device_id: string
+          id: string
+          revoked_at: string | null
+        }
+        Insert: {
+          admin_email: string
+          created_at?: string
+          device_id: string
+          id?: string
+          revoked_at?: string | null
+        }
+        Update: {
+          admin_email?: string
+          created_at?: string
+          device_id?: string
+          id?: string
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -181,6 +205,7 @@ export type Database = {
         Args: { p_device_id: string }
         Returns: Json
       }
+      check_owner_device: { Args: { p_device_id: string }; Returns: Json }
       is_admin_user: { Args: never; Returns: boolean }
       record_admin_activation: {
         Args: { p_device_id: string; p_email: string }
@@ -190,6 +215,11 @@ export type Database = {
         Args: { p_code: string; p_device_id: string }
         Returns: Json
       }
+      register_owner_device: {
+        Args: { p_admin_email: string; p_device_id: string }
+        Returns: Json
+      }
+      revoke_owner_device: { Args: { p_device_id: string }; Returns: Json }
       validate_beta_code: {
         Args: {
           p_code_hash: string

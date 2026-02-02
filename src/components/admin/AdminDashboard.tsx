@@ -13,13 +13,25 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  Ban
+  Ban,
+  Monitor
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { IssueCodePanel } from './IssueCodePanel';
 import { BetaCodesTable, BetaCode } from './BetaCodesTable';
 import { ActivationsTable, BetaActivation } from './ActivationsTable';
+import { OwnerDevicesTable, OwnerDevice } from './OwnerDevicesTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getDeviceId, setOwnerDevice, clearBetaAccessSession, clearOwnerDevice, isOwnerDevice as checkIsOwnerDevice } from '@/lib/betaAccess';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface AdminDashboardProps {
   userEmail: string | null;
@@ -29,8 +41,13 @@ interface AdminDashboardProps {
 export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
   const [codes, setCodes] = useState<BetaCode[]>([]);
   const [activations, setActivations] = useState<BetaActivation[]>([]);
+  const [ownerDevices, setOwnerDevices] = useState<OwnerDevice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showIssuePanel, setShowIssuePanel] = useState(false);
+  const [isMarkingOwner, setIsMarkingOwner] = useState(false);
+  const [isCurrentDeviceOwner, setIsCurrentDeviceOwner] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [clearOwnerOnLogout, setClearOwnerOnLogout] = useState(false);
   const { toast } = useToast();
 
   const fetchData = async () => {
@@ -53,6 +70,22 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
 
       if (activationsError) throw activationsError;
       setActivations(activationsData || []);
+
+      // Fetch owner devices
+      const { data: ownerDevicesData, error: ownerDevicesError } = await supabase
+        .from('owner_devices')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (ownerDevicesError) throw ownerDevicesError;
+      setOwnerDevices(ownerDevicesData || []);
+
+      // Check if current device is an owner device
+      const currentDeviceId = getDeviceId();
+      const isOwner = (ownerDevicesData || []).some(
+        (d: OwnerDevice) => d.device_id === currentDeviceId && !d.revoked_at
+      );
+      setIsCurrentDeviceOwner(isOwner);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -83,6 +116,58 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
     revoked: codes.filter(c => getCodeStatus(c) === 'revoked').length,
     expired: codes.filter(c => getCodeStatus(c) === 'expired').length,
     activations: activations.length,
+    ownerDevices: ownerDevices.filter(d => !d.revoked_at).length,
+  };
+
+  const handleMarkOwnerDevice = async () => {
+    if (!userEmail) return;
+    
+    setIsMarkingOwner(true);
+    const deviceId = getDeviceId();
+    
+    try {
+      const { data, error } = await supabase.rpc('register_owner_device', {
+        p_device_id: deviceId,
+        p_admin_email: userEmail,
+      });
+
+      if (error) throw error;
+
+      const result = data as { success: boolean; error?: string };
+      
+      if (result.success) {
+        // Set local storage flags
+        setOwnerDevice(deviceId);
+        setIsCurrentDeviceOwner(true);
+        
+        toast({
+          title: 'Owner Device Registered',
+          description: 'This device now has automatic admin access.',
+        });
+        
+        fetchData();
+      } else {
+        throw new Error(result.error || 'Failed to register device');
+      }
+    } catch (error) {
+      console.error('Register owner device error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to register owner device.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsMarkingOwner(false);
+    }
+  };
+
+  const handleLogout = () => {
+    if (clearOwnerOnLogout) {
+      clearOwnerDevice();
+    }
+    clearBetaAccessSession();
+    setShowLogoutDialog(false);
+    onSignOut();
   };
 
   return (
@@ -108,9 +193,9 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
                 <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
-              <Button variant="ghost" size="sm" onClick={onSignOut}>
+              <Button variant="ghost" size="sm" onClick={() => setShowLogoutDialog(true)}>
                 <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                Log Out
               </Button>
             </div>
           </div>
@@ -187,19 +272,39 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
           </Card>
         </div>
 
-        {/* Issue Code Panel */}
-        {showIssuePanel ? (
-          <IssueCodePanel 
-            adminEmail={userEmail || ''} 
-            onClose={() => setShowIssuePanel(false)}
-            onCreated={fetchData}
-          />
-        ) : (
-          <Button onClick={() => setShowIssuePanel(true)} className="w-full md:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            Issue Access Code
-          </Button>
-        )}
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3">
+          {showIssuePanel ? (
+            <IssueCodePanel 
+              adminEmail={userEmail || ''} 
+              onClose={() => setShowIssuePanel(false)}
+              onCreated={fetchData}
+            />
+          ) : (
+            <Button onClick={() => setShowIssuePanel(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Issue Access Code
+            </Button>
+          )}
+
+          {!isCurrentDeviceOwner && (
+            <Button 
+              variant="outline" 
+              onClick={handleMarkOwnerDevice}
+              disabled={isMarkingOwner}
+            >
+              <Monitor className="h-4 w-4 mr-2" />
+              {isMarkingOwner ? 'Registering...' : 'Mark This Device as Owner'}
+            </Button>
+          )}
+
+          {isCurrentDeviceOwner && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 rounded-md text-sm text-emerald-700">
+              <CheckCircle2 className="h-4 w-4" />
+              This is an Owner Device
+            </div>
+          )}
+        </div>
 
         {/* Tables */}
         <Tabs defaultValue="codes" className="space-y-4">
@@ -212,6 +317,10 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
               <Smartphone className="h-4 w-4 mr-2" />
               Activations ({activations.length})
             </TabsTrigger>
+            <TabsTrigger value="owner-devices">
+              <Monitor className="h-4 w-4 mr-2" />
+              Owner Devices ({stats.ownerDevices})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="codes">
@@ -221,8 +330,53 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
           <TabsContent value="activations">
             <ActivationsTable activations={activations} />
           </TabsContent>
+
+          <TabsContent value="owner-devices">
+            <OwnerDevicesTable devices={ownerDevices} onRefresh={fetchData} />
+          </TabsContent>
         </Tabs>
       </main>
+
+      {/* Logout Dialog */}
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Log Out</DialogTitle>
+            <DialogDescription>
+              You will be signed out of the admin dashboard.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 pt-4">
+            {isCurrentDeviceOwner && (
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="clear-owner"
+                  checked={clearOwnerOnLogout}
+                  onCheckedChange={(checked) => setClearOwnerOnLogout(checked === true)}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="clear-owner" className="text-sm font-normal">
+                    Also remove owner device on this device
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    If unchecked, you'll auto-authenticate next time.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowLogoutDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleLogout}>
+                Log Out
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
