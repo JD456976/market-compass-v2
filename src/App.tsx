@@ -7,6 +7,8 @@ import { ClientModeProvider } from "@/contexts/ClientModeContext";
 import Index from "./pages/Index";
 import MarketProfiles from "./pages/MarketProfiles";
 import MarketScenarios from "./pages/MarketScenarios";
+import MarketData from "./pages/MarketData";
+import Methodology from "./pages/Methodology";
 import SellerFlow from "./pages/SellerFlow";
 import BuyerFlow from "./pages/BuyerFlow";
 import SellerReport from "./pages/SellerReport";
@@ -34,6 +36,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/market-profiles" element={<MarketProfiles />} />
             <Route path="/market-scenarios" element={<MarketScenarios />} />
+            <Route path="/market-data" element={<MarketData />} />
+            <Route path="/methodology" element={<Methodology />} />
             <Route path="/seller" element={<SellerFlow />} />
             <Route path="/seller/report" element={<SellerReport />} />
             <Route path="/buyer" element={<BuyerFlow />} />

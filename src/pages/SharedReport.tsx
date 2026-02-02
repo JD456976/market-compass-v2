@@ -11,7 +11,9 @@ import { Session, LikelihoodBand, MarketProfile } from '@/types';
 import { getSessionById, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { ReportHeader } from '@/components/ReportHeader';
+import { MethodologyFooter } from '@/components/MethodologyFooter';
 import { formatLocation } from '@/lib/utils';
+import { LikelihoodBar } from '@/components/ClientVisuals';
 import { ForceClientMode } from '@/contexts/ClientModeContext';
 import { 
   getTitle, 
@@ -246,14 +248,23 @@ const SharedReportContent = () => {
                         <div className="text-center p-6 rounded-xl border-2 border-border/50">
                           <p className="text-sm text-muted-foreground mb-3">30 Days</p>
                           <LikelihoodBadge band={reportData.likelihood30} />
+                          <div className="mt-3 px-1">
+                            <LikelihoodBar band={reportData.likelihood30} showLabels={false} />
+                          </div>
                         </div>
                         <div className="text-center p-6 rounded-xl border-2 border-border/50">
                           <p className="text-sm text-muted-foreground mb-3">60 Days</p>
                           <LikelihoodBadge band={reportData.likelihood60} />
+                          <div className="mt-3 px-1">
+                            <LikelihoodBar band={reportData.likelihood60} showLabels={false} />
+                          </div>
                         </div>
                         <div className="text-center p-6 rounded-xl border-2 border-border/50">
                           <p className="text-sm text-muted-foreground mb-3">90 Days</p>
                           <LikelihoodBadge band={reportData.likelihood90} />
+                          <div className="mt-3 px-1">
+                            <LikelihoodBar band={reportData.likelihood90} showLabels={false} />
+                          </div>
                         </div>
                       </>
                     )}
@@ -335,6 +346,9 @@ const SharedReportContent = () => {
                       <div className="text-center p-8 rounded-xl border-2 border-accent/30 bg-accent/5 min-w-[200px]">
                         <p className="text-sm text-muted-foreground mb-3">Likelihood of Acceptance</p>
                         <LikelihoodBadge band={reportData.acceptanceLikelihood} />
+                        <div className="mt-4 px-2">
+                          <LikelihoodBar band={reportData.acceptanceLikelihood} />
+                        </div>
                       </div>
                     </div>
                   )}
@@ -402,6 +416,9 @@ const SharedReportContent = () => {
             <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
             <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
           </div>
+
+          {/* Methodology Footer */}
+          <MethodologyFooter snapshotDate={reportData.snapshotTimestamp} />
 
         </motion.div>
       </div>

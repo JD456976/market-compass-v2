@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send } from 'lucide-react';
+import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen } from 'lucide-react';
+import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -21,6 +22,9 @@ const staggerContainer = {
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
+      {/* Agent Onboarding Modal */}
+      <AgentOnboarding />
+
       {/* Hero Section */}
       <div className="hero-gradient text-primary-foreground">
         <div className="container mx-auto px-4 py-16 md:py-24">
@@ -110,52 +114,98 @@ const Index = () => {
           </motion.div>
         </motion.div>
 
-        {/* Secondary Links */}
+        {/* Secondary Links - Session Management */}
         <motion.div 
-          className="flex flex-wrap items-center justify-center gap-4"
+          className="max-w-4xl mx-auto mb-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 px-1">Session Management</h3>
+          <div className="flex flex-wrap gap-3">
+            <Link to="/drafts">
+              <Button variant="outline" size="lg" className="min-w-[160px]">
+                <FolderOpen className="mr-2 h-4 w-4" />
+                Draft Analyses
+              </Button>
+            </Link>
+            <Link to="/templates">
+              <Button variant="outline" size="lg" className="min-w-[160px]">
+                <FileText className="mr-2 h-4 w-4" />
+                Templates
+              </Button>
+            </Link>
+            <Link to="/shared-reports">
+              <Button variant="outline" size="lg" className="min-w-[160px]">
+                <Send className="mr-2 h-4 w-4" />
+                Shared Reports
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* Market & Settings */}
+        <motion.div 
+          className="max-w-4xl mx-auto mb-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          <Link to="/market-scenarios">
-            <Button variant="outline" size="lg" className="min-w-[180px]">
-              <TrendingUp className="mr-2 h-4 w-4" />
-              Market Scenarios
-            </Button>
-          </Link>
-          <Link to="/drafts">
-            <Button variant="outline" size="lg" className="min-w-[180px]">
-              <FolderOpen className="mr-2 h-4 w-4" />
-              Draft Analyses
-            </Button>
-          </Link>
-          <Link to="/shared-reports">
-            <Button variant="outline" size="lg" className="min-w-[180px]">
-              <Send className="mr-2 h-4 w-4" />
-              Shared Reports
-            </Button>
-          </Link>
-          <Link to="/templates">
-            <Button variant="outline" size="lg" className="min-w-[180px]">
-              <FileText className="mr-2 h-4 w-4" />
-              Templates
-            </Button>
-          </Link>
-          <Link to="/agent-profile">
-            <Button variant="outline" size="lg" className="min-w-[180px]">
-              <User className="mr-2 h-4 w-4" />
-              Agent Profile
-            </Button>
-          </Link>
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 px-1">Market & Settings</h3>
+          <div className="flex flex-wrap gap-3">
+            <Link to="/market-scenarios">
+              <Button variant="outline" size="lg" className="min-w-[160px]">
+                <TrendingUp className="mr-2 h-4 w-4" />
+                Market Scenarios
+              </Button>
+            </Link>
+            <Link to="/market-data">
+              <Button variant="outline" size="lg" className="min-w-[160px]">
+                <Database className="mr-2 h-4 w-4" />
+                Market Data
+              </Button>
+            </Link>
+            <Link to="/agent-profile">
+              <Button variant="outline" size="lg" className="min-w-[160px]">
+                <User className="mr-2 h-4 w-4" />
+                Agent Profile
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* Help & Info */}
+        <motion.div 
+          className="max-w-4xl mx-auto"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 px-1">Help & Info</h3>
+          <div className="flex flex-wrap gap-3">
+            <Link to="/methodology">
+              <Button variant="outline" size="lg" className="min-w-[160px]">
+                <BookOpen className="mr-2 h-4 w-4" />
+                Data & Methodology
+              </Button>
+            </Link>
+            <OnboardingTrigger />
+          </div>
         </motion.div>
       </div>
 
       {/* Footer */}
       <footer className="border-t border-border/50 mt-16">
         <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Compass className="h-4 w-4" />
-            <span>Market Compass v0</span>
+          <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Compass className="h-4 w-4" />
+              <span>Market Compass v0</span>
+            </div>
+            <p className="text-xs text-center max-w-md">
+              Uses public market trend research and transaction logic. 
+              Does not use MLS data or provide valuations.
+            </p>
           </div>
         </div>
       </footer>

@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Shield, Scale, Target, TrendingUp, Info, Users, Eye } from 'lucide-react';
+import { Clock, Shield, Scale, Target, TrendingUp, Info, Users, Eye, AlertCircle } from 'lucide-react';
 import { Session, SellerReportData, BuyerReportData } from '@/types';
 import { getSessionById, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
@@ -18,6 +18,7 @@ import {
   ComparisonTableRow 
 } from '@/lib/comparisonHelpers';
 import { ReportHeader } from '@/components/ReportHeader';
+import { MethodologyFooter } from '@/components/MethodologyFooter';
 
 const COMPARISON_FRAMING = `This report compares how different strategies change tradeoffs. It does not recommend one option over another or predict outcomes.`;
 
@@ -332,6 +333,17 @@ const SharedComparisonReport = () => {
             <div className="w-4 h-4 bg-accent/5 border border-accent/20 rounded"></div>
             <span>Highlighted rows indicate differences between options</span>
           </div>
+
+          {/* Important Notice */}
+          <div className="flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
+            <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome.
+            </p>
+          </div>
+
+          {/* Methodology Footer */}
+          <MethodologyFooter snapshotDate={snapshotTimestamp} />
         </motion.div>
       </div>
     </div>
