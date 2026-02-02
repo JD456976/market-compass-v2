@@ -4,15 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, GitCompare } from 'lucide-react';
-import { Session } from '@/types';
-import { loadSessions } from '@/lib/storage';
+import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown } from 'lucide-react';
+import { Session, MarketProfile } from '@/types';
+import { loadSessions, getMarketProfileById } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { formatLocation } from '@/lib/utils';
+import { exportReportToPdf } from '@/lib/pdfExport';
+import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 
 const SharedReports = () => {
   const { toast } = useToast();
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   useEffect(() => {
     // Only show sessions that have been shared or exported
@@ -29,6 +32,63 @@ const SharedReports = () => {
       title: "Link copied",
       description: "Share link has been copied to clipboard.",
     });
+  };
+
+  const handleExportPdf = async (session: Session) => {
+    setExportingId(session.id);
+    try {
+      // Get market profile if available
+      let marketProfile: MarketProfile | undefined;
+      if (session.selected_market_profile_id) {
+        marketProfile = getMarketProfileById(session.selected_market_profile_id);
+      }
+      
+      // Calculate report data for timestamp
+      const reportData = session.session_type === 'Seller'
+        ? calculateSellerReport(session, marketProfile)
+        : calculateBuyerReport(session, marketProfile);
+      
+      // Create a temporary hidden element to render the report for PDF
+      const tempContainer = document.createElement('div');
+      tempContainer.id = 'pdf-export-temp';
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.width = '794px';
+      tempContainer.innerHTML = `
+        <div class="pdf-section" style="padding: 20px; font-family: system-ui, sans-serif;">
+          <h2 style="margin: 0 0 8px; font-size: 18px;">${session.session_type} Report</h2>
+          <p style="margin: 0 0 4px; color: #666;">Prepared for: ${session.client_name}</p>
+          <p style="margin: 0 0 16px; color: #666;">Location: ${formatLocation(session.location)}</p>
+          <p style="margin: 0; font-size: 12px; color: #999;">
+            Please open the full shared report link for detailed content.
+          </p>
+        </div>
+      `;
+      document.body.appendChild(tempContainer);
+      
+      await exportReportToPdf('pdf-export-temp', {
+        clientName: session.client_name,
+        reportType: session.session_type === 'Seller' ? 'Seller' : 'Buyer',
+        snapshotTimestamp: reportData.snapshotTimestamp,
+        isClientMode: true,
+      });
+      
+      document.body.removeChild(tempContainer);
+      
+      toast({
+        title: "PDF exported",
+        description: "Your report has been downloaded.",
+      });
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      toast({
+        title: "Export failed",
+        description: "Could not generate PDF. Please try opening the shared report link instead.",
+        variant: "destructive",
+      });
+    } finally {
+      setExportingId(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -162,6 +222,16 @@ const SharedReports = () => {
                               <Link2 className="h-4 w-4" />
                             </Button>
                           )}
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleExportPdf(session)}
+                            disabled={exportingId === session.id}
+                            title="Export PDF"
+                            className="min-h-[44px] min-w-[44px]"
+                          >
+                            <FileDown className="h-4 w-4" />
+                          </Button>
                           <Link to={`/share/${session.id}`} target="_blank">
                             <Button 
                               variant="ghost" 
