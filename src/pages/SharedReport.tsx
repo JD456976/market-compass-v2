@@ -3,18 +3,21 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   Clock, Building2, Users, Target, TrendingUp, AlertCircle, 
-  AlertTriangle, ShieldAlert
+  AlertTriangle, ShieldAlert, FileDown
 } from 'lucide-react';
 import { Session, LikelihoodBand, MarketProfile } from '@/types';
-import { getSessionById, getMarketProfileById } from '@/lib/storage';
+import { getSessionById, getMarketProfileById, upsertSession } from '@/lib/storage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { ReportHeader } from '@/components/ReportHeader';
 import { MethodologyFooter } from '@/components/MethodologyFooter';
 import { formatLocation } from '@/lib/utils';
 import { LikelihoodBar } from '@/components/ClientVisuals';
 import { ForceClientMode } from '@/contexts/ClientModeContext';
+import { exportReportToPdf } from '@/lib/pdfExport';
+import { useToast } from '@/hooks/use-toast';
 import { 
   getTitle, 
   buyerWhatThisMeans, 
@@ -47,9 +50,11 @@ const IMPORTANT_NOTICE = `Important Notice: This report is an informational deci
 
 const SharedReportContent = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
+  const { toast } = useToast();
   const [session, setSession] = useState<Session | null>(null);
   const [marketProfile, setMarketProfile] = useState<MarketProfile | undefined>(undefined);
   const [notFound, setNotFound] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Always use client mode language for shared reports - NO TOGGLE
   const isClientMode = true;
@@ -73,6 +78,44 @@ const SharedReportContent = () => {
     }
   }, [sessionId]);
 
+  const handleExportPdf = async () => {
+    if (!session) return;
+    setExporting(true);
+    try {
+      await exportReportToPdf('shared-report-export', {
+        clientName: session.client_name,
+        reportType: session.session_type === 'Seller' ? 'Seller' : 'Buyer',
+        snapshotTimestamp: reportData?.snapshotTimestamp,
+        isClientMode: true,
+      });
+      // Mark as exported if not already
+      if (!session.pdf_exported) {
+        const updatedSession = { ...session, pdf_exported: true };
+        upsertSession(updatedSession);
+        setSession(updatedSession);
+      }
+      toast({
+        title: "PDF exported",
+        description: "Your report has been downloaded.",
+      });
+    } catch {
+      toast({
+        title: "PDF export failed",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Calculate report data early so it's available for PDF export
+  const reportData = session 
+    ? (session.session_type === 'Seller' 
+        ? calculateSellerReport(session, marketProfile)
+        : calculateBuyerReport(session, marketProfile))
+    : null;
+
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
 
@@ -95,12 +138,9 @@ const SharedReportContent = () => {
     );
   }
 
-  if (!session) return null;
+  if (!session || !reportData) return null;
 
   const isSeller = session.session_type === 'Seller';
-  const reportData = isSeller 
-    ? calculateSellerReport(session, marketProfile)
-    : calculateBuyerReport(session, marketProfile);
 
   // Get mode-appropriate text for buyer
   const buyerAcceptance = !isSeller && 'acceptanceLikelihood' in reportData ? reportData.acceptanceLikelihood : 'Moderate';
@@ -120,12 +160,24 @@ const SharedReportContent = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Shared Report Banner - NO navigation buttons */}
+      {/* Shared Report Banner with PDF Export */}
       <div className="bg-muted border-b border-border">
         <div className="container mx-auto px-4 py-2">
-          <p className="text-sm text-center text-muted-foreground">
-            Shared Report (Read-only)
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Shared Report
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportPdf}
+              disabled={exporting}
+              className="h-8 text-xs"
+            >
+              <FileDown className="h-3.5 w-3.5 mr-1.5" />
+              {exporting ? 'Exporting...' : 'Download PDF'}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -146,20 +198,23 @@ const SharedReportContent = () => {
 
       <div className="container mx-auto px-4 py-8 max-w-3xl -mt-4">
         <motion.div
+          id="shared-report-export"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="space-y-6"
         >
           {/* Prepared For/By Header Block */}
-          <ReportHeader
-            reportType={isSeller ? 'Seller' : 'Buyer'}
-            clientName={session.client_name}
-            snapshotTimestamp={reportData.snapshotTimestamp}
-          />
+          <div className="pdf-section pdf-header-section">
+            <ReportHeader
+              reportType={isSeller ? 'Seller' : 'Buyer'}
+              clientName={session.client_name}
+              snapshotTimestamp={reportData.snapshotTimestamp}
+            />
+          </div>
 
           {/* Overview Card */}
-          <Card>
+          <Card className="pdf-section pdf-avoid-break">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Target className="h-5 w-5 text-accent" />
@@ -197,7 +252,7 @@ const SharedReportContent = () => {
           {/* Seller-specific content */}
           {isSeller && session.seller_inputs && (
             <>
-              <Card>
+              <Card className="pdf-section pdf-avoid-break">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <TrendingUp className="h-5 w-5 text-accent" />
@@ -229,7 +284,7 @@ const SharedReportContent = () => {
                 </CardContent>
               </Card>
 
-              <Card className="overflow-hidden">
+              <Card className="pdf-section pdf-avoid-break overflow-hidden">
                 <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 section-header-mobile">
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -273,7 +328,7 @@ const SharedReportContent = () => {
               </Card>
 
               {/* What This Means - Seller */}
-              <Card>
+              <Card className="pdf-section pdf-avoid-break">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-lg">{getTitle('whatThisMeans', isClientMode)}</CardTitle>
                 </CardHeader>
@@ -292,7 +347,7 @@ const SharedReportContent = () => {
           {/* Buyer-specific content */}
           {!isSeller && session.buyer_inputs && (
             <>
-              <Card>
+              <Card className="pdf-section pdf-avoid-break">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <TrendingUp className="h-5 w-5 text-accent" />
@@ -328,7 +383,7 @@ const SharedReportContent = () => {
                 </CardContent>
               </Card>
 
-              <Card className="overflow-hidden">
+              <Card className="pdf-section pdf-avoid-break overflow-hidden">
                 <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 section-header-mobile">
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -356,7 +411,7 @@ const SharedReportContent = () => {
               </Card>
 
               {/* What This Means - Buyer */}
-              <Card>
+              <Card className="pdf-section pdf-avoid-break">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-lg">{getTitle('whatThisMeans', isClientMode)}</CardTitle>
                 </CardHeader>
@@ -371,7 +426,7 @@ const SharedReportContent = () => {
               </Card>
 
               {'riskOfLosingHome' in reportData && (
-                <Card>
+                <Card className="pdf-section pdf-avoid-break">
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <ShieldAlert className="h-5 w-5 text-accent" />
@@ -412,13 +467,15 @@ const SharedReportContent = () => {
           )}
 
           {/* Important Notice */}
-          <div className="flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
+          <div className="pdf-section flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
             <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
             <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
           </div>
 
           {/* Methodology Footer */}
-          <MethodologyFooter snapshotDate={reportData.snapshotTimestamp} />
+          <div className="pdf-section">
+            <MethodologyFooter snapshotDate={reportData.snapshotTimestamp} />
+          </div>
 
         </motion.div>
       </div>

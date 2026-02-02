@@ -25,9 +25,13 @@ const DraftAnalyses = () => {
   }, []);
 
   const refreshSessions = () => {
-    const allSessions = loadSessions().sort(
-      (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-    );
+    // Only show sessions that have NOT been shared or exported
+    // Once shared/exported, they move to Shared Reports
+    const allSessions = loadSessions()
+      .filter(s => !s.share_link_created && !s.pdf_exported)
+      .sort(
+        (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
     setSessions(allSessions);
   };
 
@@ -36,6 +40,8 @@ const DraftAnalyses = () => {
       toggleCompareSelection(session.id);
       return;
     }
+    // Store entry context for back navigation
+    sessionStorage.setItem('report_entry_context', '/drafts');
     sessionStorage.setItem('current_session', JSON.stringify(session));
     if (session.session_type === 'Seller') {
       navigate('/seller/report');

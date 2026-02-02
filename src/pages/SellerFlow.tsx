@@ -112,6 +112,8 @@ const SellerFlow = () => {
       updated_at: new Date().toISOString(),
     };
     
+    // Clear entry context for new reports (back goes to flow)
+    sessionStorage.removeItem('report_entry_context');
     sessionStorage.setItem('current_session', JSON.stringify(session));
     navigate('/seller/report');
   };

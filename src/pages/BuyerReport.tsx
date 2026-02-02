@@ -154,6 +154,7 @@ const BuyerReport = () => {
 
   const handleExportPdf = async () => {
     if (!reportData) return;
+    const wasAlreadySharedOrExported = reportData.session.share_link_created || reportData.session.pdf_exported;
     try {
       await exportReportToPdf('report-export', {
         clientName: reportData.session.client_name,
@@ -165,10 +166,19 @@ const BuyerReport = () => {
       const updatedSession = { ...reportData.session, pdf_exported: true };
       upsertSession(updatedSession);
       setReportData({ ...reportData, session: updatedSession });
-      toast({
-        title: "PDF exported",
-        description: "Your report has been downloaded.",
-      });
+      
+      // Notify about lifecycle transition
+      if (!wasAlreadySharedOrExported) {
+        toast({
+          title: "PDF exported",
+          description: "Report moved to Shared Reports.",
+        });
+      } else {
+        toast({
+          title: "PDF exported",
+          description: "Your report has been downloaded.",
+        });
+      }
     } catch {
       toast({
         title: "PDF export failed",
@@ -180,6 +190,7 @@ const BuyerReport = () => {
 
   const handleShareLink = () => {
     if (!reportData) return;
+    const wasAlreadySharedOrExported = reportData.session.share_link_created || reportData.session.pdf_exported;
     try {
       // Mark as shared and save
       const updatedSession = { ...reportData.session, share_link_created: true };
@@ -187,10 +198,19 @@ const BuyerReport = () => {
       setReportData({ ...reportData, session: updatedSession });
       const url = `${window.location.origin}/share/${reportData.session.id}`;
       navigator.clipboard.writeText(url);
-      toast({
-        title: "Link copied",
-        description: "Share link has been copied to clipboard.",
-      });
+      
+      // Notify about lifecycle transition
+      if (!wasAlreadySharedOrExported) {
+        toast({
+          title: "Link copied",
+          description: "Report moved to Shared Reports.",
+        });
+      } else {
+        toast({
+          title: "Link copied",
+          description: "Share link has been copied to clipboard.",
+        });
+      }
     } catch {
       toast({
         title: "Could not generate share link",
@@ -198,6 +218,15 @@ const BuyerReport = () => {
         variant: "destructive",
       });
     }
+  };
+
+  // Get entry context for back navigation
+  const getBackPath = () => {
+    const entryContext = sessionStorage.getItem('report_entry_context');
+    if (entryContext === '/drafts' || entryContext === '/shared-reports') {
+      return entryContext;
+    }
+    return '/buyer';
   };
 
   if (!reportData) return null;
@@ -308,7 +337,7 @@ const BuyerReport = () => {
         <div className="container mx-auto px-4 py-6 report-header-mobile">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Link to="/buyer">
+              <Link to={getBackPath()}>
                 <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
