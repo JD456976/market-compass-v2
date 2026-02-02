@@ -55,12 +55,14 @@ export interface Session {
   property_type: PropertyType;
   condition: Condition;
   selected_market_profile_id?: string; // Legacy - now also supports market scenario IDs
-  market_scenario_id?: string; // New: reference to market scenario
+  market_scenario_id?: string; // Reference to market scenario
   market_scenario_overrides?: {
     demandLevel?: 'low' | 'medium' | 'high';
     competitionLevel?: 'low' | 'medium' | 'high';
     pricingSensitivity?: 'low' | 'medium' | 'high';
   };
+  // Market snapshot reference (auto-attached based on location)
+  market_snapshot_id?: string;
   seller_inputs?: SellerInputs;
   buyer_inputs?: BuyerInputs;
   // Deliverable tracking

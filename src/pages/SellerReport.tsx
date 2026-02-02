@@ -41,6 +41,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DraftEditorSheet } from '@/components/DraftEditorSheet';
 import { LikelihoodBar, TradeoffMatrix, getSellerTradeoffPosition, MetricIcon } from '@/components/ClientVisuals';
+import { getMarketSnapshotOrBaseline, MarketSnapshot, parseCityFromLocation } from '@/lib/marketSnapshots';
+import { 
+  MarketGrounding, 
+  RealityAnchorNotes, 
+  ConsistencyWarning, 
+  PrimaryLimitingFactor,
+  getConsistencyIssues,
+  getPrimaryLimitingFactor
+} from '@/components/RealityAnchors';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -63,6 +72,7 @@ const SellerReport = () => {
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [marketSnapshot, setMarketSnapshot] = useState<{ snapshot: MarketSnapshot; isGenericBaseline: boolean } | null>(null);
 
   useEffect(() => {
     const sessionData = sessionStorage.getItem('current_session');
@@ -79,6 +89,10 @@ const SellerReport = () => {
       
       const data = calculateSellerReport(session, marketProfile);
       setReportData(data);
+      
+      // Get market snapshot based on location
+      const snapshotData = getMarketSnapshotOrBaseline(session.location);
+      setMarketSnapshot(snapshotData);
     } catch {
       navigate('/seller');
     }
@@ -194,10 +208,24 @@ const SellerReport = () => {
     inputs.desired_timeframe
   );
 
+  // Agent-only: consistency checks and limiting factor
+  const consistencyIssues = getConsistencyIssues(session);
+  const limitingFactor = marketSnapshot 
+    ? getPrimaryLimitingFactor(session, marketSnapshot.snapshot, likelihood30)
+    : null;
+
+  // Client-mode market reference
+  const cityName = parseCityFromLocation(session.location) || formatLocation(session.location);
+
   const handleDraftUpdate = (updatedSession: Session) => {
     const updatedData = calculateSellerReport(updatedSession, marketProfile);
     setReportData(updatedData);
     sessionStorage.setItem('current_session', JSON.stringify(updatedSession));
+    
+    // Update market snapshot if location changed
+    const newSnapshot = getMarketSnapshotOrBaseline(updatedSession.location);
+    setMarketSnapshot(newSnapshot);
+    
     setSaved(false);
     toast({
       title: "Draft updated",
@@ -327,6 +355,31 @@ const SellerReport = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Agent-only: Market Grounding & Reality Anchors */}
+            {!isClientMode && marketSnapshot && (
+              <div className="space-y-3 pdf-hide-agent-notes">
+                <MarketGrounding 
+                  session={session}
+                  snapshot={marketSnapshot.snapshot}
+                  isGenericBaseline={marketSnapshot.isGenericBaseline}
+                />
+                <RealityAnchorNotes session={session} snapshot={marketSnapshot.snapshot} />
+                {consistencyIssues.length > 0 && (
+                  <ConsistencyWarning issues={consistencyIssues} />
+                )}
+                {limitingFactor && (
+                  <PrimaryLimitingFactor factor={limitingFactor.factor} lever={limitingFactor.lever} />
+                )}
+              </div>
+            )}
+
+            {/* Client-mode: Market context reference */}
+            {isClientMode && (
+              <p className="text-xs text-muted-foreground text-center py-2">
+                Analysis reflects current market conditions in the {cityName} area.
+              </p>
+            )}
 
             {/* Market Snapshot */}
             <Card className="pdf-section pdf-avoid-break overflow-hidden">
