@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp, RotateCcw, Info, Compass, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,12 +14,12 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
   DrawerClose,
 } from '@/components/ui/drawer';
 import { BuyerInputs, FinancingType, DownPaymentPercent, Contingency, ClosingTimeline, BuyerPreference } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
+import { SCENARIO_EXPLORER_OPEN_EVENT } from '@/lib/scenarioExplorerEvents';
 
 interface ScenarioExplorerProps {
   originalInputs: BuyerInputs;
@@ -317,6 +318,17 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
   const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
   const [isApplying, setIsApplying] = useState(false);
 
+  // Allow report header CTAs (outside this component) to open the explorer.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onOpen = () => {
+      if (isMobile) setDrawerOpen(true);
+      else setIsExpanded(true);
+    };
+    window.addEventListener(SCENARIO_EXPLORER_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(SCENARIO_EXPLORER_OPEN_EVENT, onOpen);
+  }, [isMobile]);
+
   // Sync local inputs when currentInputs changes (e.g., after reset)
   useEffect(() => {
     setLocalInputs(currentInputs);
@@ -374,23 +386,26 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
   if (isMobile) {
     return (
       <>
-        {/* Floating Action Button */}
+        {/* Floating Action Button (ported to <body> to avoid transform/overflow clipping) */}
+        {typeof document !== 'undefined' &&
+          createPortal(
+            <div className="scenario-fab-container pdf-exclude">
+              <Button
+                onClick={() => setDrawerOpen(true)}
+                className="relative h-14 min-h-[44px] rounded-full shadow-lg gap-2 px-5 max-w-[calc(100vw-3rem)]"
+              >
+                <Compass className="h-5 w-5 shrink-0" />
+                <span className="font-medium truncate">Scenario Explorer</span>
+                {hasChanges && (
+                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent" />
+                )}
+              </Button>
+            </div>,
+            document.body,
+          )}
+
         <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-          <DrawerTrigger asChild>
-            <Button
-              className="pdf-exclude fixed bottom-6 right-6 z-50 h-14 rounded-full shadow-lg gap-2 px-5"
-              style={{ 
-                paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
-              }}
-            >
-              <Compass className="h-5 w-5" />
-              <span className="font-medium">Scenario Explorer</span>
-              {hasChanges && (
-                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent" />
-              )}
-            </Button>
-          </DrawerTrigger>
-          <DrawerContent className="max-h-[85vh]">
+          <DrawerContent className="h-[70vh]">
             <DrawerHeader className="border-b pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -406,11 +421,11 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
                 </DrawerClose>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Try changes and see how they affect competitiveness
+                Try changes and see how they affect competitiveness (no guarantees).
               </p>
             </DrawerHeader>
             
-            <div className="overflow-y-auto px-4 py-4 max-h-[calc(85vh-180px)]">
+            <div className="scenario-drawer-content px-4 py-4">
               <ScenarioForm
                 localInputs={localInputs}
                 setLocalInputs={setLocalInputs}
