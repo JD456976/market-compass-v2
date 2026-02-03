@@ -329,6 +329,24 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
     return () => window.removeEventListener(SCENARIO_EXPLORER_OPEN_EVENT, onOpen);
   }, [isMobile]);
 
+  // Dev-only visibility sanity check
+  useEffect(() => {
+    if (import.meta.env.DEV && typeof document !== 'undefined') {
+      // Check if FAB container is visible after a short delay
+      const timer = setTimeout(() => {
+        const fab = document.querySelector('.scenario-fab-container');
+        if (fab) {
+          const rect = fab.getBoundingClientRect();
+          const isVisible = rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.right > 0;
+          if (!isVisible) {
+            console.warn('[Scenario Explorer] FAB not visible at this breakpoint – check CSS hidden/overflow/z-index.');
+          }
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isMobile]);
+
   // Sync local inputs when currentInputs changes (e.g., after reset)
   useEffect(() => {
     setLocalInputs(currentInputs);

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   Clock, Building2, Users, Target, TrendingUp, AlertCircle, 
-  AlertTriangle, ShieldAlert, FileDown
+  AlertTriangle, ShieldAlert, FileDown, Compass
 } from 'lucide-react';
 import { Session, LikelihoodBand, MarketProfile, BuyerInputs } from '@/types';
 import { getSessionById, getMarketProfileById, upsertSession } from '@/lib/storage';
@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AnalysisMethodology } from '@/components/AnalysisMethodology';
 import { LikelihoodHelperText, LikelihoodDefinitions } from '@/components/LikelihoodDefinitions';
 import { ScenarioExplorer } from '@/components/ScenarioExplorer';
+import { openScenarioExplorer } from '@/lib/scenarioExplorerEvents';
 import { 
   getTitle, 
   buyerWhatThisMeans, 
@@ -224,14 +225,28 @@ const SharedReportContent = () => {
       {/* Header - NO toggle, NO navigation */}
       <div className="hero-gradient text-primary-foreground">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-accent/20">
-              {isSeller ? <Building2 className="h-5 w-5 text-accent" /> : <Users className="h-5 w-5 text-accent" />}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/20">
+                {isSeller ? <Building2 className="h-5 w-5 text-accent" /> : <Users className="h-5 w-5 text-accent" />}
+              </div>
+              <div>
+                <h1 className="text-2xl font-serif font-bold">{isSeller ? 'Seller' : 'Buyer'} Report</h1>
+                <p className="text-sm text-primary-foreground/70">{session.client_name} • {formatLocation(session.location)}</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-serif font-bold">{isSeller ? 'Seller' : 'Buyer'} Report</h1>
-              <p className="text-sm text-primary-foreground/70">{session.client_name} • {formatLocation(session.location)}</p>
-            </div>
+            {/* Desktop Scenario Explorer CTA for Buyer reports */}
+            {!isSeller && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openScenarioExplorer}
+                className="hidden md:flex items-center gap-2 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20"
+              >
+                <Compass className="h-4 w-4" />
+                Scenario Explorer
+              </Button>
+            )}
           </div>
         </div>
       </div>
