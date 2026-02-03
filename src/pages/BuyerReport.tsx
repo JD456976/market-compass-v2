@@ -53,10 +53,10 @@ import {
   getConsistencyIssues,
   getPrimaryLimitingFactor
 } from '@/components/RealityAnchors';
-import { RotateCcw, Compass } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { AnalysisMethodology } from '@/components/AnalysisMethodology';
 import { DraftStatusIndicator } from '@/components/DraftStatusIndicator';
-import { ScenarioExplorer, ScenarioExplorerTrigger } from '@/components/ScenarioExplorer';
+import { ScenarioExplorer, ScenarioExplorerCard } from '@/components/ScenarioExplorer';
 import { openScenarioExplorer } from '@/lib/scenarioExplorerEvents';
 import { BuyerInputs } from '@/types';
 
@@ -379,28 +379,14 @@ const BuyerReport = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 self-end sm:self-auto">
-              {/* Desktop Scenario Explorer CTA - Client mode only */}
-              {isClientMode && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={openScenarioExplorer}
-                  className="hidden md:flex items-center gap-2 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20 relative"
-                >
-                  <Compass className="h-4 w-4" />
-                  Scenario Explorer
-                  {scenarioInputs && originalInputs && JSON.stringify(scenarioInputs) !== JSON.stringify(originalInputs) && (
-                    <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
-                  )}
-                </Button>
-              )}
               <ModeSwitcher className="bg-primary-foreground/10 rounded-lg px-3 py-2" />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 max-w-3xl -mt-4">
+      {/* Add bottom padding on mobile when Scenario Explorer pill is visible (client mode) */}
+      <div className={`container mx-auto px-4 py-8 max-w-3xl -mt-4 ${isClientMode ? 'pb-24 md:pb-8' : ''}`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -423,6 +409,14 @@ const BuyerReport = () => {
                 showTimestamp={false}
               />
             </div>
+
+            {/* Scenario Explorer Card - Client Mode Only, Top of Report */}
+            {isClientMode && originalInputs && scenarioInputs && (
+              <ScenarioExplorerCard
+                hasChanges={JSON.stringify(scenarioInputs) !== JSON.stringify(originalInputs)}
+                onClick={openScenarioExplorer}
+              />
+            )}
 
             {/* Offer Overview */}
             <Card className="pdf-section pdf-avoid-break">
@@ -729,15 +723,9 @@ const BuyerReport = () => {
                 <AgentLabTrigger onClick={() => setLabOpen(true)} />
               </>
             )}
-            {/* Share/Export and Scenario Explorer only visible in Client mode */}
+            {/* Share/Export only visible in Client mode */}
             {isClientMode && (
               <>
-                {/* Mobile Scenario Explorer trigger - placed before export actions */}
-                <ScenarioExplorerTrigger
-                  onClick={openScenarioExplorer}
-                  hasChanges={scenarioInputs && originalInputs && JSON.stringify(scenarioInputs) !== JSON.stringify(originalInputs)}
-                  className="md:hidden min-h-[44px]"
-                />
                 <Button onClick={handleExportPdf} size="lg" variant="outline" className="min-h-[44px]">
                   <FileDown className="mr-2 h-4 w-4" />
                   Export PDF
