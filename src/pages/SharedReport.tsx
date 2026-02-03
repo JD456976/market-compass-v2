@@ -188,14 +188,14 @@ const SharedReportContent = () => {
     <div className="min-h-screen bg-background">
       {/* Shared Report Banner with PDF Export */}
       <div className="bg-muted border-b border-border">
-        <div className="container mx-auto px-4 py-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-sm text-muted-foreground font-medium">
                 Shared Report
               </p>
-              <p className="text-xs text-muted-foreground/70">
-                Changes are for exploration only and do not update the original report.
+              <p className="text-xs text-muted-foreground/70 break-words">
+                Changes are for exploration only.
               </p>
             </div>
             <Button 
@@ -203,9 +203,9 @@ const SharedReportContent = () => {
               size="sm" 
               onClick={handleExportPdf}
               disabled={exporting}
-              className="h-8 text-xs"
+              className="min-h-[44px] px-4 text-sm shrink-0 self-start sm:self-auto"
             >
-              <FileDown className="h-3.5 w-3.5 mr-1.5" />
+              <FileDown className="h-4 w-4 mr-2" />
               {exporting ? 'Exporting...' : 'Download PDF'}
             </Button>
           </div>
@@ -214,15 +214,15 @@ const SharedReportContent = () => {
 
       {/* Header - NO toggle, NO navigation */}
       <div className="hero-gradient text-primary-foreground">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent/20">
+        <div className="container mx-auto px-4 py-6 report-header-mobile">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 rounded-lg bg-accent/20 shrink-0">
                 {isSeller ? <Building2 className="h-5 w-5 text-accent" /> : <Users className="h-5 w-5 text-accent" />}
               </div>
-              <div>
-                <h1 className="text-2xl font-serif font-bold">{isSeller ? 'Seller' : 'Buyer'} Report</h1>
-                <p className="text-sm text-primary-foreground/70">{session.client_name} • {formatLocation(session.location)}</p>
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-serif font-bold">{isSeller ? 'Seller' : 'Buyer'} Report</h1>
+                <p className="text-sm text-primary-foreground/70 truncate">{session.client_name} • {formatLocation(session.location)}</p>
               </div>
             </div>
             {/* Desktop Scenario Explorer CTA for Buyer reports */}
@@ -231,7 +231,7 @@ const SharedReportContent = () => {
                 variant="outline"
                 size="sm"
                 onClick={openScenarioExplorer}
-                className="hidden md:flex items-center gap-2 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20 relative"
+                className="hidden md:flex items-center gap-2 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20 relative min-h-[44px]"
               >
                 <Compass className="h-4 w-4" />
                 Scenario Explorer
@@ -244,7 +244,8 @@ const SharedReportContent = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 max-w-3xl -mt-4">
+      {/* Add bottom padding on mobile for Scenario Explorer pill */}
+      <div className={`container mx-auto px-4 py-8 max-w-3xl -mt-4 ${!isSeller ? 'pb-28 md:pb-8' : ''}`}>
         <motion.div
           id="shared-report-export"
           initial={{ opacity: 0, y: 20 }}
@@ -308,18 +309,18 @@ const SharedReportContent = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 likelihood-cards-mobile">
-                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 likelihood-cards-mobile">
+                    <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-sm text-muted-foreground mb-1">List Price</p>
-                      <p className="text-xl font-serif font-bold">{formatCurrency(session.seller_inputs.seller_selected_list_price)}</p>
+                      <p className="text-lg sm:text-xl font-serif font-bold break-words">{formatCurrency(session.seller_inputs.seller_selected_list_price)}</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                    <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-sm text-muted-foreground mb-1">Timeframe</p>
-                      <p className="text-xl font-serif font-bold">{session.seller_inputs.desired_timeframe} days</p>
+                      <p className="text-lg sm:text-xl font-serif font-bold">{session.seller_inputs.desired_timeframe} days</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                    <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile col-span-2 sm:col-span-1">
                       <p className="text-sm text-muted-foreground mb-1">Strategy</p>
-                      <p className="text-xl font-serif font-bold">{session.seller_inputs.strategy_preference}</p>
+                      <p className="text-lg sm:text-xl font-serif font-bold">{session.seller_inputs.strategy_preference}</p>
                     </div>
                   </div>
                   {/* Only show client notes - NEVER agent notes */}
@@ -348,27 +349,27 @@ const SharedReportContent = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="grid grid-cols-3 gap-4 likelihood-cards-mobile">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     {'likelihood30' in reportData && (
                       <>
-                        <div className="text-center p-6 rounded-xl border-2 border-border/50">
-                          <p className="text-sm text-muted-foreground mb-3">30 Days</p>
+                        <div className="text-center p-4 sm:p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
+                          <p className="text-sm text-muted-foreground mb-2">30 Days</p>
                           <LikelihoodBadge band={reportData.likelihood30} />
                           <LikelihoodHelperText band={reportData.likelihood30} />
                           <div className="mt-3 px-1">
                             <LikelihoodBar band={reportData.likelihood30} showLabels={false} />
                           </div>
                         </div>
-                        <div className="text-center p-6 rounded-xl border-2 border-border/50">
-                          <p className="text-sm text-muted-foreground mb-3">60 Days</p>
+                        <div className="text-center p-4 sm:p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
+                          <p className="text-sm text-muted-foreground mb-2">60 Days</p>
                           <LikelihoodBadge band={reportData.likelihood60} />
                           <LikelihoodHelperText band={reportData.likelihood60} />
                           <div className="mt-3 px-1">
                             <LikelihoodBar band={reportData.likelihood60} showLabels={false} />
                           </div>
                         </div>
-                        <div className="text-center p-6 rounded-xl border-2 border-border/50">
-                          <p className="text-sm text-muted-foreground mb-3">90 Days</p>
+                        <div className="text-center p-4 sm:p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
+                          <p className="text-sm text-muted-foreground mb-2">90 Days</p>
                           <LikelihoodBadge band={reportData.likelihood90} />
                           <LikelihoodHelperText band={reportData.likelihood90} />
                           <div className="mt-3 px-1">
@@ -430,30 +431,30 @@ const SharedReportContent = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 likelihood-cards-mobile">
-                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                      <p className="text-sm text-muted-foreground mb-1">Offer Price</p>
-                      <p className="text-xl font-serif font-bold">{formatCurrency(whatIfInputs?.offer_price || session.buyer_inputs.offer_price)}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 likelihood-cards-mobile">
+                    <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Offer Price</p>
+                      <p className="text-base sm:text-xl font-serif font-bold break-words">{formatCurrency(whatIfInputs?.offer_price || session.buyer_inputs.offer_price)}</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                      <p className="text-sm text-muted-foreground mb-1">Financing</p>
-                      <p className="text-xl font-serif font-bold">{whatIfInputs?.financing_type || session.buyer_inputs.financing_type}</p>
+                    <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Financing</p>
+                      <p className="text-base sm:text-xl font-serif font-bold">{whatIfInputs?.financing_type || session.buyer_inputs.financing_type}</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                      <p className="text-sm text-muted-foreground mb-1">Down Payment</p>
-                      <p className="text-xl font-serif font-bold">{whatIfInputs?.down_payment_percent || session.buyer_inputs.down_payment_percent}%</p>
+                    <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Down Payment</p>
+                      <p className="text-base sm:text-xl font-serif font-bold">{whatIfInputs?.down_payment_percent || session.buyer_inputs.down_payment_percent}%</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                      <p className="text-sm text-muted-foreground mb-1">Contingencies</p>
-                      <p className="text-lg font-serif font-bold">{(whatIfInputs?.contingencies || session.buyer_inputs.contingencies).join(', ') || 'None'}</p>
+                    <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Contingencies</p>
+                      <p className="text-sm sm:text-lg font-serif font-bold break-words">{(whatIfInputs?.contingencies || session.buyer_inputs.contingencies).join(', ') || 'None'}</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                      <p className="text-sm text-muted-foreground mb-1">Close Timeline</p>
-                      <p className="text-xl font-serif font-bold">{whatIfInputs?.closing_timeline || session.buyer_inputs.closing_timeline} days</p>
+                    <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Close Timeline</p>
+                      <p className="text-base sm:text-xl font-serif font-bold">{whatIfInputs?.closing_timeline || session.buyer_inputs.closing_timeline} days</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                      <p className="text-sm text-muted-foreground mb-1">Strategy</p>
-                      <p className="text-lg font-serif font-bold">{whatIfInputs?.buyer_preference || session.buyer_inputs.buyer_preference}</p>
+                    <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Strategy</p>
+                      <p className="text-sm sm:text-lg font-serif font-bold break-words">{whatIfInputs?.buyer_preference || session.buyer_inputs.buyer_preference}</p>
                     </div>
                   </div>
                   {/* Only show client notes - NEVER agent notes */}
@@ -505,30 +506,30 @@ const SharedReportContent = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid sm:grid-cols-2 gap-6">
-                      <div className="p-6 rounded-xl border-2 border-border/50">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-4 sm:p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
                         <div className="flex items-center gap-2 mb-3">
-                          <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-                          <p className="font-medium">{getTitle('riskOfLosingHome', isClientMode)}</p>
+                          <ShieldAlert className="h-5 w-5 text-muted-foreground shrink-0" />
+                          <p className="font-medium text-sm sm:text-base">{getTitle('riskOfLosingHome', isClientMode)}</p>
                         </div>
                         <div className="mb-2">
                           <RiskBadge band={reportData.riskOfLosingHome} />
                         </div>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           {reportData.riskOfLosingHome === 'High' 
                             ? buyerRiskDescriptions.client.losingHomeHigh 
                             : buyerRiskDescriptions.client.losingHomeLow}
                         </p>
                       </div>
-                      <div className="p-6 rounded-xl border-2 border-border/50">
+                      <div className="p-4 sm:p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
                         <div className="flex items-center gap-2 mb-3">
-                          <AlertTriangle className="h-5 w-5 text-muted-foreground" />
-                          <p className="font-medium">{getTitle('riskOfOverpaying', isClientMode)}</p>
+                          <AlertTriangle className="h-5 w-5 text-muted-foreground shrink-0" />
+                          <p className="font-medium text-sm sm:text-base">{getTitle('riskOfOverpaying', isClientMode)}</p>
                         </div>
                         <div className="mb-2">
                           <RiskBadge band={reportData.riskOfOverpaying} />
                         </div>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           {reportData.riskOfOverpaying === 'High' 
                             ? buyerRiskDescriptions.client.overpayingHigh 
                             : buyerRiskDescriptions.client.overpayingLow}

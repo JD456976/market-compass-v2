@@ -362,19 +362,19 @@ const BuyerReport = () => {
       <div className="hero-gradient text-primary-foreground">
         <div className="container mx-auto px-4 py-6 report-header-mobile">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0">
               <Link to={getBackPath()}>
-                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
+                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 min-h-[44px] min-w-[44px]">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               </Link>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accent/20">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-lg bg-accent/20 shrink-0">
                   <Users className="h-5 w-5 text-accent" />
                 </div>
-                <div>
-                  <h1 className="text-2xl font-serif font-bold">Buyer Report</h1>
-                  <p className="text-sm text-primary-foreground/70">{session.client_name} • {formatLocation(session.location)}</p>
+                <div className="min-w-0">
+                  <h1 className="text-xl sm:text-2xl font-serif font-bold">Buyer Report</h1>
+                  <p className="text-sm text-primary-foreground/70 truncate">{session.client_name} • {formatLocation(session.location)}</p>
                 </div>
               </div>
             </div>
@@ -463,35 +463,35 @@ const BuyerReport = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className={`grid ${inputs.financing_type === 'Cash' ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'} gap-4 mb-4 likelihood-cards-mobile`}>
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
-                    <p className="text-sm text-muted-foreground mb-1">Offer Price</p>
-                    <p className="text-lg font-serif font-bold">{formatCurrency(inputs.offer_price)}</p>
+                <div className={`grid ${inputs.financing_type === 'Cash' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'} gap-3 mb-4 likelihood-cards-mobile`}>
+                  <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Offer Price</p>
+                    <p className="text-base sm:text-lg font-serif font-bold break-words">{formatCurrency(inputs.offer_price)}</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
-                    <p className="text-sm text-muted-foreground mb-1">Financing</p>
-                    <p className="text-lg font-serif font-bold">{inputs.financing_type}</p>
+                  <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Financing</p>
+                    <p className="text-base sm:text-lg font-serif font-bold">{inputs.financing_type}</p>
                   </div>
                   {/* Hide Down Payment for Cash offers */}
                   {inputs.financing_type !== 'Cash' && (
-                    <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
-                      <p className="text-sm text-muted-foreground mb-1">Down Payment</p>
-                      <p className="text-lg font-serif font-bold">{inputs.down_payment_percent}</p>
+                    <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Down Payment</p>
+                      <p className="text-base sm:text-lg font-serif font-bold">{inputs.down_payment_percent}</p>
                     </div>
                   )}
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
-                    <p className="text-sm text-muted-foreground mb-1">Closing</p>
-                    <p className="text-lg font-serif font-bold">{inputs.closing_timeline} days</p>
+                  <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Closing</p>
+                    <p className="text-base sm:text-lg font-serif font-bold">{inputs.closing_timeline} days</p>
                   </div>
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-muted/50">
-                    <p className="text-sm text-muted-foreground mb-1">Contingencies</p>
-                    <p className="font-medium">{inputs.contingencies.length > 0 ? inputs.contingencies.join(', ') : 'None'}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3 sm:p-4 rounded-xl bg-muted/50">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Contingencies</p>
+                    <p className="font-medium text-sm sm:text-base break-words">{inputs.contingencies.length > 0 ? inputs.contingencies.join(', ') : 'None'}</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-muted/50">
-                    <p className="text-sm text-muted-foreground mb-1">Buyer Preference</p>
-                    <p className="font-medium">{inputs.buyer_preference}</p>
+                  <div className="p-3 sm:p-4 rounded-xl bg-muted/50">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Buyer Preference</p>
+                    <p className="font-medium text-sm sm:text-base">{inputs.buyer_preference}</p>
                   </div>
                 </div>
                 {/* Client Notes - visible in PDF/Share */}
@@ -643,12 +643,12 @@ const BuyerReport = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="text-center p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
-                    <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-                      <AlertTriangle className="h-6 w-6 text-destructive" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="text-center p-4 sm:p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-3">
+                      <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-destructive" />
                     </div>
-                    <p className="font-medium mb-2">{getTitle('riskOfLosingHome', isClientMode)}</p>
+                    <p className="font-medium text-sm sm:text-base mb-2">{getTitle('riskOfLosingHome', isClientMode)}</p>
                     <RiskBadge band={riskOfLosingHome} />
                     <p className="text-[10px] text-muted-foreground mt-1.5">
                       {likelihoodHelperText[riskOfLosingHome]}
@@ -657,11 +657,11 @@ const BuyerReport = () => {
                       {losingHomeDesc}
                     </p>
                   </div>
-                  <div className="text-center p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
-                    <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
-                      <TrendingUp className="h-6 w-6 text-amber-600" />
+                  <div className="text-center p-4 sm:p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-3">
+                      <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
                     </div>
-                    <p className="font-medium mb-2">{getTitle('riskOfOverpaying', isClientMode)}</p>
+                    <p className="font-medium text-sm sm:text-base mb-2">{getTitle('riskOfOverpaying', isClientMode)}</p>
                     <RiskBadge band={riskOfOverpaying} />
                     <p className="text-[10px] text-muted-foreground mt-1.5">
                       {likelihoodHelperText[riskOfOverpaying]}

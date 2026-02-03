@@ -311,19 +311,19 @@ const SellerReport = () => {
       <div className="hero-gradient text-primary-foreground">
         <div className="container mx-auto px-4 py-6 report-header-mobile">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0">
               <Link to={getBackPath()}>
-                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
+                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 min-h-[44px] min-w-[44px]">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               </Link>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accent/20">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-lg bg-accent/20 shrink-0">
                   <Building2 className="h-5 w-5 text-accent" />
                 </div>
-                <div>
-                  <h1 className="text-2xl font-serif font-bold">Seller Report</h1>
-                  <p className="text-sm text-primary-foreground/70">{session.client_name} • {formatLocation(session.location)}</p>
+                <div className="min-w-0">
+                  <h1 className="text-xl sm:text-2xl font-serif font-bold">Seller Report</h1>
+                  <p className="text-sm text-primary-foreground/70 truncate">{session.client_name} • {formatLocation(session.location)}</p>
                 </div>
               </div>
             </div>
@@ -401,18 +401,18 @@ const SellerReport = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 likelihood-cards-mobile">
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
-                    <p className="text-sm text-muted-foreground mb-1">List Price</p>
-                    <p className="text-xl font-serif font-bold">{formatCurrency(inputs.seller_selected_list_price)}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 likelihood-cards-mobile">
+                  <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">List Price</p>
+                    <p className="text-base sm:text-xl font-serif font-bold break-words">{formatCurrency(inputs.seller_selected_list_price)}</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
-                    <p className="text-sm text-muted-foreground mb-1">Timeframe</p>
-                    <p className="text-xl font-serif font-bold">{inputs.desired_timeframe} days</p>
+                  <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Timeframe</p>
+                    <p className="text-base sm:text-xl font-serif font-bold">{inputs.desired_timeframe} days</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
-                    <p className="text-sm text-muted-foreground mb-1">Strategy</p>
-                    <p className="text-xl font-serif font-bold">{inputs.strategy_preference}</p>
+                  <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile col-span-2 sm:col-span-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Strategy</p>
+                    <p className="text-base sm:text-xl font-serif font-bold">{inputs.strategy_preference}</p>
                   </div>
                 </div>
                 {/* Client Notes - visible in PDF/Share */}
