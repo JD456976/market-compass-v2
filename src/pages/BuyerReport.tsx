@@ -384,10 +384,13 @@ const BuyerReport = () => {
                 variant="outline"
                 size="sm"
                 onClick={openScenarioExplorer}
-                className="hidden md:flex items-center gap-2 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20"
+                className="hidden md:flex items-center gap-2 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20 relative"
               >
                 <Compass className="h-4 w-4" />
                 Scenario Explorer
+                {scenarioInputs && originalInputs && JSON.stringify(scenarioInputs) !== JSON.stringify(originalInputs) && (
+                  <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
+                )}
               </Button>
               <ModeSwitcher className="bg-primary-foreground/10 rounded-lg px-3 py-2" />
             </div>
