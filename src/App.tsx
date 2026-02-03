@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ClientModeProvider } from "@/contexts/ClientModeContext";
 import { BetaAccessGate } from "@/components/BetaAccessGate";
+import { GlobalNav, MobileNavSpacer } from "@/components/GlobalNav";
 import Index from "./pages/Index";
 import MarketProfiles from "./pages/MarketProfiles";
 import MarketScenarios from "./pages/MarketScenarios";
@@ -75,6 +76,18 @@ function AppRoutes() {
   return <BetaAccessGate>{routes}</BetaAccessGate>;
 }
 
+function AppLayout() {
+  return (
+    <>
+      <GlobalNav />
+      <main className="flex-1">
+        <AppRoutes />
+      </main>
+      <MobileNavSpacer />
+    </>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ClientModeProvider>
@@ -82,7 +95,9 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AppRoutes />
+          <div className="min-h-screen flex flex-col">
+            <AppLayout />
+          </div>
         </BrowserRouter>
       </TooltipProvider>
     </ClientModeProvider>
