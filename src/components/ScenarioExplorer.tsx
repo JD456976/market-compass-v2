@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, RotateCcw, Info, Compass, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, RotateCcw, Info, Compass, X, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerClose,
+  DrawerDescription,
 } from '@/components/ui/drawer';
 import { BuyerInputs, FinancingType, DownPaymentPercent, Contingency, ClosingTimeline, BuyerPreference } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -26,6 +27,9 @@ interface ScenarioExplorerProps {
   onInputsChange: (inputs: BuyerInputs) => void;
   currentInputs: BuyerInputs;
 }
+
+// Tooltip explanation for Scenario Explorer
+const SCENARIO_EXPLORER_TOOLTIP = "Explore different offer strategies without changing your original report. Adjust price, financing, and terms to see how they might affect competitiveness.";
 
 const CONTINGENCY_OPTIONS: { value: Contingency; label: string }[] = [
   { value: 'Inspection', label: 'Inspection' },
@@ -400,25 +404,48 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
 
   const hasChanges = changedFields.size > 0;
 
+  // Ref for auto-scrolling drawer content to top
+  const drawerContentRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll drawer content to top when opened
+  useEffect(() => {
+    if (drawerOpen && drawerContentRef.current) {
+      // Small delay to ensure content is rendered
+      setTimeout(() => {
+        drawerContentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+      }, 50);
+    }
+  }, [drawerOpen]);
+
   // Mobile: Floating button + Drawer
   if (isMobile) {
     return (
       <>
-        {/* Floating Action Button (ported to <body> to avoid transform/overflow clipping) */}
+        {/* Floating Action Button - positioned top-right on mobile to avoid Apply overlap */}
         {typeof document !== 'undefined' &&
           createPortal(
-            <div className="scenario-fab-container pdf-exclude">
-              <Button
-                onClick={() => setDrawerOpen(true)}
-                className="relative h-14 min-h-[44px] rounded-full shadow-lg gap-2 px-5 max-w-[calc(100vw-3rem)]"
-              >
-                <Compass className="h-5 w-5 shrink-0" />
-                <span className="font-medium truncate">Scenario Explorer</span>
-                {hasChanges && (
-                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent animate-pulse" />
-                )}
-              </Button>
-            </div>,
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="scenario-fab-container pdf-exclude">
+                    <Button
+                      onClick={() => setDrawerOpen(true)}
+                      className="relative h-12 min-h-[44px] rounded-full shadow-lg gap-2 px-4"
+                      size="sm"
+                    >
+                      <Compass className="h-5 w-5 shrink-0" />
+                      <span className="font-medium text-sm">Scenarios</span>
+                      {hasChanges && (
+                        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent animate-pulse" />
+                      )}
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[250px]">
+                  <p className="text-xs">{SCENARIO_EXPLORER_TOOLTIP}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>,
             document.body,
           )}
 
@@ -426,7 +453,8 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
           <DrawerContent className="h-[85vh]">
             <DrawerHeader className="border-b pb-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Compass className="h-5 w-5 text-accent" />
                   <DrawerTitle className="font-serif text-lg">Scenario Explorer</DrawerTitle>
                   {hasChanges && (
                     <Badge variant="secondary" className="text-xs">Modified</Badge>
@@ -438,12 +466,15 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
                   </Button>
                 </DrawerClose>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Try changes and see how they affect competitiveness (no guarantees).
-              </p>
+              <DrawerDescription className="text-sm text-muted-foreground mt-1">
+                {SCENARIO_EXPLORER_TOOLTIP}
+              </DrawerDescription>
             </DrawerHeader>
             
-            <div className="scenario-drawer-content px-4 py-4">
+            <div 
+              ref={drawerContentRef}
+              className="scenario-drawer-content px-4 py-4"
+            >
               <ScenarioForm
                 localInputs={localInputs}
                 setLocalInputs={setLocalInputs}
@@ -501,6 +532,21 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
                   Modified
                 </Badge>
               )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    type="button" 
+                    className="h-6 w-6 flex items-center justify-center shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label="What is Scenario Explorer?"
+                  >
+                    <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[280px]">
+                  <p className="text-xs">{SCENARIO_EXPLORER_TOOLTIP}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
             <p className="text-sm text-muted-foreground mt-1 break-words">
               Try changes and see how they affect competitiveness

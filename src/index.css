@@ -440,15 +440,18 @@ p, span, h1, h2, h3, h4, h5, h6, label {
    ============================================ */
 .scenario-fab-container {
   position: fixed;
-  bottom: max(1.5rem, env(safe-area-inset-bottom));
-  right: 1.5rem;
+  /* Position at top-right on mobile to avoid Apply button overlap */
+  top: max(1rem, env(safe-area-inset-top));
+  right: 1rem;
+  bottom: auto;
   z-index: 9999;
   pointer-events: auto;
 }
 
-/* Desktop: show both FAB and header CTA - FAB positioned differently */
+/* Desktop: position at bottom-right */
 @media (min-width: 768px) {
   .scenario-fab-container {
+    top: auto;
     bottom: 2rem;
     right: 2rem;
   }
@@ -462,9 +465,26 @@ p, span, h1, h2, h3, h4, h5, h6, label {
   }
 }
 
-/* Scenario drawer scrollable content */
+/* Scenario drawer scrollable content - auto-scroll to top */
 .scenario-drawer-content {
   max-height: calc(85vh - 160px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================
+   Global auto-scroll for forms and menus
+   ============================================ */
+/* Ensure all scrollable containers start at top */
+[data-radix-scroll-area-viewport],
+[data-radix-select-viewport],
+[data-radix-dropdown-menu-content],
+.scroll-area-viewport {
+  scroll-behavior: smooth;
+}
+
+/* Drawer and sheet content should scroll to top on open */
+[data-vaul-drawer-content],
+[data-radix-dialog-content] {
+  scroll-behavior: smooth;
 }
