@@ -241,10 +241,13 @@ const SharedReportContent = () => {
                 variant="outline"
                 size="sm"
                 onClick={openScenarioExplorer}
-                className="hidden md:flex items-center gap-2 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20"
+                className="hidden md:flex items-center gap-2 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20 relative"
               >
                 <Compass className="h-4 w-4" />
                 Scenario Explorer
+                {isWhatIfModified && (
+                  <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
+                )}
               </Button>
             )}
           </div>
@@ -415,13 +418,25 @@ const SharedReportContent = () => {
                 onInputsChange={handleWhatIfChange}
               />
 
-              {/* What-If Modified Notice */}
+              {/* What-If Modified Notice with PDF Download CTA */}
               {isWhatIfModified && (
-                <div className="pdf-exclude flex items-center gap-2 p-3 rounded-lg bg-accent/10 border border-accent/30 text-sm">
-                  <AlertCircle className="h-4 w-4 text-accent shrink-0" />
-                  <p className="text-muted-foreground">
-                    You're viewing modified settings. Results below reflect your changes.
-                  </p>
+                <div className="pdf-exclude flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-lg bg-accent/10 border border-accent/30">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <AlertCircle className="h-4 w-4 text-accent shrink-0" />
+                    <p className="text-sm text-muted-foreground">
+                      You're viewing modified settings. Download a PDF to save this scenario.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportPdf}
+                    disabled={exporting}
+                    className="shrink-0 h-9 min-h-[44px]"
+                  >
+                    <FileDown className="h-4 w-4 mr-1.5" />
+                    {exporting ? 'Exporting...' : 'Download PDF'}
+                  </Button>
                 </div>
               )}
 

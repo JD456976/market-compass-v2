@@ -318,12 +318,12 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
   const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
   const [isApplying, setIsApplying] = useState(false);
 
-  // Allow report header CTAs (outside this component) to open the explorer.
+  // Allow report header CTAs (outside this component) to toggle the explorer.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const onOpen = () => {
       if (isMobile) setDrawerOpen(true);
-      else setIsExpanded(true);
+      else setIsExpanded(prev => !prev); // Toggle on desktop
     };
     window.addEventListener(SCENARIO_EXPLORER_OPEN_EVENT, onOpen);
     return () => window.removeEventListener(SCENARIO_EXPLORER_OPEN_EVENT, onOpen);
@@ -415,7 +415,7 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
                 <Compass className="h-5 w-5 shrink-0" />
                 <span className="font-medium truncate">Scenario Explorer</span>
                 {hasChanges && (
-                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent" />
+                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent animate-pulse" />
                 )}
               </Button>
             </div>,
@@ -423,7 +423,7 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
           )}
 
         <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-          <DrawerContent className="h-[70vh]">
+          <DrawerContent className="h-[85vh]">
             <DrawerHeader className="border-b pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
