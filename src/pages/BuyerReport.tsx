@@ -56,7 +56,7 @@ import {
 import { RotateCcw, Compass } from 'lucide-react';
 import { AnalysisMethodology } from '@/components/AnalysisMethodology';
 import { DraftStatusIndicator } from '@/components/DraftStatusIndicator';
-import { ScenarioExplorer } from '@/components/ScenarioExplorer';
+import { ScenarioExplorer, ScenarioExplorerTrigger } from '@/components/ScenarioExplorer';
 import { openScenarioExplorer } from '@/lib/scenarioExplorerEvents';
 import { BuyerInputs } from '@/types';
 
@@ -379,19 +379,21 @@ const BuyerReport = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 self-end sm:self-auto">
-              {/* Desktop Scenario Explorer CTA */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={openScenarioExplorer}
-                className="hidden md:flex items-center gap-2 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20 relative"
-              >
-                <Compass className="h-4 w-4" />
-                Scenario Explorer
-                {scenarioInputs && originalInputs && JSON.stringify(scenarioInputs) !== JSON.stringify(originalInputs) && (
-                  <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
-                )}
-              </Button>
+              {/* Desktop Scenario Explorer CTA - Client mode only */}
+              {isClientMode && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openScenarioExplorer}
+                  className="hidden md:flex items-center gap-2 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20 relative"
+                >
+                  <Compass className="h-4 w-4" />
+                  Scenario Explorer
+                  {scenarioInputs && originalInputs && JSON.stringify(scenarioInputs) !== JSON.stringify(originalInputs) && (
+                    <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
+                  )}
+                </Button>
+              )}
               <ModeSwitcher className="bg-primary-foreground/10 rounded-lg px-3 py-2" />
             </div>
           </div>
@@ -727,9 +729,15 @@ const BuyerReport = () => {
                 <AgentLabTrigger onClick={() => setLabOpen(true)} />
               </>
             )}
-            {/* Share/Export only visible in Client mode */}
+            {/* Share/Export and Scenario Explorer only visible in Client mode */}
             {isClientMode && (
               <>
+                {/* Mobile Scenario Explorer trigger - placed before export actions */}
+                <ScenarioExplorerTrigger
+                  onClick={openScenarioExplorer}
+                  hasChanges={scenarioInputs && originalInputs && JSON.stringify(scenarioInputs) !== JSON.stringify(originalInputs)}
+                  className="md:hidden min-h-[44px]"
+                />
                 <Button onClick={handleExportPdf} size="lg" variant="outline" className="min-h-[44px]">
                   <FileDown className="mr-2 h-4 w-4" />
                   Export PDF
@@ -810,8 +818,8 @@ const BuyerReport = () => {
         onApply={handleDraftUpdate}
       />
 
-      {/* Scenario Explorer - Available on all viewports */}
-      {originalInputs && scenarioInputs && (
+      {/* Scenario Explorer - Client mode only */}
+      {isClientMode && originalInputs && scenarioInputs && (
         <ScenarioExplorer
           originalInputs={originalInputs}
           currentInputs={scenarioInputs}
