@@ -306,6 +306,39 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_report_views: {
+        Row: {
+          device_type: string | null
+          id: string
+          referrer: string | null
+          report_id: string
+          share_token: string
+          user_agent: string | null
+          viewed_at: string
+          viewer_id: string
+        }
+        Insert: {
+          device_type?: string | null
+          id?: string
+          referrer?: string | null
+          report_id: string
+          share_token: string
+          user_agent?: string | null
+          viewed_at?: string
+          viewer_id: string
+        }
+        Update: {
+          device_type?: string | null
+          id?: string
+          referrer?: string | null
+          report_id?: string
+          share_token?: string
+          user_agent?: string | null
+          viewed_at?: string
+          viewer_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

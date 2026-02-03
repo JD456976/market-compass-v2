@@ -1,22 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2, Eye, Clock } from 'lucide-react';
 import { Session } from '@/types';
 import { useSharedSessions } from '@/hooks/useSessions';
+import { useBatchViewStats, useReportViewNotifications } from '@/hooks/useReportViewStats';
 import { useToast } from '@/hooks/use-toast';
 import { formatLocation } from '@/lib/utils';
 import { exportReportToPdf } from '@/lib/pdfExport';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { getMarketProfileByIdFromSupabase } from '@/lib/supabaseStorage';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const SharedReports = () => {
   const { toast } = useToast();
   const { sessions, loading } = useSharedSessions();
   const [exportingId, setExportingId] = useState<string | null>(null);
+
+  // Get report IDs for view stats and real-time notifications
+  const reportIds = useMemo(() => sessions.map(s => s.id), [sessions]);
+  const { stats: viewStats, loading: loadingStats } = useBatchViewStats(reportIds);
+  
+  // Enable real-time notifications when reports are viewed
+  useReportViewNotifications(reportIds);
 
   const handleCopyLink = (session: Session) => {
     const url = `${window.location.origin}/share/${session.id}`;
@@ -90,6 +99,21 @@ const SharedReports = () => {
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return formatDate(dateString);
   };
 
   const getStatusBadges = (session: Session) => {
@@ -210,8 +234,29 @@ const SharedReports = () => {
                               {formatDate(session.updated_at)}
                             </span>
                           </div>
-                          <div className="flex gap-2 mt-2">
+                          <div className="flex gap-2 mt-2 flex-wrap items-center">
                             {getStatusBadges(session)}
+                            {/* View stats */}
+                            {viewStats.get(session.id) && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge variant="outline" className="text-xs gap-1">
+                                      <Eye className="h-3 w-3" />
+                                      {viewStats.get(session.id)!.totalViews}
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p className="text-xs">
+                                      {viewStats.get(session.id)!.totalViews} view{viewStats.get(session.id)!.totalViews !== 1 ? 's' : ''}
+                                      {viewStats.get(session.id)!.lastViewedAt && (
+                                        <><br />Last: {formatRelativeTime(viewStats.get(session.id)!.lastViewedAt!)}</>
+                                      )}
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
                           </div>
                         </div>
                         <div className="flex gap-1 shrink-0">

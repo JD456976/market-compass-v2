@@ -20,6 +20,10 @@ interface UseSessionResult {
   refreshSession: () => Promise<void>;
 }
 
+interface UseSharedSessionResult extends UseSessionResult {
+  shareToken: string | null;
+}
+
 /**
  * Hook to load a session by ID from Supabase with localStorage fallback
  */
@@ -88,10 +92,12 @@ export function useSession(sessionId: string | undefined): UseSessionResult {
 /**
  * Hook to load a session by share token from Supabase
  * Falls back to loading by ID for legacy share links
+ * Returns the share token for view tracking
  */
-export function useSharedSession(shareTokenOrId: string | undefined): UseSessionResult {
+export function useSharedSession(shareTokenOrId: string | undefined): UseSharedSessionResult {
   const [session, setSession] = useState<Session | null>(null);
   const [marketProfile, setMarketProfile] = useState<MarketProfile | undefined>(undefined);
+  const [shareToken, setShareToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ReportError | null>(null);
 
@@ -108,9 +114,13 @@ export function useSharedSession(shareTokenOrId: string | undefined): UseSession
     try {
       // Try loading by share token first
       let loadedSession = await getSessionByShareToken(shareTokenOrId);
+      let resolvedShareToken: string | null = null;
       
-      // Fallback: try loading by ID (for legacy links)
-      if (!loadedSession) {
+      if (loadedSession) {
+        // If found by share token, use that token
+        resolvedShareToken = shareTokenOrId;
+      } else {
+        // Fallback: try loading by ID (for legacy links)
         loadedSession = await getSessionByIdFromSupabase(shareTokenOrId);
       }
       
@@ -126,6 +136,7 @@ export function useSharedSession(shareTokenOrId: string | undefined): UseSession
       }
 
       setSession(loadedSession);
+      setShareToken(resolvedShareToken);
 
       // Load market profile if referenced
       if (loadedSession.selected_market_profile_id) {
@@ -158,6 +169,7 @@ export function useSharedSession(shareTokenOrId: string | undefined): UseSession
   return {
     session,
     marketProfile,
+    shareToken,
     loading,
     error,
     updateSession,
