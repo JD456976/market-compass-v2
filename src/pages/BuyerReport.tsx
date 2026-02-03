@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -53,9 +53,12 @@ import {
   getConsistencyIssues,
   getPrimaryLimitingFactor
 } from '@/components/RealityAnchors';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Compass } from 'lucide-react';
 import { AnalysisMethodology } from '@/components/AnalysisMethodology';
 import { DraftStatusIndicator } from '@/components/DraftStatusIndicator';
+import { ScenarioExplorer } from '@/components/ScenarioExplorer';
+import { openScenarioExplorer } from '@/lib/scenarioExplorerEvents';
+import { BuyerInputs } from '@/types';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -90,6 +93,10 @@ const BuyerReport = () => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [labOpen, setLabOpen] = useState(false);
   const [marketSnapshot, setMarketSnapshot] = useState<{ snapshot: MarketSnapshot; isGenericBaseline: boolean } | null>(null);
+  
+  // Scenario Explorer state
+  const [originalInputs, setOriginalInputs] = useState<BuyerInputs | null>(null);
+  const [scenarioInputs, setScenarioInputs] = useState<BuyerInputs | null>(null);
 
   useEffect(() => {
     const sessionData = sessionStorage.getItem('current_session');
@@ -107,6 +114,12 @@ const BuyerReport = () => {
       const data = calculateBuyerReport(session, marketProfile);
       setReportData(data);
       
+      // Initialize Scenario Explorer inputs
+      if (session.buyer_inputs) {
+        setOriginalInputs({ ...session.buyer_inputs });
+        setScenarioInputs({ ...session.buyer_inputs });
+      }
+      
       // Get market snapshot based on location
       const snapshotData = getMarketSnapshotOrBaseline(session.location);
       setMarketSnapshot(snapshotData);
@@ -114,6 +127,16 @@ const BuyerReport = () => {
       navigate('/buyer');
     }
   }, [navigate]);
+
+  // Handle scenario input changes - recalculate report with new inputs
+  const handleScenarioChange = useCallback((newInputs: BuyerInputs) => {
+    setScenarioInputs(newInputs);
+    if (reportData) {
+      const updatedSession = { ...reportData.session, buyer_inputs: newInputs };
+      const newData = calculateBuyerReport(updatedSession, reportData.marketProfile);
+      setReportData(newData);
+    }
+  }, [reportData]);
 
   const handleSave = () => {
     if (!reportData) return;
@@ -355,7 +378,19 @@ const BuyerReport = () => {
                 </div>
               </div>
             </div>
-            <ModeSwitcher className="bg-primary-foreground/10 rounded-lg px-3 py-2 self-end sm:self-auto" />
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              {/* Desktop Scenario Explorer CTA */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openScenarioExplorer}
+                className="hidden md:flex items-center gap-2 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20"
+              >
+                <Compass className="h-4 w-4" />
+                Scenario Explorer
+              </Button>
+              <ModeSwitcher className="bg-primary-foreground/10 rounded-lg px-3 py-2" />
+            </div>
           </div>
         </div>
       </div>
@@ -771,6 +806,15 @@ const BuyerReport = () => {
         onOpenChange={setLabOpen}
         onApply={handleDraftUpdate}
       />
+
+      {/* Scenario Explorer - Available on all viewports */}
+      {originalInputs && scenarioInputs && (
+        <ScenarioExplorer
+          originalInputs={originalInputs}
+          currentInputs={scenarioInputs}
+          onInputsChange={handleScenarioChange}
+        />
+      )}
     </div>
   );
 };

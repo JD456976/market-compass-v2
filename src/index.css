@@ -442,7 +442,16 @@ p, span, h1, h2, h3, h4, h5, h6, label {
   position: fixed;
   bottom: max(1.5rem, env(safe-area-inset-bottom));
   right: 1.5rem;
-  z-index: 50;
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+/* Desktop: show both FAB and header CTA - FAB positioned differently */
+@media (min-width: 768px) {
+  .scenario-fab-container {
+    bottom: 2rem;
+    right: 2rem;
+  }
 }
 
 /* Ensure FAB doesn't overlap content */
