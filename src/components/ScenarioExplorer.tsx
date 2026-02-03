@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp, RotateCcw, Info, Compass, X, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -333,24 +332,6 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
     return () => window.removeEventListener(SCENARIO_EXPLORER_OPEN_EVENT, onOpen);
   }, [isMobile]);
 
-  // Dev-only visibility sanity check
-  useEffect(() => {
-    if (import.meta.env.DEV && typeof document !== 'undefined') {
-      // Check if FAB container is visible after a short delay
-      const timer = setTimeout(() => {
-        const fab = document.querySelector('.scenario-fab-container');
-        if (fab) {
-          const rect = fab.getBoundingClientRect();
-          const isVisible = rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.right > 0;
-          if (!isVisible) {
-            console.warn('[Scenario Explorer] FAB not visible at this breakpoint – check CSS hidden/overflow/z-index.');
-          }
-        }
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isMobile]);
-
   // Sync local inputs when currentInputs changes (e.g., after reset)
   useEffect(() => {
     setLocalInputs(currentInputs);
@@ -417,101 +398,71 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
     }
   }, [drawerOpen]);
 
-  // Mobile: Floating button + Drawer
+  // Mobile: Inline trigger + Drawer (no FAB)
   if (isMobile) {
     return (
-      <>
-        {/* Floating Action Button - positioned top-right on mobile to avoid Apply overlap */}
-        {typeof document !== 'undefined' &&
-          createPortal(
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="scenario-fab-container pdf-exclude">
-                    <Button
-                      onClick={() => setDrawerOpen(true)}
-                      className="relative h-12 min-h-[44px] rounded-full shadow-lg gap-2 px-4"
-                      size="sm"
-                    >
-                      <Compass className="h-5 w-5 shrink-0" />
-                      <span className="font-medium text-sm">Scenarios</span>
-                      {hasChanges && (
-                        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent animate-pulse" />
-                      )}
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[250px]">
-                  <p className="text-xs">{SCENARIO_EXPLORER_TOOLTIP}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>,
-            document.body,
-          )}
-
-        <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-          <DrawerContent className="h-[85vh]">
-            <DrawerHeader className="border-b pb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Compass className="h-5 w-5 text-accent" />
-                  <DrawerTitle className="font-serif text-lg">Scenario Explorer</DrawerTitle>
-                  {hasChanges && (
-                    <Badge variant="secondary" className="text-xs">Modified</Badge>
-                  )}
-                </div>
-                <DrawerClose asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full">
-                    <X className="h-5 w-5" />
-                  </Button>
-                </DrawerClose>
-              </div>
-              <DrawerDescription className="text-sm text-muted-foreground mt-1">
-                {SCENARIO_EXPLORER_TOOLTIP}
-              </DrawerDescription>
-            </DrawerHeader>
-            
-            <div 
-              ref={drawerContentRef}
-              className="scenario-drawer-content px-4 py-4"
-            >
-              <ScenarioForm
-                localInputs={localInputs}
-                setLocalInputs={setLocalInputs}
-                originalInputs={originalInputs}
-                changedFields={changedFields}
-              />
-            </div>
-            
-            {/* Footer with Apply/Reset buttons */}
-            <div 
-              className="border-t p-4 flex gap-3 bg-background"
-              style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
-            >
-              <Button
-                variant="outline"
-                onClick={handleReset}
-                disabled={!hasChanges}
-                className="flex-1 h-12 min-h-[44px]"
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Reset
-              </Button>
-              <Button
-                onClick={handleApply}
-                disabled={isApplying}
-                className="flex-1 h-12 min-h-[44px]"
-              >
-                {isApplying ? (
-                  <span className="animate-pulse">Applying...</span>
-                ) : (
-                  'Apply Changes'
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DrawerContent className="h-[85vh]">
+          <DrawerHeader className="border-b pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Compass className="h-5 w-5 text-accent" />
+                <DrawerTitle className="font-serif text-lg">Scenario Explorer</DrawerTitle>
+                {hasChanges && (
+                  <Badge variant="secondary" className="text-xs">Modified</Badge>
                 )}
-              </Button>
+              </div>
+              <DrawerClose asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full">
+                  <X className="h-5 w-5" />
+                </Button>
+              </DrawerClose>
             </div>
-          </DrawerContent>
-        </Drawer>
-      </>
+            <DrawerDescription className="text-sm text-muted-foreground mt-1">
+              {SCENARIO_EXPLORER_TOOLTIP}
+            </DrawerDescription>
+          </DrawerHeader>
+          
+          <div 
+            ref={drawerContentRef}
+            className="scenario-drawer-content px-4 py-4"
+          >
+            <ScenarioForm
+              localInputs={localInputs}
+              setLocalInputs={setLocalInputs}
+              originalInputs={originalInputs}
+              changedFields={changedFields}
+            />
+          </div>
+          
+          {/* Footer with Apply/Reset buttons */}
+          <div 
+            className="border-t p-4 flex gap-3 bg-background"
+            style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+          >
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              disabled={!hasChanges}
+              className="flex-1 h-12 min-h-[44px]"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset
+            </Button>
+            <Button
+              onClick={handleApply}
+              disabled={isApplying}
+              className="flex-1 h-12 min-h-[44px]"
+            >
+              {isApplying ? (
+                <span className="animate-pulse">Applying...</span>
+              ) : (
+                'Apply Changes'
+              )}
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
     );
   }
 
@@ -600,6 +551,39 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
         )}
       </AnimatePresence>
     </Card>
+  );
+}
+
+// Inline trigger button for embedding in report (client mode mobile)
+interface ScenarioExplorerTriggerProps {
+  hasChanges?: boolean;
+  onClick: () => void;
+  className?: string;
+}
+
+export function ScenarioExplorerTrigger({ hasChanges, onClick, className }: ScenarioExplorerTriggerProps) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={onClick}
+            variant="outline"
+            className={`relative gap-2 ${className || ''}`}
+          >
+            <Compass className="h-4 w-4" />
+            <span>Explore Scenarios</span>
+            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+            {hasChanges && (
+              <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[280px]">
+          <p className="text-xs">{SCENARIO_EXPLORER_TOOLTIP}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
