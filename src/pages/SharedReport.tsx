@@ -19,8 +19,8 @@ import { ForceClientMode } from '@/contexts/ClientModeContext';
 import { exportReportToPdf } from '@/lib/pdfExport';
 import { useToast } from '@/hooks/use-toast';
 import { AnalysisMethodology } from '@/components/AnalysisMethodology';
-import { LikelihoodHelperText } from '@/components/LikelihoodDefinitions';
-import { WhatIfPanel } from '@/components/WhatIfPanel';
+import { LikelihoodHelperText, LikelihoodDefinitions } from '@/components/LikelihoodDefinitions';
+import { ScenarioExplorer } from '@/components/ScenarioExplorer';
 import { 
   getTitle, 
   buyerWhatThisMeans, 
@@ -327,10 +327,13 @@ const SharedReportContent = () => {
               <Card className="pdf-section pdf-avoid-break overflow-hidden">
                 <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 section-header-mobile">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Clock className="h-5 w-5 text-accent" />
-                      {getTitle('saleLikelihood', isClientMode)}
-                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Clock className="h-5 w-5 text-accent" />
+                        {getTitle('saleLikelihood', isClientMode)}
+                      </CardTitle>
+                      <LikelihoodDefinitions />
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Market snapshot as of: {new Date(reportData.snapshotTimestamp).toLocaleString()}
                     </p>
@@ -390,8 +393,8 @@ const SharedReportContent = () => {
           {/* Buyer-specific content */}
           {!isSeller && effectiveSession.buyer_inputs && originalBuyerInputs && whatIfInputs && (
             <>
-              {/* What-If Panel - Only visible in browser, not PDF */}
-              <WhatIfPanel
+              {/* Scenario Explorer - Renders as FAB+Drawer on mobile, Card on desktop */}
+              <ScenarioExplorer
                 originalInputs={originalBuyerInputs}
                 currentInputs={whatIfInputs}
                 onInputsChange={handleWhatIfChange}
@@ -418,7 +421,8 @@ const SharedReportContent = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 likelihood-cards-mobile">
+                  {/* Adjust grid based on whether down payment is shown (Cash hides it) */}
+                  <div className={`grid ${effectiveSession.buyer_inputs.financing_type === 'Cash' ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'} gap-4 mb-4 likelihood-cards-mobile`}>
                     <div className="p-4 rounded-xl bg-secondary/50 text-center">
                       <p className="text-sm text-muted-foreground mb-1">Offer Price</p>
                       <p className="text-lg font-serif font-bold">{formatCurrency(effectiveSession.buyer_inputs.offer_price)}</p>
@@ -427,10 +431,13 @@ const SharedReportContent = () => {
                       <p className="text-sm text-muted-foreground mb-1">Financing</p>
                       <p className="text-lg font-serif font-bold">{effectiveSession.buyer_inputs.financing_type}</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                      <p className="text-sm text-muted-foreground mb-1">Down Payment</p>
-                      <p className="text-lg font-serif font-bold">{effectiveSession.buyer_inputs.down_payment_percent}</p>
-                    </div>
+                    {/* Hide Down Payment for Cash offers */}
+                    {effectiveSession.buyer_inputs.financing_type !== 'Cash' && (
+                      <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                        <p className="text-sm text-muted-foreground mb-1">Down Payment</p>
+                        <p className="text-lg font-serif font-bold">{effectiveSession.buyer_inputs.down_payment_percent}</p>
+                      </div>
+                    )}
                     <div className="p-4 rounded-xl bg-secondary/50 text-center">
                       <p className="text-sm text-muted-foreground mb-1">Closing</p>
                       <p className="text-lg font-serif font-bold">{effectiveSession.buyer_inputs.closing_timeline} days</p>
@@ -449,10 +456,13 @@ const SharedReportContent = () => {
               <Card className="pdf-section pdf-avoid-break overflow-hidden">
                 <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 section-header-mobile">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Clock className="h-5 w-5 text-accent" />
-                      {getTitle('acceptanceLikelihood', isClientMode)}
-                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Clock className="h-5 w-5 text-accent" />
+                        {getTitle('acceptanceLikelihood', isClientMode)}
+                      </CardTitle>
+                      <LikelihoodDefinitions />
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Market snapshot as of: {new Date(reportData.snapshotTimestamp).toLocaleString()}
                     </p>
@@ -543,6 +553,9 @@ const SharedReportContent = () => {
           <div className="pdf-section">
             <MethodologyFooter snapshotDate={reportData.snapshotTimestamp} />
           </div>
+
+          {/* Spacer for mobile FAB - only on buyer reports */}
+          {!isSeller && <div className="h-20 md:h-0" />}
 
         </motion.div>
       </div>
