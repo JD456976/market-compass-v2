@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, RotateCcw, Info, Compass, X, HelpCircle } from 'lucide-react';
+import { RotateCcw, Info, Compass, X, HelpCircle, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Drawer,
@@ -16,6 +16,14 @@ import {
   DrawerClose,
   DrawerDescription,
 } from '@/components/ui/drawer';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetClose,
+} from '@/components/ui/sheet';
 import { BuyerInputs, FinancingType, DownPaymentPercent, Contingency, ClosingTimeline, BuyerPreference } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
@@ -28,7 +36,8 @@ interface ScenarioExplorerProps {
 }
 
 // Tooltip explanation for Scenario Explorer
-const SCENARIO_EXPLORER_TOOLTIP = "Explore different offer strategies without changing your original report. Adjust price, financing, and terms to see how they might affect competitiveness.";
+const SCENARIO_EXPLORER_TOOLTIP = "Try changing terms to see how outcomes shift.";
+const SCENARIO_EXPLORER_DESCRIPTION = "Adjust terms to explore tradeoffs before you decide.";
 
 const CONTINGENCY_OPTIONS: { value: Contingency; label: string }[] = [
   { value: 'Inspection', label: 'Inspection' },
@@ -112,10 +121,6 @@ function ScenarioForm({
   return (
     <TooltipProvider>
       <div className="space-y-6 overflow-x-hidden">
-        <p className="text-xs text-muted-foreground break-words">
-          Adjust offer terms below to explore different strategies. Changes here are private unless shared.
-        </p>
-        
         {/* Offer Details Section */}
         <div className="space-y-4">
           <h4 className="text-sm font-medium text-muted-foreground">Offer Details</h4>
@@ -315,22 +320,18 @@ function ScenarioForm({
 
 export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs }: ScenarioExplorerProps) {
   const isMobile = useIsMobile();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [localInputs, setLocalInputs] = useState<BuyerInputs>(currentInputs);
   const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
   const [isApplying, setIsApplying] = useState(false);
 
-  // Allow report header CTAs (outside this component) to toggle the explorer.
+  // Listen for external open events (from header buttons, etc.)
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const onOpen = () => {
-      if (isMobile) setDrawerOpen(true);
-      else setIsExpanded(prev => !prev); // Toggle on desktop
-    };
+    const onOpen = () => setIsOpen(true);
     window.addEventListener(SCENARIO_EXPLORER_OPEN_EVENT, onOpen);
     return () => window.removeEventListener(SCENARIO_EXPLORER_OPEN_EVENT, onOpen);
-  }, [isMobile]);
+  }, []);
 
   // Sync local inputs when currentInputs changes (e.g., after reset)
   useEffect(() => {
@@ -358,13 +359,13 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
 
   // Debounced auto-apply for desktop
   useEffect(() => {
-    if (!isMobile) {
+    if (!isMobile && isOpen) {
       const timer = setTimeout(() => {
         onInputsChange(localInputs);
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [localInputs, onInputsChange, isMobile]);
+  }, [localInputs, onInputsChange, isMobile, isOpen]);
 
   const handleReset = useCallback(() => {
     setLocalInputs({ ...originalInputs });
@@ -375,186 +376,199 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
 
   const handleApply = useCallback(() => {
     setIsApplying(true);
-    // Small delay for visual feedback
     setTimeout(() => {
       onInputsChange(localInputs);
       setIsApplying(false);
-      setDrawerOpen(false);
+      setIsOpen(false);
     }, 200);
   }, [localInputs, onInputsChange]);
 
   const hasChanges = changedFields.size > 0;
 
-  // Ref for auto-scrolling drawer content to top
-  const drawerContentRef = useRef<HTMLDivElement>(null);
+  // Ref for auto-scrolling content to top
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll drawer content to top when opened
+  // Auto-scroll content to top when opened
   useEffect(() => {
-    if (drawerOpen && drawerContentRef.current) {
-      // Small delay to ensure content is rendered
+    if (isOpen && contentRef.current) {
       setTimeout(() => {
-        drawerContentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+        contentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
       }, 50);
     }
-  }, [drawerOpen]);
+  }, [isOpen]);
 
-  // Mobile: Inline trigger + Drawer (no FAB)
+  // Panel content (shared between mobile drawer and desktop sheet)
+  const panelContent = (
+    <>
+      <div 
+        ref={contentRef}
+        className="flex-1 overflow-y-auto px-4 py-4 scenario-drawer-content"
+      >
+        <ScenarioForm
+          localInputs={localInputs}
+          setLocalInputs={setLocalInputs}
+          originalInputs={originalInputs}
+          changedFields={changedFields}
+        />
+      </div>
+      
+      {/* Footer with Apply/Reset buttons */}
+      <div 
+        className="border-t p-4 flex gap-3 bg-background shrink-0"
+        style={{ paddingBottom: isMobile ? 'max(1rem, env(safe-area-inset-bottom))' : '1rem' }}
+      >
+        <Button
+          variant="outline"
+          onClick={handleReset}
+          disabled={!hasChanges}
+          className="flex-1 h-12 min-h-[44px]"
+        >
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Reset
+        </Button>
+        <Button
+          onClick={handleApply}
+          disabled={isApplying}
+          className="flex-1 h-12 min-h-[44px]"
+        >
+          {isApplying ? (
+            <span className="animate-pulse">Applying...</span>
+          ) : (
+            'Apply Changes'
+          )}
+        </Button>
+      </div>
+    </>
+  );
+
+  // Mobile: Bottom Drawer
   if (isMobile) {
     return (
-      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DrawerContent className="h-[85vh]">
-          <DrawerHeader className="border-b pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Compass className="h-5 w-5 text-accent" />
-                <DrawerTitle className="font-serif text-lg">Scenario Explorer</DrawerTitle>
-                {hasChanges && (
-                  <Badge variant="secondary" className="text-xs">Modified</Badge>
-                )}
+      <>
+        {/* Sticky bottom pill - always visible */}
+        <div 
+          className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none"
+          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+        >
+          <button
+            onClick={() => setIsOpen(true)}
+            className="pointer-events-auto flex items-center gap-2 px-5 py-3 min-h-[48px] rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 active:scale-[0.98] transition-all touch-manipulation"
+          >
+            <Compass className="h-4 w-4" />
+            <span className="font-medium text-sm">Scenario Explorer</span>
+            {hasChanges && (
+              <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+            )}
+          </button>
+        </div>
+
+        {/* Bottom drawer */}
+        <Drawer open={isOpen} onOpenChange={setIsOpen}>
+          <DrawerContent className="h-[85vh] flex flex-col">
+            <DrawerHeader className="border-b pb-4 shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Compass className="h-5 w-5 text-accent" />
+                  <DrawerTitle className="font-serif text-lg">Scenario Explorer</DrawerTitle>
+                  {hasChanges && (
+                    <Badge variant="secondary" className="text-xs">Modified</Badge>
+                  )}
+                </div>
+                <DrawerClose asChild>
+                  <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full">
+                    <X className="h-5 w-5" />
+                  </Button>
+                </DrawerClose>
               </div>
-              <DrawerClose asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full">
-                  <X className="h-5 w-5" />
-                </Button>
-              </DrawerClose>
-            </div>
-            <DrawerDescription className="text-sm text-muted-foreground mt-1">
-              {SCENARIO_EXPLORER_TOOLTIP}
-            </DrawerDescription>
-          </DrawerHeader>
-          
-          <div 
-            ref={drawerContentRef}
-            className="scenario-drawer-content px-4 py-4"
-          >
-            <ScenarioForm
-              localInputs={localInputs}
-              setLocalInputs={setLocalInputs}
-              originalInputs={originalInputs}
-              changedFields={changedFields}
-            />
-          </div>
-          
-          {/* Footer with Apply/Reset buttons */}
-          <div 
-            className="border-t p-4 flex gap-3 bg-background"
-            style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
-          >
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              disabled={!hasChanges}
-              className="flex-1 h-12 min-h-[44px]"
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Reset
-            </Button>
-            <Button
-              onClick={handleApply}
-              disabled={isApplying}
-              className="flex-1 h-12 min-h-[44px]"
-            >
-              {isApplying ? (
-                <span className="animate-pulse">Applying...</span>
-              ) : (
-                'Apply Changes'
-              )}
-            </Button>
-          </div>
-        </DrawerContent>
-      </Drawer>
+              <DrawerDescription className="text-sm text-muted-foreground mt-1">
+                {SCENARIO_EXPLORER_DESCRIPTION}
+              </DrawerDescription>
+            </DrawerHeader>
+            
+            {panelContent}
+          </DrawerContent>
+        </Drawer>
+      </>
     );
   }
 
-  // Desktop: Collapsible Card
+  // Desktop: Right-side Sheet
   return (
-    <Card className="pdf-exclude w-full max-w-full overflow-hidden">
-      <CardHeader 
-        className="cursor-pointer min-h-[56px] touch-manipulation"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-start sm:items-center justify-between gap-2 sm:gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Compass className="h-5 w-5 text-accent shrink-0" />
-              <CardTitle className="text-base font-medium break-words">Scenario Explorer</CardTitle>
-              {hasChanges && (
-                <Badge variant="secondary" className="text-xs whitespace-nowrap">
-                  Modified
-                </Badge>
-              )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button 
-                    type="button" 
-                    className="h-6 w-6 flex items-center justify-center shrink-0"
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label="What is Scenario Explorer?"
-                  >
-                    <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[280px]">
-                  <p className="text-xs">{SCENARIO_EXPLORER_TOOLTIP}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1 break-words">
-              Try changes and see how they affect competitiveness
-            </p>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            {hasChanges && isExpanded && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleReset();
-                }}
-                className="gap-1 sm:gap-1.5 text-muted-foreground hover:text-foreground h-10 min-h-[44px] px-2 sm:px-3"
-              >
-                <RotateCcw className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">Reset to Original</span>
-                <span className="sm:hidden">Reset</span>
-              </Button>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetContent side="right" className="w-[400px] sm:w-[440px] flex flex-col p-0">
+        <SheetHeader className="border-b px-6 py-4 shrink-0">
+          <div className="flex items-center gap-2">
+            <Compass className="h-5 w-5 text-accent" />
+            <SheetTitle className="font-serif text-lg">Scenario Explorer</SheetTitle>
+            {hasChanges && (
+              <Badge variant="secondary" className="text-xs">Modified</Badge>
             )}
-            <div className="w-10 h-10 min-h-[44px] flex items-center justify-center">
-              {isExpanded ? (
-                <ChevronUp className="h-5 w-5 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-muted-foreground" />
-              )}
-            </div>
           </div>
-        </div>
-      </CardHeader>
-      
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <CardContent className="pt-0">
-              <ScenarioForm
-                localInputs={localInputs}
-                setLocalInputs={setLocalInputs}
-                originalInputs={originalInputs}
-                changedFields={changedFields}
-              />
-            </CardContent>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </Card>
+          <SheetDescription className="text-sm text-muted-foreground">
+            {SCENARIO_EXPLORER_DESCRIPTION}
+          </SheetDescription>
+        </SheetHeader>
+        
+        {panelContent}
+      </SheetContent>
+    </Sheet>
   );
 }
 
-// Inline trigger button for embedding in report (client mode mobile)
+// Top-of-report entry card for desktop
+interface ScenarioExplorerCardProps {
+  hasChanges?: boolean;
+  onClick: () => void;
+  className?: string;
+}
+
+export function ScenarioExplorerCard({ hasChanges, onClick, className }: ScenarioExplorerCardProps) {
+  return (
+    <TooltipProvider>
+      <Card 
+        className={`pdf-exclude cursor-pointer group hover:border-accent/50 transition-colors ${className || ''}`}
+        onClick={onClick}
+      >
+        <CardContent className="p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 rounded-lg bg-accent/10 shrink-0">
+              <Compass className="h-5 w-5 text-accent" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium text-sm">Scenario Explorer</h3>
+                {hasChanges && (
+                  <Badge variant="secondary" className="text-xs">Modified</Badge>
+                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button 
+                      type="button" 
+                      className="h-5 w-5 flex items-center justify-center shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="What is Scenario Explorer?"
+                    >
+                      <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[280px]">
+                    <p className="text-xs">{SCENARIO_EXPLORER_TOOLTIP}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                {SCENARIO_EXPLORER_TOOLTIP}
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-accent transition-colors shrink-0" />
+        </CardContent>
+      </Card>
+    </TooltipProvider>
+  );
+}
+
+// Inline trigger button (legacy, kept for flexibility)
 interface ScenarioExplorerTriggerProps {
   hasChanges?: boolean;
   onClick: () => void;
