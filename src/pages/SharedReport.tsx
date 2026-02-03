@@ -18,6 +18,8 @@ import { LikelihoodBar } from '@/components/ClientVisuals';
 import { ForceClientMode } from '@/contexts/ClientModeContext';
 import { exportReportToPdf } from '@/lib/pdfExport';
 import { useToast } from '@/hooks/use-toast';
+import { AnalysisMethodology } from '@/components/AnalysisMethodology';
+import { likelihoodHelperText } from '@/components/LikelihoodDefinitions';
 import { 
   getTitle, 
   buyerWhatThisMeans, 
@@ -467,6 +469,9 @@ const SharedReportContent = () => {
           )}
 
           {/* Important Notice */}
+          {/* How This Analysis Is Formed - Collapsible */}
+          <AnalysisMethodology />
+
           <div className="pdf-section flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
             <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
             <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>

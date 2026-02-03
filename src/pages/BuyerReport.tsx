@@ -42,7 +42,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DraftEditorSheet } from '@/components/DraftEditorSheet';
 import { LikelihoodBar, TradeoffMatrix, getBuyerTradeoffPosition, MetricIcon } from '@/components/ClientVisuals';
-import { LikelihoodDefinitions } from '@/components/LikelihoodDefinitions';
+import { LikelihoodDefinitions, likelihoodHelperText } from '@/components/LikelihoodDefinitions';
 import { AgentLab, AgentLabTrigger } from '@/components/AgentLab';
 import { getMarketSnapshotOrBaseline, MarketSnapshot, parseCityFromLocation, getMarketContext, GENERIC_BASELINE } from '@/lib/marketSnapshots';
 import { 
@@ -54,6 +54,8 @@ import {
   getPrimaryLimitingFactor
 } from '@/components/RealityAnchors';
 import { RotateCcw } from 'lucide-react';
+import { AnalysisMethodology } from '@/components/AnalysisMethodology';
+import { DraftStatusIndicator } from '@/components/DraftStatusIndicator';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -367,6 +369,11 @@ const BuyerReport = () => {
         >
           {/* Report content for PDF export */}
           <div id="report-export" className={`space-y-6 ${isClientMode ? 'client-mode' : 'agent-mode'}`}>
+            {/* Draft Status - Agent Mode Only */}
+            {!isClientMode && (
+              <DraftStatusIndicator session={session} className="pdf-hide-agent-notes" />
+            )}
+
             {/* Prepared For/By Header Block */}
             <div className="pdf-section pdf-header-section">
               <ReportHeader
@@ -522,6 +529,9 @@ const BuyerReport = () => {
                       <LikelihoodBadge band={acceptanceLikelihood} />
                       {!isClientMode && <ConfidenceRange band={acceptanceLikelihood} />}
                     </div>
+                    <p className="text-[10px] text-muted-foreground mt-2">
+                      {likelihoodHelperText[acceptanceLikelihood]}
+                    </p>
                     {/* Client-mode visual: Likelihood Bar */}
                     {isClientMode && (
                       <div className="mt-4 px-2">
@@ -606,7 +616,10 @@ const BuyerReport = () => {
                     </div>
                     <p className="font-medium mb-2">{getTitle('riskOfLosingHome', isClientMode)}</p>
                     <RiskBadge band={riskOfLosingHome} />
-                    <p className="text-xs text-muted-foreground mt-3">
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      {likelihoodHelperText[riskOfLosingHome]}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
                       {losingHomeDesc}
                     </p>
                   </div>
@@ -616,13 +629,19 @@ const BuyerReport = () => {
                     </div>
                     <p className="font-medium mb-2">{getTitle('riskOfOverpaying', isClientMode)}</p>
                     <RiskBadge band={riskOfOverpaying} />
-                    <p className="text-xs text-muted-foreground mt-3">
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      {likelihoodHelperText[riskOfOverpaying]}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
                       {overpayingDesc}
                     </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* How This Analysis Is Formed - Collapsible */}
+            <AnalysisMethodology />
 
             {/* Important Notice */}
             <div className="pdf-section pdf-avoid-break flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">

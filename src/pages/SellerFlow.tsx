@@ -15,6 +15,7 @@ import { LocationAutocomplete } from '@/components/LocationAutocomplete';
 import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
 import { SessionTemplate } from '@/lib/templates';
 import { loadMarketScenarios, MarketScenario, getMarketScenarioById } from '@/lib/marketScenarios';
+import { useToast } from '@/hooks/use-toast';
 
 // Default form values
 const DEFAULT_VALUES = {
@@ -32,6 +33,7 @@ const DEFAULT_VALUES = {
 
 const SellerFlow = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [marketScenarios, setMarketScenarios] = useState<MarketScenario[]>([]);
   const [appliedTemplate, setAppliedTemplate] = useState<SessionTemplate | null>(null);
   
@@ -121,7 +123,12 @@ const SellerFlow = () => {
     setAppliedTemplate(null);
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+    // Toast confirmation
+    toast({
+      title: "Form cleared",
+      description: "All fields have been reset to defaults.",
+    });
+  }, [toast]);
 
   const handleGenerate = () => {
     const session: Session = {
