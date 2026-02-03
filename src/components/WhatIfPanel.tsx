@@ -8,16 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { BuyerInputs, FinancingType, DownPaymentPercent, Contingency, ClosingTimeline, BuyerPreference } from '@/types';
 
 interface WhatIfPanelProps {
@@ -71,7 +61,6 @@ const PREFERENCE_OPTIONS: { value: BuyerPreference; label: string }[] = [
 
 export function WhatIfPanel({ originalInputs, onInputsChange, currentInputs }: WhatIfPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [showResetDialog, setShowResetDialog] = useState(false);
   const [localInputs, setLocalInputs] = useState<BuyerInputs>(currentInputs);
   const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
 
@@ -104,7 +93,6 @@ export function WhatIfPanel({ originalInputs, onInputsChange, currentInputs }: W
 
   const handleReset = useCallback(() => {
     setLocalInputs({ ...originalInputs });
-    setShowResetDialog(false);
   }, [originalInputs]);
 
   const handleContingencyChange = (contingency: Contingency, checked: boolean) => {
@@ -136,26 +124,47 @@ export function WhatIfPanel({ originalInputs, onInputsChange, currentInputs }: W
 
   return (
     <TooltipProvider>
-      <Card className="pdf-exclude border-dashed border-2 border-border/60 bg-muted/30">
+      <Card className="pdf-exclude">
         <CardHeader 
-          className="cursor-pointer py-4"
+          className="cursor-pointer"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
-              <span>Adjust Offer Settings</span>
-              <span className="text-xs text-muted-foreground font-normal">(What-If)</span>
-              {hasChanges && (
-                <span className="text-xs bg-accent/20 text-accent px-2 py-0.5 rounded-full">
-                  Modified
-                </span>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <CardTitle className="text-base font-medium">Scenario Explorer</CardTitle>
+                {hasChanges && (
+                  <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full whitespace-nowrap">
+                    Scenario: Modified
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Try changes and see how they affect competitiveness
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {hasChanges && isExpanded && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleReset();
+                  }}
+                  className="gap-1.5 text-muted-foreground hover:text-foreground"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Reset to Original</span>
+                  <span className="sm:hidden">Reset</span>
+                </Button>
               )}
-            </CardTitle>
-            {isExpanded ? (
-              <ChevronUp className="h-5 w-5 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-muted-foreground" />
-            )}
+              {isExpanded ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              )}
+            </div>
           </div>
         </CardHeader>
         
@@ -168,6 +177,9 @@ export function WhatIfPanel({ originalInputs, onInputsChange, currentInputs }: W
               transition={{ duration: 0.2 }}
             >
               <CardContent className="pt-0 space-y-6">
+                <p className="text-xs text-muted-foreground">
+                  Adjust offer terms below to explore different strategies. Changes here are private unless shared.
+                </p>
                 {/* Offer Details Section */}
                 <div className="space-y-4">
                   <h4 className="text-sm font-medium text-muted-foreground">Offer Details</h4>
@@ -353,40 +365,10 @@ export function WhatIfPanel({ originalInputs, onInputsChange, currentInputs }: W
                   </div>
                 </div>
 
-                {/* Reset Button */}
-                {hasChanges && (
-                  <div className="flex justify-end pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowResetDialog(true)}
-                      className="gap-2"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                      Reset Changes
-                    </Button>
-                  </div>
-                )}
               </CardContent>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Reset Confirmation Dialog */}
-        <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Reset changes?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will restore all settings to their original values from the report.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleReset}>Reset</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </Card>
     </TooltipProvider>
   );
