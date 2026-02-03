@@ -1,56 +1,72 @@
 import { LikelihoodBand, BuyerPreference, StrategyPreference } from '@/types';
-import { Clock, Target, Scale, Zap } from 'lucide-react';
+import { Clock, Target, Scale, Zap, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { likelihoodHelperText } from '@/components/LikelihoodDefinitions';
 
 interface LikelihoodBarProps {
   band: LikelihoodBand;
   showLabels?: boolean;
+  showExplanation?: boolean;
 }
 
-export function LikelihoodBar({ band, showLabels = true }: LikelihoodBarProps) {
+export function LikelihoodBar({ band, showLabels = true, showExplanation = false }: LikelihoodBarProps) {
   const segments = [
-    { key: 'Low', label: 'Low' },
-    { key: 'Moderate', label: 'Moderate' },
-    { key: 'High', label: 'High' },
+    { key: 'Low' as const, label: 'Low' },
+    { key: 'Moderate' as const, label: 'Moderate' },
+    { key: 'High' as const, label: 'High' },
   ];
   
   return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="relative flex h-2 rounded-full overflow-hidden bg-muted">
-        {segments.map((seg, i) => {
-          const isActive = seg.key === band;
-          return (
-            <div
-              key={seg.key}
-              className={`flex-1 transition-colors ${
-                isActive 
-                  ? band === 'High' 
-                    ? 'bg-emerald-600/80' 
-                    : band === 'Moderate' 
-                    ? 'bg-amber-500/80' 
-                    : 'bg-slate-400/80'
-                  : 'bg-muted'
-              } ${i < segments.length - 1 ? 'border-r border-background' : ''}`}
-            />
-          );
-        })}
-      </div>
-      {showLabels && (
-        <div className="flex justify-between mt-1.5">
-          {segments.map((seg) => (
-            <span 
-              key={seg.key}
-              className={`text-[10px] ${
-                seg.key === band 
-                  ? 'text-foreground font-medium' 
-                  : 'text-muted-foreground/60'
-              }`}
-            >
-              {seg.label}
-            </span>
-          ))}
+    <TooltipProvider>
+      <div className="w-full max-w-sm mx-auto">
+        <div className="relative flex h-2 rounded-full overflow-hidden bg-muted">
+          {segments.map((seg, i) => {
+            const isActive = seg.key === band;
+            return (
+              <div
+                key={seg.key}
+                className={`flex-1 transition-colors ${
+                  isActive 
+                    ? band === 'High' 
+                      ? 'bg-emerald-600/80' 
+                      : band === 'Moderate' 
+                      ? 'bg-amber-500/80' 
+                      : 'bg-slate-400/80'
+                    : 'bg-muted'
+                } ${i < segments.length - 1 ? 'border-r border-background' : ''}`}
+              />
+            );
+          })}
         </div>
-      )}
-    </div>
+        {showLabels && (
+          <div className="flex justify-between mt-1.5">
+            {segments.map((seg) => (
+              <Tooltip key={seg.key}>
+                <TooltipTrigger asChild>
+                  <span 
+                    className={`text-[10px] cursor-help ${
+                      seg.key === band 
+                        ? 'text-foreground font-medium' 
+                        : 'text-muted-foreground/60'
+                    }`}
+                  >
+                    {seg.label}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[200px]">
+                  <p className="text-xs">{likelihoodHelperText[seg.key]}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        )}
+        {showExplanation && (
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            {likelihoodHelperText[band]}
+          </p>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }
 
