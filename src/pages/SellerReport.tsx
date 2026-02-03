@@ -41,6 +41,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DraftEditorSheet } from '@/components/DraftEditorSheet';
 import { LikelihoodBar, TradeoffMatrix, getSellerTradeoffPosition, MetricIcon } from '@/components/ClientVisuals';
+import { LikelihoodDefinitions } from '@/components/LikelihoodDefinitions';
 import { getMarketSnapshotOrBaseline, MarketSnapshot, parseCityFromLocation, getMarketContext } from '@/lib/marketSnapshots';
 import { 
   MarketGrounding, 
@@ -458,6 +459,7 @@ const SellerReport = () => {
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Clock className="h-5 w-5 text-accent" />
                     {getTitle('saleLikelihood', isClientMode)}
+                    <LikelihoodDefinitions />
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">
                     Market snapshot as of: {new Date(snapshotTimestamp).toLocaleString()}
