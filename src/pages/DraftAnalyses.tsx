@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Eye, Copy, Building2, Users, FileEdit, Calendar, GitCompare, Check, X } from 'lucide-react';
+import { ArrowLeft, Eye, Copy, Building2, Users, FileEdit, Calendar, GitCompare, Check, X, Loader2 } from 'lucide-react';
 import { Session } from '@/types';
-import { loadSessions, upsertSession, deleteSession, generateId } from '@/lib/storage';
+import { useDraftSessions } from '@/hooks/useSessions';
 import { useToast } from '@/hooks/use-toast';
 import { formatLocation } from '@/lib/utils';
 import { SwipeableCard } from '@/components/SwipeableCard';
@@ -14,26 +14,11 @@ import { SwipeableCard } from '@/components/SwipeableCard';
 const DraftAnalyses = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const { sessions, loading, upsertSession, deleteSession } = useDraftSessions();
   
   // Compare mode state
   const [compareMode, setCompareMode] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState<string[]>([]);
-
-  useEffect(() => {
-    refreshSessions();
-  }, []);
-
-  const refreshSessions = () => {
-    // Only show sessions that have NOT been shared or exported
-    // Once shared/exported, they move to Shared Reports
-    const allSessions = loadSessions()
-      .filter(s => !s.share_link_created && !s.pdf_exported)
-      .sort(
-        (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      );
-    setSessions(allSessions);
-  };
 
   const handleOpen = (session: Session) => {
     if (compareMode) {
@@ -50,28 +35,28 @@ const DraftAnalyses = () => {
     }
   };
 
-  const handleDuplicate = (session: Session) => {
+  const handleDuplicate = async (session: Session) => {
     const now = new Date().toISOString();
     // Clean up duplicate naming - remove existing "(Copy)" suffixes
     const baseName = session.client_name.replace(/\s*\(Copy\)+$/g, '');
     const duplicated: Session = {
       ...session,
-      id: generateId(),
+      id: crypto.randomUUID(),
       client_name: `${baseName} (Copy)`,
+      share_link_created: false,
+      pdf_exported: false,
       created_at: now,
       updated_at: now,
     };
-    upsertSession(duplicated);
-    refreshSessions();
+    await upsertSession(duplicated);
     toast({
       title: "Draft duplicated",
       description: `Created a copy of "${baseName}"`,
     });
   };
 
-  const handleDelete = (id: string) => {
-    deleteSession(id);
-    refreshSessions();
+  const handleDelete = async (id: string) => {
+    await deleteSession(id);
     toast({
       title: "Draft deleted",
       description: "The draft has been removed.",
@@ -108,6 +93,17 @@ const DraftAnalyses = () => {
       year: 'numeric',
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading drafts...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

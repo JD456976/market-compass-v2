@@ -1,29 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown } from 'lucide-react';
-import { Session, MarketProfile } from '@/types';
-import { loadSessions, getMarketProfileById } from '@/lib/storage';
+import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2 } from 'lucide-react';
+import { Session } from '@/types';
+import { useSharedSessions } from '@/hooks/useSessions';
 import { useToast } from '@/hooks/use-toast';
 import { formatLocation } from '@/lib/utils';
 import { exportReportToPdf } from '@/lib/pdfExport';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
+import { getMarketProfileByIdFromSupabase } from '@/lib/supabaseStorage';
 
 const SharedReports = () => {
   const { toast } = useToast();
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const { sessions, loading } = useSharedSessions();
   const [exportingId, setExportingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Only show sessions that have been shared or exported
-    const allSessions = loadSessions()
-      .filter(s => s.share_link_created || s.pdf_exported)
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-    setSessions(allSessions);
-  }, []);
 
   const handleCopyLink = (session: Session) => {
     const url = `${window.location.origin}/share/${session.id}`;
@@ -38,9 +31,9 @@ const SharedReports = () => {
     setExportingId(session.id);
     try {
       // Get market profile if available
-      let marketProfile: MarketProfile | undefined;
+      let marketProfile = undefined;
       if (session.selected_market_profile_id) {
-        marketProfile = getMarketProfileById(session.selected_market_profile_id);
+        marketProfile = await getMarketProfileByIdFromSupabase(session.selected_market_profile_id) || undefined;
       }
       
       // Calculate report data for timestamp
@@ -118,6 +111,17 @@ const SharedReports = () => {
     }
     return badges;
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading shared reports...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
