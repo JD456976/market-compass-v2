@@ -445,19 +445,21 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
   if (isMobile) {
     return (
       <>
-        {/* Sticky bottom pill - always visible */}
+        {/* Sticky bottom pill - positioned above other bottom actions */}
         <div 
           className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none"
-          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+          style={{ paddingBottom: 'calc(max(0.75rem, env(safe-area-inset-bottom)) + 4.5rem)' }}
         >
           <button
             onClick={() => setIsOpen(true)}
             className="pointer-events-auto flex items-center gap-2 px-5 py-3 min-h-[48px] rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 active:scale-[0.98] transition-all touch-manipulation"
           >
-            <Compass className="h-4 w-4" />
-            <span className="font-medium text-sm">Scenario Explorer</span>
+            <Compass className="h-4 w-4 shrink-0" />
+            <span className="font-medium text-sm whitespace-nowrap">Explore Scenarios</span>
             {hasChanges && (
-              <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+              <Badge variant="accent" className="text-[10px] px-1.5 py-0 ml-1 shrink-0">
+                Modified
+              </Badge>
             )}
           </button>
         </div>
