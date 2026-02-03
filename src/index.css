@@ -262,6 +262,12 @@ body.is-exporting #report-export button {
   display: none !important;
 }
 
+/* Hide interactive elements in PDF export */
+.pdf-export .pdf-exclude,
+body.is-exporting .pdf-exclude {
+  display: none !important;
+}
+
 /* Hide agent notes in PDF export when in client mode */
 .pdf-export.client-mode .pdf-hide-agent-notes,
 body.is-exporting .client-mode .pdf-hide-agent-notes {

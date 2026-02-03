@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import {
   Clock, Building2, Users, Target, TrendingUp, AlertCircle, 
   AlertTriangle, ShieldAlert, FileDown
 } from 'lucide-react';
-import { Session, LikelihoodBand, MarketProfile } from '@/types';
+import { Session, LikelihoodBand, MarketProfile, BuyerInputs } from '@/types';
 import { getSessionById, getMarketProfileById, upsertSession } from '@/lib/storage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { ReportHeader } from '@/components/ReportHeader';
@@ -19,7 +19,8 @@ import { ForceClientMode } from '@/contexts/ClientModeContext';
 import { exportReportToPdf } from '@/lib/pdfExport';
 import { useToast } from '@/hooks/use-toast';
 import { AnalysisMethodology } from '@/components/AnalysisMethodology';
-import { likelihoodHelperText } from '@/components/LikelihoodDefinitions';
+import { LikelihoodHelperText } from '@/components/LikelihoodDefinitions';
+import { WhatIfPanel } from '@/components/WhatIfPanel';
 import { 
   getTitle, 
   buyerWhatThisMeans, 
@@ -57,6 +58,11 @@ const SharedReportContent = () => {
   const [marketProfile, setMarketProfile] = useState<MarketProfile | undefined>(undefined);
   const [notFound, setNotFound] = useState(false);
   const [exporting, setExporting] = useState(false);
+  
+  // What-If state for buyer reports
+  const [originalBuyerInputs, setOriginalBuyerInputs] = useState<BuyerInputs | null>(null);
+  const [whatIfInputs, setWhatIfInputs] = useState<BuyerInputs | null>(null);
+  const [isWhatIfModified, setIsWhatIfModified] = useState(false);
 
   // Always use client mode language for shared reports - NO TOGGLE
   const isClientMode = true;
@@ -78,7 +84,33 @@ const SharedReportContent = () => {
     if (loadedSession.selected_market_profile_id) {
       setMarketProfile(getMarketProfileById(loadedSession.selected_market_profile_id));
     }
+    
+    // Initialize what-if state for buyer reports
+    if (loadedSession.session_type === 'Buyer' && loadedSession.buyer_inputs) {
+      setOriginalBuyerInputs({ ...loadedSession.buyer_inputs });
+      setWhatIfInputs({ ...loadedSession.buyer_inputs });
+    }
   }, [sessionId]);
+
+  // Handle what-if input changes
+  const handleWhatIfChange = useCallback((inputs: BuyerInputs) => {
+    setWhatIfInputs(inputs);
+    if (originalBuyerInputs) {
+      const isModified = JSON.stringify(inputs) !== JSON.stringify(originalBuyerInputs);
+      setIsWhatIfModified(isModified);
+    }
+  }, [originalBuyerInputs]);
+
+  // Create modified session for what-if calculations
+  const getEffectiveSession = useCallback((): Session | null => {
+    if (!session) return null;
+    if (session.session_type === 'Buyer' && whatIfInputs) {
+      return { ...session, buyer_inputs: whatIfInputs };
+    }
+    return session;
+  }, [session, whatIfInputs]);
+
+  const effectiveSession = getEffectiveSession();
 
   const handleExportPdf = async () => {
     if (!session) return;
@@ -89,6 +121,10 @@ const SharedReportContent = () => {
         reportType: session.session_type === 'Seller' ? 'Seller' : 'Buyer',
         snapshotTimestamp: reportData?.snapshotTimestamp,
         isClientMode: true,
+        // Add what-if notice if modified
+        customNotice: isWhatIfModified 
+          ? 'This report reflects the selected offer settings at export time. To explore other scenarios, use the shared report link.'
+          : undefined,
       });
       // Mark as exported if not already
       if (!session.pdf_exported) {
@@ -98,7 +134,9 @@ const SharedReportContent = () => {
       }
       toast({
         title: "PDF exported",
-        description: "Your report has been downloaded.",
+        description: isWhatIfModified 
+          ? "Your modified scenario has been downloaded."
+          : "Your report has been downloaded.",
       });
     } catch {
       toast({
@@ -111,11 +149,11 @@ const SharedReportContent = () => {
     }
   };
 
-  // Calculate report data early so it's available for PDF export
-  const reportData = session 
-    ? (session.session_type === 'Seller' 
-        ? calculateSellerReport(session, marketProfile)
-        : calculateBuyerReport(session, marketProfile))
+  // Calculate report data using effective session (with what-if changes)
+  const reportData = effectiveSession 
+    ? (effectiveSession.session_type === 'Seller' 
+        ? calculateSellerReport(effectiveSession, marketProfile)
+        : calculateBuyerReport(effectiveSession, marketProfile))
     : null;
 
   const formatCurrency = (value: number) =>
@@ -140,7 +178,7 @@ const SharedReportContent = () => {
     );
   }
 
-  if (!session || !reportData) return null;
+  if (!session || !effectiveSession || !reportData) return null;
 
   const isSeller = session.session_type === 'Seller';
 
@@ -305,6 +343,7 @@ const SharedReportContent = () => {
                         <div className="text-center p-6 rounded-xl border-2 border-border/50">
                           <p className="text-sm text-muted-foreground mb-3">30 Days</p>
                           <LikelihoodBadge band={reportData.likelihood30} />
+                          <LikelihoodHelperText band={reportData.likelihood30} />
                           <div className="mt-3 px-1">
                             <LikelihoodBar band={reportData.likelihood30} showLabels={false} />
                           </div>
@@ -312,6 +351,7 @@ const SharedReportContent = () => {
                         <div className="text-center p-6 rounded-xl border-2 border-border/50">
                           <p className="text-sm text-muted-foreground mb-3">60 Days</p>
                           <LikelihoodBadge band={reportData.likelihood60} />
+                          <LikelihoodHelperText band={reportData.likelihood60} />
                           <div className="mt-3 px-1">
                             <LikelihoodBar band={reportData.likelihood60} showLabels={false} />
                           </div>
@@ -319,6 +359,7 @@ const SharedReportContent = () => {
                         <div className="text-center p-6 rounded-xl border-2 border-border/50">
                           <p className="text-sm text-muted-foreground mb-3">90 Days</p>
                           <LikelihoodBadge band={reportData.likelihood90} />
+                          <LikelihoodHelperText band={reportData.likelihood90} />
                           <div className="mt-3 px-1">
                             <LikelihoodBar band={reportData.likelihood90} showLabels={false} />
                           </div>
@@ -347,36 +388,56 @@ const SharedReportContent = () => {
           )}
 
           {/* Buyer-specific content */}
-          {!isSeller && session.buyer_inputs && (
+          {!isSeller && effectiveSession.buyer_inputs && originalBuyerInputs && whatIfInputs && (
             <>
+              {/* What-If Panel - Only visible in browser, not PDF */}
+              <WhatIfPanel
+                originalInputs={originalBuyerInputs}
+                currentInputs={whatIfInputs}
+                onInputsChange={handleWhatIfChange}
+              />
+
+              {/* What-If Modified Notice */}
+              {isWhatIfModified && (
+                <div className="pdf-exclude flex items-center gap-2 p-3 rounded-lg bg-accent/10 border border-accent/30 text-sm">
+                  <AlertCircle className="h-4 w-4 text-accent shrink-0" />
+                  <p className="text-muted-foreground">
+                    You're viewing modified settings. Results below reflect your changes.
+                  </p>
+                </div>
+              )}
+
               <Card className="pdf-section pdf-avoid-break">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <TrendingUp className="h-5 w-5 text-accent" />
                     {getTitle('offerDetails', isClientMode)}
+                    {isWhatIfModified && (
+                      <span className="text-xs text-accent font-normal">(Modified)</span>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 likelihood-cards-mobile">
                     <div className="p-4 rounded-xl bg-secondary/50 text-center">
                       <p className="text-sm text-muted-foreground mb-1">Offer Price</p>
-                      <p className="text-lg font-serif font-bold">{formatCurrency(session.buyer_inputs.offer_price)}</p>
+                      <p className="text-lg font-serif font-bold">{formatCurrency(effectiveSession.buyer_inputs.offer_price)}</p>
                     </div>
                     <div className="p-4 rounded-xl bg-secondary/50 text-center">
                       <p className="text-sm text-muted-foreground mb-1">Financing</p>
-                      <p className="text-lg font-serif font-bold">{session.buyer_inputs.financing_type}</p>
+                      <p className="text-lg font-serif font-bold">{effectiveSession.buyer_inputs.financing_type}</p>
                     </div>
                     <div className="p-4 rounded-xl bg-secondary/50 text-center">
                       <p className="text-sm text-muted-foreground mb-1">Down Payment</p>
-                      <p className="text-lg font-serif font-bold">{session.buyer_inputs.down_payment_percent}</p>
+                      <p className="text-lg font-serif font-bold">{effectiveSession.buyer_inputs.down_payment_percent}</p>
                     </div>
                     <div className="p-4 rounded-xl bg-secondary/50 text-center">
                       <p className="text-sm text-muted-foreground mb-1">Closing</p>
-                      <p className="text-lg font-serif font-bold">{session.buyer_inputs.closing_timeline} days</p>
+                      <p className="text-lg font-serif font-bold">{effectiveSession.buyer_inputs.closing_timeline} days</p>
                     </div>
                   </div>
                   {/* Only show client notes - NEVER agent notes */}
-                  {(session.buyer_inputs.client_notes || session.buyer_inputs.notes) && (
+                  {(session.buyer_inputs?.client_notes || session.buyer_inputs?.notes) && (
                     <div className="mt-4 p-4 rounded-xl bg-muted/50">
                       <p className="text-sm text-muted-foreground mb-1">Notes</p>
                       <p className="text-sm">{session.buyer_inputs.client_notes || session.buyer_inputs.notes}</p>
@@ -403,6 +464,7 @@ const SharedReportContent = () => {
                       <div className="text-center p-8 rounded-xl border-2 border-accent/30 bg-accent/5 min-w-[200px]">
                         <p className="text-sm text-muted-foreground mb-3">Likelihood of Acceptance</p>
                         <LikelihoodBadge band={reportData.acceptanceLikelihood} />
+                        <LikelihoodHelperText band={reportData.acceptanceLikelihood} />
                         <div className="mt-4 px-2">
                           <LikelihoodBar band={reportData.acceptanceLikelihood} />
                         </div>
