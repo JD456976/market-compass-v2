@@ -434,3 +434,28 @@ p, span, h1, h2, h3, h4, h5, h6, label {
     width: 100%;
   }
 }
+
+/* ============================================
+   Scenario Explorer Mobile FAB positioning
+   ============================================ */
+.scenario-fab-container {
+  position: fixed;
+  bottom: max(1.5rem, env(safe-area-inset-bottom));
+  right: 1.5rem;
+  z-index: 50;
+}
+
+/* Ensure FAB doesn't overlap content */
+@media (max-width: 768px) {
+  .scenario-fab-spacer {
+    height: 80px;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Scenario drawer scrollable content */
+.scenario-drawer-content {
+  max-height: calc(85vh - 160px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
