@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -16,21 +16,35 @@ import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
 import { SessionTemplate } from '@/lib/templates';
 import { loadMarketScenarios, MarketScenario, getMarketScenarioById } from '@/lib/marketScenarios';
 
+// Default form values
+const DEFAULT_VALUES = {
+  clientName: '',
+  location: '',
+  propertyType: 'SFH' as PropertyType,
+  condition: 'Maintained' as Condition,
+  selectedScenarioId: undefined as string | undefined,
+  listPrice: '',
+  timeframe: '60' as DesiredTimeframe,
+  strategy: 'Balanced' as StrategyPreference,
+  agentNotes: '',
+  clientNotes: '',
+};
+
 const SellerFlow = () => {
   const navigate = useNavigate();
   const [marketScenarios, setMarketScenarios] = useState<MarketScenario[]>([]);
   const [appliedTemplate, setAppliedTemplate] = useState<SessionTemplate | null>(null);
   
-  const [clientName, setClientName] = useState('');
-  const [location, setLocation] = useState('');
-  const [propertyType, setPropertyType] = useState<PropertyType>('SFH');
-  const [condition, setCondition] = useState<Condition>('Maintained');
-  const [selectedScenarioId, setSelectedScenarioId] = useState<string | undefined>(undefined);
-  const [listPrice, setListPrice] = useState<string>('');
-  const [timeframe, setTimeframe] = useState<DesiredTimeframe>('60');
-  const [strategy, setStrategy] = useState<StrategyPreference>('Balanced');
-  const [agentNotes, setAgentNotes] = useState('');
-  const [clientNotes, setClientNotes] = useState('');
+  const [clientName, setClientName] = useState(DEFAULT_VALUES.clientName);
+  const [location, setLocation] = useState(DEFAULT_VALUES.location);
+  const [propertyType, setPropertyType] = useState<PropertyType>(DEFAULT_VALUES.propertyType);
+  const [condition, setCondition] = useState<Condition>(DEFAULT_VALUES.condition);
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string | undefined>(DEFAULT_VALUES.selectedScenarioId);
+  const [listPrice, setListPrice] = useState<string>(DEFAULT_VALUES.listPrice);
+  const [timeframe, setTimeframe] = useState<DesiredTimeframe>(DEFAULT_VALUES.timeframe);
+  const [strategy, setStrategy] = useState<StrategyPreference>(DEFAULT_VALUES.strategy);
+  const [agentNotes, setAgentNotes] = useState(DEFAULT_VALUES.agentNotes);
+  const [clientNotes, setClientNotes] = useState(DEFAULT_VALUES.clientNotes);
   
   // Scenario overrides
   const [showOverrides, setShowOverrides] = useState(false);
@@ -86,6 +100,28 @@ const SellerFlow = () => {
     setCompetitionOverride(undefined);
     setPricingOverride(undefined);
   };
+
+  // True reset: clear ALL fields back to defaults (no navigation)
+  const handleFullReset = useCallback(() => {
+    setClientName(DEFAULT_VALUES.clientName);
+    setLocation(DEFAULT_VALUES.location);
+    setPropertyType(DEFAULT_VALUES.propertyType);
+    setCondition(DEFAULT_VALUES.condition);
+    setSelectedScenarioId(DEFAULT_VALUES.selectedScenarioId);
+    setListPrice(DEFAULT_VALUES.listPrice);
+    setTimeframe(DEFAULT_VALUES.timeframe);
+    setStrategy(DEFAULT_VALUES.strategy);
+    setAgentNotes(DEFAULT_VALUES.agentNotes);
+    setClientNotes(DEFAULT_VALUES.clientNotes);
+    setDemandOverride(undefined);
+    setCompetitionOverride(undefined);
+    setPricingOverride(undefined);
+    setShowOverrides(false);
+    setAttempted(false);
+    setAppliedTemplate(null);
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const handleGenerate = () => {
     const session: Session = {
@@ -157,12 +193,10 @@ const SellerFlow = () => {
                 </div>
               </div>
             </div>
-            {appliedTemplate && (
-              <Button variant="ghost" size="sm" onClick={handleResetToTemplate}>
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Reset to Template
-              </Button>
-            )}
+            <Button variant="ghost" size="sm" onClick={handleFullReset} className="min-h-[44px]">
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Reset
+            </Button>
           </div>
         </div>
       </div>

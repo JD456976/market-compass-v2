@@ -19,7 +19,7 @@ export function MethodologyFooter({ snapshotDate, className = '' }: MethodologyF
           Data & Methodology
         </Link>
       </div>
-      <p className="text-[10px] text-muted-foreground max-w-md mx-auto leading-relaxed">
+      <p className="text-[10px] text-muted-foreground max-w-md mx-auto leading-relaxed methodology-disclaimer">
         Uses public market trend research. Does not use MLS data or provide property valuations. 
         Does not guarantee outcomes.
         {displayDate && ` Analysis reflects conditions as of ${displayDate}.`}
