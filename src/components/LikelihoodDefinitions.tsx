@@ -19,20 +19,20 @@ import { useIsMobile } from '@/hooks/use-mobile';
 const definitions = [
   {
     label: 'Low',
-    shortDesc: 'Outside typical market response',
-    description: 'Current inputs and market conditions suggest the desired outcome is less likely within this timeframe.',
+    shortDesc: 'Outside typical market response range.',
+    description: 'Current inputs suggest the desired outcome is less likely within this timeframe. This does not mean impossible—market conditions vary.',
     color: 'bg-slate-400/20 border-slate-400/40',
   },
   {
     label: 'Moderate',
-    shortDesc: 'Within typical market response range',
-    description: 'Mixed signals are present; the outcome is plausible but depends on execution and market response.',
+    shortDesc: 'Within typical market response range.',
+    description: 'Mixed signals are present; the outcome is plausible but depends on execution and market dynamics.',
     color: 'bg-amber-500/20 border-amber-500/40',
   },
   {
     label: 'High',
-    shortDesc: 'Aligned with typical market response',
-    description: 'Strong alignment between inputs and typical market behavior suggests a favorable outcome within this timeframe.',
+    shortDesc: 'Strong alignment with typical market response.',
+    description: 'Strong alignment between inputs and typical market behavior suggests favorable positioning for this timeframe.',
     color: 'bg-emerald-600/20 border-emerald-600/40',
   },
 ];
@@ -65,16 +65,16 @@ function DefinitionsContent() {
 
 // Export helper text for inline use
 export const likelihoodHelperText = {
-  Low: 'Outside typical market response',
-  Moderate: 'Within typical market response range', 
-  High: 'Aligned with typical market response',
+  Low: 'Outside typical market response range.',
+  Moderate: 'Within typical market response range.', 
+  High: 'Strong alignment with typical market response.',
 };
 
 // Export full explanations for tooltips
 export const likelihoodExplanations = {
-  Low: 'Low means this offer is less competitive for this market and timeline. It does not mean impossible.',
-  Moderate: 'Moderate indicates mixed signals—the outcome is plausible but depends on execution and market response.',
-  High: 'High indicates strong alignment between your offer terms and typical market expectations.',
+  Low: 'Outside typical market response range. This does not mean impossible—market conditions vary.',
+  Moderate: 'Within typical market response range. Outcome depends on execution and market dynamics.',
+  High: 'Strong alignment with typical market response. Favorable positioning for this market.',
 };
 
 // Inline helper text component

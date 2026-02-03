@@ -36,7 +36,7 @@ interface ScenarioExplorerProps {
 }
 
 // Tooltip explanation for Scenario Explorer
-const SCENARIO_EXPLORER_TOOLTIP = "Try changing terms to see how outcomes shift.";
+const SCENARIO_EXPLORER_TOOLTIP = "Explore how changing terms may affect competitiveness.";
 const SCENARIO_EXPLORER_DESCRIPTION = "Adjust terms to explore tradeoffs before you decide.";
 
 const CONTINGENCY_OPTIONS: { value: Contingency; label: string }[] = [
