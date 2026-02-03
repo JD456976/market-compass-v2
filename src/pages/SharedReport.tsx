@@ -6,10 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   Clock, Building2, Users, Target, TrendingUp, AlertCircle, 
-  AlertTriangle, ShieldAlert, FileDown, Compass
+  AlertTriangle, ShieldAlert, FileDown, Compass, Loader2
 } from 'lucide-react';
-import { Session, LikelihoodBand, MarketProfile, BuyerInputs } from '@/types';
-import { getSessionById, getMarketProfileById, upsertSession } from '@/lib/storage';
+import { Session, LikelihoodBand, BuyerInputs } from '@/types';
+import { useSharedSession } from '@/hooks/useSession';
+import { getReportErrorMessage } from '@/lib/supabaseStorage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { ReportHeader } from '@/components/ReportHeader';
 import { MethodologyFooter } from '@/components/MethodologyFooter';
@@ -27,7 +28,6 @@ import {
   buyerWhatThisMeans, 
   sellerWhatThisMeans,
   buyerRiskDescriptions,
-  tradeoffDescriptions,
 } from '@/lib/clientLanguage';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
@@ -55,9 +55,7 @@ const IMPORTANT_NOTICE = `Important Notice: This report is an informational deci
 const SharedReportContent = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const { toast } = useToast();
-  const [session, setSession] = useState<Session | null>(null);
-  const [marketProfile, setMarketProfile] = useState<MarketProfile | undefined>(undefined);
-  const [notFound, setNotFound] = useState(false);
+  const { session, marketProfile, loading, error } = useSharedSession(sessionId);
   const [exporting, setExporting] = useState(false);
   
   // What-If state for buyer reports
@@ -69,29 +67,13 @@ const SharedReportContent = () => {
   const isClientMode = true;
   const mode = 'client';
 
+  // Initialize what-if state when session loads
   useEffect(() => {
-    if (!sessionId) {
-      setNotFound(true);
-      return;
+    if (session?.session_type === 'Buyer' && session.buyer_inputs) {
+      setOriginalBuyerInputs({ ...session.buyer_inputs });
+      setWhatIfInputs({ ...session.buyer_inputs });
     }
-
-    const loadedSession = getSessionById(sessionId);
-    if (!loadedSession) {
-      setNotFound(true);
-      return;
-    }
-
-    setSession(loadedSession);
-    if (loadedSession.selected_market_profile_id) {
-      setMarketProfile(getMarketProfileById(loadedSession.selected_market_profile_id));
-    }
-    
-    // Initialize what-if state for buyer reports
-    if (loadedSession.session_type === 'Buyer' && loadedSession.buyer_inputs) {
-      setOriginalBuyerInputs({ ...loadedSession.buyer_inputs });
-      setWhatIfInputs({ ...loadedSession.buyer_inputs });
-    }
-  }, [sessionId]);
+  }, [session]);
 
   // Handle what-if input changes
   const handleWhatIfChange = useCallback((inputs: BuyerInputs) => {
@@ -122,17 +104,10 @@ const SharedReportContent = () => {
         reportType: session.session_type === 'Seller' ? 'Seller' : 'Buyer',
         snapshotTimestamp: reportData?.snapshotTimestamp,
         isClientMode: true,
-        // Add what-if notice if modified
         customNotice: isWhatIfModified 
           ? 'This report reflects the selected offer settings at export time. To explore other scenarios, use the shared report link.'
           : undefined,
       });
-      // Mark as exported if not already
-      if (!session.pdf_exported) {
-        const updatedSession = { ...session, pdf_exported: true };
-        upsertSession(updatedSession);
-        setSession(updatedSession);
-      }
       toast({
         title: "PDF exported",
         description: isWhatIfModified 
@@ -160,7 +135,20 @@ const SharedReportContent = () => {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
 
-  if (notFound) {
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading report...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state with specific messages
+  if (error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full text-center">
@@ -168,10 +156,7 @@ const SharedReportContent = () => {
             <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-serif font-bold mb-2">Report Not Available</h2>
             <p className="text-muted-foreground mb-4">
-              No report was found on this device.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Open the report on the device where it was created, then click Share Link again.
+              {getReportErrorMessage(error)}
             </p>
           </CardContent>
         </Card>
@@ -205,9 +190,14 @@ const SharedReportContent = () => {
       <div className="bg-muted border-b border-border">
         <div className="container mx-auto px-4 py-2">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Shared Report
-            </p>
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Shared Report
+              </p>
+              <p className="text-xs text-muted-foreground/70">
+                Changes are for exploration only and do not update the original report.
+              </p>
+            </div>
             <Button 
               variant="outline" 
               size="sm" 
@@ -392,52 +382,44 @@ const SharedReportContent = () => {
               </Card>
 
               {/* What This Means - Seller */}
-              <Card className="pdf-section pdf-avoid-break">
-                <CardHeader className="pb-4">
+              <Card className="pdf-section pdf-avoid-break border-accent/20 bg-gradient-to-br from-accent/5 to-transparent">
+                <CardHeader className="pb-3">
                   <CardTitle className="text-lg">{getTitle('whatThisMeans', isClientMode)}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {sellerWhatThisMeansText}
-                  </p>
-                  <p className="text-sm text-muted-foreground italic">
-                    <span className="font-medium not-italic">Tradeoff to consider:</span> {tradeoffDescriptions[mode].sellerPriceVsTime}
-                  </p>
+                <CardContent>
+                  <p className="text-muted-foreground leading-relaxed">{sellerWhatThisMeansText}</p>
                 </CardContent>
               </Card>
             </>
           )}
 
           {/* Buyer-specific content */}
-          {!isSeller && effectiveSession.buyer_inputs && originalBuyerInputs && whatIfInputs && (
+          {!isSeller && session.buyer_inputs && (
             <>
-              {/* Scenario Explorer - Renders as FAB+Drawer on mobile, Card on desktop */}
-              <ScenarioExplorer
-                originalInputs={originalBuyerInputs}
-                currentInputs={whatIfInputs}
-                onInputsChange={handleWhatIfChange}
-              />
-
-              {/* What-If Modified Notice with PDF Download CTA */}
+              {/* What-If Modified Banner */}
               {isWhatIfModified && (
-                <div className="pdf-exclude flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-lg bg-accent/10 border border-accent/30">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <AlertCircle className="h-4 w-4 text-accent shrink-0" />
-                    <p className="text-sm text-muted-foreground">
-                      You're viewing modified settings. Download a PDF to save this scenario.
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportPdf}
-                    disabled={exporting}
-                    className="shrink-0 h-9 min-h-[44px]"
-                  >
-                    <FileDown className="h-4 w-4 mr-1.5" />
-                    {exporting ? 'Exporting...' : 'Download PDF'}
-                  </Button>
-                </div>
+                <Card className="border-accent bg-accent/5">
+                  <CardContent className="py-3 px-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="accent" className="text-xs">Modified</Badge>
+                        <span className="text-sm text-muted-foreground">
+                          Viewing adjusted scenario
+                        </span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportPdf}
+                        disabled={exporting}
+                        className="h-7 text-xs"
+                      >
+                        <FileDown className="h-3 w-3 mr-1" />
+                        Download PDF
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
               <Card className="pdf-section pdf-avoid-break">
@@ -445,36 +427,37 @@ const SharedReportContent = () => {
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <TrendingUp className="h-5 w-5 text-accent" />
                     {getTitle('offerDetails', isClientMode)}
-                    {isWhatIfModified && (
-                      <span className="text-xs text-accent font-normal">(Modified)</span>
-                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {/* Adjust grid based on whether down payment is shown (Cash hides it) */}
-                  <div className={`grid ${effectiveSession.buyer_inputs.financing_type === 'Cash' ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'} gap-4 mb-4 likelihood-cards-mobile`}>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 likelihood-cards-mobile">
                     <div className="p-4 rounded-xl bg-secondary/50 text-center">
                       <p className="text-sm text-muted-foreground mb-1">Offer Price</p>
-                      <p className="text-lg font-serif font-bold">{formatCurrency(effectiveSession.buyer_inputs.offer_price)}</p>
+                      <p className="text-xl font-serif font-bold">{formatCurrency(whatIfInputs?.offer_price || session.buyer_inputs.offer_price)}</p>
                     </div>
                     <div className="p-4 rounded-xl bg-secondary/50 text-center">
                       <p className="text-sm text-muted-foreground mb-1">Financing</p>
-                      <p className="text-lg font-serif font-bold">{effectiveSession.buyer_inputs.financing_type}</p>
+                      <p className="text-xl font-serif font-bold">{whatIfInputs?.financing_type || session.buyer_inputs.financing_type}</p>
                     </div>
-                    {/* Hide Down Payment for Cash offers */}
-                    {effectiveSession.buyer_inputs.financing_type !== 'Cash' && (
-                      <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                        <p className="text-sm text-muted-foreground mb-1">Down Payment</p>
-                        <p className="text-lg font-serif font-bold">{effectiveSession.buyer_inputs.down_payment_percent}</p>
-                      </div>
-                    )}
                     <div className="p-4 rounded-xl bg-secondary/50 text-center">
-                      <p className="text-sm text-muted-foreground mb-1">Closing</p>
-                      <p className="text-lg font-serif font-bold">{effectiveSession.buyer_inputs.closing_timeline} days</p>
+                      <p className="text-sm text-muted-foreground mb-1">Down Payment</p>
+                      <p className="text-xl font-serif font-bold">{whatIfInputs?.down_payment_percent || session.buyer_inputs.down_payment_percent}%</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                      <p className="text-sm text-muted-foreground mb-1">Contingencies</p>
+                      <p className="text-lg font-serif font-bold">{(whatIfInputs?.contingencies || session.buyer_inputs.contingencies).join(', ') || 'None'}</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                      <p className="text-sm text-muted-foreground mb-1">Close Timeline</p>
+                      <p className="text-xl font-serif font-bold">{whatIfInputs?.closing_timeline || session.buyer_inputs.closing_timeline} days</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-secondary/50 text-center">
+                      <p className="text-sm text-muted-foreground mb-1">Strategy</p>
+                      <p className="text-lg font-serif font-bold">{whatIfInputs?.buyer_preference || session.buyer_inputs.buyer_preference}</p>
                     </div>
                   </div>
                   {/* Only show client notes - NEVER agent notes */}
-                  {(session.buyer_inputs?.client_notes || session.buyer_inputs?.notes) && (
+                  {(session.buyer_inputs.client_notes || session.buyer_inputs.notes) && (
                     <div className="mt-4 p-4 rounded-xl bg-muted/50">
                       <p className="text-sm text-muted-foreground mb-1">Notes</p>
                       <p className="text-sm">{session.buyer_inputs.client_notes || session.buyer_inputs.notes}</p>
@@ -500,104 +483,111 @@ const SharedReportContent = () => {
                 </CardHeader>
                 <CardContent className="pt-6">
                   {'acceptanceLikelihood' in reportData && (
-                    <div className="flex justify-center">
-                      <div className="text-center p-8 rounded-xl border-2 border-accent/30 bg-accent/5 min-w-[200px]">
-                        <p className="text-sm text-muted-foreground mb-3">Likelihood of Acceptance</p>
-                        <LikelihoodBadge band={reportData.acceptanceLikelihood} />
-                        <LikelihoodHelperText band={reportData.acceptanceLikelihood} />
-                        <div className="mt-4 px-2">
-                          <LikelihoodBar band={reportData.acceptanceLikelihood} />
-                        </div>
+                    <div className="text-center p-8 rounded-xl border-2 border-border/50 max-w-sm mx-auto">
+                      <p className="text-sm text-muted-foreground mb-4">Acceptance Likelihood</p>
+                      <LikelihoodBadge band={reportData.acceptanceLikelihood} />
+                      <LikelihoodHelperText band={reportData.acceptanceLikelihood} />
+                      <div className="mt-4 px-4">
+                        <LikelihoodBar band={reportData.acceptanceLikelihood} />
                       </div>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              {/* What This Means - Buyer */}
-              <Card className="pdf-section pdf-avoid-break">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">{getTitle('whatThisMeans', isClientMode)}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {buyerWhatThisMeansText}
-                  </p>
-                  <p className="text-sm text-muted-foreground italic">
-                    <span className="font-medium not-italic">Tradeoff to consider:</span> {tradeoffDescriptions[mode].buyerMain}
-                  </p>
-                </CardContent>
-              </Card>
-
+              {/* Risk Assessment */}
               {'riskOfLosingHome' in reportData && (
                 <Card className="pdf-section pdf-avoid-break">
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <ShieldAlert className="h-5 w-5 text-accent" />
+                      <AlertTriangle className="h-5 w-5 text-accent" />
                       {getTitle('riskTradeoff', isClientMode)}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="text-center p-6 rounded-xl border-2 border-border/50">
-                        <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-                          <AlertTriangle className="h-6 w-6 text-destructive" />
+                    <div className="grid sm:grid-cols-2 gap-6">
+                      <div className="p-6 rounded-xl border-2 border-border/50">
+                        <div className="flex items-center gap-2 mb-3">
+                          <ShieldAlert className="h-5 w-5 text-muted-foreground" />
+                          <p className="font-medium">{getTitle('riskOfLosingHome', isClientMode)}</p>
                         </div>
-                        <p className="font-medium mb-2">{getTitle('riskOfLosingHome', isClientMode)}</p>
-                        <RiskBadge band={reportData.riskOfLosingHome} />
-                        <p className="text-xs text-muted-foreground mt-3">
-                          {reportData.riskOfLosingHome === 'High' || reportData.riskOfLosingHome === 'Moderate'
-                            ? buyerRiskDescriptions[mode].losingHomeHigh
-                            : buyerRiskDescriptions[mode].losingHomeLow}
+                        <div className="mb-2">
+                          <RiskBadge band={reportData.riskOfLosingHome} />
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {reportData.riskOfLosingHome === 'High' 
+                            ? buyerRiskDescriptions.client.losingHomeHigh 
+                            : buyerRiskDescriptions.client.losingHomeLow}
                         </p>
                       </div>
-                      <div className="text-center p-6 rounded-xl border-2 border-border/50">
-                        <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
-                          <TrendingUp className="h-6 w-6 text-amber-600" />
+                      <div className="p-6 rounded-xl border-2 border-border/50">
+                        <div className="flex items-center gap-2 mb-3">
+                          <AlertTriangle className="h-5 w-5 text-muted-foreground" />
+                          <p className="font-medium">{getTitle('riskOfOverpaying', isClientMode)}</p>
                         </div>
-                        <p className="font-medium mb-2">{getTitle('riskOfOverpaying', isClientMode)}</p>
-                        <RiskBadge band={reportData.riskOfOverpaying} />
-                        <p className="text-xs text-muted-foreground mt-3">
-                          {reportData.riskOfOverpaying === 'High' || reportData.riskOfOverpaying === 'Moderate'
-                            ? buyerRiskDescriptions[mode].overpayingHigh
-                            : buyerRiskDescriptions[mode].overpayingLow}
+                        <div className="mb-2">
+                          <RiskBadge band={reportData.riskOfOverpaying} />
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {reportData.riskOfOverpaying === 'High' 
+                            ? buyerRiskDescriptions.client.overpayingHigh 
+                            : buyerRiskDescriptions.client.overpayingLow}
                         </p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               )}
+
+              {/* What This Means - Buyer */}
+              <Card className="pdf-section pdf-avoid-break border-accent/20 bg-gradient-to-br from-accent/5 to-transparent">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">{getTitle('whatThisMeans', isClientMode)}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground leading-relaxed">{buyerWhatThisMeansText}</p>
+                </CardContent>
+              </Card>
             </>
           )}
 
-          {/* Important Notice */}
-          {/* How This Analysis Is Formed - Collapsible */}
-          <AnalysisMethodology />
-
-          <div className="pdf-section flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
-            <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-            <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
-          </div>
-
-          {/* Methodology Footer */}
+          {/* Methodology */}
           <div className="pdf-section">
-            <MethodologyFooter snapshotDate={reportData.snapshotTimestamp} />
+            <AnalysisMethodology />
           </div>
 
-          {/* Spacer for mobile FAB - only on buyer reports */}
-          {!isSeller && <div className="h-20 md:h-0" />}
+          {/* Important Notice */}
+          <Card className="pdf-section pdf-avoid-break bg-muted/30">
+            <CardContent className="py-4">
+              <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
+            </CardContent>
+          </Card>
 
+          {/* Footer */}
+          <div className="pdf-section">
+            <MethodologyFooter />
+          </div>
         </motion.div>
       </div>
+
+      {/* Scenario Explorer for Buyer reports */}
+      {!isSeller && session.buyer_inputs && originalBuyerInputs && whatIfInputs && (
+        <ScenarioExplorer
+          originalInputs={originalBuyerInputs}
+          currentInputs={whatIfInputs}
+          onInputsChange={handleWhatIfChange}
+        />
+      )}
     </div>
   );
 };
 
-// Wrap with ForceClientMode to ensure client language is always used
-const SharedReport = () => (
-  <ForceClientMode>
-    <SharedReportContent />
-  </ForceClientMode>
-);
+const SharedReport = () => {
+  return (
+    <ForceClientMode>
+      <SharedReportContent />
+    </ForceClientMode>
+  );
+};
 
 export default SharedReport;

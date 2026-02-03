@@ -168,6 +168,51 @@ export type Database = {
         }
         Relationships: []
       }
+      market_profiles: {
+        Row: {
+          contingency_tolerance: string
+          created_at: string
+          id: string
+          label: string
+          location: string
+          multiple_offers_frequency: string
+          owner_device_id: string | null
+          owner_user_id: string | null
+          property_type: string
+          typical_dom: string
+          typical_sale_to_list: string
+          updated_at: string
+        }
+        Insert: {
+          contingency_tolerance: string
+          created_at?: string
+          id?: string
+          label: string
+          location: string
+          multiple_offers_frequency: string
+          owner_device_id?: string | null
+          owner_user_id?: string | null
+          property_type: string
+          typical_dom: string
+          typical_sale_to_list: string
+          updated_at?: string
+        }
+        Update: {
+          contingency_tolerance?: string
+          created_at?: string
+          id?: string
+          label?: string
+          location?: string
+          multiple_offers_frequency?: string
+          owner_device_id?: string | null
+          owner_user_id?: string | null
+          property_type?: string
+          typical_dom?: string
+          typical_sale_to_list?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       owner_devices: {
         Row: {
           admin_email: string
@@ -189,6 +234,75 @@ export type Database = {
           device_id?: string
           id?: string
           revoked_at?: string | null
+        }
+        Relationships: []
+      }
+      sessions: {
+        Row: {
+          buyer_inputs: Json | null
+          client_name: string
+          condition: string
+          created_at: string
+          id: string
+          location: string
+          market_scenario_id: string | null
+          market_scenario_overrides: Json | null
+          market_snapshot_id: string | null
+          owner_device_id: string | null
+          owner_user_id: string | null
+          pdf_exported: boolean | null
+          property_type: string
+          selected_market_profile_id: string | null
+          seller_inputs: Json | null
+          session_type: string
+          share_link_created: boolean | null
+          share_token: string | null
+          share_token_revoked: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          buyer_inputs?: Json | null
+          client_name: string
+          condition: string
+          created_at?: string
+          id?: string
+          location: string
+          market_scenario_id?: string | null
+          market_scenario_overrides?: Json | null
+          market_snapshot_id?: string | null
+          owner_device_id?: string | null
+          owner_user_id?: string | null
+          pdf_exported?: boolean | null
+          property_type: string
+          selected_market_profile_id?: string | null
+          seller_inputs?: Json | null
+          session_type: string
+          share_link_created?: boolean | null
+          share_token?: string | null
+          share_token_revoked?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          buyer_inputs?: Json | null
+          client_name?: string
+          condition?: string
+          created_at?: string
+          id?: string
+          location?: string
+          market_scenario_id?: string | null
+          market_scenario_overrides?: Json | null
+          market_snapshot_id?: string | null
+          owner_device_id?: string | null
+          owner_user_id?: string | null
+          pdf_exported?: boolean | null
+          property_type?: string
+          selected_market_profile_id?: string | null
+          seller_inputs?: Json | null
+          session_type?: string
+          share_link_created?: boolean | null
+          share_token?: string | null
+          share_token_revoked?: boolean | null
+          updated_at?: string
         }
         Relationships: []
       }
