@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,7 @@ import { AnalysisMethodology } from '@/components/AnalysisMethodology';
 import { LikelihoodHelperText, LikelihoodDefinitions } from '@/components/LikelihoodDefinitions';
 import { ScenarioExplorer } from '@/components/ScenarioExplorer';
 import { openScenarioExplorer } from '@/lib/scenarioExplorerEvents';
+import { logSharedReportView } from '@/lib/viewTracking';
 import { 
   getTitle, 
   buyerWhatThisMeans, 
@@ -55,8 +56,9 @@ const IMPORTANT_NOTICE = `Important Notice: This report is an informational deci
 const SharedReportContent = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const { toast } = useToast();
-  const { session, marketProfile, loading, error } = useSharedSession(sessionId);
+  const { session, marketProfile, shareToken, loading, error } = useSharedSession(sessionId);
   const [exporting, setExporting] = useState(false);
+  const viewLoggedRef = useRef(false);
   
   // What-If state for buyer reports
   const [originalBuyerInputs, setOriginalBuyerInputs] = useState<BuyerInputs | null>(null);
@@ -74,6 +76,14 @@ const SharedReportContent = () => {
       setWhatIfInputs({ ...session.buyer_inputs });
     }
   }, [session]);
+
+  // Log view event once when session loads (with share token)
+  useEffect(() => {
+    if (session && shareToken && !viewLoggedRef.current) {
+      viewLoggedRef.current = true;
+      logSharedReportView(shareToken, session.id);
+    }
+  }, [session, shareToken]);
 
   // Handle what-if input changes
   const handleWhatIfChange = useCallback((inputs: BuyerInputs) => {
