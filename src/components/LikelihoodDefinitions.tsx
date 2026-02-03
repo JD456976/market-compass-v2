@@ -70,6 +70,22 @@ export const likelihoodHelperText = {
   High: 'Aligned with typical market response',
 };
 
+// Export full explanations for tooltips
+export const likelihoodExplanations = {
+  Low: 'Low means this offer is less competitive for this market and timeline. It does not mean impossible.',
+  Moderate: 'Moderate indicates mixed signals—the outcome is plausible but depends on execution and market response.',
+  High: 'High indicates strong alignment between your offer terms and typical market expectations.',
+};
+
+// Inline helper text component
+export function LikelihoodHelperText({ band }: { band: 'Low' | 'Moderate' | 'High' }) {
+  return (
+    <p className="text-xs text-muted-foreground mt-1 text-center">
+      {likelihoodHelperText[band]}
+    </p>
+  );
+}
+
 export function LikelihoodDefinitions() {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);

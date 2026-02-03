@@ -8,6 +8,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ArrowLeft, ArrowRight, Building2, Home, Sparkles, DollarSign, RotateCcw } from 'lucide-react';
 import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference } from '@/types';
 import { generateId } from '@/lib/storage';
@@ -36,6 +46,7 @@ const SellerFlow = () => {
   const { toast } = useToast();
   const [marketScenarios, setMarketScenarios] = useState<MarketScenario[]>([]);
   const [appliedTemplate, setAppliedTemplate] = useState<SessionTemplate | null>(null);
+  const [showResetDialog, setShowResetDialog] = useState(false);
   
   const [clientName, setClientName] = useState(DEFAULT_VALUES.clientName);
   const [location, setLocation] = useState(DEFAULT_VALUES.location);
@@ -200,7 +211,7 @@ const SellerFlow = () => {
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleFullReset} className="min-h-[44px]">
+            <Button variant="ghost" size="sm" onClick={() => setShowResetDialog(true)} className="min-h-[44px]">
               <RotateCcw className="mr-2 h-4 w-4" />
               Reset
             </Button>
@@ -450,6 +461,24 @@ const SellerFlow = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Reset Confirmation Dialog */}
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset form?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will clear all fields and reset the form to its default state.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setShowResetDialog(false); handleFullReset(); }}>
+              Reset
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

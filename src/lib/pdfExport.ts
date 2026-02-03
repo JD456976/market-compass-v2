@@ -8,6 +8,7 @@ interface ExportOptions {
   reportType: 'Seller' | 'Buyer' | 'Comparison';
   snapshotTimestamp?: string;
   isClientMode?: boolean;
+  customNotice?: string; // Optional notice for what-if exports
 }
 
 interface ComparisonExportOptions {
@@ -176,7 +177,19 @@ export async function exportReportToPdf(
     currentY += 3;
     pdf.setDrawColor(200, 200, 200);
     pdf.line(margin, currentY, pageWidth - margin, currentY);
-    currentY += 8;
+    currentY += 4;
+    
+    // Add custom notice if provided (e.g., for what-if exports)
+    if (options.customNotice) {
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'italic');
+      pdf.setTextColor(100, 100, 100);
+      const noticeLines = pdf.splitTextToSize(options.customNotice, contentWidth);
+      pdf.text(noticeLines, margin, currentY);
+      currentY += noticeLines.length * 3.5 + 4;
+    } else {
+      currentY += 4;
+    }
 
     // Track pages for numbering
     let totalPages = 1;
