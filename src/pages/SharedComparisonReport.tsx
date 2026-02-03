@@ -19,6 +19,7 @@ import {
 } from '@/lib/comparisonHelpers';
 import { ReportHeader } from '@/components/ReportHeader';
 import { MethodologyFooter } from '@/components/MethodologyFooter';
+import { AnalysisMethodology } from '@/components/AnalysisMethodology';
 
 const COMPARISON_FRAMING = `This report compares how different strategies change tradeoffs. It does not recommend one option over another or predict outcomes.`;
 
@@ -333,6 +334,9 @@ const SharedComparisonReport = () => {
             <div className="w-4 h-4 bg-accent/5 border border-accent/20 rounded"></div>
             <span>Highlighted rows indicate differences between options</span>
           </div>
+
+          {/* How This Analysis Is Formed - Collapsible */}
+          <AnalysisMethodology />
 
           {/* Important Notice */}
           <div className="flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">

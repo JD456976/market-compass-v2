@@ -20,6 +20,7 @@ import {
 import { exportComparisonToPdf } from '@/lib/pdfExport';
 import { toast } from '@/hooks/use-toast';
 import { ReportHeader } from '@/components/ReportHeader';
+import { AnalysisMethodology } from '@/components/AnalysisMethodology';
 
 const COMPARISON_FRAMING = `This report compares how different strategies change tradeoffs. It does not recommend one option over another or predict outcomes.`;
 
@@ -418,6 +419,9 @@ const ClientComparisonReport = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* How This Analysis Is Formed - Collapsible */}
+            <AnalysisMethodology />
 
             {/* Likelihood Explainer */}
             <div className="pdf-section">
