@@ -25,6 +25,7 @@ import AgentProfile from "./pages/AgentProfile";
 import Templates from "./pages/Templates";
 import Admin from "./pages/Admin";
 import BetaAccess from "./pages/BetaAccess";
+import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,7 @@ function AppRoutes() {
       <Route path="/compare/client" element={<ClientComparisonReport />} />
       <Route path="/agent-profile" element={<AgentProfile />} />
       <Route path="/templates" element={<Templates />} />
+      <Route path="/subscription" element={<Subscription />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/share/:sessionId" element={<SharedReport />} />
       <Route path="/share/compare" element={<SharedComparisonReport />} />

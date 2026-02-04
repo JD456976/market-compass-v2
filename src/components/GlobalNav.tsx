@@ -4,7 +4,7 @@ import { NavLink } from '@/components/NavLink';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { isAllowedAdmin } from '@/lib/adminConfig';
 import { getBetaAccessSession } from '@/lib/betaAccess';
-import { Home, FolderOpen, Send, Settings, Compass } from 'lucide-react';
+import { Home, FolderOpen, Send, Settings, Compass, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -18,6 +18,7 @@ const navItems: NavItem[] = [
   { to: '/', label: 'Home', icon: <Home className="h-5 w-5" /> },
   { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-5 w-5" /> },
   { to: '/shared-reports', label: 'Shared', icon: <Send className="h-5 w-5" /> },
+  { to: '/subscription', label: 'Pro', icon: <Sparkles className="h-5 w-5" /> },
   { to: '/admin', label: 'Admin', icon: <Settings className="h-5 w-5" />, adminOnly: true },
 ];
 
