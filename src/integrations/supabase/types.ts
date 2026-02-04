@@ -353,6 +353,16 @@ export type Database = {
         Returns: Json
       }
       check_owner_device: { Args: { p_device_id: string }; Returns: Json }
+      create_beta_code: {
+        Args: {
+          p_admin_email: string
+          p_code_hash: string
+          p_email: string
+          p_expires_at?: string
+          p_issued_to?: string
+        }
+        Returns: Json
+      }
       is_admin_user: { Args: never; Returns: boolean }
       record_admin_activation: {
         Args: { p_device_id: string; p_email: string }

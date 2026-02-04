@@ -60,21 +60,31 @@ export function IssueCodePanel({ adminEmail, onClose, onCreated }: IssueCodePane
       const codeHash = await hashCode(rawCode);
       const expiresAt = calculateExpiresAt(expiration);
 
-      const { error } = await supabase
-        .from('beta_codes')
-        .insert({
-          email: email.trim().toLowerCase(),
-          code_hash: codeHash,
-          issued_to: issuedTo.trim(),
-          expires_at: expiresAt,
-          created_by_admin_email: adminEmail,
-        });
+      // Use RPC function to create code (bypasses RLS, validates admin server-side)
+      const { data, error } = await supabase.rpc('create_beta_code', {
+        p_admin_email: adminEmail,
+        p_email: email.trim().toLowerCase(),
+        p_code_hash: codeHash,
+        p_issued_to: issuedTo.trim(),
+        p_expires_at: expiresAt,
+      });
 
       if (error) {
-        console.error('Insert error:', error);
+        console.error('RPC error:', error);
         toast({
           title: 'Failed to create code',
           description: error.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Check if the RPC returned an error
+      const result = data as { success: boolean; error?: string; code_id?: string } | null;
+      if (result && !result.success) {
+        toast({
+          title: 'Failed to create code',
+          description: result.error || 'Unknown error',
           variant: 'destructive',
         });
         return;
