@@ -305,21 +305,6 @@ export default function BetaAccess() {
         <CardContent>
           {step === 'email' ? (
             <form onSubmit={handleEmailSubmit} className="space-y-4">
-              {/* Admin quick-fill chips - only show when email is empty */}
-              {!email && (
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {ADMIN_EMAILS.map((adminEmail) => (
-                    <button
-                      key={adminEmail}
-                      type="button"
-                      onClick={() => handleQuickFill(adminEmail)}
-                      className="text-xs px-3 py-1.5 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground transition-colors min-h-[36px]"
-                    >
-                      {adminEmail}
-                    </button>
-                  ))}
-                </div>
-              )}
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
