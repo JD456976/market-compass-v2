@@ -51,21 +51,38 @@ const SharedReports = () => {
         : calculateBuyerReport(session, marketProfile);
       
       // Create a temporary hidden element to render the report for PDF
+      // Using DOM methods instead of innerHTML to prevent XSS attacks
       const tempContainer = document.createElement('div');
       tempContainer.id = 'pdf-export-temp';
       tempContainer.style.position = 'absolute';
       tempContainer.style.left = '-9999px';
       tempContainer.style.width = '794px';
-      tempContainer.innerHTML = `
-        <div class="pdf-section" style="padding: 20px; font-family: system-ui, sans-serif;">
-          <h2 style="margin: 0 0 8px; font-size: 18px;">${session.session_type} Report</h2>
-          <p style="margin: 0 0 4px; color: #666;">Prepared for: ${session.client_name}</p>
-          <p style="margin: 0 0 16px; color: #666;">Location: ${formatLocation(session.location)}</p>
-          <p style="margin: 0; font-size: 12px; color: #999;">
-            Please open the full shared report link for detailed content.
-          </p>
-        </div>
-      `;
+      
+      const pdfSection = document.createElement('div');
+      pdfSection.className = 'pdf-section';
+      pdfSection.style.cssText = 'padding: 20px; font-family: system-ui, sans-serif;';
+      
+      const h2 = document.createElement('h2');
+      h2.style.cssText = 'margin: 0 0 8px; font-size: 18px;';
+      h2.textContent = `${session.session_type} Report`;
+      
+      const p1 = document.createElement('p');
+      p1.style.cssText = 'margin: 0 0 4px; color: #666;';
+      p1.textContent = `Prepared for: ${session.client_name}`;
+      
+      const p2 = document.createElement('p');
+      p2.style.cssText = 'margin: 0 0 16px; color: #666;';
+      p2.textContent = `Location: ${formatLocation(session.location)}`;
+      
+      const p3 = document.createElement('p');
+      p3.style.cssText = 'margin: 0; font-size: 12px; color: #999;';
+      p3.textContent = 'Please open the full shared report link for detailed content.';
+      
+      pdfSection.appendChild(h2);
+      pdfSection.appendChild(p1);
+      pdfSection.appendChild(p2);
+      pdfSection.appendChild(p3);
+      tempContainer.appendChild(pdfSection);
       document.body.appendChild(tempContainer);
       
       await exportReportToPdf('pdf-export-temp', {
