@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDeviceId, setOwnerDevice, clearBetaAccessSession, clearOwnerDevice, isOwnerDevice as checkIsOwnerDevice } from '@/lib/betaAccess';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { MobileNavSpacer } from '@/components/GlobalNav';
 import {
   Dialog,
   DialogContent,
@@ -172,10 +173,35 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Header - Mobile Responsive */}
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          {/* Mobile Layout: Stacked */}
+          <div className="flex flex-col gap-4 md:hidden">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-serif font-semibold whitespace-nowrap">Admin Dashboard</h1>
+              <Link to="/">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="sr-only">Back</span>
+                </Button>
+              </Link>
+            </div>
+            <p className="text-sm text-muted-foreground break-all">{userEmail}</p>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading} className="flex-1">
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowLogoutDialog(true)} className="flex-1">
+                <LogOut className="h-4 w-4 mr-2" />
+                Log Out
+              </Button>
+            </div>
+          </div>
+
+          {/* Desktop Layout: Horizontal */}
+          <div className="hidden md:flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link to="/">
                 <Button variant="ghost" size="sm">
@@ -308,18 +334,18 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
 
         {/* Tables */}
         <Tabs defaultValue="codes" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="codes">
-              <KeyRound className="h-4 w-4 mr-2" />
-              Access Codes ({codes.length})
+          <TabsList className="flex flex-wrap h-auto gap-1">
+            <TabsTrigger value="codes" className="flex-1 min-w-fit">
+              <KeyRound className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Access </span>Codes ({codes.length})
             </TabsTrigger>
-            <TabsTrigger value="activations">
-              <Smartphone className="h-4 w-4 mr-2" />
-              Activations ({activations.length})
+            <TabsTrigger value="activations" className="flex-1 min-w-fit">
+              <Smartphone className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Activations</span><span className="sm:hidden">Active</span> ({activations.length})
             </TabsTrigger>
-            <TabsTrigger value="owner-devices">
-              <Monitor className="h-4 w-4 mr-2" />
-              Owner Devices ({stats.ownerDevices})
+            <TabsTrigger value="owner-devices" className="flex-1 min-w-fit">
+              <Monitor className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Owner </span>Devices ({stats.ownerDevices})
             </TabsTrigger>
           </TabsList>
 
@@ -335,6 +361,9 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
             <OwnerDevicesTable devices={ownerDevices} onRefresh={fetchData} />
           </TabsContent>
         </Tabs>
+        
+        {/* Mobile nav spacer */}
+        <MobileNavSpacer />
       </main>
 
       {/* Logout Dialog */}
