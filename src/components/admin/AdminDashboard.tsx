@@ -172,36 +172,35 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header - Mobile Responsive */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
+    <div className="min-h-screen bg-background w-full overflow-x-hidden">
+      {/* Header */}
+      <header className="border-b bg-card w-full">
+        <div className="px-4 py-4 w-full max-w-full">
           {/* Mobile Layout: Stacked */}
-          <div className="flex flex-col gap-4 md:hidden">
-            <div className="flex items-center justify-between">
-              <h1 className="text-xl font-serif font-semibold whitespace-nowrap">Admin Dashboard</h1>
+          <div className="flex flex-col gap-3 md:hidden">
+            <div className="flex items-center justify-between w-full">
+              <h1 className="text-lg font-serif font-semibold">Admin</h1>
               <Link to="/">
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4" />
-                  <span className="sr-only">Back</span>
                 </Button>
               </Link>
             </div>
-            <p className="text-sm text-muted-foreground break-all">{userEmail}</p>
-            <div className="flex items-center gap-2">
+            <p className="text-xs text-muted-foreground truncate max-w-full">{userEmail}</p>
+            <div className="flex items-center gap-2 w-full">
               <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading} className="flex-1">
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <span className="ml-1">Refresh</span>
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setShowLogoutDialog(true)} className="flex-1">
-                <LogOut className="h-4 w-4 mr-2" />
-                Log Out
+                <LogOut className="h-4 w-4" />
+                <span className="ml-1">Log Out</span>
               </Button>
             </div>
           </div>
 
           {/* Desktop Layout: Horizontal */}
-          <div className="hidden md:flex items-center justify-between">
+          <div className="hidden md:flex items-center justify-between container mx-auto">
             <div className="flex items-center gap-4">
               <Link to="/">
                 <Button variant="ghost" size="sm">
