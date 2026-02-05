@@ -174,13 +174,13 @@ export function AgentOnboarding({ onComplete, forceShow = false }: AgentOnboardi
                 </Button>
               </div>
 
-              {/* Skip link */}
+              {/* Don't show again link */}
               {!isLastStep && (
                 <button
                   onClick={handleSkip}
                   className="text-xs text-muted-foreground hover:text-foreground mt-4 w-full text-center"
                 >
-                  Skip for now
+                  Don't show again
                 </button>
               )}
             </CardContent>
