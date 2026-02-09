@@ -466,18 +466,21 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
 
         {/* Bottom drawer */}
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
-          <DrawerContent className="h-[85vh] flex flex-col">
-            <DrawerHeader className="border-b pb-4 shrink-0">
+          <DrawerContent 
+            className="h-[85vh] flex flex-col"
+            style={{ paddingTop: 'env(safe-area-inset-top)' }}
+          >
+            <DrawerHeader className="border-b pb-4 shrink-0 sticky top-0 bg-background z-10">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Compass className="h-5 w-5 text-accent" />
-                  <DrawerTitle className="font-serif text-lg">Scenario Explorer</DrawerTitle>
+                <div className="flex items-center gap-2 min-w-0">
+                  <Compass className="h-5 w-5 text-accent shrink-0" />
+                  <DrawerTitle className="font-serif text-lg truncate">Scenario Explorer</DrawerTitle>
                   {hasChanges && (
-                    <Badge variant="secondary" className="text-xs">Modified</Badge>
+                    <Badge variant="secondary" className="text-xs shrink-0">Modified</Badge>
                   )}
                 </div>
                 <DrawerClose asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full">
+                  <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full shrink-0">
                     <X className="h-5 w-5" />
                   </Button>
                 </DrawerClose>

@@ -25,6 +25,7 @@ import {
 } from '@/types';
 import { generateId } from '@/lib/storage';
 import { LocationAutocomplete } from '@/components/LocationAutocomplete';
+import { AddressInput, LocationMode, stubGeocode } from '@/components/AddressInput';
 import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
 import { SessionTemplate } from '@/lib/templates';
 import { loadMarketScenarios, MarketScenario, getMarketScenarioById } from '@/lib/marketScenarios';
@@ -64,6 +65,8 @@ const BuyerFlow = () => {
   
   const [clientName, setClientName] = useState(DEFAULT_VALUES.clientName);
   const [location, setLocation] = useState(DEFAULT_VALUES.location);
+  const [locationMode, setLocationMode] = useState<LocationMode>('town');
+  const [fullAddress, setFullAddress] = useState('');
   const [propertyType, setPropertyType] = useState<PropertyType>(DEFAULT_VALUES.propertyType);
   const [condition, setCondition] = useState<Condition>(DEFAULT_VALUES.condition);
   const [selectedScenarioId, setSelectedScenarioId] = useState<string | undefined>(DEFAULT_VALUES.selectedScenarioId);
@@ -141,6 +144,8 @@ const BuyerFlow = () => {
   const handleFullReset = useCallback(() => {
     setClientName(DEFAULT_VALUES.clientName);
     setLocation(DEFAULT_VALUES.location);
+    setLocationMode('town');
+    setFullAddress('');
     setPropertyType(DEFAULT_VALUES.propertyType);
     setCondition(DEFAULT_VALUES.condition);
     setSelectedScenarioId(DEFAULT_VALUES.selectedScenarioId);
@@ -291,16 +296,23 @@ const BuyerFlow = () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location <span className="text-destructive">*</span></Label>
-                  <LocationAutocomplete
-                    value={location}
-                    onChange={setLocation}
-                    placeholder="Seattle, WA"
+                  <AddressInput
+                    locationMode={locationMode}
+                    onLocationModeChange={setLocationMode}
+                    town={location}
+                    onTownChange={setLocation}
+                    fullAddress={fullAddress}
+                    onFullAddressChange={setFullAddress}
                     hasError={attempted && !location.trim()}
-                  />
-                  {attempted && !location.trim() && (
-                    <p className="text-xs text-destructive">Location is required</p>
-                  )}
+                    attempted={attempted}
+                  >
+                    <LocationAutocomplete
+                      value={location}
+                      onChange={setLocation}
+                      placeholder="Seattle, WA"
+                      hasError={attempted && !location.trim()}
+                    />
+                  </AddressInput>
                 </div>
               </div>
 

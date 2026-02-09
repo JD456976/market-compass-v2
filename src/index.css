@@ -306,20 +306,43 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 .report-info-block p {
   overflow-wrap: anywhere;
   word-break: break-word;
-  hyphens: auto;
+  hyphens: none;
 }
 
 /* Mobile report card stat tiles - improved spacing and wrapping */
 .pdf-stat-tile {
   padding: 1rem;
   min-height: auto;
+  height: auto;
 }
 
 .pdf-stat-tile .text-xl,
-.pdf-stat-tile .text-lg {
+.pdf-stat-tile .text-lg,
+.pdf-stat-tile .text-base {
   word-break: break-word;
   overflow-wrap: anywhere;
   line-height: 1.3;
+  hyphens: none;
+}
+
+/* Flex row children must allow text shrinking */
+.flex > * {
+  min-width: 0;
+}
+
+/* Stat tiles in grids: ensure height auto-adjusts */
+.likelihood-cards-mobile > div,
+.pdf-stat-tile {
+  height: auto;
+  min-height: auto;
+}
+
+/* Pill tags and chips should wrap */
+[class*="Badge"],
+[class*="badge"] {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  hyphens: none;
 }
 
 /* Mobile Responsive Fixes (≤480px) */
@@ -361,10 +384,12 @@ p, span, h1, h2, h3, h4, h5, h6, label {
     padding: 1rem;
   }
   
-  /* Stat tiles on mobile - tighter padding */
+  /* Stat tiles on mobile - tighter padding, auto height */
   .likelihood-cards-mobile .pdf-stat-tile,
   .likelihood-cards-mobile > div {
     padding: 0.875rem !important;
+    height: auto !important;
+    min-height: auto !important;
   }
   
   .likelihood-cards-mobile .text-xl {
@@ -394,19 +419,19 @@ p, span, h1, h2, h3, h4, h5, h6, label {
   .important-notice-text {
     word-break: break-word;
     overflow-wrap: anywhere;
-    hyphens: auto;
+    hyphens: none;
     text-align: left;
     padding-left: 0;
     padding-right: 0;
   }
 
-  /* Fix badge/chip text overflow - keep readable */
+  /* Fix badge/chip text overflow - allow wrapping */
   [class*="Badge"],
   [class*="badge"] {
     max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    hyphens: none;
   }
 
   /* Fix card title overflow */
@@ -433,6 +458,20 @@ p, span, h1, h2, h3, h4, h5, h6, label {
   /* Risk cards grid on mobile */
   .grid.md\\:grid-cols-2.gap-6 {
     gap: 1rem;
+  }
+
+  /* Contingencies tile: clean comma-separated wrapping */
+  .contingencies-list {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    hyphens: none;
+    line-height: 1.5;
+  }
+
+  /* Currency/number overflow protection */
+  .font-serif.font-bold {
+    font-size: clamp(0.875rem, 3.5vw, 1.125rem);
+    overflow-wrap: anywhere;
   }
 }
 
