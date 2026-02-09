@@ -487,7 +487,7 @@ const BuyerReport = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="p-3 sm:p-4 rounded-xl bg-muted/50">
                     <p className="text-xs sm:text-sm text-muted-foreground mb-1">Contingencies</p>
-                    <p className="font-medium text-sm sm:text-base break-words">{inputs.contingencies.length > 0 ? inputs.contingencies.join(', ') : 'None'}</p>
+                    <p className="font-medium text-sm sm:text-base contingencies-list">{inputs.contingencies.length > 0 ? inputs.contingencies.join(', ') : 'None'}</p>
                   </div>
                   <div className="p-3 sm:p-4 rounded-xl bg-muted/50">
                     <p className="text-xs sm:text-sm text-muted-foreground mb-1">Buyer Preference</p>
