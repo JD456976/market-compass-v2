@@ -1,19 +1,21 @@
-import { LikelihoodBand, BuyerPreference, StrategyPreference } from '@/types';
-import { Clock, Target, Scale, Zap, Info } from 'lucide-react';
+import { ExtendedLikelihoodBand, LikelihoodBand, BuyerPreference, StrategyPreference } from '@/types';
+import { Clock, Target, Scale, Zap } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { likelihoodHelperText } from '@/components/LikelihoodDefinitions';
+import { extendedLikelihoodHelperText } from '@/components/LikelihoodDefinitions';
 
 interface LikelihoodBarProps {
-  band: LikelihoodBand;
+  band: ExtendedLikelihoodBand | LikelihoodBand;
   showLabels?: boolean;
   showExplanation?: boolean;
 }
 
 export function LikelihoodBar({ band, showLabels = true, showExplanation = false }: LikelihoodBarProps) {
-  const segments = [
-    { key: 'Low' as const, label: 'Low' },
-    { key: 'Moderate' as const, label: 'Moderate' },
-    { key: 'High' as const, label: 'High' },
+  const segments: { key: ExtendedLikelihoodBand; label: string }[] = [
+    { key: 'Very Low', label: 'Very Low' },
+    { key: 'Low', label: 'Low' },
+    { key: 'Moderate', label: 'Moderate' },
+    { key: 'High', label: 'High' },
+    { key: 'Very High', label: 'Very High' },
   ];
   
   return (
@@ -22,18 +24,17 @@ export function LikelihoodBar({ band, showLabels = true, showExplanation = false
         <div className="relative flex h-2 rounded-full overflow-hidden bg-muted">
           {segments.map((seg, i) => {
             const isActive = seg.key === band;
+            const colorClass = isActive
+              ? band === 'Very High' ? 'bg-emerald-700/90'
+              : band === 'High' ? 'bg-emerald-600/80'
+              : band === 'Moderate' ? 'bg-amber-500/80'
+              : band === 'Low' ? 'bg-slate-400/80'
+              : 'bg-red-500/80'
+              : 'bg-muted';
             return (
               <div
                 key={seg.key}
-                className={`flex-1 transition-colors ${
-                  isActive 
-                    ? band === 'High' 
-                      ? 'bg-emerald-600/80' 
-                      : band === 'Moderate' 
-                      ? 'bg-amber-500/80' 
-                      : 'bg-slate-400/80'
-                    : 'bg-muted'
-                } ${i < segments.length - 1 ? 'border-r border-background' : ''}`}
+                className={`flex-1 transition-colors ${colorClass} ${i < segments.length - 1 ? 'border-r border-background' : ''}`}
               />
             );
           })}
@@ -44,7 +45,7 @@ export function LikelihoodBar({ band, showLabels = true, showExplanation = false
               <Tooltip key={seg.key}>
                 <TooltipTrigger asChild>
                   <span 
-                    className={`text-[10px] cursor-help ${
+                    className={`text-[9px] cursor-help ${
                       seg.key === band 
                         ? 'text-foreground font-medium' 
                         : 'text-muted-foreground/60'
@@ -54,7 +55,7 @@ export function LikelihoodBar({ band, showLabels = true, showExplanation = false
                   </span>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-[200px]">
-                  <p className="text-xs">{likelihoodHelperText[seg.key]}</p>
+                  <p className="text-xs">{extendedLikelihoodHelperText[seg.key]}</p>
                 </TooltipContent>
               </Tooltip>
             ))}
@@ -62,7 +63,7 @@ export function LikelihoodBar({ band, showLabels = true, showExplanation = false
         )}
         {showExplanation && (
           <p className="text-xs text-muted-foreground text-center mt-2">
-            {likelihoodHelperText[band]}
+            {extendedLikelihoodHelperText[band as ExtendedLikelihoodBand] || ''}
           </p>
         )}
       </div>
@@ -71,8 +72,8 @@ export function LikelihoodBar({ band, showLabels = true, showExplanation = false
 }
 
 interface TradeoffPosition {
-  x: number; // 0-100, left to right (Speed to Price / Certainty to Flexibility)
-  y: number; // 0-100, bottom to top
+  x: number;
+  y: number;
 }
 
 interface TradeoffMatrixProps {
@@ -93,15 +94,12 @@ export function TradeoffMatrix({
   return (
     <div className="w-full max-w-[200px] mx-auto">
       <div className="relative aspect-square border border-border/60 rounded-lg bg-muted/30">
-        {/* Grid lines */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-full h-px bg-border/40" />
         </div>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="h-full w-px bg-border/40" />
         </div>
-        
-        {/* Position dots */}
         {positions.map((pos, i) => (
           <div
             key={i}
@@ -123,8 +121,6 @@ export function TradeoffMatrix({
           </div>
         ))}
       </div>
-      
-      {/* Axis labels */}
       <div className="flex justify-between mt-1.5 px-1">
         <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
           <Zap className="h-2.5 w-2.5" />
@@ -142,49 +138,21 @@ export function TradeoffMatrix({
   );
 }
 
-// Helper to calculate tradeoff position based on session data
 export function getBuyerTradeoffPosition(
   preference: BuyerPreference,
   contingencyCount: number,
   financingType: string,
   closingTimeline: string
 ): TradeoffPosition {
-  // X axis: Speed (left) to Price (right)
-  // Y axis: Flexibility (bottom) to Certainty (top)
-  
   let x = 50;
   let y = 50;
-  
-  // Preference affects primary position
-  if (preference === 'Must win') {
-    x = 25; // Prioritizes speed
-    y = 70; // Higher certainty of winning
-  } else if (preference === 'Price-protective') {
-    x = 75; // Prioritizes price
-    y = 40; // More flexible on outcome
-  } else {
-    x = 50;
-    y = 55;
-  }
-  
-  // Contingencies affect flexibility
-  if (contingencyCount >= 3) {
-    y = Math.max(20, y - 20); // More flexibility needed
-  } else if (contingencyCount === 0) {
-    y = Math.min(85, y + 15); // Higher certainty
-  }
-  
-  // Cash offers shift toward certainty and speed
-  if (financingType === 'Cash') {
-    x = Math.max(15, x - 10);
-    y = Math.min(90, y + 15);
-  }
-  
-  // Fast close shifts toward speed
-  if (closingTimeline === '<21' || closingTimeline === '21-30') {
-    x = Math.max(15, x - 10);
-  }
-  
+  if (preference === 'Must win') { x = 25; y = 70; }
+  else if (preference === 'Price-protective') { x = 75; y = 40; }
+  else { x = 50; y = 55; }
+  if (contingencyCount >= 3) { y = Math.max(20, y - 20); }
+  else if (contingencyCount === 0) { y = Math.min(85, y + 15); }
+  if (financingType === 'Cash') { x = Math.max(15, x - 10); y = Math.min(90, y + 15); }
+  if (closingTimeline === '<21' || closingTimeline === '21-30') { x = Math.max(15, x - 10); }
   return { x, y };
 }
 
@@ -194,31 +162,14 @@ export function getSellerTradeoffPosition(
 ): TradeoffPosition {
   let x = 50;
   let y = 50;
-  
-  if (strategy === 'Prioritize speed') {
-    x = 25;
-    y = 65;
-  } else if (strategy === 'Maximize price') {
-    x = 75;
-    y = 45;
-  } else {
-    x = 50;
-    y = 55;
-  }
-  
-  // Shorter timeframe increases urgency (speed)
-  if (timeframe === '30') {
-    x = Math.max(15, x - 10);
-    y = Math.min(80, y + 10);
-  } else if (timeframe === '90+') {
-    x = Math.min(85, x + 10);
-    y = Math.max(30, y - 10);
-  }
-  
+  if (strategy === 'Prioritize speed') { x = 25; y = 65; }
+  else if (strategy === 'Maximize price') { x = 75; y = 45; }
+  else { x = 50; y = 55; }
+  if (timeframe === '30') { x = Math.max(15, x - 10); y = Math.min(80, y + 10); }
+  else if (timeframe === '90+') { x = Math.min(85, x + 10); y = Math.max(30, y - 10); }
   return { x, y };
 }
 
-// Client-friendly icons for key metrics
 interface MetricIconProps {
   type: 'timeline' | 'certainty' | 'tradeoff' | 'pricing';
   className?: string;
@@ -226,15 +177,12 @@ interface MetricIconProps {
 
 export function MetricIcon({ type, className = "h-4 w-4" }: MetricIconProps) {
   switch (type) {
-    case 'timeline':
-      return <Clock className={`${className} text-muted-foreground`} />;
-    case 'certainty':
-      return <Target className={`${className} text-muted-foreground`} />;
-    case 'tradeoff':
-      return <Scale className={`${className} text-muted-foreground`} />;
-    case 'pricing':
-      return <Zap className={`${className} text-muted-foreground`} />;
-    default:
-      return null;
+    case 'timeline': return <Clock className={`${className} text-muted-foreground`} />;
+    case 'certainty': return <Target className={`${className} text-muted-foreground`} />;
+    case 'tradeoff': return <Scale className={`${className} text-muted-foreground`} />;
+    case 'pricing': return <Zap className={`${className} text-muted-foreground`} />;
+    default: return null;
   }
 }
+
+export type { TradeoffPosition };

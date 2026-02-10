@@ -13,6 +13,9 @@ export type Contingency = 'Inspection' | 'Financing' | 'Appraisal' | 'Home sale'
 export type ClosingTimeline = '<21' | '21-30' | '31-45' | '45+';
 export type BuyerPreference = 'Must win' | 'Balanced' | 'Price-protective';
 export type LikelihoodBand = 'Low' | 'Moderate' | 'High';
+export type ExtendedLikelihoodBand = 'Very Low' | 'Low' | 'Moderate' | 'High' | 'Very High';
+export type MarketConditions = 'Hot' | 'Balanced' | 'Cool';
+export type InvestmentType = 'Primary Residence' | 'Investment Property';
 
 export interface MarketProfile {
   id: string;
@@ -45,6 +48,18 @@ export interface BuyerInputs {
   notes?: string; // Legacy field - maps to client_notes
   agent_notes?: string;
   client_notes?: string;
+  // New market-aware fields
+  reference_price?: number;
+  market_conditions?: MarketConditions;
+  days_on_market?: number;
+  investment_type?: InvestmentType;
+}
+
+export interface AddressFields {
+  address_line?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
 }
 
 export interface Session {
@@ -63,6 +78,10 @@ export interface Session {
   };
   // Market snapshot reference (auto-attached based on location)
   market_snapshot_id?: string;
+  // Address fields
+  address_fields?: AddressFields;
+  // Privacy toggle (default true = hide address from client)
+  client_privacy?: boolean;
   seller_inputs?: SellerInputs;
   buyer_inputs?: BuyerInputs;
   // Deliverable tracking
@@ -81,11 +100,35 @@ export interface SellerReportData {
   snapshotTimestamp: string;
 }
 
+export interface ScoringDebug {
+  referencePrice: number;
+  offerPrice: number;
+  priceRatio: number;
+  marketConditions: MarketConditions;
+  daysOnMarket: number | null;
+  investmentType: InvestmentType;
+  baseTiers: {
+    acceptance: ExtendedLikelihoodBand;
+    overpayRisk: ExtendedLikelihoodBand;
+    losingHomeRisk: ExtendedLikelihoodBand;
+  };
+  modifiers: string[];
+  finalTiers: {
+    acceptance: ExtendedLikelihoodBand;
+    overpayRisk: ExtendedLikelihoodBand;
+    losingHomeRisk: ExtendedLikelihoodBand;
+  };
+  confidence: 'High' | 'Limited';
+  warnings: string[];
+}
+
 export interface BuyerReportData {
   session: Session;
   marketProfile?: MarketProfile;
-  acceptanceLikelihood: LikelihoodBand;
-  riskOfLosingHome: LikelihoodBand;
-  riskOfOverpaying: LikelihoodBand;
+  acceptanceLikelihood: ExtendedLikelihoodBand;
+  riskOfLosingHome: ExtendedLikelihoodBand;
+  riskOfOverpaying: ExtendedLikelihoodBand;
   snapshotTimestamp: string;
+  confidence: 'High' | 'Limited';
+  debug?: ScoringDebug;
 }

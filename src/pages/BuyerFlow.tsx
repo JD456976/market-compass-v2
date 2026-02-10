@@ -47,6 +47,10 @@ const DEFAULT_VALUES = {
   condition: 'Maintained' as Condition,
   selectedScenarioId: undefined as string | undefined,
   offerPrice: '',
+  referencePrice: '',
+  marketConditions: 'Balanced' as 'Hot' | 'Balanced' | 'Cool',
+  daysOnMarket: '',
+  investmentType: 'Primary Residence' as 'Primary Residence' | 'Investment Property',
   financingType: 'Conventional' as FinancingType,
   downPayment: '20+' as DownPaymentPercent,
   contingencies: ['Inspection', 'Financing'] as Contingency[],
@@ -71,6 +75,10 @@ const BuyerFlow = () => {
   const [condition, setCondition] = useState<Condition>(DEFAULT_VALUES.condition);
   const [selectedScenarioId, setSelectedScenarioId] = useState<string | undefined>(DEFAULT_VALUES.selectedScenarioId);
   const [offerPrice, setOfferPrice] = useState<string>(DEFAULT_VALUES.offerPrice);
+  const [referencePrice, setReferencePrice] = useState<string>(DEFAULT_VALUES.referencePrice);
+  const [marketConditions, setMarketConditions] = useState<'Hot' | 'Balanced' | 'Cool'>(DEFAULT_VALUES.marketConditions);
+  const [daysOnMarket, setDaysOnMarket] = useState<string>(DEFAULT_VALUES.daysOnMarket);
+  const [investmentType, setInvestmentType] = useState<'Primary Residence' | 'Investment Property'>(DEFAULT_VALUES.investmentType);
   const [financingType, setFinancingType] = useState<FinancingType>(DEFAULT_VALUES.financingType);
   const [downPayment, setDownPayment] = useState<DownPaymentPercent>(DEFAULT_VALUES.downPayment);
   const [contingencies, setContingencies] = useState<Contingency[]>(DEFAULT_VALUES.contingencies);
@@ -150,6 +158,10 @@ const BuyerFlow = () => {
     setCondition(DEFAULT_VALUES.condition);
     setSelectedScenarioId(DEFAULT_VALUES.selectedScenarioId);
     setOfferPrice(DEFAULT_VALUES.offerPrice);
+    setReferencePrice(DEFAULT_VALUES.referencePrice);
+    setMarketConditions(DEFAULT_VALUES.marketConditions);
+    setDaysOnMarket(DEFAULT_VALUES.daysOnMarket);
+    setInvestmentType(DEFAULT_VALUES.investmentType);
     setFinancingType(DEFAULT_VALUES.financingType);
     setDownPayment(DEFAULT_VALUES.downPayment);
     setContingencies(DEFAULT_VALUES.contingencies);
@@ -198,8 +210,18 @@ const BuyerFlow = () => {
         competitionLevel: competitionOverride,
         pricingSensitivity: pricingOverride,
       } : undefined,
+      address_fields: locationMode === 'address' && fullAddress ? {
+        address_line: fullAddress,
+        city: location.split(',')[0]?.trim(),
+        state: location.split(',')[1]?.trim(),
+      } : undefined,
+      client_privacy: true,
       buyer_inputs: {
         offer_price: parseFloat(offerPrice) || 0,
+        reference_price: referencePrice ? parseFloat(referencePrice) : undefined,
+        market_conditions: marketConditions,
+        days_on_market: daysOnMarket ? parseInt(daysOnMarket) : undefined,
+        investment_type: investmentType,
         financing_type: financingType,
         down_payment_percent: downPayment,
         contingencies,
@@ -413,6 +435,72 @@ const BuyerFlow = () => {
                   )}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Market Context */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-accent" />
+                Market Context
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Market Conditions <span className="text-destructive">*</span></Label>
+                  <Select value={marketConditions} onValueChange={(v: 'Hot' | 'Balanced' | 'Cool') => setMarketConditions(v)}>
+                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Hot">Hot Market</SelectItem>
+                      <SelectItem value="Balanced">Balanced Market</SelectItem>
+                      <SelectItem value="Cool">Cool Market</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="daysOnMarket">Days on Market <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+                  <Input
+                    id="daysOnMarket"
+                    type="number"
+                    value={daysOnMarket}
+                    onChange={(e) => setDaysOnMarket(e.target.value)}
+                    placeholder="e.g., 14"
+                    className="h-11"
+                    min={0}
+                    max={365}
+                  />
+                  <p className="text-xs text-muted-foreground">Leave blank if unknown or new listing</p>
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Property Purpose <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+                  <Select value={investmentType} onValueChange={(v: 'Primary Residence' | 'Investment Property') => setInvestmentType(v)}>
+                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Primary Residence">Primary Residence</SelectItem>
+                      <SelectItem value="Investment Property">Investment Property</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="referencePrice">Reference / List Price <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="referencePrice"
+                      type="number"
+                      value={referencePrice}
+                      onChange={(e) => setReferencePrice(e.target.value)}
+                      placeholder="e.g., 900,000"
+                      className="h-11 pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">List price or expected market value for scoring accuracy</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

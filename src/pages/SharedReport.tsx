@@ -8,7 +8,7 @@ import {
   Clock, Building2, Users, Target, TrendingUp, AlertCircle, 
   AlertTriangle, ShieldAlert, FileDown, Compass, Loader2
 } from 'lucide-react';
-import { Session, LikelihoodBand, BuyerInputs } from '@/types';
+import { Session, LikelihoodBand, ExtendedLikelihoodBand, BuyerInputs } from '@/types';
 import { useSharedSession } from '@/hooks/useSession';
 import { getReportErrorMessage } from '@/lib/supabaseStorage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
@@ -31,24 +31,20 @@ import {
   buyerRiskDescriptions,
 } from '@/lib/clientLanguage';
 
-function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
-  if (band === 'High') {
-    return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">High</Badge>;
-  }
-  if (band === 'Moderate') {
-    return <Badge variant="warning" className="px-4 py-1.5 text-sm font-medium">Moderate</Badge>;
-  }
-  return <Badge variant="outline" className="px-4 py-1.5 text-sm font-medium">Low</Badge>;
+function LikelihoodBadge({ band }: { band: LikelihoodBand | ExtendedLikelihoodBand }) {
+  if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
+  if (band === 'High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">High</Badge>;
+  if (band === 'Moderate') return <Badge variant="warning" className="px-4 py-1.5 text-sm font-medium">Moderate</Badge>;
+  if (band === 'Low') return <Badge variant="outline" className="px-4 py-1.5 text-sm font-medium">Low</Badge>;
+  return <Badge variant="destructive" className="px-4 py-1.5 text-sm font-medium">Very Low</Badge>;
 }
 
-function RiskBadge({ band }: { band: LikelihoodBand }) {
-  if (band === 'High') {
-    return <Badge variant="destructive" className="px-4 py-1.5 text-sm font-medium">High</Badge>;
-  }
-  if (band === 'Moderate') {
-    return <Badge variant="warning" className="px-4 py-1.5 text-sm font-medium">Moderate</Badge>;
-  }
-  return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Low</Badge>;
+function RiskBadge({ band }: { band: LikelihoodBand | ExtendedLikelihoodBand }) {
+  if (band === 'Very High') return <Badge variant="destructive" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
+  if (band === 'High') return <Badge variant="destructive" className="px-4 py-1.5 text-sm font-medium">High</Badge>;
+  if (band === 'Moderate') return <Badge variant="warning" className="px-4 py-1.5 text-sm font-medium">Moderate</Badge>;
+  if (band === 'Low') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Low</Badge>;
+  return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very Low</Badge>;
 }
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;

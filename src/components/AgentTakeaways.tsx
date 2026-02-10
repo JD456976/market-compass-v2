@@ -1,13 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lightbulb } from 'lucide-react';
-import { Session, LikelihoodBand } from '@/types';
+import { Session, LikelihoodBand, ExtendedLikelihoodBand } from '@/types';
 
 interface BuyerTakeawaysProps {
   type: 'buyer';
   session: Session;
-  acceptanceLikelihood: LikelihoodBand;
-  riskOfLosingHome: LikelihoodBand;
-  riskOfOverpaying: LikelihoodBand;
+  acceptanceLikelihood: ExtendedLikelihoodBand;
+  riskOfLosingHome: ExtendedLikelihoodBand;
+  riskOfOverpaying: ExtendedLikelihoodBand;
 }
 
 interface SellerTakeawaysProps {
@@ -18,15 +18,22 @@ interface SellerTakeawaysProps {
 
 type AgentTakeawaysProps = BuyerTakeawaysProps | SellerTakeawaysProps;
 
+// Helper to check "high-ish" for extended bands
+function isHighOrAbove(band: ExtendedLikelihoodBand): boolean {
+  return band === 'High' || band === 'Very High';
+}
+function isModerateOrAbove(band: ExtendedLikelihoodBand): boolean {
+  return band === 'Moderate' || band === 'High' || band === 'Very High';
+}
+
 function getBuyerTakeaways(
   session: Session,
-  acceptanceLikelihood: LikelihoodBand,
-  riskOfLosingHome: LikelihoodBand,
-  riskOfOverpaying: LikelihoodBand
+  acceptanceLikelihood: ExtendedLikelihoodBand,
+  riskOfLosingHome: ExtendedLikelihoodBand,
+  riskOfOverpaying: ExtendedLikelihoodBand
 ): { lever: string; risk: string; framing: string } {
   const inputs = session.buyer_inputs!;
   
-  // Determine primary lever
   let lever = '';
   if (inputs.buyer_preference === 'Price-protective') {
     lever = 'Consider adjusting offer price if competitiveness becomes a priority.';
@@ -40,19 +47,17 @@ function getBuyerTakeaways(
     lever = 'Offer price positioning is the primary lever for this scenario.';
   }
 
-  // Determine risk to watch
   let risk = '';
-  if (riskOfLosingHome === 'High' || (riskOfLosingHome === 'Moderate' && riskOfOverpaying === 'Low')) {
+  if (isHighOrAbove(riskOfLosingHome) || (isModerateOrAbove(riskOfLosingHome) && !isModerateOrAbove(riskOfOverpaying))) {
     risk = 'Watch for competitive pressure—client may need to act quickly.';
-  } else if (riskOfOverpaying === 'High' || riskOfOverpaying === 'Moderate') {
+  } else if (isModerateOrAbove(riskOfOverpaying)) {
     risk = 'Monitor value protection—ensure pricing aligns with comparables.';
   } else {
     risk = 'Balanced risk profile—maintain current positioning unless market shifts.';
   }
 
-  // Suggested framing
   let framing = '';
-  if (acceptanceLikelihood === 'High') {
+  if (isHighOrAbove(acceptanceLikelihood)) {
     framing = '"Your offer is well-positioned for consideration given current market conditions."';
   } else if (acceptanceLikelihood === 'Moderate') {
     framing = '"There are opportunities to strengthen your offer if we see competitive activity."';
@@ -69,7 +74,6 @@ function getSellerTakeaways(
 ): { lever: string; risk: string; framing: string } {
   const inputs = session.seller_inputs!;
   
-  // Determine primary lever
   let lever = '';
   if (inputs.strategy_preference === 'Maximize price') {
     lever = 'List price is the primary lever—consider market response after initial exposure.';
@@ -81,7 +85,6 @@ function getSellerTakeaways(
     lever = 'Balanced strategy allows flexibility—monitor early showing feedback.';
   }
 
-  // Determine risk to watch
   let risk = '';
   if (likelihood30 === 'Low' && inputs.desired_timeframe === '30') {
     risk = 'Extended time on market is likely—prepare client for pricing discussion at 30 days.';
@@ -93,7 +96,6 @@ function getSellerTakeaways(
     risk = 'Balanced exposure—review buyer feedback after first two weeks.';
   }
 
-  // Suggested framing
   let framing = '';
   if (likelihood30 === 'High') {
     framing = '"Market conditions are favorable—we should see activity within the first few weeks."';

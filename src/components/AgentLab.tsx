@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Session, LikelihoodBand } from '@/types';
+import { Session, LikelihoodBand, ExtendedLikelihoodBand } from '@/types';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,7 @@ import { upsertSession } from '@/lib/storage';
 
 interface AgentLabProps {
   session: Session;
-  currentLikelihood: LikelihoodBand;
+  currentLikelihood: ExtendedLikelihoodBand | LikelihoodBand;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onApply: (updatedSession: Session) => void;
@@ -50,11 +50,14 @@ function calculatePreviewLikelihood(sliders: LabSliders): { band: LikelihoodBand
   return { band, score };
 }
 
-function getConfidenceRange(band: LikelihoodBand): string {
+function getConfidenceRange(band: string): string {
   switch (band) {
+    case 'Very High': return '85–95%';
     case 'High': return '70–90%';
     case 'Moderate': return '45–60%';
     case 'Low': return '15–35%';
+    case 'Very Low': return '5–15%';
+    default: return '';
   }
 }
 

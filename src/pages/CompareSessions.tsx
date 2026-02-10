@@ -5,29 +5,25 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, GitCompare, Building2, Users, Target, TrendingUp, Clock, ShieldAlert, AlertTriangle, FileText, Eye } from 'lucide-react';
-import { Session, LikelihoodBand, SellerReportData, BuyerReportData } from '@/types';
+import { Session, LikelihoodBand, ExtendedLikelihoodBand, SellerReportData, BuyerReportData } from '@/types';
 import { getSessionById, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { formatLocation } from '@/lib/utils';
 
-function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
-  if (band === 'High') {
-    return <Badge variant="success" className="px-3 py-1 text-xs font-medium">High</Badge>;
-  }
-  if (band === 'Moderate') {
-    return <Badge variant="warning" className="px-3 py-1 text-xs font-medium">Moderate</Badge>;
-  }
-  return <Badge variant="outline" className="px-3 py-1 text-xs font-medium">Low</Badge>;
+function LikelihoodBadge({ band }: { band: LikelihoodBand | ExtendedLikelihoodBand }) {
+  if (band === 'Very High') return <Badge variant="success" className="px-3 py-1 text-xs font-medium">Very High</Badge>;
+  if (band === 'High') return <Badge variant="success" className="px-3 py-1 text-xs font-medium">High</Badge>;
+  if (band === 'Moderate') return <Badge variant="warning" className="px-3 py-1 text-xs font-medium">Moderate</Badge>;
+  if (band === 'Low') return <Badge variant="outline" className="px-3 py-1 text-xs font-medium">Low</Badge>;
+  return <Badge variant="destructive" className="px-3 py-1 text-xs font-medium">Very Low</Badge>;
 }
 
-function RiskBadge({ band }: { band: LikelihoodBand }) {
-  if (band === 'High') {
-    return <Badge variant="destructive" className="px-3 py-1 text-xs font-medium">High</Badge>;
-  }
-  if (band === 'Moderate') {
-    return <Badge variant="warning" className="px-3 py-1 text-xs font-medium">Moderate</Badge>;
-  }
-  return <Badge variant="success" className="px-3 py-1 text-xs font-medium">Low</Badge>;
+function RiskBadge({ band }: { band: LikelihoodBand | ExtendedLikelihoodBand }) {
+  if (band === 'Very High') return <Badge variant="destructive" className="px-3 py-1 text-xs font-medium">Very High</Badge>;
+  if (band === 'High') return <Badge variant="destructive" className="px-3 py-1 text-xs font-medium">High</Badge>;
+  if (band === 'Moderate') return <Badge variant="warning" className="px-3 py-1 text-xs font-medium">Moderate</Badge>;
+  if (band === 'Low') return <Badge variant="success" className="px-3 py-1 text-xs font-medium">Low</Badge>;
+  return <Badge variant="success" className="px-3 py-1 text-xs font-medium">Very Low</Badge>;
 }
 
 function CompareCell({ label, valueA, valueB, highlight = false }: { 

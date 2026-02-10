@@ -57,9 +57,9 @@ export function getConsistencyIssues(session: Session): string[] {
 export function getPrimaryLimitingFactor(
   session: Session, 
   snapshot: MarketSnapshot,
-  likelihood: LikelihoodBand
+  likelihood: string
 ): { factor: string; lever: string } | null {
-  if (likelihood === 'High') return null; // No limiting factor if already high
+  if (likelihood === 'High' || likelihood === 'Very High') return null;
   
   const context = getMarketContext(snapshot);
   
