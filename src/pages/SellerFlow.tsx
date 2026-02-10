@@ -22,6 +22,7 @@ import { ArrowLeft, ArrowRight, Building2, Home, Sparkles, DollarSign, RotateCcw
 import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference } from '@/types';
 import { generateId } from '@/lib/storage';
 import { LocationAutocomplete } from '@/components/LocationAutocomplete';
+import { AddressInput, LocationMode, stubGeocode } from '@/components/AddressInput';
 import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
 import { SessionTemplate } from '@/lib/templates';
 import { loadMarketScenarios, MarketScenario, getMarketScenarioById } from '@/lib/marketScenarios';
@@ -50,6 +51,8 @@ const SellerFlow = () => {
   
   const [clientName, setClientName] = useState(DEFAULT_VALUES.clientName);
   const [location, setLocation] = useState(DEFAULT_VALUES.location);
+  const [locationMode, setLocationMode] = useState<LocationMode>('town');
+  const [fullAddress, setFullAddress] = useState('');
   const [propertyType, setPropertyType] = useState<PropertyType>(DEFAULT_VALUES.propertyType);
   const [condition, setCondition] = useState<Condition>(DEFAULT_VALUES.condition);
   const [selectedScenarioId, setSelectedScenarioId] = useState<string | undefined>(DEFAULT_VALUES.selectedScenarioId);
@@ -118,6 +121,8 @@ const SellerFlow = () => {
   const handleFullReset = useCallback(() => {
     setClientName(DEFAULT_VALUES.clientName);
     setLocation(DEFAULT_VALUES.location);
+    setLocationMode('town');
+    setFullAddress('');
     setPropertyType(DEFAULT_VALUES.propertyType);
     setCondition(DEFAULT_VALUES.condition);
     setSelectedScenarioId(DEFAULT_VALUES.selectedScenarioId);
@@ -234,33 +239,37 @@ const SellerFlow = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="clientName">Client Name <span className="text-destructive">*</span></Label>
-                  <Input
-                    id="clientName"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="John Smith"
-                    className={`h-11 ${attempted && !clientName.trim() ? 'border-destructive' : ''}`}
-                  />
-                  {attempted && !clientName.trim() && (
-                    <p className="text-xs text-destructive">Client name is required</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location <span className="text-destructive">*</span></Label>
-                  <LocationAutocomplete
-                    value={location}
-                    onChange={setLocation}
-                    placeholder="Seattle, WA"
-                    hasError={attempted && !location.trim()}
-                  />
-                  {attempted && !location.trim() && (
-                    <p className="text-xs text-destructive">Location is required</p>
-                  )}
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="clientName">Client Name <span className="text-destructive">*</span></Label>
+                <Input
+                  id="clientName"
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  placeholder="John Smith"
+                  className={`h-11 ${attempted && !clientName.trim() ? 'border-destructive' : ''}`}
+                />
+                {attempted && !clientName.trim() && (
+                  <p className="text-xs text-destructive">Client name is required</p>
+                )}
               </div>
+
+              <AddressInput
+                locationMode={locationMode}
+                onLocationModeChange={setLocationMode}
+                town={location}
+                onTownChange={setLocation}
+                fullAddress={fullAddress}
+                onFullAddressChange={setFullAddress}
+                hasError={attempted && !location.trim()}
+                attempted={attempted}
+              >
+                <LocationAutocomplete
+                  value={location}
+                  onChange={setLocation}
+                  placeholder="Seattle, WA"
+                  hasError={attempted && !location.trim()}
+                />
+              </AddressInput>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
