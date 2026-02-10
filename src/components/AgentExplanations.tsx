@@ -1,36 +1,36 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Info, Lightbulb } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { LikelihoodBand, Session } from '@/types';
+import { ExtendedLikelihoodBand, LikelihoodBand, Session } from '@/types';
 
 interface ConfidenceRangeProps {
-  band: LikelihoodBand;
+  band: ExtendedLikelihoodBand | LikelihoodBand;
   label?: string;
 }
 
-// Confidence ranges for agent mode only
-export function ConfidenceRange({ band, label }: ConfidenceRangeProps) {
-  const ranges: Record<LikelihoodBand, string> = {
+export function ConfidenceRange({ band }: ConfidenceRangeProps) {
+  const ranges: Record<string, string> = {
+    'Very High': '85–95%',
     High: '70–90%',
     Moderate: '40–65%',
     Low: '15–35%',
+    'Very Low': '5–15%',
   };
 
   return (
     <span className="text-xs text-muted-foreground ml-1">
-      ({ranges[band]})
+      ({ranges[band] || ''})
     </span>
   );
 }
 
 interface WhyThisResultProps {
-  band: LikelihoodBand;
+  band: ExtendedLikelihoodBand | LikelihoodBand;
   factors: string[];
 }
 
 export function WhyThisResult({ band, factors }: WhyThisResultProps) {
   const [isOpen, setIsOpen] = useState(false);
-
   if (factors.length === 0) return null;
 
   return (
@@ -73,14 +73,19 @@ export function WhatWouldChange({ suggestions }: WhatWouldChangeProps) {
   );
 }
 
-// Helper to generate factors based on session data - probabilistic language
-export function getAcceptanceFactors(session: Session, band: LikelihoodBand): string[] {
+// Helper to generate factors based on session data
+export function getAcceptanceFactors(session: Session, band: ExtendedLikelihoodBand | LikelihoodBand): string[] {
   const factors: string[] = [];
   const inputs = session.buyer_inputs;
-  
   if (!inputs) return factors;
 
-  // Positive factors
+  // Price ratio factor
+  if (inputs.reference_price && inputs.reference_price > 0) {
+    const ratio = inputs.offer_price / inputs.reference_price;
+    if (ratio >= 1.15) factors.push(`Offer is ${Math.round((ratio - 1) * 100)}% above reference price`);
+    else if (ratio < 0.90) factors.push(`Offer is ${Math.round((1 - ratio) * 100)}% below reference price`);
+  }
+
   if (inputs.financing_type === 'Cash') {
     factors.push('Cash financing tends to provide the strongest offer position');
   }
@@ -90,8 +95,6 @@ export function getAcceptanceFactors(session: Session, band: LikelihoodBand): st
   if (inputs.contingencies.length === 0 || inputs.contingencies.includes('None')) {
     factors.push('No contingencies tends to increase seller confidence');
   }
-
-  // Negative factors
   if (inputs.contingencies.includes('Home sale')) {
     factors.push('Home sale contingency often significantly reduces certainty');
   }
@@ -101,19 +104,24 @@ export function getAcceptanceFactors(session: Session, band: LikelihoodBand): st
   if (inputs.closing_timeline === '45+') {
     factors.push('Extended closing timeline can concern some sellers');
   }
-  if (inputs.contingencies.length >= 3) {
-    factors.push('Multiple contingencies tend to reduce offer competitiveness');
+  if (inputs.market_conditions === 'Hot') {
+    factors.push('Hot market increases competition for this property');
+  }
+  if (inputs.days_on_market && inputs.days_on_market > 60) {
+    factors.push('Extended days on market suggests seller may be more flexible');
   }
 
-  return factors.slice(0, 3); // Max 3 factors
+  return factors.slice(0, 4);
 }
 
-export function getImprovementSuggestions(session: Session, band: LikelihoodBand): string[] {
+export function getImprovementSuggestions(session: Session, band: ExtendedLikelihoodBand | LikelihoodBand): string[] {
   const suggestions: string[] = [];
   const inputs = session.buyer_inputs;
-  
-  if (!inputs || band === 'High') return suggestions;
+  if (!inputs || band === 'High' || band === 'Very High') return suggestions;
 
+  if (inputs.reference_price && inputs.offer_price < inputs.reference_price) {
+    suggestions.push('Increasing offer price closer to or above reference price would improve acceptance.');
+  }
   if (inputs.contingencies.length > 1) {
     suggestions.push('Reducing contingencies tends to increase certainty.');
   }
@@ -130,7 +138,6 @@ export function getImprovementSuggestions(session: Session, band: LikelihoodBand
 export function getSellerFactors(session: Session, band: LikelihoodBand): string[] {
   const factors: string[] = [];
   const inputs = session.seller_inputs;
-  
   if (!inputs) return factors;
 
   if (inputs.strategy_preference === 'Prioritize speed') {
@@ -155,7 +162,6 @@ export function getSellerFactors(session: Session, band: LikelihoodBand): string
 export function getSellerImprovementSuggestions(session: Session, band: LikelihoodBand): string[] {
   const suggestions: string[] = [];
   const inputs = session.seller_inputs;
-  
   if (!inputs || band === 'High') return suggestions;
 
   if (inputs.strategy_preference === 'Maximize price') {

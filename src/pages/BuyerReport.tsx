@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, Clock, Users, Target, TrendingUp, AlertCircle, CheckCircle2, AlertTriangle, ShieldAlert, FileDown, Share2, FileText, Pencil } from 'lucide-react';
-import { Session, BuyerReportData, LikelihoodBand } from '@/types';
+import { Session, BuyerReportData, ExtendedLikelihoodBand } from '@/types';
 import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateBuyerReport } from '@/lib/scoring';
 import { useToast } from '@/hooks/use-toast';
@@ -62,24 +62,20 @@ import { BuyerInputs } from '@/types';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
-function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
-  if (band === 'High') {
-    return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">High</Badge>;
-  }
-  if (band === 'Moderate') {
-    return <Badge variant="warning" className="px-4 py-1.5 text-sm font-medium">Moderate</Badge>;
-  }
-  return <Badge variant="outline" className="px-4 py-1.5 text-sm font-medium">Low</Badge>;
+function LikelihoodBadge({ band }: { band: ExtendedLikelihoodBand }) {
+  if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
+  if (band === 'High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">High</Badge>;
+  if (band === 'Moderate') return <Badge variant="warning" className="px-4 py-1.5 text-sm font-medium">Moderate</Badge>;
+  if (band === 'Low') return <Badge variant="outline" className="px-4 py-1.5 text-sm font-medium">Low</Badge>;
+  return <Badge variant="destructive" className="px-4 py-1.5 text-sm font-medium">Very Low</Badge>;
 }
 
-function RiskBadge({ band }: { band: LikelihoodBand }) {
-  if (band === 'High') {
-    return <Badge variant="destructive" className="px-4 py-1.5 text-sm font-medium">High</Badge>;
-  }
-  if (band === 'Moderate') {
-    return <Badge variant="warning" className="px-4 py-1.5 text-sm font-medium">Moderate</Badge>;
-  }
-  return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Low</Badge>;
+function RiskBadge({ band }: { band: ExtendedLikelihoodBand }) {
+  if (band === 'Very High') return <Badge variant="destructive" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
+  if (band === 'High') return <Badge variant="destructive" className="px-4 py-1.5 text-sm font-medium">High</Badge>;
+  if (band === 'Moderate') return <Badge variant="warning" className="px-4 py-1.5 text-sm font-medium">Moderate</Badge>;
+  if (band === 'Low') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Low</Badge>;
+  return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very Low</Badge>;
 }
 
 const BuyerReport = () => {

@@ -15,8 +15,15 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ExtendedLikelihoodBand, LikelihoodBand } from '@/types';
 
 const definitions = [
+  {
+    label: 'Very Low',
+    shortDesc: 'Well outside typical market response range.',
+    description: 'Current inputs are far from what the market typically responds to. Significant adjustments would be needed.',
+    color: 'bg-red-500/20 border-red-500/40',
+  },
   {
     label: 'Low',
     shortDesc: 'Outside typical market response range.',
@@ -34,6 +41,12 @@ const definitions = [
     shortDesc: 'Strong alignment with typical market response.',
     description: 'Strong alignment between inputs and typical market behavior suggests favorable positioning for this timeframe.',
     color: 'bg-emerald-600/20 border-emerald-600/40',
+  },
+  {
+    label: 'Very High',
+    shortDesc: 'Exceptionally strong alignment.',
+    description: 'Inputs are very strongly aligned with market expectations. The desired outcome is highly likely barring unusual circumstances.',
+    color: 'bg-emerald-700/20 border-emerald-700/40',
   },
 ];
 
@@ -63,25 +76,35 @@ function DefinitionsContent() {
   );
 }
 
-// Export helper text for inline use
-export const likelihoodHelperText = {
+// Export helper text for inline use (extended 5-tier)
+export const extendedLikelihoodHelperText: Record<ExtendedLikelihoodBand, string> = {
+  'Very Low': 'Well outside typical market response range.',
+  Low: 'Outside typical market response range.',
+  Moderate: 'Within typical market response range.', 
+  High: 'Strong alignment with typical market response.',
+  'Very High': 'Exceptionally strong alignment with market expectations.',
+};
+
+// Legacy 3-tier helper text
+export const likelihoodHelperText: Record<LikelihoodBand, string> = {
   Low: 'Outside typical market response range.',
   Moderate: 'Within typical market response range.', 
   High: 'Strong alignment with typical market response.',
 };
 
 // Export full explanations for tooltips
-export const likelihoodExplanations = {
+export const likelihoodExplanations: Record<LikelihoodBand, string> = {
   Low: 'Outside typical market response range. This does not mean impossible—market conditions vary.',
   Moderate: 'Within typical market response range. Outcome depends on execution and market dynamics.',
   High: 'Strong alignment with typical market response. Favorable positioning for this market.',
 };
 
 // Inline helper text component
-export function LikelihoodHelperText({ band }: { band: 'Low' | 'Moderate' | 'High' }) {
+export function LikelihoodHelperText({ band }: { band: ExtendedLikelihoodBand | LikelihoodBand }) {
+  const text = (extendedLikelihoodHelperText as Record<string, string>)[band] || likelihoodHelperText[band as LikelihoodBand];
   return (
     <p className="text-xs text-muted-foreground mt-1 text-center">
-      {likelihoodHelperText[band]}
+      {text}
     </p>
   );
 }

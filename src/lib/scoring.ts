@@ -2,36 +2,33 @@ import {
   MarketProfile, 
   Session, 
   LikelihoodBand,
+  ExtendedLikelihoodBand,
+  MarketConditions,
+  InvestmentType,
   SellerReportData,
-  BuyerReportData 
+  BuyerReportData,
+  ScoringDebug,
 } from '@/types';
+
+// =============================================
+// SELLER SCORING (unchanged legacy 3-tier)
+// =============================================
 
 function getMarketModifiers(profile?: MarketProfile): number {
   if (!profile) return 0;
-  
   let score = 0;
-  
-  // typical_sale_to_list: Below(-1), Near(0), Above(+1)
   if (profile.typical_sale_to_list === 'Below') score -= 1;
   else if (profile.typical_sale_to_list === 'Above') score += 1;
-  
-  // typical_dom: Fast(+1), Normal(0), Slow(-1)
   if (profile.typical_dom === 'Fast') score += 1;
   else if (profile.typical_dom === 'Slow') score -= 1;
-  
-  // multiple_offers_frequency: Rare(-1), Sometimes(0), Common(+1)
   if (profile.multiple_offers_frequency === 'Rare') score -= 1;
   else if (profile.multiple_offers_frequency === 'Common') score += 1;
-  
-  // contingency_tolerance: Low(-1), Medium(0), High(+1)
   if (profile.contingency_tolerance === 'Low') score -= 1;
   else if (profile.contingency_tolerance === 'High') score += 1;
-  
   return score;
 }
 
 function getConditionModifier(condition: Session['condition']): number {
-  // Condition: Dated(-1), Maintained(0), Updated(+1), Renovated(+1)
   switch (condition) {
     case 'Dated': return -1;
     case 'Maintained': return 0;
@@ -52,7 +49,6 @@ export function calculateSellerReport(
   marketProfile?: MarketProfile
 ): SellerReportData {
   const baseScore = getMarketModifiers(marketProfile) + getConditionModifier(session.condition);
-  
   return {
     session,
     marketProfile,
@@ -63,6 +59,110 @@ export function calculateSellerReport(
   };
 }
 
+// =============================================
+// BUYER SCORING (new 5-tier price-ratio system)
+// =============================================
+
+// Numeric tier values: 1=Very Low, 2=Low, 3=Moderate, 4=High, 5=Very High
+const TIER_MAP: Record<number, ExtendedLikelihoodBand> = {
+  1: 'Very Low',
+  2: 'Low',
+  3: 'Moderate',
+  4: 'High',
+  5: 'Very High',
+};
+
+function clampTier(n: number): number {
+  return Math.max(1, Math.min(5, Math.round(n)));
+}
+
+function tierToNum(t: ExtendedLikelihoodBand): number {
+  switch (t) {
+    case 'Very Low': return 1;
+    case 'Low': return 2;
+    case 'Moderate': return 3;
+    case 'High': return 4;
+    case 'Very High': return 5;
+  }
+}
+
+function numToTier(n: number): ExtendedLikelihoodBand {
+  return TIER_MAP[clampTier(n)];
+}
+
+// Base acceptance from price ratio + market conditions
+function getBaseAcceptance(ratio: number, market: MarketConditions): ExtendedLikelihoodBand {
+  if (ratio >= 1.25) return 'Very High';
+  if (ratio >= 1.15) return 'High';
+  if (ratio >= 1.05) {
+    if (market === 'Cool') return 'Moderate';
+    return 'High';
+  }
+  if (ratio >= 1.00) return 'Moderate';
+  if (ratio >= 0.95) {
+    if (market === 'Hot') return 'Moderate';
+    if (market === 'Balanced') return 'Moderate';
+    return 'Low';
+  }
+  if (ratio >= 0.90) {
+    if (market === 'Hot') return 'Moderate';
+    if (market === 'Balanced') return 'Low';
+    return 'Very Low';
+  }
+  if (ratio >= 0.85) {
+    if (market === 'Hot') return 'Low';
+    return 'Very Low';
+  }
+  return 'Very Low';
+}
+
+// Base overpay risk from price ratio only
+function getBaseOverpayRisk(ratio: number): ExtendedLikelihoodBand {
+  if (ratio >= 1.30) return 'Very High';
+  if (ratio >= 1.15) return 'High';
+  if (ratio >= 1.05) return 'Moderate';
+  if (ratio >= 1.00) return 'Low';
+  if (ratio >= 0.95) return 'Low';
+  return 'Very Low';
+}
+
+// Base losing home risk from price ratio + market conditions
+function getBaseLosingHomeRisk(ratio: number, market: MarketConditions): ExtendedLikelihoodBand {
+  if (ratio >= 1.35) return 'Very Low';
+  if (ratio >= 1.20) return 'Very Low';
+  if (ratio >= 1.05) return 'Low';
+  if (ratio >= 1.00) {
+    if (market === 'Hot') return 'Moderate';
+    if (market === 'Balanced') return 'Low';
+    return 'Very Low';
+  }
+  if (ratio >= 0.95) {
+    if (market === 'Hot') return 'Moderate';
+    if (market === 'Balanced') return 'Moderate';
+    return 'Low';
+  }
+  if (ratio >= 0.90) {
+    if (market === 'Hot') return 'High';
+    if (market === 'Balanced') return 'High';
+    return 'Moderate';
+  }
+  // <= 0.90
+  if (market === 'Hot') return 'Very High';
+  if (market === 'Balanced') return 'High';
+  return 'Moderate';
+}
+
+// DOM modifier (acceptance only)
+function getDOMModifier(days: number | null): number {
+  if (days === null || days === undefined) return 0;
+  if (days <= 7) return -1;
+  if (days <= 14) return -0.5;
+  if (days <= 30) return 0;
+  if (days <= 60) return 0.5;
+  if (days <= 90) return 1;
+  return 1.5;
+}
+
 export function calculateBuyerReport(
   session: Session,
   marketProfile?: MarketProfile
@@ -71,97 +171,142 @@ export function calculateBuyerReport(
   if (!inputs) {
     throw new Error('Buyer inputs required');
   }
-  
-  let score = getMarketModifiers(marketProfile) + getConditionModifier(session.condition);
-  
+
+  const offerPrice = inputs.offer_price;
+  const marketConditions: MarketConditions = inputs.market_conditions || 'Balanced';
+  const daysOnMarket: number | null = inputs.days_on_market ?? null;
+  const investmentType: InvestmentType = inputs.investment_type || 'Primary Residence';
   const isCash = inputs.financing_type === 'Cash';
-  const hasMinimalContingencies = inputs.contingencies.includes('None') || 
-    inputs.contingencies.length === 0 ||
-    (inputs.contingencies.length === 1 && inputs.contingencies[0] === 'Inspection');
-  const hasFastClose = inputs.closing_timeline === '<21' || inputs.closing_timeline === '21-30';
-  
-  // financing: Cash(+3), Conventional(+1), FHA/VA(0)
-  // Cash gets higher bonus to help reach High likelihood
+
+  // Determine reference price & confidence
+  let referencePrice = inputs.reference_price || 0;
+  let confidence: 'High' | 'Limited' = 'High';
+  const warnings: string[] = [];
+
+  if (!referencePrice || referencePrice <= 0) {
+    referencePrice = offerPrice;
+    confidence = 'Limited';
+    warnings.push('reference_price unavailable, using offer_price as fallback');
+  }
+
+  const priceRatio = referencePrice > 0 ? offerPrice / referencePrice : 1;
+
+  // 1. Base tiers from price ratio + market
+  const baseAcceptance = getBaseAcceptance(priceRatio, marketConditions);
+  const baseOverpay = getBaseOverpayRisk(priceRatio);
+  const baseLosing = getBaseLosingHomeRisk(priceRatio, marketConditions);
+
+  let acceptanceNum = tierToNum(baseAcceptance);
+  let overpayNum = tierToNum(baseOverpay);
+  let losingNum = tierToNum(baseLosing);
+
+  const modifiers: string[] = [];
+
+  // 2. Days on Market modifier (acceptance only)
+  const domMod = getDOMModifier(daysOnMarket);
+  if (domMod !== 0) {
+    acceptanceNum += domMod;
+    const domLabel = daysOnMarket !== null ? `${daysOnMarket}` : 'unknown';
+    modifiers.push(`Days on Market (${domLabel}): ${domMod > 0 ? '+' : ''}${domMod} Acceptance`);
+  }
+
+  // 3. Property Type modifier
+  if (investmentType === 'Investment Property') {
+    acceptanceNum -= 0.5;
+    overpayNum += 0.5;
+    losingNum -= 0.5;
+    modifiers.push('Investment Property: −0.5 Acceptance, +0.5 Overpay, −0.5 Losing Home');
+  }
+
+  // 4. Financing modifier
   if (isCash) {
-    score += 3;
-  } else if (inputs.financing_type === 'Conventional') {
-    score += 1;
+    acceptanceNum += 1;
+    losingNum -= 1;
+    modifiers.push('Financing (Cash): +1 Acceptance, −1 Losing Home');
+  } else if (inputs.down_payment_percent === '<10') {
+    acceptanceNum -= 0.5;
+    losingNum += 0.5;
+    modifiers.push('Low Down Payment (<10%): −0.5 Acceptance, +0.5 Losing Home');
   }
-  
-  // down_payment: Only applies if NOT cash
-  // 20+(+1), 10–19(0), <10(-1)
-  if (!isCash) {
-    if (inputs.down_payment_percent === '20+') score += 1;
-    else if (inputs.down_payment_percent === '<10') score -= 1;
+  // 20%+ is baseline (no modifier)
+
+  // 5. Contingency modifiers
+  const contingencies = inputs.contingencies;
+  if (contingencies.includes('Inspection') && !contingencies.includes('None')) {
+    const penalty = marketConditions === 'Hot' ? -1 : -0.5;
+    acceptanceNum += penalty;
+    losingNum += Math.abs(penalty);
+    modifiers.push(`Contingency (Inspection${marketConditions === 'Hot' ? ', Hot Market' : ''}): ${penalty} Acceptance, +${Math.abs(penalty)} Losing Home`);
   }
-  
-  // contingencies: None(+2), Inspection only(+1), Financing(0), Appraisal(-1), Home sale(-2)
-  // Reduced penalty when cash or fast close is present
-  if (inputs.contingencies.includes('None') || inputs.contingencies.length === 0) {
-    score += 2;
-  } else if (inputs.contingencies.length === 1 && inputs.contingencies[0] === 'Inspection') {
-    score += 1;
-  } else if (inputs.contingencies.includes('Home sale')) {
-    // Reduce penalty if cash or fast close offsets
-    score -= (isCash || hasFastClose) ? 1 : 2;
-  } else if (inputs.contingencies.includes('Appraisal')) {
-    score -= 1;
-  }
-  
-  // closing: <21(+2), 21–30(+1), 31–45(0), 45+(-1)
-  // Faster close gets higher bonus
-  if (inputs.closing_timeline === '<21') {
-    score += 2;
-  } else if (inputs.closing_timeline === '21-30') {
-    score += 1;
-  } else if (inputs.closing_timeline === '45+') {
-    score -= 1;
-  }
-  
-  // Calculate acceptance likelihood with expanded thresholds
-  // Low: ≤0, Moderate: 1-4, High: ≥5
-  let acceptanceLikelihood: LikelihoodBand;
-  if (score <= 0) {
-    acceptanceLikelihood = 'Low';
-  } else if (score >= 5) {
-    acceptanceLikelihood = 'High';
-  } else {
-    acceptanceLikelihood = 'Moderate';
-  }
-  
-  // Calculate risk bands based on buyer preference AND offer strength
-  let riskOfLosingHome: LikelihoodBand;
-  let riskOfOverpaying: LikelihoodBand;
-  
-  // Risk relationship based on preference, adjusted by offer strength
-  if (inputs.buyer_preference === 'Must win') {
-    riskOfLosingHome = 'Low';
-    // High acceptance + must win = higher overpaying risk
-    riskOfOverpaying = acceptanceLikelihood === 'High' ? 'High' : 'Moderate';
-  } else if (inputs.buyer_preference === 'Price-protective') {
-    // Low acceptance + price-protective = higher losing risk
-    riskOfLosingHome = acceptanceLikelihood === 'Low' ? 'High' : 'Moderate';
-    riskOfOverpaying = 'Low';
-  } else {
-    // Balanced: risks depend on offer strength
-    if (acceptanceLikelihood === 'High') {
-      riskOfLosingHome = 'Low';
-      riskOfOverpaying = 'Moderate';
-    } else if (acceptanceLikelihood === 'Low') {
-      riskOfLosingHome = 'Moderate';
-      riskOfOverpaying = 'Low';
+  if (contingencies.includes('Appraisal') && !contingencies.includes('None')) {
+    if (priceRatio > 1.05) {
+      acceptanceNum -= 1;
+      losingNum += 1;
+      modifiers.push('Contingency (Appraisal, ratio>1.05): −1 Acceptance, +1 Losing Home');
     } else {
-      riskOfLosingHome = 'Moderate';
-      riskOfOverpaying = 'Moderate';
+      acceptanceNum -= 0.25;
+      modifiers.push('Contingency (Appraisal): −0.25 Acceptance');
     }
   }
-  
+  if (contingencies.includes('Financing') && !contingencies.includes('None')) {
+    acceptanceNum -= 0.75;
+    losingNum += 0.75;
+    modifiers.push('Contingency (Financing): −0.75 Acceptance, +0.75 Losing Home');
+  }
+  if (contingencies.includes('Home sale') && !contingencies.includes('None')) {
+    acceptanceNum -= 1;
+    losingNum += 1;
+    modifiers.push('Contingency (Home Sale): −1 Acceptance, +1 Losing Home');
+  }
+
+  // 6. Enforce extreme price ratio caps
+  if (priceRatio >= 2.0 && acceptanceNum < tierToNum('High')) {
+    acceptanceNum = tierToNum('High');
+    modifiers.push('Cap: ratio≥2.0 forces Acceptance≥High');
+  }
+  if (priceRatio <= 0.85 && acceptanceNum > tierToNum('Low')) {
+    acceptanceNum = tierToNum('Low');
+    modifiers.push('Cap: ratio≤0.85 forces Acceptance≤Low');
+  }
+  if (priceRatio >= 1.30 && overpayNum < tierToNum('High')) {
+    overpayNum = tierToNum('High');
+    modifiers.push('Cap: ratio≥1.30 forces Overpay≥High');
+  }
+
+  const finalAcceptance = numToTier(acceptanceNum);
+  const finalOverpay = numToTier(overpayNum);
+  const finalLosing = numToTier(losingNum);
+
+  const debug: ScoringDebug = {
+    referencePrice,
+    offerPrice,
+    priceRatio,
+    marketConditions,
+    daysOnMarket,
+    investmentType,
+    baseTiers: {
+      acceptance: baseAcceptance,
+      overpayRisk: baseOverpay,
+      losingHomeRisk: baseLosing,
+    },
+    modifiers,
+    finalTiers: {
+      acceptance: finalAcceptance,
+      overpayRisk: finalOverpay,
+      losingHomeRisk: finalLosing,
+    },
+    confidence,
+    warnings,
+  };
+
   return {
     session,
     marketProfile,
-    acceptanceLikelihood,
-    riskOfLosingHome,
-    riskOfOverpaying,
+    acceptanceLikelihood: finalAcceptance,
+    riskOfLosingHome: finalLosing,
+    riskOfOverpaying: finalOverpay,
     snapshotTimestamp: new Date().toISOString(),
+    confidence,
+    debug,
   };
 }
