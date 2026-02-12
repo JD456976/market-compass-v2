@@ -210,6 +210,45 @@ export type Database = {
         }
         Relationships: []
       }
+      email_queue: {
+        Row: {
+          body_html: string
+          body_text: string | null
+          created_at: string
+          error: string | null
+          id: string
+          metadata: Json | null
+          sent_at: string | null
+          status: string
+          subject: string
+          to_email: string
+        }
+        Insert: {
+          body_html: string
+          body_text?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          metadata?: Json | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          to_email: string
+        }
+        Update: {
+          body_html?: string
+          body_text?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          metadata?: Json | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          to_email?: string
+        }
+        Relationships: []
+      }
       market_profiles: {
         Row: {
           contingency_tolerance: string
@@ -405,6 +444,39 @@ export type Database = {
         }
         Relationships: []
       }
+      report_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          read_by_agent_at: string | null
+          read_by_client_at: string | null
+          report_id: string
+          sender_id: string
+          sender_role: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          read_by_agent_at?: string | null
+          read_by_client_at?: string | null
+          report_id: string
+          sender_id: string
+          sender_role: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          read_by_agent_at?: string | null
+          read_by_client_at?: string | null
+          report_id?: string
+          sender_id?: string
+          sender_role?: string
+        }
+        Relationships: []
+      }
       report_notes: {
         Row: {
           author_name: string | null
@@ -435,6 +507,51 @@ export type Database = {
           is_pinned?: boolean
           report_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      report_scenarios: {
+        Row: {
+          created_at: string
+          created_by_id: string
+          created_by_role: string
+          id: string
+          note_to_agent: string | null
+          report_id: string
+          reviewed_at: string | null
+          reviewed_status: string | null
+          scenario_payload: Json
+          submitted_at: string | null
+          submitted_to_agent: boolean
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by_id: string
+          created_by_role: string
+          id?: string
+          note_to_agent?: string | null
+          report_id: string
+          reviewed_at?: string | null
+          reviewed_status?: string | null
+          scenario_payload?: Json
+          submitted_at?: string | null
+          submitted_to_agent?: boolean
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by_id?: string
+          created_by_role?: string
+          id?: string
+          note_to_agent?: string | null
+          report_id?: string
+          reviewed_at?: string | null
+          reviewed_status?: string | null
+          scenario_payload?: Json
+          submitted_at?: string | null
+          submitted_to_agent?: boolean
+          title?: string | null
         }
         Relationships: []
       }

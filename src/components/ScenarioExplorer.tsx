@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Info, Compass, X, HelpCircle, ChevronRight } from 'lucide-react';
+import { RotateCcw, Info, Compass, X, HelpCircle, ChevronRight, Save, SendHorizonal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,11 +29,22 @@ import { BuyerInputs, FinancingType, DownPaymentPercent, Contingency, ClosingTim
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
 import { SCENARIO_EXPLORER_OPEN_EVENT } from '@/lib/scenarioExplorerEvents';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 interface ScenarioExplorerProps {
   originalInputs: BuyerInputs;
   onInputsChange: (inputs: BuyerInputs) => void;
   currentInputs: BuyerInputs;
+  reportId?: string;
 }
 
 // Tooltip explanation for Scenario Explorer
@@ -318,12 +330,18 @@ function ScenarioForm({
   );
 }
 
-export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs }: ScenarioExplorerProps) {
+export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs, reportId }: ScenarioExplorerProps) {
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [localInputs, setLocalInputs] = useState<BuyerInputs>(currentInputs);
   const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
   const [isApplying, setIsApplying] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [submitNote, setSubmitNote] = useState('');
+  const [submitTitle, setSubmitTitle] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Listen for external open events (from header buttons, etc.)
   useEffect(() => {
@@ -383,6 +401,62 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
     }, 200);
   }, [localInputs, onInputsChange]);
 
+  const handleSaveScenario = useCallback(async () => {
+    if (!reportId) return;
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from('report_scenarios').insert({
+        report_id: reportId,
+        created_by_role: 'client',
+        created_by_id: 'client',
+        scenario_payload: localInputs as any,
+      });
+      if (error) throw error;
+      toast({ title: 'Scenario saved' });
+    } catch {
+      toast({ title: 'Failed to save scenario', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [reportId, localInputs, toast]);
+
+  const handleSubmitToAgent = useCallback(async () => {
+    if (!reportId) return;
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from('report_scenarios').insert({
+        report_id: reportId,
+        created_by_role: 'client',
+        created_by_id: 'client',
+        title: submitTitle.trim() || null,
+        note_to_agent: submitNote.trim() || null,
+        scenario_payload: localInputs as any,
+        submitted_to_agent: true,
+        submitted_at: new Date().toISOString(),
+        reviewed_status: 'pending',
+      });
+      if (error) throw error;
+
+      // Notify agent
+      supabase.functions.invoke('report-notifications', {
+        body: {
+          type: 'scenario_submitted',
+          report_id: reportId,
+          scenario_title: submitTitle.trim() || 'Untitled Scenario',
+        },
+      }).catch(() => {});
+
+      toast({ title: 'Scenario sent to agent for review' });
+      setShowSubmitDialog(false);
+      setSubmitNote('');
+      setSubmitTitle('');
+    } catch {
+      toast({ title: 'Failed to submit scenario', variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [reportId, localInputs, submitTitle, submitNote, toast]);
+
   const hasChanges = changedFields.size > 0;
 
   // Ref for auto-scrolling content to top
@@ -412,32 +486,94 @@ export function ScenarioExplorer({ originalInputs, onInputsChange, currentInputs
         />
       </div>
       
-      {/* Footer with Apply/Reset buttons */}
+      {/* Footer with Apply/Reset/Save/Submit buttons */}
       <div 
-        className="border-t p-4 flex gap-3 bg-background shrink-0"
+        className="border-t p-4 space-y-2 bg-background shrink-0"
         style={{ paddingBottom: isMobile ? 'max(1rem, env(safe-area-inset-bottom))' : '1rem' }}
       >
-        <Button
-          variant="outline"
-          onClick={handleReset}
-          disabled={!hasChanges}
-          className="flex-1 h-12 min-h-[44px]"
-        >
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Reset
-        </Button>
-        <Button
-          onClick={handleApply}
-          disabled={isApplying}
-          className="flex-1 h-12 min-h-[44px]"
-        >
-          {isApplying ? (
-            <span className="animate-pulse">Applying...</span>
-          ) : (
-            'Apply Changes'
-          )}
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            disabled={!hasChanges}
+            className="flex-1 h-12 min-h-[44px]"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Reset
+          </Button>
+          <Button
+            onClick={handleApply}
+            disabled={isApplying}
+            className="flex-1 h-12 min-h-[44px]"
+          >
+            {isApplying ? (
+              <span className="animate-pulse">Applying...</span>
+            ) : (
+              'Apply Changes'
+            )}
+          </Button>
+        </div>
+        {reportId && hasChanges && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSaveScenario}
+              disabled={isSaving}
+              className="flex-1 min-h-[40px] text-xs"
+            >
+              <Save className="h-3.5 w-3.5 mr-1.5" />
+              {isSaving ? 'Saving...' : 'Save Scenario'}
+            </Button>
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => setShowSubmitDialog(true)}
+              className="flex-1 min-h-[40px] text-xs"
+            >
+              <SendHorizonal className="h-3.5 w-3.5 mr-1.5" />
+              Send to Agent
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* Submit to Agent Dialog */}
+      <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Scenario to Agent</DialogTitle>
+            <DialogDescription>
+              Your agent will review this scenario and respond.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-sm">Title (optional)</Label>
+              <Input
+                placeholder="e.g., Higher offer with fewer contingencies"
+                value={submitTitle}
+                onChange={(e) => setSubmitTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm">Note to Agent (optional)</Label>
+              <Textarea
+                placeholder="Any context or questions for your agent..."
+                value={submitNote}
+                onChange={(e) => setSubmitNote(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSubmitDialog(false)}>Cancel</Button>
+            <Button onClick={handleSubmitToAgent} disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : 'Submit for Review'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 

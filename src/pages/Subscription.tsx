@@ -7,24 +7,9 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { 
-  ArrowLeft, 
-  FileText,
-  BarChart3,
-  Share2,
-  Sparkles,
-  Users,
-  Building2,
-  PenTool,
-  User,
-  Palette,
-  TrendingUp,
-  Activity,
-  Clock,
-  RefreshCw,
-  ChevronRight,
-  Layers,
-  ExternalLink,
-  MessageSquare
+  ArrowLeft, FileText, BarChart3, Share2, Sparkles, Users, Building2,
+  PenTool, User, Palette, TrendingUp, Activity, RefreshCw, ChevronRight,
+  Layers, MessageSquare, Compass, CheckCircle2, AlertCircle, Clock
 } from 'lucide-react';
 import { getBetaAccessSession } from '@/lib/betaAccess';
 import { useSessions } from '@/hooks/useSessions';
@@ -35,13 +20,25 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface ClientMessage {
   id: string;
-  content: string;
-  author_name: string | null;
+  body: string;
+  sender_id: string;
   created_at: string;
   report_id: string;
+  read_by_agent_at: string | null;
   client_name?: string;
   session_type?: string;
   share_token?: string | null;
+}
+
+interface PendingScenario {
+  id: string;
+  report_id: string;
+  title: string | null;
+  note_to_agent: string | null;
+  reviewed_status: string | null;
+  submitted_at: string | null;
+  created_at: string;
+  client_name?: string;
 }
 
 export default function Subscription() {
@@ -51,6 +48,7 @@ export default function Subscription() {
   const [isRestoring, setIsRestoring] = useState(false);
   const [profile, setProfile] = useState<AgentProfile | null>(null);
   const [clientMessages, setClientMessages] = useState<ClientMessage[]>([]);
+  const [pendingScenarios, setPendingScenarios] = useState<PendingScenario[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
   
   const session = getBetaAccessSession();
@@ -60,52 +58,86 @@ export default function Subscription() {
     setProfile(loadAgentProfile());
   }, []);
 
-  // Fetch recent client messages on shared reports
+  // Fetch recent client messages from report_messages
   useEffect(() => {
-    const fetchClientMessages = async () => {
+    const fetchData = async () => {
       setLoadingMessages(true);
-      const { data: notes } = await supabase
-        .from('report_notes')
-        .select('id, content, author_name, created_at, report_id')
-        .eq('author_type', 'client')
+      
+      // Fetch unread client messages
+      const { data: messages } = await supabase
+        .from('report_messages')
+        .select('id, body, sender_id, created_at, report_id, read_by_agent_at')
+        .eq('sender_role', 'client')
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (notes && notes.length > 0) {
-        // Enrich with session info
-        const reportIds = [...new Set(notes.map(n => n.report_id))];
+      // Fetch pending scenario submissions
+      const { data: scenarios } = await supabase
+        .from('report_scenarios')
+        .select('id, report_id, title, note_to_agent, reviewed_status, submitted_at, created_at')
+        .eq('submitted_to_agent', true)
+        .in('reviewed_status', ['pending'])
+        .order('submitted_at', { ascending: false })
+        .limit(10);
+
+      // Enrich with session info
+      const allReportIds = [
+        ...new Set([
+          ...(messages?.map(m => m.report_id) || []),
+          ...(scenarios?.map(s => s.report_id) || []),
+        ])
+      ];
+
+      if (allReportIds.length > 0) {
         const { data: relatedSessions } = await supabase
           .from('sessions')
           .select('id, client_name, session_type, share_token')
-          .in('id', reportIds);
+          .in('id', allReportIds);
 
         const sessionMap = new Map(relatedSessions?.map(s => [s.id, s]) || []);
-        const enriched: ClientMessage[] = notes.map(n => ({
-          ...n,
-          client_name: sessionMap.get(n.report_id)?.client_name,
-          session_type: sessionMap.get(n.report_id)?.session_type,
-          share_token: sessionMap.get(n.report_id)?.share_token,
-        }));
-        setClientMessages(enriched);
+
+        if (messages) {
+          setClientMessages(messages.map(m => ({
+            ...m,
+            client_name: sessionMap.get(m.report_id)?.client_name,
+            session_type: sessionMap.get(m.report_id)?.session_type,
+            share_token: sessionMap.get(m.report_id)?.share_token,
+          })));
+        }
+
+        if (scenarios) {
+          setPendingScenarios(scenarios.map(s => ({
+            ...s,
+            client_name: sessionMap.get(s.report_id)?.client_name,
+          })));
+        }
       }
       setLoadingMessages(false);
     };
-    fetchClientMessages();
+    fetchData();
   }, []);
 
   const handleRestorePurchases = async () => {
     setIsRestoring(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
-    toast({
-      title: 'No purchases found',
-      description: 'Subscriptions will be available after the beta period.',
-    });
+    toast({ title: 'No purchases found', description: 'Subscriptions will be available after the beta period.' });
     setIsRestoring(false);
+  };
+
+  const handleScenarioAction = async (scenarioId: string, action: 'accepted' | 'needs_changes') => {
+    const { error } = await supabase
+      .from('report_scenarios')
+      .update({ reviewed_status: action, reviewed_at: new Date().toISOString() })
+      .eq('id', scenarioId);
+
+    if (!error) {
+      setPendingScenarios(prev => prev.filter(s => s.id !== scenarioId));
+      toast({ title: action === 'accepted' ? 'Scenario accepted' : 'Changes requested' });
+    }
   };
 
   // Compute stats
   const totalReports = sessions.length;
-  const draftCount = sessions.filter(s => !s.share_link_created && !s.pdf_exported).length;
   const sharedCount = sessions.filter(s => s.share_link_created || s.pdf_exported).length;
   const buyerCount = sessions.filter(s => s.session_type === 'Buyer').length;
   const sellerCount = sessions.filter(s => s.session_type === 'Seller').length;
@@ -113,12 +145,13 @@ export default function Subscription() {
     new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
   ).slice(0, 5);
 
-  // Current month report count
   const thisMonth = new Date();
   const monthReports = sessions.filter(s => {
     const d = new Date(s.created_at);
     return d.getMonth() === thisMonth.getMonth() && d.getFullYear() === thisMonth.getFullYear();
   }).length;
+
+  const unreadCount = clientMessages.filter(m => !m.read_by_agent_at).length;
 
   const quickActions = [
     { label: 'New Seller Report', icon: Building2, to: '/seller', color: 'text-primary' },
@@ -171,7 +204,7 @@ export default function Subscription() {
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
                     {hasBetaAccess 
-                      ? 'All professional features unlocked during beta. Thank you for testing!'
+                      ? 'All professional features unlocked during beta.'
                       : `${FREE_TIER_LIMITS.reportsPerMonth} reports/month on the free plan.`}
                   </p>
                 </div>
@@ -238,9 +271,11 @@ export default function Subscription() {
                 <CardTitle className="text-base flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-accent" />
                   Client Messages
-                  <Badge variant="secondary" className="bg-accent/10 text-accent-foreground text-[10px] ml-1">
-                    {clientMessages.length} new
-                  </Badge>
+                  {unreadCount > 0 && (
+                    <Badge variant="secondary" className="bg-accent/10 text-accent-foreground text-[10px] ml-1">
+                      {unreadCount} unread
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -251,18 +286,21 @@ export default function Subscription() {
                       to={msg.share_token ? `/share/${msg.report_id}` : `/drafts`}
                       className="block"
                     >
-                      <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors border border-border/50">
+                      <div className={`flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors border ${!msg.read_by_agent_at ? 'border-accent/30 bg-accent/5' : 'border-border/50'}`}>
                         <div className="p-1.5 rounded-full bg-accent/10 shrink-0 mt-0.5">
                           <User className="h-3.5 w-3.5 text-accent" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">{msg.author_name || 'Client'}</span>
+                            <span className="text-sm font-medium">{msg.sender_id || 'Client'}</span>
                             <span className="text-[10px] text-muted-foreground">
                               on {msg.client_name || 'Report'}
                             </span>
+                            {!msg.read_by_agent_at && (
+                              <span className="h-2 w-2 rounded-full bg-accent shrink-0" />
+                            )}
                           </div>
-                          <p className="text-sm text-muted-foreground truncate mt-0.5">{msg.content}</p>
+                          <p className="text-sm text-muted-foreground truncate mt-0.5">{msg.body}</p>
                           <span className="text-[10px] text-muted-foreground">
                             {new Date(msg.created_at).toLocaleDateString()} • {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
@@ -270,6 +308,67 @@ export default function Subscription() {
                         <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
                       </div>
                     </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Pending Scenario Reviews */}
+        {pendingScenarios.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.13 }}>
+            <Card className="border-accent/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Compass className="h-4 w-4 text-accent" />
+                  Scenario Reviews
+                  <Badge variant="secondary" className="bg-accent/10 text-accent-foreground text-[10px] ml-1">
+                    {pendingScenarios.length} pending
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {pendingScenarios.map((scenario) => (
+                    <div key={scenario.id} className="p-3 rounded-lg border border-accent/20 bg-accent/5 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {scenario.title || 'Untitled Scenario'}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {scenario.client_name || 'Client'} • {scenario.submitted_at ? new Date(scenario.submitted_at).toLocaleDateString() : ''}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] shrink-0">
+                          <Clock className="h-2.5 w-2.5 mr-1" />
+                          Pending
+                        </Badge>
+                      </div>
+                      {scenario.note_to_agent && (
+                        <p className="text-xs text-muted-foreground italic">"{scenario.note_to_agent}"</p>
+                      )}
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 min-h-[36px] text-xs"
+                          onClick={() => handleScenarioAction(scenario.id, 'needs_changes')}
+                        >
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          Needs Changes
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="flex-1 min-h-[36px] text-xs"
+                          onClick={() => handleScenarioAction(scenario.id, 'accepted')}
+                        >
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Accept
+                        </Button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </CardContent>
@@ -362,12 +461,7 @@ export default function Subscription() {
 
         {/* Restore & Legal */}
         <div className="text-center space-y-4 pt-4">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleRestorePurchases}
-            disabled={isRestoring}
-          >
+          <Button variant="outline" size="sm" onClick={handleRestorePurchases} disabled={isRestoring}>
             {isRestoring ? (
               <><RefreshCw className="h-3 w-3 mr-1 animate-spin" /> Checking...</>
             ) : (
