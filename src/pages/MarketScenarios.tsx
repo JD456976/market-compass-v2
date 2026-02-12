@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -8,13 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Pencil, Trash2, TrendingUp, Users2, Clock, DollarSign, Scale, Zap, Lock } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ArrowLeft, Plus, Pencil, Trash2, TrendingUp, Users2, Clock, DollarSign, Scale, Zap, Lock, Loader2 } from 'lucide-react';
 import { 
   MarketScenario, 
-  loadMarketScenarios, 
-  saveCustomScenario, 
-  deleteCustomScenario,
   BUILT_IN_SCENARIOS,
   DemandLevel,
   CompetitionLevel,
@@ -22,6 +19,7 @@ import {
   DOMBand,
   NegotiationLeverage
 } from '@/lib/marketScenarios';
+import { loadScenariosFromSupabase, upsertScenarioToSupabase, deleteScenarioFromSupabase } from '@/lib/supabaseScenarios';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -36,11 +34,13 @@ import {
 
 const MarketScenarios = () => {
   const { toast } = useToast();
-  const [scenarios, setScenarios] = useState<MarketScenario[]>([]);
+  const [scenarios, setScenarios] = useState<MarketScenario[]>([...BUILT_IN_SCENARIOS]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingScenario, setEditingScenario] = useState<MarketScenario | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scenarioToDelete, setScenarioToDelete] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   
   // Form state
   const [formName, setFormName] = useState('');
@@ -51,13 +51,23 @@ const MarketScenarios = () => {
   const [formDOM, setFormDOM] = useState<DOMBand>('average');
   const [formLeverage, setFormLeverage] = useState<NegotiationLeverage>('neutral');
 
-  useEffect(() => {
-    refreshScenarios();
+  const refreshScenarios = useCallback(async () => {
+    setLoading(true);
+    try {
+      const dbScenarios = await loadScenariosFromSupabase();
+      setScenarios([...BUILT_IN_SCENARIOS, ...dbScenarios]);
+    } catch {
+      // fallback to built-in only
+      setScenarios([...BUILT_IN_SCENARIOS]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const refreshScenarios = () => {
-    setScenarios(loadMarketScenarios());
-  };
+  useEffect(() => {
+    refreshScenarios();
+  }, [refreshScenarios]);
+
 
   const openEditDialog = (scenario: MarketScenario) => {
     if (scenario.isBuiltIn) return;
@@ -84,13 +94,15 @@ const MarketScenarios = () => {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formName.trim() || !formSummary.trim()) return;
+    setSaving(true);
     
-    saveCustomScenario({
+    const scenario: MarketScenario = {
       id: editingScenario?.id || crypto.randomUUID(),
       name: formName.trim(),
       summary: formSummary.trim(),
+      isBuiltIn: false,
       assumptions: {
         demandLevel: formDemand,
         competitionLevel: formCompetition,
@@ -98,10 +110,14 @@ const MarketScenarios = () => {
         typicalDOMBand: formDOM,
         negotiationLeverage: formLeverage,
       },
-    });
+      created_at: editingScenario?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
     
-    refreshScenarios();
+    await upsertScenarioToSupabase(scenario);
+    await refreshScenarios();
     setDialogOpen(false);
+    setSaving(false);
     
     toast({
       title: editingScenario ? "Scenario updated" : "Scenario created",
@@ -116,10 +132,10 @@ const MarketScenarios = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (scenarioToDelete) {
-      deleteCustomScenario(scenarioToDelete);
-      refreshScenarios();
+      await deleteScenarioFromSupabase(scenarioToDelete);
+      await refreshScenarios();
       toast({
         title: "Scenario deleted",
         description: "The custom scenario has been removed.",
@@ -425,8 +441,8 @@ const MarketScenarios = () => {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!formName.trim() || !formSummary.trim()}>
-              {editingScenario ? 'Update' : 'Create'} Scenario
+            <Button onClick={handleSave} disabled={!formName.trim() || !formSummary.trim() || saving}>
+              {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : `${editingScenario ? 'Update' : 'Create'} Scenario`}
             </Button>
           </DialogFooter>
         </DialogContent>
