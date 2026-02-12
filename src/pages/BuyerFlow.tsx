@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, ArrowRight, Users, Home, Sparkles, DollarSign, FileCheck, RotateCcw, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Users, Home, Sparkles, DollarSign, FileCheck, RotateCcw, Check, ClipboardList, Pencil } from 'lucide-react';
 import { 
   Session, PropertyType, Condition, FinancingType, 
   DownPaymentPercent, Contingency, ClosingTimeline, BuyerPreference 
@@ -30,6 +30,7 @@ import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
 import { SessionTemplate } from '@/lib/templates';
 import { loadMarketScenarios, MarketScenario, getMarketScenarioById } from '@/lib/marketScenarios';
 import { useToast } from '@/hooks/use-toast';
+import { ReviewSection, ReviewRow } from '@/components/ReviewStep';
 
 const contingencyOptions: { value: Contingency; label: string }[] = [
   { value: 'Inspection', label: 'Inspection' },
@@ -44,6 +45,7 @@ const STEPS = [
   { label: 'Market', icon: Sparkles },
   { label: 'Offer', icon: DollarSign },
   { label: 'Terms', icon: FileCheck },
+  { label: 'Review', icon: ClipboardList },
 ] as const;
 
 // Default form values
@@ -260,6 +262,7 @@ const BuyerFlow = () => {
     3: [
       ...(contingencies.length === 0 ? ['contingencies'] : []),
     ],
+    4: [], // Review step — no fields
   };
 
   const currentStepValid = stepErrors[step]?.length === 0;
@@ -765,6 +768,52 @@ const BuyerFlow = () => {
                       className="resize-none"
                     />
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Step 4: Review */}
+            {step === 4 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ClipboardList className="h-5 w-5 text-accent" />
+                    Review Your Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {/* Property & Client */}
+                  <ReviewSection title="Property & Client" stepIndex={0} onEdit={goToStep}>
+                    <ReviewRow label="Client" value={clientName} />
+                    <ReviewRow label="Location" value={location} />
+                    <ReviewRow label="Property Type" value={propertyType === 'SFH' ? 'Single Family Home' : propertyType === 'MFH' ? 'Multi-Family Home' : 'Condo'} />
+                    <ReviewRow label="Condition" value={condition} />
+                    {selectedScenario && <ReviewRow label="Market Scenario" value={selectedScenario.name} />}
+                  </ReviewSection>
+
+                  {/* Market Context */}
+                  <ReviewSection title="Market Context" stepIndex={1} onEdit={goToStep}>
+                    <ReviewRow label="Market Conditions" value={`${marketConditions} Market`} />
+                    <ReviewRow label="Days on Market" value={daysOnMarket || '—'} />
+                    <ReviewRow label="Property Purpose" value={investmentType} />
+                    <ReviewRow label="Reference Price" value={referencePrice ? `$${Number(referencePrice).toLocaleString()}` : '—'} />
+                  </ReviewSection>
+
+                  {/* Offer Details */}
+                  <ReviewSection title="Offer Details" stepIndex={2} onEdit={goToStep}>
+                    <ReviewRow label="Offer Price" value={offerPrice ? `$${Number(offerPrice).toLocaleString()}` : '—'} />
+                    <ReviewRow label="Financing" value={financingType} />
+                    {financingType !== 'Cash' && <ReviewRow label="Down Payment" value={downPayment} />}
+                  </ReviewSection>
+
+                  {/* Terms */}
+                  <ReviewSection title="Contingencies & Terms" stepIndex={3} onEdit={goToStep}>
+                    <ReviewRow label="Contingencies" value={contingencies.join(', ') || '—'} />
+                    <ReviewRow label="Closing Timeline" value={`${closingTimeline} days`} />
+                    <ReviewRow label="Buyer Preference" value={buyerPreference} />
+                    {clientNotes && <ReviewRow label="Client Notes" value={clientNotes} />}
+                    {agentNotes && <ReviewRow label="Agent Notes" value={agentNotes} />}
+                  </ReviewSection>
                 </CardContent>
               </Card>
             )}

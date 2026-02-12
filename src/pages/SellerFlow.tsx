@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, ArrowRight, Building2, Home, Sparkles, DollarSign, RotateCcw, Check, FileText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, Home, Sparkles, DollarSign, RotateCcw, Check, FileText, ClipboardList, Pencil } from 'lucide-react';
 import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference } from '@/types';
 import { generateId } from '@/lib/storage';
 import { LocationAutocomplete } from '@/components/LocationAutocomplete';
@@ -26,11 +26,13 @@ import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
 import { SessionTemplate } from '@/lib/templates';
 import { loadMarketScenarios, MarketScenario, getMarketScenarioById } from '@/lib/marketScenarios';
 import { useToast } from '@/hooks/use-toast';
+import { ReviewSection, ReviewRow } from '@/components/ReviewStep';
 
 const STEPS = [
   { label: 'Property', icon: Home },
   { label: 'Strategy', icon: Sparkles },
   { label: 'Notes', icon: FileText },
+  { label: 'Review', icon: ClipboardList },
 ] as const;
 
 // Default form values
@@ -192,6 +194,7 @@ const SellerFlow = () => {
       ...(!listPrice || parseFloat(listPrice) <= 0 ? ['list_price'] : []),
     ],
     2: [], // Notes step has no required fields
+    3: [], // Review step — no fields
   };
 
   const currentStepValid = stepErrors[step]?.length === 0;
@@ -574,6 +577,38 @@ const SellerFlow = () => {
                       className="resize-none"
                     />
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Step 3: Review */}
+            {step === 3 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ClipboardList className="h-5 w-5 text-accent" />
+                    Review Your Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <ReviewSection title="Property & Client" stepIndex={0} onEdit={goToStep}>
+                    <ReviewRow label="Client" value={clientName} />
+                    <ReviewRow label="Location" value={location} />
+                    <ReviewRow label="Property Type" value={propertyType === 'SFH' ? 'Single Family Home' : propertyType === 'MFH' ? 'Multi-Family Home' : 'Condo'} />
+                    <ReviewRow label="Condition" value={condition} />
+                    {selectedScenario && <ReviewRow label="Market Scenario" value={selectedScenario.name} />}
+                  </ReviewSection>
+
+                  <ReviewSection title="Listing Strategy" stepIndex={1} onEdit={goToStep}>
+                    <ReviewRow label="List Price" value={listPrice ? `$${Number(listPrice).toLocaleString()}` : '—'} />
+                    <ReviewRow label="Desired Timeframe" value={`${timeframe} days`} />
+                    <ReviewRow label="Strategy" value={strategy} />
+                  </ReviewSection>
+
+                  <ReviewSection title="Notes" stepIndex={2} onEdit={goToStep}>
+                    <ReviewRow label="Client Notes" value={clientNotes || '—'} />
+                    <ReviewRow label="Agent Notes" value={agentNotes || '—'} />
+                  </ReviewSection>
                 </CardContent>
               </Card>
             )}
