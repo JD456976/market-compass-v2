@@ -12,6 +12,8 @@ import {
   Layers, MessageSquare, Compass, CheckCircle2, AlertCircle, Clock, Eye
 } from 'lucide-react';
 import { NotificationBell } from '@/components/NotificationBell';
+import { ScenarioCompareSheet } from '@/components/ScenarioCompareSheet';
+import { BuyerInputs } from '@/types';
 import { getBetaAccessSession } from '@/lib/betaAccess';
 import { useSessions } from '@/hooks/useSessions';
 import { loadAgentProfile, AgentProfile } from '@/lib/agentProfile';
@@ -40,6 +42,7 @@ interface PendingScenario {
   submitted_at: string | null;
   created_at: string;
   client_name?: string;
+  scenario_payload: BuyerInputs;
 }
 
 interface AnalyticsData {
@@ -61,6 +64,7 @@ export default function Subscription() {
   const [pendingScenarios, setPendingScenarios] = useState<PendingScenario[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [compareScenario, setCompareScenario] = useState<PendingScenario | null>(null);
   
   const session = getBetaAccessSession();
   const hasBetaAccess = !!session;
@@ -85,7 +89,7 @@ export default function Subscription() {
       // Fetch pending scenario submissions
       const { data: scenarios } = await supabase
         .from('report_scenarios')
-        .select('id, report_id, title, note_to_agent, reviewed_status, submitted_at, created_at')
+        .select('id, report_id, title, note_to_agent, reviewed_status, submitted_at, created_at, scenario_payload')
         .eq('submitted_to_agent', true)
         .in('reviewed_status', ['pending'])
         .order('submitted_at', { ascending: false })
@@ -120,6 +124,7 @@ export default function Subscription() {
           setPendingScenarios(scenarios.map(s => ({
             ...s,
             client_name: sessionMap.get(s.report_id)?.client_name,
+            scenario_payload: s.scenario_payload as unknown as BuyerInputs,
           })));
         }
       }
@@ -585,6 +590,20 @@ export default function Subscription() {
           </div>
         </div>
       </div>
+      {/* Scenario Compare Sheet */}
+      {compareScenario && (
+        <ScenarioCompareSheet
+          open={!!compareScenario}
+          onOpenChange={(open) => { if (!open) setCompareScenario(null); }}
+          scenarioId={compareScenario.id}
+          reportId={compareScenario.report_id}
+          clientName={compareScenario.client_name}
+          scenarioTitle={compareScenario.title || undefined}
+          noteToAgent={compareScenario.note_to_agent || undefined}
+          scenarioPayload={compareScenario.scenario_payload}
+          onAction={handleScenarioAction}
+        />
+      )}
     </div>
   );
 }
