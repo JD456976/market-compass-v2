@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   Clock, Building2, Users, Target, TrendingUp, AlertCircle, 
-  AlertTriangle, ShieldAlert, FileDown, Compass, Loader2
+  AlertTriangle, ShieldAlert, FileDown, Compass, Loader2, LayoutDashboard
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Session, LikelihoodBand, ExtendedLikelihoodBand, BuyerInputs } from '@/types';
 import { useSharedSession } from '@/hooks/useSession';
 import { getReportErrorMessage } from '@/lib/supabaseStorage';
@@ -611,6 +612,17 @@ const SharedReportContent = () => {
           {/* Footer */}
           <div className="pdf-section">
             <MethodologyFooter />
+          </div>
+
+          {/* Client Dashboard Link */}
+          <div className="text-center pt-2 pb-4 no-pdf">
+            <Link
+              to="/my-reports"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-accent transition-colors"
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              View all your reports
+            </Link>
           </div>
         </motion.div>
       </div>
