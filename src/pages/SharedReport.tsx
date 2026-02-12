@@ -27,6 +27,7 @@ import { openScenarioExplorer } from '@/lib/scenarioExplorerEvents';
 import { logSharedReportView } from '@/lib/viewTracking';
 import { ClientFeedback } from '@/components/report/ClientFeedback';
 import { loadBrandingForSession, AgentBranding } from '@/lib/agentBranding';
+import { ReportWatermark } from '@/components/report/ReportWatermark';
 import { 
   getTitle, 
   buyerWhatThisMeans, 
@@ -586,6 +587,15 @@ const SharedReportContent = () => {
               <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
             </CardContent>
           </Card>
+
+          {/* Report Watermark */}
+          <ReportWatermark
+            reportId={session.id}
+            createdAt={session.created_at}
+            updatedAt={session.updated_at}
+            isPdfExported={session.pdf_exported ?? false}
+            isShareLinkCreated={session.share_link_created ?? false}
+          />
 
           {/* Custom Footer */}
           {agentBranding?.footer_text && (
