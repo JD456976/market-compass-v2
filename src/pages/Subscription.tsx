@@ -20,6 +20,8 @@ import { loadAgentProfile, AgentProfile } from '@/lib/agentProfile';
 import { FREE_TIER_LIMITS } from '@/lib/featureGating';
 import { formatLocation } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { ReportMessages } from '@/components/report/ReportMessages';
 
 interface ClientMessage {
   id: string;
@@ -65,6 +67,8 @@ export default function Subscription() {
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [compareScenario, setCompareScenario] = useState<PendingScenario | null>(null);
+  const [messageSheetReportId, setMessageSheetReportId] = useState<string | null>(null);
+  const [messageSheetClientName, setMessageSheetClientName] = useState<string>('');
   
   const session = getBetaAccessSession();
   const hasBetaAccess = !!session;
@@ -345,10 +349,14 @@ export default function Subscription() {
               <CardContent>
                 <div className="space-y-2">
                   {clientMessages.map((msg) => (
-                    <Link
+                    <button
                       key={msg.id}
-                      to={msg.share_token ? `/share/${msg.report_id}` : `/drafts`}
-                      className="block"
+                      type="button"
+                      onClick={() => {
+                        setMessageSheetReportId(msg.report_id);
+                        setMessageSheetClientName(msg.client_name || 'Client');
+                      }}
+                      className="block w-full text-left"
                     >
                       <div className={`flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors border ${!msg.read_by_agent_at ? 'border-accent/30 bg-accent/5' : 'border-border/50'}`}>
                         <div className="p-1.5 rounded-full bg-accent/10 shrink-0 mt-0.5">
@@ -371,7 +379,7 @@ export default function Subscription() {
                         </div>
                         <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
                       </div>
-                    </Link>
+                    </button>
                   ))}
                 </div>
               </CardContent>
@@ -604,6 +612,23 @@ export default function Subscription() {
           onAction={handleScenarioAction}
         />
       )}
+
+      {/* Message Thread Sheet */}
+      <Sheet open={!!messageSheetReportId} onOpenChange={(open) => { if (!open) setMessageSheetReportId(null); }}>
+        <SheetContent side="right" className="sm:max-w-md w-full p-0 flex flex-col">
+          <SheetHeader className="p-4 pb-2 border-b">
+            <SheetTitle className="flex items-center gap-2 text-base">
+              <MessageSquare className="h-4 w-4 text-accent" />
+              Messages — {messageSheetClientName}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto p-4">
+            {messageSheetReportId && (
+              <ReportMessages reportId={messageSheetReportId} isAgent={true} className="border-0 shadow-none" />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
