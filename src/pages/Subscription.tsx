@@ -23,13 +23,25 @@ import {
   RefreshCw,
   ChevronRight,
   Layers,
-  ExternalLink
+  ExternalLink,
+  MessageSquare
 } from 'lucide-react';
 import { getBetaAccessSession } from '@/lib/betaAccess';
 import { useSessions } from '@/hooks/useSessions';
 import { loadAgentProfile, AgentProfile } from '@/lib/agentProfile';
 import { FREE_TIER_LIMITS } from '@/lib/featureGating';
 import { formatLocation } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+
+interface ClientMessage {
+  id: string;
+  content: string;
+  author_name: string | null;
+  created_at: string;
+  report_id: string;
+  client_name?: string;
+  session_type?: string;
+}
 
 export default function Subscription() {
   const navigate = useNavigate();
@@ -37,12 +49,46 @@ export default function Subscription() {
   const { sessions } = useSessions();
   const [isRestoring, setIsRestoring] = useState(false);
   const [profile, setProfile] = useState<AgentProfile | null>(null);
+  const [clientMessages, setClientMessages] = useState<ClientMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(true);
   
   const session = getBetaAccessSession();
   const hasBetaAccess = !!session;
 
   useEffect(() => {
     setProfile(loadAgentProfile());
+  }, []);
+
+  // Fetch recent client messages on shared reports
+  useEffect(() => {
+    const fetchClientMessages = async () => {
+      setLoadingMessages(true);
+      const { data: notes } = await supabase
+        .from('report_notes')
+        .select('id, content, author_name, created_at, report_id')
+        .eq('author_type', 'client')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (notes && notes.length > 0) {
+        // Enrich with session info
+        const reportIds = [...new Set(notes.map(n => n.report_id))];
+        const { data: relatedSessions } = await supabase
+          .from('sessions')
+          .select('id, client_name, session_type')
+          .in('id', reportIds);
+
+        const sessionMap = new Map(relatedSessions?.map(s => [s.id, s]) || []);
+        const enriched: ClientMessage[] = notes.map(n => ({
+          ...n,
+          client_name: sessionMap.get(n.report_id)?.client_name,
+          session_type: sessionMap.get(n.report_id)?.session_type,
+        }));
+        setClientMessages(enriched);
+      }
+      setLoadingMessages(false);
+    };
+    fetchClientMessages();
   }, []);
 
   const handleRestorePurchases = async () => {
@@ -181,6 +227,53 @@ export default function Subscription() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Client Messages */}
+        {clientMessages.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+            <Card className="border-accent/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-accent" />
+                  Client Messages
+                  <Badge variant="secondary" className="bg-accent/10 text-accent-foreground text-[10px] ml-1">
+                    {clientMessages.length} new
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {clientMessages.map((msg) => (
+                    <Link
+                      key={msg.id}
+                      to={msg.session_type === 'Seller' ? `/seller-report/${msg.report_id}` : `/buyer-report/${msg.report_id}`}
+                      className="block"
+                    >
+                      <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors border border-border/50">
+                        <div className="p-1.5 rounded-full bg-accent/10 shrink-0 mt-0.5">
+                          <User className="h-3.5 w-3.5 text-accent" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">{msg.author_name || 'Client'}</span>
+                            <span className="text-[10px] text-muted-foreground">
+                              on {msg.client_name || 'Report'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate mt-0.5">{msg.content}</p>
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(msg.created_at).toLocaleDateString()} • {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Recent Activity */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
