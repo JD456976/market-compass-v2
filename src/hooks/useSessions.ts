@@ -100,16 +100,51 @@ export function useDraftSessions(): UseSessionsResult {
 
 /**
  * Hook to get only shared sessions (shared or exported)
+ * Supports filtering by archived status
  */
-export function useSharedSessions(): UseSessionsResult {
+export function useSharedSessions(): UseSessionsResult & { 
+  archiveSession: (id: string) => Promise<void>;
+  unarchiveSession: (id: string) => Promise<void>;
+  activeSessions: Session[];
+  archivedSessions: Session[];
+} {
   const result = useSessions();
   
   const sharedSessions = result.sessions.filter(
     s => s.share_link_created || s.pdf_exported
   );
 
+  const activeSessions = sharedSessions.filter(s => !s.archived);
+  const archivedSessions = sharedSessions.filter(s => s.archived);
+
+  const archiveSession = useCallback(async (id: string) => {
+    const session = result.sessions.find(s => s.id === id);
+    if (session) {
+      await result.upsertSession({ 
+        ...session, 
+        archived: true,
+        archived_at: new Date().toISOString(),
+      } as Session);
+    }
+  }, [result.sessions, result.upsertSession]);
+
+  const unarchiveSession = useCallback(async (id: string) => {
+    const session = result.sessions.find(s => s.id === id);
+    if (session) {
+      await result.upsertSession({ 
+        ...session, 
+        archived: false,
+        archived_at: null,
+      } as Session);
+    }
+  }, [result.sessions, result.upsertSession]);
+
   return {
     ...result,
     sessions: sharedSessions,
+    activeSessions,
+    archivedSessions,
+    archiveSession,
+    unarchiveSession,
   };
 }
