@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, ArrowRight, Users, Home, Sparkles, DollarSign, FileCheck, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Users, Home, Sparkles, DollarSign, FileCheck, RotateCcw, Check } from 'lucide-react';
 import { 
   Session, PropertyType, Condition, FinancingType, 
   DownPaymentPercent, Contingency, ClosingTimeline, BuyerPreference 
@@ -38,6 +38,13 @@ const contingencyOptions: { value: Contingency; label: string }[] = [
   { value: 'Home sale', label: 'Home Sale' },
   { value: 'None', label: 'None (Waiving all)' },
 ];
+
+const STEPS = [
+  { label: 'Property', icon: Home },
+  { label: 'Market', icon: Sparkles },
+  { label: 'Offer', icon: DollarSign },
+  { label: 'Terms', icon: FileCheck },
+] as const;
 
 // Default form values
 const DEFAULT_VALUES = {
@@ -63,6 +70,8 @@ const DEFAULT_VALUES = {
 const BuyerFlow = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [step, setStep] = useState(0);
+  const [stepDirection, setStepDirection] = useState(1);
   const [marketScenarios, setMarketScenarios] = useState<MarketScenario[]>([]);
   const [appliedTemplate, setAppliedTemplate] = useState<SessionTemplate | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -93,10 +102,11 @@ const BuyerFlow = () => {
   const [competitionOverride, setCompetitionOverride] = useState<'low' | 'medium' | 'high' | undefined>(undefined);
   const [pricingOverride, setPricingOverride] = useState<'low' | 'medium' | 'high' | undefined>(undefined);
 
+  const [attempted, setAttempted] = useState(false);
+
   useEffect(() => {
     setMarketScenarios(loadMarketScenarios());
     
-    // Check for prefill template
     const templateData = sessionStorage.getItem('prefill_template');
     if (templateData) {
       try {
@@ -148,7 +158,6 @@ const BuyerFlow = () => {
     setPricingOverride(undefined);
   };
 
-  // True reset: clear ALL fields back to defaults (no navigation)
   const handleFullReset = useCallback(() => {
     setClientName(DEFAULT_VALUES.clientName);
     setLocation(DEFAULT_VALUES.location);
@@ -175,9 +184,8 @@ const BuyerFlow = () => {
     setShowOverrides(false);
     setAttempted(false);
     setAppliedTemplate(null);
-    // Scroll to top
+    setStep(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // Toast confirmation
     toast({
       title: "Form cleared",
       description: "All fields have been reset to defaults.",
@@ -234,29 +242,78 @@ const BuyerFlow = () => {
       updated_at: new Date().toISOString(),
     };
     
-    // Clear entry context for new reports (back goes to flow)
     sessionStorage.removeItem('report_entry_context');
     sessionStorage.setItem('current_session', JSON.stringify(session));
     navigate('/buyer/report');
   };
 
-  // Compute missing required fields
-  const missingFields: string[] = [];
-  if (!clientName.trim()) missingFields.push('client_name');
-  if (!location.trim()) missingFields.push('location');
-  if (!offerPrice || parseFloat(offerPrice) <= 0) missingFields.push('offer_price');
-  if (contingencies.length === 0) missingFields.push('contingencies');
-  
-  const isValid = missingFields.length === 0;
-  const [attempted, setAttempted] = useState(false);
+  // Per-step validation
+  const stepErrors: Record<number, string[]> = {
+    0: [
+      ...(!clientName.trim() ? ['client_name'] : []),
+      ...(!location.trim() ? ['location'] : []),
+    ],
+    1: [], // No required fields on market context step
+    2: [
+      ...(!offerPrice || parseFloat(offerPrice) <= 0 ? ['offer_price'] : []),
+    ],
+    3: [
+      ...(contingencies.length === 0 ? ['contingencies'] : []),
+    ],
+  };
+
+  const currentStepValid = stepErrors[step]?.length === 0;
+  const allValid = Object.values(stepErrors).every(e => e.length === 0);
+
+  const goNext = () => {
+    setAttempted(true);
+    if (!currentStepValid) return;
+    if (step < STEPS.length - 1) {
+      setStepDirection(1);
+      setStep(s => s + 1);
+      setAttempted(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const goPrev = () => {
+    if (step > 0) {
+      setStepDirection(-1);
+      setStep(s => s - 1);
+      setAttempted(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const goToStep = (target: number) => {
+    // Allow going back freely; going forward requires current step valid
+    if (target < step) {
+      setStepDirection(-1);
+      setStep(target);
+      setAttempted(false);
+    } else if (target > step) {
+      setAttempted(true);
+      if (currentStepValid) {
+        setStepDirection(1);
+        setStep(target);
+        setAttempted(false);
+      }
+    }
+  };
 
   const onGenerateReport = () => {
     setAttempted(true);
-    if (!isValid) return;
+    if (!allValid) return;
     handleGenerate();
   };
 
   const selectedScenario = selectedScenarioId ? getMarketScenarioById(selectedScenarioId) : undefined;
+
+  const slideVariants = {
+    enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (dir: number) => ({ x: dir > 0 ? -80 : 80, opacity: 0 }),
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -276,7 +333,7 @@ const BuyerFlow = () => {
                 </div>
                 <div>
                   <h1 className="text-2xl font-serif font-bold">Buyer Analysis</h1>
-                  <p className="text-sm text-muted-foreground">Evaluate offer competitiveness and risk</p>
+                  <p className="text-sm text-muted-foreground">Step {step + 1} of {STEPS.length} — {STEPS[step].label}</p>
                 </div>
               </div>
             </div>
@@ -285,385 +342,458 @@ const BuyerFlow = () => {
               Reset
             </Button>
           </div>
+
+          {/* Progress Stepper */}
+          <div className="mt-4 flex items-center gap-1">
+            {STEPS.map((s, i) => {
+              const Icon = s.icon;
+              const isCompleted = i < step;
+              const isCurrent = i === step;
+              const hasErrors = attempted && i === step && !currentStepValid;
+              return (
+                <button
+                  key={i}
+                  onClick={() => goToStep(i)}
+                  className="flex-1 group"
+                >
+                  <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                    <div className={`
+                      w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all
+                      ${isCompleted ? 'bg-primary text-primary-foreground' : ''}
+                      ${isCurrent ? 'bg-accent text-accent-foreground ring-2 ring-accent/30' : ''}
+                      ${!isCompleted && !isCurrent ? 'bg-muted text-muted-foreground' : ''}
+                      ${hasErrors ? 'ring-2 ring-destructive/50' : ''}
+                    `}>
+                      {isCompleted ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
+                    </div>
+                    <span className={`text-xs font-medium hidden sm:inline ${isCurrent ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      {s.label}
+                    </span>
+                  </div>
+                  <div className={`
+                    h-1 rounded-full transition-all
+                    ${isCompleted ? 'bg-primary' : ''}
+                    ${isCurrent ? 'bg-accent' : ''}
+                    ${!isCompleted && !isCurrent ? 'bg-muted' : ''}
+                  `} />
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          {/* Property & Client Info */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Home className="h-5 w-5 text-accent" />
-                Property & Client Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="clientName">Client Name <span className="text-destructive">*</span></Label>
-                  <Input
-                    id="clientName"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Jane Doe"
-                    className={`h-11 ${attempted && !clientName.trim() ? 'border-destructive' : ''}`}
-                  />
-                  {attempted && !clientName.trim() && (
-                    <p className="text-xs text-destructive">Client name is required</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <AddressInput
-                    locationMode={locationMode}
-                    onLocationModeChange={setLocationMode}
-                    town={location}
-                    onTownChange={setLocation}
-                    fullAddress={fullAddress}
-                    onFullAddressChange={setFullAddress}
-                    hasError={attempted && !location.trim()}
-                    attempted={attempted}
-                  >
-                    <LocationAutocomplete
-                      value={location}
-                      onChange={setLocation}
-                      placeholder="Seattle, WA"
-                      hasError={attempted && !location.trim()}
-                    />
-                  </AddressInput>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Property Type</Label>
-                  <Select value={propertyType} onValueChange={(v: PropertyType) => setPropertyType(v)}>
-                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SFH">Single Family Home</SelectItem>
-                      <SelectItem value="Condo">Condo</SelectItem>
-                      <SelectItem value="MFH">Multi-Family Home</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Property Condition</Label>
-                  <Select value={condition} onValueChange={(v: Condition) => setCondition(v)}>
-                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Dated">Dated</SelectItem>
-                      <SelectItem value="Maintained">Maintained</SelectItem>
-                      <SelectItem value="Updated">Updated</SelectItem>
-                      <SelectItem value="Renovated">Renovated</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center">
-                  Market Scenario <span className="text-muted-foreground text-xs ml-1">(Optional)</span>
-                  <MarketScenarioTooltip />
-                </Label>
-                <Select value={selectedScenarioId ?? "__none__"} onValueChange={(v) => setSelectedScenarioId(v === "__none__" ? undefined : v)}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Select a market scenario..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">None</SelectItem>
-                    {marketScenarios.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedScenario && (
-                  <p className="text-xs text-muted-foreground mt-1">{selectedScenario.summary}</p>
-                )}
-              </div>
-
-              {selectedScenarioId && (
-                <div className="space-y-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowOverrides(!showOverrides)}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
-                  >
-                    {showOverrides ? 'Hide' : 'Adjust'} scenario for this session
-                  </button>
-                  
-                  {showOverrides && (
-                    <div className="grid md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
-                      <div className="space-y-2">
-                        <Label className="text-xs">Demand Level</Label>
-                        <Select value={demandOverride || "__default__"} onValueChange={(v) => setDemandOverride(v === "__default__" ? undefined : v as 'low' | 'medium' | 'high')}>
-                          <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Default" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__default__">Default</SelectItem>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">Competition</Label>
-                        <Select value={competitionOverride || "__default__"} onValueChange={(v) => setCompetitionOverride(v === "__default__" ? undefined : v as 'low' | 'medium' | 'high')}>
-                          <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Default" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__default__">Default</SelectItem>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">Pricing Sensitivity</Label>
-                        <Select value={pricingOverride || "__default__"} onValueChange={(v) => setPricingOverride(v === "__default__" ? undefined : v as 'low' | 'medium' | 'high')}>
-                          <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Default" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__default__">Default</SelectItem>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+        <AnimatePresence mode="wait" custom={stepDirection}>
+          <motion.div
+            key={step}
+            custom={stepDirection}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+          >
+            {/* Step 0: Property & Client */}
+            {step === 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Home className="h-5 w-5 text-accent" />
+                    Property & Client Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="clientName">Client Name <span className="text-destructive">*</span></Label>
+                      <Input
+                        id="clientName"
+                        value={clientName}
+                        onChange={(e) => setClientName(e.target.value)}
+                        placeholder="Jane Doe"
+                        className={`h-11 ${attempted && !clientName.trim() ? 'border-destructive' : ''}`}
+                      />
+                      {attempted && !clientName.trim() && (
+                        <p className="text-xs text-destructive">Client name is required</p>
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Market Context */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-accent" />
-                Market Context
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Market Conditions <span className="text-destructive">*</span></Label>
-                  <Select value={marketConditions} onValueChange={(v: 'Hot' | 'Balanced' | 'Cool') => setMarketConditions(v)}>
-                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Hot">Hot Market</SelectItem>
-                      <SelectItem value="Balanced">Balanced Market</SelectItem>
-                      <SelectItem value="Cool">Cool Market</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="daysOnMarket">Days on Market <span className="text-muted-foreground text-xs">(Optional)</span></Label>
-                  <Input
-                    id="daysOnMarket"
-                    type="number"
-                    value={daysOnMarket}
-                    onChange={(e) => setDaysOnMarket(e.target.value)}
-                    placeholder="e.g., 14"
-                    className="h-11"
-                    min={0}
-                    max={365}
-                  />
-                  <p className="text-xs text-muted-foreground">Leave blank if unknown or new listing</p>
-                </div>
-              </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Property Purpose <span className="text-muted-foreground text-xs">(Optional)</span></Label>
-                  <Select value={investmentType} onValueChange={(v: 'Primary Residence' | 'Investment Property') => setInvestmentType(v)}>
-                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Primary Residence">Primary Residence</SelectItem>
-                      <SelectItem value="Investment Property">Investment Property</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="referencePrice">Reference / List Price <span className="text-muted-foreground text-xs">(Optional)</span></Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="referencePrice"
-                      type="number"
-                      value={referencePrice}
-                      onChange={(e) => setReferencePrice(e.target.value)}
-                      placeholder="e.g., 900,000"
-                      className="h-11 pl-10"
-                    />
+                    <div className="space-y-2">
+                      <AddressInput
+                        locationMode={locationMode}
+                        onLocationModeChange={setLocationMode}
+                        town={location}
+                        onTownChange={setLocation}
+                        fullAddress={fullAddress}
+                        onFullAddressChange={setFullAddress}
+                        hasError={attempted && !location.trim()}
+                        attempted={attempted}
+                      >
+                        <LocationAutocomplete
+                          value={location}
+                          onChange={setLocation}
+                          placeholder="Seattle, WA"
+                          hasError={attempted && !location.trim()}
+                        />
+                      </AddressInput>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">List price or expected market value for scoring accuracy</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Offer Details */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-accent" />
-                Offer Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="offerPrice">Offer Price <span className="text-destructive">*</span></Label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="offerPrice"
-                    type="number"
-                    value={offerPrice}
-                    onChange={(e) => setOfferPrice(e.target.value)}
-                    placeholder="500,000"
-                    className={`h-11 pl-10 ${attempted && (!offerPrice || parseFloat(offerPrice) <= 0) ? 'border-destructive' : ''}`}
-                  />
-                </div>
-                {attempted && (!offerPrice || parseFloat(offerPrice) <= 0) && (
-                  <p className="text-xs text-destructive">Offer price is required</p>
-                )}
-              </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Property Type</Label>
+                      <Select value={propertyType} onValueChange={(v: PropertyType) => setPropertyType(v)}>
+                        <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="SFH">Single Family Home</SelectItem>
+                          <SelectItem value="Condo">Condo</SelectItem>
+                          <SelectItem value="MFH">Multi-Family Home</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Property Condition</Label>
+                      <Select value={condition} onValueChange={(v: Condition) => setCondition(v)}>
+                        <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Dated">Dated</SelectItem>
+                          <SelectItem value="Maintained">Maintained</SelectItem>
+                          <SelectItem value="Updated">Updated</SelectItem>
+                          <SelectItem value="Renovated">Renovated</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-              <div className={`grid gap-4 ${financingType === 'Cash' ? 'md:grid-cols-1' : 'md:grid-cols-2'}`}>
-                <div className="space-y-2">
-                  <Label>Financing Type</Label>
-                  <Select value={financingType} onValueChange={(v: FinancingType) => setFinancingType(v)}>
-                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Cash">Cash</SelectItem>
-                      <SelectItem value="Conventional">Conventional</SelectItem>
-                      <SelectItem value="FHA">FHA</SelectItem>
-                      <SelectItem value="VA">VA</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {financingType !== 'Cash' && (
                   <div className="space-y-2">
-                    <Label>Down Payment</Label>
-                    <Select value={downPayment} onValueChange={(v: DownPaymentPercent) => setDownPayment(v)}>
-                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                    <Label className="flex items-center">
+                      Market Scenario <span className="text-muted-foreground text-xs ml-1">(Optional)</span>
+                      <MarketScenarioTooltip />
+                    </Label>
+                    <Select value={selectedScenarioId ?? "__none__"} onValueChange={(v) => setSelectedScenarioId(v === "__none__" ? undefined : v)}>
+                      <SelectTrigger className="h-11"><SelectValue placeholder="Select a market scenario..." /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="<10">Less than 10%</SelectItem>
-                        <SelectItem value="10-19">10-19%</SelectItem>
-                        <SelectItem value="20+">20% or more</SelectItem>
+                        <SelectItem value="__none__">None</SelectItem>
+                        {marketScenarios.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    {selectedScenario && (
+                      <p className="text-xs text-muted-foreground mt-1">{selectedScenario.summary}</p>
+                    )}
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Contingencies & Terms */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileCheck className="h-5 w-5 text-accent" />
-                Contingencies & Terms
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <Label>Contingencies <span className="text-destructive">*</span></Label>
-                <div className="grid grid-cols-2 gap-4">
-                  {contingencyOptions.map((opt) => (
-                    <div key={opt.value} className={`flex items-center space-x-3 p-3 rounded-lg border hover:border-accent/30 transition-colors ${attempted && contingencies.length === 0 ? 'border-destructive' : 'border-border/50'}`}>
-                      <Checkbox
-                        id={opt.value}
-                        checked={contingencies.includes(opt.value)}
-                        onCheckedChange={(checked) => handleContingencyChange(opt.value, !!checked)}
-                      />
-                      <label htmlFor={opt.value} className="text-sm cursor-pointer font-medium">
-                        {opt.label}
-                      </label>
+                  {selectedScenarioId && (
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowOverrides(!showOverrides)}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
+                      >
+                        {showOverrides ? 'Hide' : 'Adjust'} scenario for this session
+                      </button>
+                      
+                      {showOverrides && (
+                        <div className="grid md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+                          <div className="space-y-2">
+                            <Label className="text-xs">Demand Level</Label>
+                            <Select value={demandOverride || "__default__"} onValueChange={(v) => setDemandOverride(v === "__default__" ? undefined : v as 'low' | 'medium' | 'high')}>
+                              <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Default" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__default__">Default</SelectItem>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Competition</Label>
+                            <Select value={competitionOverride || "__default__"} onValueChange={(v) => setCompetitionOverride(v === "__default__" ? undefined : v as 'low' | 'medium' | 'high')}>
+                              <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Default" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__default__">Default</SelectItem>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Pricing Sensitivity</Label>
+                            <Select value={pricingOverride || "__default__"} onValueChange={(v) => setPricingOverride(v === "__default__" ? undefined : v as 'low' | 'medium' | 'high')}>
+                              <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Default" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__default__">Default</SelectItem>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-                {attempted && contingencies.length === 0 && (
-                  <p className="text-xs text-destructive">Select at least one contingency option</p>
-                )}
-              </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Closing Timeline</Label>
-                  <Select value={closingTimeline} onValueChange={(v: ClosingTimeline) => setClosingTimeline(v)}>
-                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="<21">Less than 21 days</SelectItem>
-                      <SelectItem value="21-30">21-30 days</SelectItem>
-                      <SelectItem value="31-45">31-45 days</SelectItem>
-                      <SelectItem value="45+">45+ days</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Buyer Preference</Label>
-                  <Select value={buyerPreference} onValueChange={(v: BuyerPreference) => setBuyerPreference(v)}>
-                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Must win">Must win</SelectItem>
-                      <SelectItem value="Balanced">Balanced</SelectItem>
-                      <SelectItem value="Price-protective">Price-protective</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+            {/* Step 1: Market Context */}
+            {step === 1 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-accent" />
+                    Market Context
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Market Conditions <span className="text-destructive">*</span></Label>
+                      <Select value={marketConditions} onValueChange={(v: 'Hot' | 'Balanced' | 'Cool') => setMarketConditions(v)}>
+                        <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Hot">Hot Market</SelectItem>
+                          <SelectItem value="Balanced">Balanced Market</SelectItem>
+                          <SelectItem value="Cool">Cool Market</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="daysOnMarket">Days on Market <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+                      <Input
+                        id="daysOnMarket"
+                        type="number"
+                        value={daysOnMarket}
+                        onChange={(e) => setDaysOnMarket(e.target.value)}
+                        placeholder="e.g., 14"
+                        className="h-11"
+                        min={0}
+                        max={365}
+                      />
+                      <p className="text-xs text-muted-foreground">Leave blank if unknown or new listing</p>
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Property Purpose <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+                      <Select value={investmentType} onValueChange={(v: 'Primary Residence' | 'Investment Property') => setInvestmentType(v)}>
+                        <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Primary Residence">Primary Residence</SelectItem>
+                          <SelectItem value="Investment Property">Investment Property</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="referencePrice">Reference / List Price <span className="text-muted-foreground text-xs">(Optional)</span></Label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="referencePrice"
+                          type="number"
+                          value={referencePrice}
+                          onChange={(e) => setReferencePrice(e.target.value)}
+                          placeholder="e.g., 900,000"
+                          className="h-11 pl-10"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">List price or expected market value for scoring accuracy</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-              <div className="space-y-2">
-                <Label htmlFor="clientNotes">Notes for Client <span className="text-muted-foreground text-xs">(Optional — included in PDF/Share)</span></Label>
-                <Textarea
-                  id="clientNotes"
-                  value={clientNotes}
-                  onChange={(e) => setClientNotes(e.target.value)}
-                  placeholder="Notes visible to the client in exports and shared links..."
-                  rows={2}
-                  className="resize-none"
-                />
-              </div>
+            {/* Step 2: Offer Details */}
+            {step === 2 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-accent" />
+                    Offer Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="offerPrice">Offer Price <span className="text-destructive">*</span></Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="offerPrice"
+                        type="number"
+                        value={offerPrice}
+                        onChange={(e) => setOfferPrice(e.target.value)}
+                        placeholder="500,000"
+                        className={`h-11 pl-10 ${attempted && (!offerPrice || parseFloat(offerPrice) <= 0) ? 'border-destructive' : ''}`}
+                      />
+                    </div>
+                    {attempted && (!offerPrice || parseFloat(offerPrice) <= 0) && (
+                      <p className="text-xs text-destructive">Offer price is required</p>
+                    )}
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="agentNotes">Agent Notes <span className="text-muted-foreground text-xs">(Private — never shared)</span></Label>
-                <Textarea
-                  id="agentNotes"
-                  value={agentNotes}
-                  onChange={(e) => setAgentNotes(e.target.value)}
-                  placeholder="Private notes for your reference only..."
-                  rows={2}
-                  className="resize-none"
-                />
-              </div>
-            </CardContent>
-          </Card>
+                  <div className={`grid gap-4 ${financingType === 'Cash' ? 'md:grid-cols-1' : 'md:grid-cols-2'}`}>
+                    <div className="space-y-2">
+                      <Label>Financing Type</Label>
+                      <Select value={financingType} onValueChange={(v: FinancingType) => setFinancingType(v)}>
+                        <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Cash">Cash</SelectItem>
+                          <SelectItem value="Conventional">Conventional</SelectItem>
+                          <SelectItem value="FHA">FHA</SelectItem>
+                          <SelectItem value="VA">VA</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {financingType !== 'Cash' && (
+                      <div className="space-y-2">
+                        <Label>Down Payment</Label>
+                        <Select value={downPayment} onValueChange={(v: DownPaymentPercent) => setDownPayment(v)}>
+                          <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="<10">Less than 10%</SelectItem>
+                            <SelectItem value="10-19">10-19%</SelectItem>
+                            <SelectItem value="20+">20% or more</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-          {/* Validation message */}
-          {attempted && !isValid && (
-            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
-              Please complete required fields to generate the report.
-            </div>
-          )}
+            {/* Step 3: Terms & Notes */}
+            {step === 3 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileCheck className="h-5 w-5 text-accent" />
+                    Contingencies & Terms
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    <Label>Contingencies <span className="text-destructive">*</span></Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      {contingencyOptions.map((opt) => (
+                        <div key={opt.value} className={`flex items-center space-x-3 p-3 rounded-lg border hover:border-accent/30 transition-colors ${attempted && contingencies.length === 0 ? 'border-destructive' : 'border-border/50'}`}>
+                          <Checkbox
+                            id={opt.value}
+                            checked={contingencies.includes(opt.value)}
+                            onCheckedChange={(checked) => handleContingencyChange(opt.value, !!checked)}
+                          />
+                          <label htmlFor={opt.value} className="text-sm cursor-pointer font-medium">
+                            {opt.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    {attempted && contingencies.length === 0 && (
+                      <p className="text-xs text-destructive">Select at least one contingency option</p>
+                    )}
+                  </div>
 
-          <div className="relative z-10 pointer-events-auto">
-            <Button 
-              type="button"
-              onClick={onGenerateReport} 
-              className="w-full" 
-              size="lg" 
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Closing Timeline</Label>
+                      <Select value={closingTimeline} onValueChange={(v: ClosingTimeline) => setClosingTimeline(v)}>
+                        <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="<21">Less than 21 days</SelectItem>
+                          <SelectItem value="21-30">21-30 days</SelectItem>
+                          <SelectItem value="31-45">31-45 days</SelectItem>
+                          <SelectItem value="45+">45+ days</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Buyer Preference</Label>
+                      <Select value={buyerPreference} onValueChange={(v: BuyerPreference) => setBuyerPreference(v)}>
+                        <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Must win">Must win</SelectItem>
+                          <SelectItem value="Balanced">Balanced</SelectItem>
+                          <SelectItem value="Price-protective">Price-protective</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="clientNotes">Notes for Client <span className="text-muted-foreground text-xs">(Optional — included in PDF/Share)</span></Label>
+                    <Textarea
+                      id="clientNotes"
+                      value={clientNotes}
+                      onChange={(e) => setClientNotes(e.target.value)}
+                      placeholder="Notes visible to the client in exports and shared links..."
+                      rows={2}
+                      className="resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="agentNotes">Agent Notes <span className="text-muted-foreground text-xs">(Private — never shared)</span></Label>
+                    <Textarea
+                      id="agentNotes"
+                      value={agentNotes}
+                      onChange={(e) => setAgentNotes(e.target.value)}
+                      placeholder="Private notes for your reference only..."
+                      rows={2}
+                      className="resize-none"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Step Navigation */}
+        <div className="mt-6 flex items-center justify-between gap-4">
+          <Button
+            variant="outline"
+            onClick={goPrev}
+            disabled={step === 0}
+            className="min-w-[120px]"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+
+          {step < STEPS.length - 1 ? (
+            <Button
               variant="accent"
+              onClick={goNext}
+              className="min-w-[120px]"
+            >
+              Next
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              variant="accent"
+              onClick={onGenerateReport}
+              size="lg"
+              className="min-w-[180px]"
             >
               Generate Report
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
+          )}
+        </div>
+
+        {/* Validation message on final step */}
+        {step === STEPS.length - 1 && attempted && !allValid && (
+          <div className="mt-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
+            Please go back and complete required fields to generate the report.
           </div>
-        </motion.div>
+        )}
       </div>
 
       {/* Reset Confirmation Dialog */}
