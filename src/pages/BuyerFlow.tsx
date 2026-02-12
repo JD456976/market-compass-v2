@@ -26,6 +26,7 @@ import {
 } from '@/types';
 import { generateId } from '@/lib/storage';
 import { upsertSessionAsync } from '@/lib/storage';
+import { formatPriceDisplay, parsePriceValue, stripCurrencyChars } from '@/lib/currencyFormat';
 import { LocationAutocomplete } from '@/components/LocationAutocomplete';
 import { AddressInput, LocationMode, stubGeocode } from '@/components/AddressInput';
 import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
@@ -231,8 +232,8 @@ const BuyerFlow = () => {
     } : undefined,
     client_privacy: true,
     buyer_inputs: {
-      offer_price: parseFloat(offerPrice) || 0,
-      reference_price: referencePrice ? parseFloat(referencePrice) : undefined,
+      offer_price: parsePriceValue(offerPrice),
+      reference_price: referencePrice ? parsePriceValue(referencePrice) : undefined,
       market_conditions: marketConditions,
       days_on_market: daysOnMarket ? parseInt(daysOnMarket) : undefined,
       investment_type: investmentType,
@@ -284,7 +285,7 @@ const BuyerFlow = () => {
     ],
     1: [], // No required fields on market context step
     2: [
-      ...(!offerPrice || parseFloat(offerPrice) <= 0 ? ['offer_price'] : []),
+      ...(!offerPrice || parsePriceValue(offerPrice) <= 0 ? ['offer_price'] : []),
     ],
     3: [
       ...(contingencies.length === 0 ? ['contingencies'] : []),
@@ -671,9 +672,10 @@ const BuyerFlow = () => {
                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="referencePrice"
-                          type="number"
-                          value={referencePrice}
-                          onChange={(e) => setReferencePrice(e.target.value)}
+                          type="text"
+                          inputMode="decimal"
+                          value={formatPriceDisplay(referencePrice)}
+                          onChange={(e) => setReferencePrice(stripCurrencyChars(e.target.value))}
                           placeholder="e.g., 900,000"
                           className="h-11 pl-10"
                         />
@@ -701,14 +703,15 @@ const BuyerFlow = () => {
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="offerPrice"
-                        type="number"
-                        value={offerPrice}
-                        onChange={(e) => setOfferPrice(e.target.value)}
+                        type="text"
+                        inputMode="decimal"
+                        value={formatPriceDisplay(offerPrice)}
+                        onChange={(e) => setOfferPrice(stripCurrencyChars(e.target.value))}
                         placeholder="500,000"
-                        className={`h-11 pl-10 ${attempted && (!offerPrice || parseFloat(offerPrice) <= 0) ? 'border-destructive' : ''}`}
+                        className={`h-11 pl-10 ${attempted && (!offerPrice || parsePriceValue(offerPrice) <= 0) ? 'border-destructive' : ''}`}
                       />
                     </div>
-                    {attempted && (!offerPrice || parseFloat(offerPrice) <= 0) && (
+                    {attempted && (!offerPrice || parsePriceValue(offerPrice) <= 0) && (
                       <p className="text-xs text-destructive">Offer price is required</p>
                     )}
                   </div>

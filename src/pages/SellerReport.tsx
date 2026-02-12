@@ -155,7 +155,6 @@ const SellerReport = () => {
 
   const handleExportPdf = async () => {
     if (!reportData) return;
-    const wasAlreadySharedOrExported = reportData.session.share_link_created || reportData.session.pdf_exported;
     try {
       await exportReportToPdf('report-export', {
         clientName: reportData.session.client_name,
@@ -163,23 +162,15 @@ const SellerReport = () => {
         snapshotTimestamp: reportData.snapshotTimestamp,
         isClientMode,
       });
-      // Mark as exported and save
+      // Mark as exported but DON'T move to shared reports
       const updatedSession = { ...reportData.session, pdf_exported: true };
       upsertSession(updatedSession);
       setReportData({ ...reportData, session: updatedSession });
       
-      // Notify about lifecycle transition
-      if (!wasAlreadySharedOrExported) {
-        toast({
-          title: "PDF exported",
-          description: "Report moved to Shared Reports.",
-        });
-      } else {
-        toast({
-          title: "PDF exported",
-          description: "Your report has been downloaded.",
-        });
-      }
+      toast({
+        title: "PDF exported",
+        description: "Your report has been downloaded.",
+      });
     } catch {
       toast({
         title: "PDF export failed",

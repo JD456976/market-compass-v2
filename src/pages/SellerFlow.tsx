@@ -22,6 +22,7 @@ import { MLSVoiceCameraInput } from '@/components/MLSVoiceCameraInput';
 import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference } from '@/types';
 import { generateId } from '@/lib/storage';
 import { upsertSessionAsync } from '@/lib/storage';
+import { formatPriceDisplay, parsePriceValue, stripCurrencyChars } from '@/lib/currencyFormat';
 import { LocationAutocomplete } from '@/components/LocationAutocomplete';
 import { AddressInput, LocationMode, stubGeocode } from '@/components/AddressInput';
 import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
@@ -173,7 +174,7 @@ const SellerFlow = () => {
       pricingSensitivity: pricingOverride,
     } : undefined,
     seller_inputs: {
-      seller_selected_list_price: parseFloat(listPrice) || 0,
+      seller_selected_list_price: parsePriceValue(listPrice),
       desired_timeframe: timeframe,
       strategy_preference: strategy,
       agent_notes: agentNotes || undefined,
@@ -218,7 +219,7 @@ const SellerFlow = () => {
       ...(!location.trim() ? ['location'] : []),
     ],
     1: [
-      ...(!listPrice || parseFloat(listPrice) <= 0 ? ['list_price'] : []),
+      ...(!listPrice || parsePriceValue(listPrice) <= 0 ? ['list_price'] : []),
     ],
     2: [], // Notes step has no required fields
     3: [], // Review step — no fields
@@ -560,14 +561,15 @@ const SellerFlow = () => {
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="listPrice"
-                        type="number"
-                        value={listPrice}
-                        onChange={(e) => setListPrice(e.target.value)}
+                        type="text"
+                        inputMode="decimal"
+                        value={formatPriceDisplay(listPrice)}
+                        onChange={(e) => setListPrice(stripCurrencyChars(e.target.value))}
                         placeholder="500,000"
-                        className={`h-11 pl-10 ${attempted && (!listPrice || parseFloat(listPrice) <= 0) ? 'border-destructive' : ''}`}
+                        className={`h-11 pl-10 ${attempted && (!listPrice || parsePriceValue(listPrice) <= 0) ? 'border-destructive' : ''}`}
                       />
                     </div>
-                    {attempted && (!listPrice || parseFloat(listPrice) <= 0) && (
+                    {attempted && (!listPrice || parsePriceValue(listPrice) <= 0) && (
                       <p className="text-xs text-destructive">List price is required</p>
                     )}
                   </div>

@@ -6,10 +6,10 @@ interface DraftStatusIndicatorProps {
 }
 
 export function DraftStatusIndicator({ session, className = '' }: DraftStatusIndicatorProps) {
-  const isShared = session.share_link_created || session.pdf_exported;
+  const isShared = session.share_link_created;
+  const isPdfExported = session.pdf_exported && !session.share_link_created;
   
   if (isShared) {
-    // Format the date when it was shared/exported
     const sharedDate = session.updated_at 
       ? new Date(session.updated_at).toLocaleDateString('en-US', { 
           month: 'short', 
@@ -22,6 +22,14 @@ export function DraftStatusIndicator({ session, className = '' }: DraftStatusInd
     return (
       <p className={`text-xs text-muted-foreground ${className}`}>
         Shared{sharedDate ? ` on ${sharedDate}` : ''}
+      </p>
+    );
+  }
+
+  if (isPdfExported) {
+    return (
+      <p className={`text-xs text-muted-foreground ${className}`}>
+        PDF exported — not shared
       </p>
     );
   }

@@ -83,13 +83,14 @@ export function useSessions(): UseSessionsResult {
 }
 
 /**
- * Hook to get only draft sessions (not shared/exported)
+ * Hook to get only draft sessions (not shared via link)
+ * PDF-exported reports remain as drafts until explicitly shared
  */
 export function useDraftSessions(): UseSessionsResult {
   const result = useSessions();
   
   const draftSessions = result.sessions.filter(
-    s => !s.share_link_created && !s.pdf_exported
+    s => !s.share_link_created
   );
 
   return {
@@ -111,7 +112,7 @@ export function useSharedSessions(): UseSessionsResult & {
   const result = useSessions();
   
   const sharedSessions = result.sessions.filter(
-    s => s.share_link_created || s.pdf_exported
+    s => s.share_link_created
   );
 
   const activeSessions = sharedSessions.filter(s => !s.archived);
