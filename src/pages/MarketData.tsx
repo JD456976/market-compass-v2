@@ -278,43 +278,40 @@ const MarketData = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="hero-gradient text-primary-foreground">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="container mx-auto px-4 py-4 sm:py-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <Link to="/">
-                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
+                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 flex-shrink-0 h-9 w-9">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               </Link>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accent/20">
-                  <Database className="h-5 w-5 text-accent" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-serif font-bold">Market Data</h1>
-                  <p className="text-sm text-primary-foreground/70">
-                    {snapshots.length} market{snapshots.length !== 1 ? 's' : ''} • {seededCount} built-in, {customCount} custom
-                  </p>
-                </div>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-serif font-bold truncate">Market Data</h1>
+                <p className="text-xs sm:text-sm text-primary-foreground/70 truncate">
+                  {snapshots.length} market{snapshots.length !== 1 ? 's' : ''} · {seededCount} built-in, {customCount} custom
+                </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0">
               <Button 
                 variant="ghost" 
-                size="sm" 
+                size="icon"
                 onClick={() => setImportDialogOpen(true)}
-                className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 h-9 w-9"
+                title="Import"
               >
-                <Upload className="mr-2 h-4 w-4" />
-                Import
+                <Upload className="h-4 w-4" />
               </Button>
               <Button 
                 variant="accent" 
                 size="sm" 
                 onClick={() => { resetForm(); setAddDialogOpen(true); }}
+                className="h-9"
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Market
+                <Plus className="mr-1.5 h-4 w-4" />
+                <span className="hidden sm:inline">Add Market</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             </div>
           </div>
@@ -388,37 +385,32 @@ const MarketData = () => {
                   transition={{ delay: index * 0.02 }}
                 >
                   <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-secondary/50">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <p className="font-sans font-medium text-sm truncate">{snapshot.location}</p>
+                            {isCustomSnapshot(snapshot.id) && (
+                              <Badge variant="outline" className="text-[10px] h-5 flex-shrink-0">Custom</Badge>
+                            )}
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <p className="font-medium">{snapshot.location}</p>
-                              {isCustomSnapshot(snapshot.id) && (
-                                <Badge variant="outline" className="text-[10px] h-5">Custom</Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {snapshot.medianDOM} DOM
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <TrendingUp className="h-3 w-3" />
-                                {(snapshot.saleToListRatio * 100).toFixed(0)}% S/L
-                              </span>
-                              {getInventoryBadge(snapshot.inventorySignal)}
-                            </div>
-                            <p className="text-[10px] text-muted-foreground mt-1">
-                              Updated {snapshot.lastUpdated} · {snapshot.sourceLabel}
-                            </p>
+                          <div className="flex items-center gap-2 sm:gap-3 text-xs text-muted-foreground flex-wrap">
+                            <span className="flex items-center gap-1 whitespace-nowrap">
+                              <Clock className="h-3 w-3" />
+                              {snapshot.medianDOM} DOM
+                            </span>
+                            <span className="flex items-center gap-1 whitespace-nowrap">
+                              <TrendingUp className="h-3 w-3" />
+                              {(snapshot.saleToListRatio * 100).toFixed(0)}% S/L
+                            </span>
+                            {getInventoryBadge(snapshot.inventorySignal)}
                           </div>
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            Updated {snapshot.lastUpdated} · {snapshot.sourceLabel}
+                          </p>
                         </div>
                         {isCustomSnapshot(snapshot.id) && (
-                          <div className="flex gap-1">
+                          <div className="flex gap-0.5 flex-shrink-0">
                             <Button 
                               variant="ghost" 
                               size="icon" 
