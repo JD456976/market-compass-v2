@@ -7,43 +7,73 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, 
-  Compass, 
   CheckCircle2, 
   RefreshCw,
   FileText,
   BarChart3,
   Layers,
   PenTool,
-  Sparkles
+  Sparkles,
+  Users,
+  Zap,
+  Crown,
+  Building2
 } from 'lucide-react';
 import { getBetaAccessSession } from '@/lib/betaAccess';
-import { PAID_FEATURES, SUBSCRIPTION_PRODUCTS } from '@/lib/featureGating';
 
-const PROFESSIONAL_FEATURES = [
+const TIERS = [
   {
-    icon: FileText,
-    title: 'Unlimited Reports',
-    description: 'Create as many seller and buyer analyses as you need',
+    name: 'Starter',
+    price: 'Free',
+    period: '',
+    description: 'For agents getting started with market analysis',
+    icon: Zap,
+    highlight: false,
+    features: [
+      '3 reports per month',
+      '1 comparison per month',
+      'Basic Scenario Explorer',
+      'Standard PDF exports',
+      'Email support',
+    ],
+    limits: { reports: 3, comparisons: 1 },
   },
   {
-    icon: BarChart3,
-    title: 'Unlimited Comparisons',
-    description: 'Compare multiple scenarios side by side',
+    name: 'Professional',
+    price: '$29',
+    period: '/month',
+    description: 'For active agents who need unlimited analysis',
+    icon: Crown,
+    highlight: true,
+    features: [
+      'Unlimited reports',
+      'Unlimited comparisons',
+      'Advanced Scenario Explorer',
+      'Branded PDF exports',
+      'AI-powered insights',
+      'Client Communication Hub',
+      'Shareable social insights',
+      'Priority support',
+    ],
+    limits: { reports: -1, comparisons: -1 },
   },
   {
-    icon: Layers,
-    title: 'Advanced Scenario Explorer',
-    description: 'Deep-dive into market conditions and pricing strategies',
-  },
-  {
-    icon: Compass,
-    title: 'Market Snapshot Selection',
-    description: 'Choose from curated market condition presets',
-  },
-  {
-    icon: PenTool,
-    title: 'Branded PDF Exports',
-    description: 'Professional exports with your branding',
+    name: 'Enterprise',
+    price: '$79',
+    period: '/month',
+    description: 'For teams and brokerages',
+    icon: Building2,
+    highlight: false,
+    features: [
+      'Everything in Professional',
+      'Team management (up to 10)',
+      'Custom branding per agent',
+      'Analytics dashboard',
+      'White-label reports',
+      'API access',
+      'Dedicated support',
+    ],
+    limits: { reports: -1, comparisons: -1 },
   },
 ];
 
@@ -57,16 +87,19 @@ export default function Subscription() {
 
   const handleRestorePurchases = async () => {
     setIsRestoring(true);
-    
-    // Simulated restore - no actual IAP during beta
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
     toast({
       title: 'No purchases found',
       description: 'Subscriptions will be available after the beta period.',
     });
-    
     setIsRestoring(false);
+  };
+
+  const handleSelectTier = (tierName: string) => {
+    toast({
+      title: `${tierName} plan selected`,
+      description: 'Subscriptions will be available after the beta period. Beta users will receive special pricing.',
+    });
   };
 
   return (
@@ -84,7 +117,7 @@ export default function Subscription() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl space-y-8">
+      <main className="container mx-auto px-4 py-8 max-w-4xl space-y-8">
         {/* Beta Access Banner */}
         {hasBetaAccess && (
           <Card className="border-emerald-500/30 bg-emerald-500/5">
@@ -101,7 +134,8 @@ export default function Subscription() {
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    You have access to all professional features during the beta period.
+                    You have access to all Professional features during the beta period. 
+                    Beta testers will receive special pricing at launch.
                   </p>
                 </div>
               </div>
@@ -109,63 +143,56 @@ export default function Subscription() {
           </Card>
         )}
 
-        {/* Professional Features */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-serif">Market Compass Professional</CardTitle>
-            <CardDescription>
-              Everything you need to deliver exceptional real estate analysis
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {PROFESSIONAL_FEATURES.map((feature, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg shrink-0">
-                  <feature.icon className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-sm">{feature.title}</h4>
-                  <p className="text-xs text-muted-foreground">{feature.description}</p>
-                </div>
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 ml-auto shrink-0 mt-1" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        {/* Pricing Tiers */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-serif font-bold mb-2">Choose Your Plan</h2>
+          <p className="text-muted-foreground">Scale your real estate analysis with the right tier</p>
+        </div>
 
-        {/* Subscription Coming Soon */}
-        <Card className="border-dashed">
-          <CardHeader className="text-center">
-            <CardTitle className="text-lg">Subscription Options Coming Soon</CardTitle>
-            <CardDescription className="text-base">
-              Subscription options will be available after the beta period. 
-              Beta testers will receive special pricing as a thank you for early feedback.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Placeholder pricing - not functional */}
-            <div className="grid gap-3">
-              <div className="p-4 rounded-lg bg-muted/50 border border-dashed">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Monthly</p>
-                    <p className="text-xs text-muted-foreground">Billed monthly</p>
-                  </div>
-                  <p className="text-muted-foreground">Coming soon</p>
+        <div className="grid md:grid-cols-3 gap-6">
+          {TIERS.map((tier) => (
+            <Card 
+              key={tier.name}
+              className={`relative ${tier.highlight ? 'border-accent shadow-lg ring-1 ring-accent/20' : 'border-border'}`}
+            >
+              {tier.highlight && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge className="bg-accent text-accent-foreground shadow-sm">
+                    Most Popular
+                  </Badge>
                 </div>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/50 border border-dashed">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Annual</p>
-                    <p className="text-xs text-muted-foreground">Save with yearly billing</p>
-                  </div>
-                  <p className="text-muted-foreground">Coming soon</p>
+              )}
+              <CardHeader className="text-center pb-4">
+                <div className={`p-3 rounded-full mx-auto mb-2 ${tier.highlight ? 'bg-accent/10' : 'bg-secondary'}`}>
+                  <tier.icon className={`h-6 w-6 ${tier.highlight ? 'text-accent' : 'text-muted-foreground'}`} />
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                <CardTitle className="font-serif text-xl">{tier.name}</CardTitle>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-3xl font-serif font-bold">{tier.price}</span>
+                  {tier.period && <span className="text-muted-foreground text-sm">{tier.period}</span>}
+                </div>
+                <CardDescription className="text-xs">{tier.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2.5">
+                  {tier.features.map((feature, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span className="text-sm">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+                <Button 
+                  className="w-full mt-4"
+                  variant={tier.highlight ? 'accent' : 'outline'}
+                  onClick={() => handleSelectTier(tier.name)}
+                >
+                  {hasBetaAccess ? 'Current Plan (Beta)' : `Choose ${tier.name}`}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
         <Separator />
 
@@ -189,16 +216,15 @@ export default function Subscription() {
             )}
           </Button>
           <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-            If you've previously subscribed, tap here to restore your purchase. 
-            This will check for any existing subscriptions linked to your account.
+            If you've previously subscribed, tap here to restore your purchase.
           </p>
         </div>
 
-        {/* Legal links placeholder */}
+        {/* Legal links */}
         <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-          <button className="hover:underline">Terms of Service</button>
+          <button className="hover:underline" onClick={() => navigate('/terms')}>Terms of Service</button>
           <span>•</span>
-          <button className="hover:underline">Privacy Policy</button>
+          <button className="hover:underline" onClick={() => navigate('/privacy')}>Privacy Policy</button>
         </div>
       </main>
     </div>
