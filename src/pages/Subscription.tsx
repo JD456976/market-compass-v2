@@ -1,89 +1,49 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
-  CheckCircle2, 
-  RefreshCw,
   FileText,
   BarChart3,
-  Layers,
-  PenTool,
+  Share2,
   Sparkles,
   Users,
-  Zap,
-  Crown,
-  Building2
+  Building2,
+  PenTool,
+  User,
+  Palette,
+  TrendingUp,
+  Activity,
+  Clock,
+  RefreshCw,
+  ChevronRight,
+  Layers,
+  ExternalLink
 } from 'lucide-react';
 import { getBetaAccessSession } from '@/lib/betaAccess';
-
-const TIERS = [
-  {
-    name: 'Starter',
-    price: 'Free',
-    period: '',
-    description: 'For agents getting started with market analysis',
-    icon: Zap,
-    highlight: false,
-    features: [
-      '3 reports per month',
-      '1 comparison per month',
-      'Basic Scenario Explorer',
-      'Standard PDF exports',
-      'Email support',
-    ],
-    limits: { reports: 3, comparisons: 1 },
-  },
-  {
-    name: 'Professional',
-    price: '$29',
-    period: '/month',
-    description: 'For active agents who need unlimited analysis',
-    icon: Crown,
-    highlight: true,
-    features: [
-      'Unlimited reports',
-      'Unlimited comparisons',
-      'Advanced Scenario Explorer',
-      'Branded PDF exports',
-      'AI-powered insights',
-      'Client Communication Hub',
-      'Shareable social insights',
-      'Priority support',
-    ],
-    limits: { reports: -1, comparisons: -1 },
-  },
-  {
-    name: 'Enterprise',
-    price: '$79',
-    period: '/month',
-    description: 'For teams and brokerages',
-    icon: Building2,
-    highlight: false,
-    features: [
-      'Everything in Professional',
-      'Team management (up to 10)',
-      'Custom branding per agent',
-      'Analytics dashboard',
-      'White-label reports',
-      'API access',
-      'Dedicated support',
-    ],
-    limits: { reports: -1, comparisons: -1 },
-  },
-];
+import { useSessions } from '@/hooks/useSessions';
+import { loadAgentProfile, AgentProfile } from '@/lib/agentProfile';
+import { FREE_TIER_LIMITS } from '@/lib/featureGating';
+import { formatLocation } from '@/lib/utils';
 
 export default function Subscription() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { sessions } = useSessions();
   const [isRestoring, setIsRestoring] = useState(false);
+  const [profile, setProfile] = useState<AgentProfile | null>(null);
   
   const session = getBetaAccessSession();
   const hasBetaAccess = !!session;
+
+  useEffect(() => {
+    setProfile(loadAgentProfile());
+  }, []);
 
   const handleRestorePurchases = async () => {
     setIsRestoring(true);
@@ -95,138 +55,237 @@ export default function Subscription() {
     setIsRestoring(false);
   };
 
-  const handleSelectTier = (tierName: string) => {
-    toast({
-      title: `${tierName} plan selected`,
-      description: 'Subscriptions will be available after the beta period. Beta users will receive special pricing.',
-    });
-  };
+  // Compute stats
+  const totalReports = sessions.length;
+  const draftCount = sessions.filter(s => !s.share_link_created && !s.pdf_exported).length;
+  const sharedCount = sessions.filter(s => s.share_link_created || s.pdf_exported).length;
+  const buyerCount = sessions.filter(s => s.session_type === 'Buyer').length;
+  const sellerCount = sessions.filter(s => s.session_type === 'Seller').length;
+  const recentSessions = [...sessions].sort((a, b) => 
+    new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  ).slice(0, 5);
+
+  // Current month report count
+  const thisMonth = new Date();
+  const monthReports = sessions.filter(s => {
+    const d = new Date(s.created_at);
+    return d.getMonth() === thisMonth.getMonth() && d.getFullYear() === thisMonth.getFullYear();
+  }).length;
+
+  const quickActions = [
+    { label: 'New Seller Report', icon: Building2, to: '/seller', color: 'text-primary' },
+    { label: 'New Buyer Report', icon: Users, to: '/buyer', color: 'text-primary' },
+    { label: 'Agent Profile', icon: User, to: '/agent-profile', color: 'text-accent' },
+    { label: 'Market Trends', icon: TrendingUp, to: '/market-trends', color: 'text-accent' },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card/50">
-        <div className="container mx-auto px-4 py-4">
+      <div className="hero-gradient text-primary-foreground">
+        <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <h1 className="text-lg font-serif font-semibold">Subscription</h1>
+            <Link to="/">
+              <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 min-h-[44px] min-w-[44px]">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/20">
+                <Sparkles className="h-5 w-5 text-accent" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-serif font-bold">Pro Dashboard</h1>
+                <p className="text-sm text-primary-foreground/70">
+                  {profile?.agent_name || 'Agent'} • {profile?.brokerage_name || 'Brokerage'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl space-y-8">
-        {/* Beta Access Banner */}
-        {hasBetaAccess && (
-          <Card className="border-emerald-500/30 bg-emerald-500/5">
+      <div className="container mx-auto px-4 py-8 max-w-3xl -mt-4 space-y-6">
+        {/* Plan Status */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className={hasBetaAccess ? 'border-accent/30' : ''}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-emerald-500/10 rounded-full">
-                  <Sparkles className="h-6 w-6 text-emerald-600" />
+                <div className={`p-3 rounded-full ${hasBetaAccess ? 'bg-accent/10' : 'bg-secondary'}`}>
+                  <Sparkles className={`h-6 w-6 ${hasBetaAccess ? 'text-accent' : 'text-muted-foreground'}`} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-emerald-700">Beta Access Active</h3>
-                    <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-700 text-xs">
-                      Full Access
+                    <h3 className="font-semibold">{hasBetaAccess ? 'Beta Pro Access' : 'Free Plan'}</h3>
+                    <Badge variant="secondary" className={`text-xs ${hasBetaAccess ? 'bg-accent/10 text-accent-foreground' : ''}`}>
+                      {hasBetaAccess ? 'Full Access' : 'Limited'}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    You have access to all Professional features during the beta period. 
-                    Beta testers will receive special pricing at launch.
+                    {hasBetaAccess 
+                      ? 'All professional features unlocked during beta. Thank you for testing!'
+                      : `${FREE_TIER_LIMITS.reportsPerMonth} reports/month on the free plan.`}
                   </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Pricing Tiers */}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-serif font-bold mb-2">Choose Your Plan</h2>
-          <p className="text-muted-foreground">Scale your real estate analysis with the right tier</p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {TIERS.map((tier) => (
-            <Card 
-              key={tier.name}
-              className={`relative ${tier.highlight ? 'border-accent shadow-lg ring-1 ring-accent/20' : 'border-border'}`}
-            >
-              {tier.highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-accent text-accent-foreground shadow-sm">
-                    Most Popular
-                  </Badge>
+              {!hasBetaAccess && (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Reports this month</span>
+                    <span className="font-medium">{monthReports} / {FREE_TIER_LIMITS.reportsPerMonth}</span>
+                  </div>
+                  <Progress value={(monthReports / FREE_TIER_LIMITS.reportsPerMonth) * 100} className="h-2" />
                 </div>
               )}
-              <CardHeader className="text-center pb-4">
-                <div className={`p-3 rounded-full mx-auto mb-2 ${tier.highlight ? 'bg-accent/10' : 'bg-secondary'}`}>
-                  <tier.icon className={`h-6 w-6 ${tier.highlight ? 'text-accent' : 'text-muted-foreground'}`} />
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Usage Stats */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: 'Total Reports', value: totalReports, icon: FileText },
+              { label: 'Shared', value: sharedCount, icon: Share2 },
+              { label: 'Buyer Reports', value: buyerCount, icon: Users },
+              { label: 'Seller Reports', value: sellerCount, icon: Building2 },
+            ].map((stat, i) => (
+              <Card key={i}>
+                <CardContent className="pt-4 pb-4 text-center">
+                  <stat.icon className="h-4 w-4 mx-auto mb-1.5 text-muted-foreground" />
+                  <p className="text-2xl font-serif font-bold">{stat.value}</p>
+                  <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-2">
+                {quickActions.map((action, i) => (
+                  <Link key={i} to={action.to}>
+                    <Button variant="outline" className="w-full justify-start gap-2 min-h-[44px]">
+                      <action.icon className={`h-4 w-4 ${action.color}`} />
+                      <span className="text-sm">{action.label}</span>
+                    </Button>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Recent Activity */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-accent" />
+                  Recent Activity
+                </CardTitle>
+                <Link to="/drafts">
+                  <Button variant="ghost" size="sm" className="text-xs">
+                    View All <ChevronRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {recentSessions.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">No reports yet. Create your first one!</p>
                 </div>
-                <CardTitle className="font-serif text-xl">{tier.name}</CardTitle>
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-3xl font-serif font-bold">{tier.price}</span>
-                  {tier.period && <span className="text-muted-foreground text-sm">{tier.period}</span>}
-                </div>
-                <CardDescription className="text-xs">{tier.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2.5">
-                  {tier.features.map((feature, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <span className="text-sm">{feature}</span>
+              ) : (
+                <div className="space-y-2">
+                  {recentSessions.map((s) => (
+                    <div key={s.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-secondary/50 transition-colors">
+                      <div className={`p-1.5 rounded-lg ${s.session_type === 'Seller' ? 'bg-primary/10' : 'bg-accent/10'}`}>
+                        {s.session_type === 'Seller' 
+                          ? <Building2 className="h-3.5 w-3.5 text-primary" /> 
+                          : <Users className="h-3.5 w-3.5 text-accent" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{s.client_name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {formatLocation(s.location)} • {s.session_type}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {(s.share_link_created || s.pdf_exported) && (
+                          <Badge variant="outline" className="text-[10px] px-1.5">Shared</Badge>
+                        )}
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(s.updated_at).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
-                <Button 
-                  className="w-full mt-4"
-                  variant={tier.highlight ? 'accent' : 'outline'}
-                  onClick={() => handleSelectTier(tier.name)}
-                >
-                  {hasBetaAccess ? 'Current Plan (Beta)' : `Choose ${tier.name}`}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Separator />
+        {/* Pro Features Summary */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Pro Features</CardTitle>
+              <CardDescription>
+                {hasBetaAccess ? 'All features unlocked with your beta access.' : 'Upgrade to unlock everything.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { icon: FileText, label: 'Unlimited Reports' },
+                  { icon: PenTool, label: 'Branded Exports' },
+                  { icon: Layers, label: 'Scenario Explorer' },
+                  { icon: BarChart3, label: 'AI Insights' },
+                  { icon: Palette, label: 'Custom Branding' },
+                  { icon: Share2, label: 'Client Hub' },
+                ].map((f, i) => (
+                  <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                    <f.icon className="h-3.5 w-3.5 text-accent" />
+                    <span className="text-xs">{f.label}</span>
+                    {hasBetaAccess && <span className="text-[10px] text-accent ml-auto">✓</span>}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        {/* Restore Purchases */}
-        <div className="text-center space-y-4">
+        {/* Restore & Legal */}
+        <div className="text-center space-y-4 pt-4">
           <Button 
             variant="outline" 
+            size="sm"
             onClick={handleRestorePurchases}
             disabled={isRestoring}
           >
             {isRestoring ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Checking...
-              </>
+              <><RefreshCw className="h-3 w-3 mr-1 animate-spin" /> Checking...</>
             ) : (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Restore Purchases
-              </>
+              <><RefreshCw className="h-3 w-3 mr-1" /> Restore Purchases</>
             )}
           </Button>
-          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-            If you've previously subscribed, tap here to restore your purchase.
-          </p>
+          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+            <Link to="/terms" className="hover:underline">Terms of Service</Link>
+            <span>•</span>
+            <Link to="/privacy" className="hover:underline">Privacy Policy</Link>
+          </div>
         </div>
-
-        {/* Legal links */}
-        <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-          <button className="hover:underline" onClick={() => navigate('/terms')}>Terms of Service</button>
-          <span>•</span>
-          <button className="hover:underline" onClick={() => navigate('/privacy')}>Privacy Policy</button>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }
