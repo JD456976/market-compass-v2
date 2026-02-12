@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, MessageSquare, Layers, Clock, ExternalLink, ArrowLeft } from 'lucide-react';
+import { FileText, MessageSquare, Layers, Clock, ExternalLink, ArrowLeft, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
+import { NotificationBell } from '@/components/NotificationBell';
+import { getBetaAccessSession } from '@/lib/betaAccess';
+import { isAllowedAdmin } from '@/lib/adminConfig';
 
 interface ClientReport {
   report_id: string;
@@ -23,16 +26,61 @@ export default function ClientDashboard() {
   const [reports, setReports] = useState<ClientReport[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Admin preview mode: ?preview=admin
+  const isAdminPreview = searchParams.get('preview') === 'admin';
+  const betaSession = getBetaAccessSession();
+  const isAdmin = isAdminPreview && betaSession?.email && isAllowedAdmin(betaSession.email);
 
   const viewerId = localStorage.getItem('mc_viewer_id') || '';
 
   useEffect(() => {
-    if (!viewerId) {
+    if (isAdmin) {
+      fetchAdminPreviewReports();
+    } else if (!viewerId) {
       setLoading(false);
       return;
+    } else {
+      fetchClientReports();
     }
-    fetchClientReports();
-  }, [viewerId]);
+  }, [viewerId, isAdmin]);
+
+  const fetchAdminPreviewReports = async () => {
+    try {
+      const { data: sessions } = await supabase
+        .from('sessions')
+        .select('id, client_name, session_type, location, share_token')
+        .eq('share_link_created', true)
+        .eq('share_token_revoked', false)
+        .order('updated_at', { ascending: false })
+        .limit(20);
+
+      if (!sessions) { setLoading(false); return; }
+
+      const reportIds = sessions.map(s => s.id);
+      const [{ data: messages }, { data: scenarios }] = await Promise.all([
+        supabase.from('report_messages').select('report_id, read_by_client_at').in('report_id', reportIds).eq('sender_role', 'agent'),
+        supabase.from('report_scenarios').select('report_id, reviewed_status').in('report_id', reportIds).eq('created_by_role', 'client'),
+      ]);
+
+      setReports(sessions.map(s => ({
+        report_id: s.id,
+        share_token: s.share_token || '',
+        client_name: s.client_name,
+        session_type: s.session_type,
+        location: s.location,
+        last_viewed: '',
+        unread_messages: messages?.filter(m => m.report_id === s.id && !m.read_by_client_at).length || 0,
+        scenario_count: scenarios?.filter(sc => sc.report_id === s.id).length || 0,
+        pending_reviews: scenarios?.filter(sc => sc.report_id === s.id && sc.reviewed_status === 'pending').length || 0,
+      })));
+    } catch (err) {
+      console.error('Failed to load admin preview reports:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchClientReports = async () => {
     try {
@@ -123,10 +171,21 @@ export default function ClientDashboard() {
           <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-serif font-bold">My Reports</h1>
-            <p className="text-sm text-muted-foreground">Reports shared with you by your agent</p>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-serif font-bold">My Reports</h1>
+              {isAdmin && (
+                <Badge variant="outline" className="text-[10px] border-accent/50 text-accent">
+                  <Shield className="h-2.5 w-2.5 mr-1" />
+                  Admin Preview
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {isAdmin ? 'Viewing client dashboard as admin' : 'Reports shared with you by your agent'}
+            </p>
           </div>
+          <NotificationBell role="client" viewerId={viewerId || undefined} />
         </div>
 
         {loading ? (

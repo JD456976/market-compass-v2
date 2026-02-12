@@ -9,8 +9,9 @@ import { motion } from 'framer-motion';
 import { 
   ArrowLeft, FileText, BarChart3, Share2, Sparkles, Users, Building2,
   PenTool, User, Palette, TrendingUp, Activity, RefreshCw, ChevronRight,
-  Layers, MessageSquare, Compass, CheckCircle2, AlertCircle, Clock
+  Layers, MessageSquare, Compass, CheckCircle2, AlertCircle, Clock, Eye
 } from 'lucide-react';
+import { NotificationBell } from '@/components/NotificationBell';
 import { getBetaAccessSession } from '@/lib/betaAccess';
 import { useSessions } from '@/hooks/useSessions';
 import { loadAgentProfile, AgentProfile } from '@/lib/agentProfile';
@@ -219,7 +220,7 @@ export default function Subscription() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-1">
               <div className="p-2 rounded-lg bg-accent/20">
                 <Sparkles className="h-5 w-5 text-accent" />
               </div>
@@ -228,6 +229,16 @@ export default function Subscription() {
                 <p className="text-sm text-primary-foreground/70">
                   {profile?.agent_name || 'Agent'} • {profile?.brokerage_name || 'Brokerage'}
                 </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <Link to="/my-reports?preview=admin">
+                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 min-h-[44px] min-w-[44px]" title="Preview Client Dashboard">
+                  <Eye className="h-5 w-5" />
+                </Button>
+              </Link>
+              <div className="[&_button]:text-primary-foreground/80 [&_button:hover]:text-primary-foreground">
+                <NotificationBell role="agent" />
               </div>
             </div>
           </div>
