@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { NotificationBell } from '@/components/NotificationBell';
 import { getBetaAccessSession } from '@/lib/betaAccess';
 import { isAllowedAdmin } from '@/lib/adminConfig';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 interface ClientReport {
   report_id: string;
@@ -36,6 +37,9 @@ export default function ClientDashboard() {
   const isAdmin = isAdminPreview && betaSession?.email && isAllowedAdmin(betaSession.email);
 
   const viewerId = localStorage.getItem('mc_viewer_id') || '';
+
+  const reportIds = useMemo(() => reports.map(r => r.report_id), [reports]);
+  usePushNotifications('client', reportIds);
 
   useEffect(() => {
     if (isAdmin) {

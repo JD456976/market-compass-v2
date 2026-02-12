@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2, Eye, Archive, ArchiveRestore, Search } from 'lucide-react';
+import { SkeletonList } from '@/components/ui/skeleton-card';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Session } from '@/types';
 import { useSharedSessions } from '@/hooks/useSessions';
 import { useBatchViewStats, useReportViewNotifications } from '@/hooks/useReportViewStats';
@@ -54,6 +56,9 @@ const SharedReports = () => {
   
   // Enable real-time notifications when reports are viewed
   useReportViewNotifications(reportIds);
+
+  // Enable push notifications for agent
+  usePushNotifications('agent', reportIds);
 
   const handleCopyLink = (session: Session) => {
     const url = `${window.location.origin}/share/${session.id}`;
@@ -353,10 +358,29 @@ const SharedReports = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading shared reports...</p>
+      <div className="min-h-screen bg-background">
+        <div className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center gap-3">
+              <Link to="/">
+                <Button variant="ghost" size="icon" className="rounded-full min-h-[44px] min-w-[44px]">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-accent/10">
+                  <Send className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-serif font-bold">Shared Reports</h1>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Loading...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="container mx-auto px-4 py-6 max-w-4xl">
+          <SkeletonList count={4} showBadge />
         </div>
       </div>
     );
