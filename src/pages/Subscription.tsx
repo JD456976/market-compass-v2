@@ -77,18 +77,17 @@ export default function Subscription() {
     setProfile(loadAgentProfile());
   }, []);
 
-  // Fetch recent client messages from report_messages
+  // Fetch recent message threads from report_messages
   useEffect(() => {
     const fetchData = async () => {
       setLoadingMessages(true);
       
-      // Fetch unread client messages
+      // Fetch all recent messages (both roles) to build conversation threads
       const { data: messages } = await supabase
         .from('report_messages')
-        .select('id, body, sender_id, created_at, report_id, read_by_agent_at')
-        .eq('sender_role', 'client')
+        .select('id, body, sender_id, sender_role, created_at, report_id, read_by_agent_at')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(50);
 
       // Fetch pending scenario submissions
       const { data: scenarios } = await supabase
@@ -99,10 +98,28 @@ export default function Subscription() {
         .order('submitted_at', { ascending: false })
         .limit(10);
 
+      // Build per-report threads: latest message + unread count from clients
+      const threadMap = new Map<string, { latestMsg: typeof messages extends (infer T)[] | null ? T : never; unreadFromClient: number }>();
+      if (messages) {
+        for (const m of messages) {
+          const existing = threadMap.get(m.report_id);
+          if (!existing) {
+            threadMap.set(m.report_id, {
+              latestMsg: m,
+              unreadFromClient: (m.sender_role === 'client' && !m.read_by_agent_at) ? 1 : 0,
+            });
+          } else {
+            if (m.sender_role === 'client' && !m.read_by_agent_at) {
+              existing.unreadFromClient++;
+            }
+          }
+        }
+      }
+
       // Enrich with session info
       const allReportIds = [
         ...new Set([
-          ...(messages?.map(m => m.report_id) || []),
+          ...(Array.from(threadMap.keys())),
           ...(scenarios?.map(s => s.report_id) || []),
         ])
       ];
@@ -115,14 +132,23 @@ export default function Subscription() {
 
         const sessionMap = new Map(relatedSessions?.map(s => [s.id, s]) || []);
 
-        if (messages) {
-          setClientMessages(messages.map(m => ({
-            ...m,
-            client_name: sessionMap.get(m.report_id)?.client_name,
-            session_type: sessionMap.get(m.report_id)?.session_type,
-            share_token: sessionMap.get(m.report_id)?.share_token,
-          })));
+        // Build client messages list from threads
+        const threadList: ClientMessage[] = [];
+        for (const [reportId, thread] of threadMap) {
+          const m = thread.latestMsg;
+          threadList.push({
+            id: m.id,
+            body: m.body,
+            sender_id: m.sender_role === 'agent' ? 'You' : (m.sender_id || 'Client'),
+            created_at: m.created_at,
+            report_id: reportId,
+            read_by_agent_at: thread.unreadFromClient > 0 ? null : 'read',
+            client_name: sessionMap.get(reportId)?.client_name,
+            session_type: sessionMap.get(reportId)?.session_type,
+            share_token: sessionMap.get(reportId)?.share_token,
+          });
         }
+        setClientMessages(threadList);
 
         if (scenarios) {
           setPendingScenarios(scenarios.map(s => ({
@@ -331,14 +357,14 @@ export default function Subscription() {
           </Card>
         </motion.div>
 
-        {/* Client Messages */}
+        {/* Conversations */}
         {clientMessages.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
             <Card className="border-accent/20">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-accent" />
-                  Client Messages
+                  Conversations
                   {unreadCount > 0 && (
                     <Badge variant="secondary" className="bg-accent/10 text-accent-foreground text-[10px] ml-1">
                       {unreadCount} unread
@@ -360,19 +386,21 @@ export default function Subscription() {
                     >
                       <div className={`flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors border ${!msg.read_by_agent_at ? 'border-accent/30 bg-accent/5' : 'border-border/50'}`}>
                         <div className="p-1.5 rounded-full bg-accent/10 shrink-0 mt-0.5">
-                          <User className="h-3.5 w-3.5 text-accent" />
+                          <MessageSquare className="h-3.5 w-3.5 text-accent" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">{msg.sender_id || 'Client'}</span>
-                            <span className="text-[10px] text-muted-foreground">
-                              on {msg.client_name || 'Report'}
-                            </span>
+                            <span className="text-sm font-medium">{msg.client_name || 'Report'}</span>
                             {!msg.read_by_agent_at && (
-                              <span className="h-2 w-2 rounded-full bg-accent shrink-0" />
+                              <Badge variant="secondary" className="bg-accent/10 text-accent-foreground text-[9px] px-1.5 py-0">
+                                new
+                              </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground truncate mt-0.5">{msg.body}</p>
+                          <p className="text-sm text-muted-foreground truncate mt-0.5">
+                            <span className="font-medium text-foreground/70">{msg.sender_id}: </span>
+                            {msg.body}
+                          </p>
                           <span className="text-[10px] text-muted-foreground">
                             {new Date(msg.created_at).toLocaleDateString()} • {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
