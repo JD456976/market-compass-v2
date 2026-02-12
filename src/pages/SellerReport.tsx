@@ -54,6 +54,11 @@ import {
 import { RotateCcw } from 'lucide-react';
 import { AnalysisMethodology } from '@/components/AnalysisMethodology';
 import { DraftStatusIndicator } from '@/components/DraftStatusIndicator';
+import { HistoricalTrends } from '@/components/report/HistoricalTrends';
+import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore';
+import { SellerCompetitiveAnalysis } from '@/components/report/CompetitiveAnalysis';
+import { SuccessPrediction } from '@/components/report/SuccessPrediction';
+import { AIInsights } from '@/components/report/AIInsights';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -459,6 +464,36 @@ const SellerReport = () => {
               </p>
             )}
 
+            {/* Market Confidence Score */}
+            {marketSnapshot && (
+              <div className="flex justify-center">
+                <MarketConfidenceScore
+                  snapshot={marketSnapshot.snapshot}
+                  isGenericBaseline={marketSnapshot.isGenericBaseline}
+                  session={session}
+                />
+              </div>
+            )}
+
+            {/* Historical Trends & Market Context */}
+            {marketSnapshot && (
+              <HistoricalTrends
+                snapshot={marketSnapshot.snapshot}
+                isGenericBaseline={marketSnapshot.isGenericBaseline}
+                isClientMode={isClientMode}
+              />
+            )}
+
+            {/* Success Prediction */}
+            {marketSnapshot && (
+              <SuccessPrediction
+                type="seller"
+                likelihood={likelihood30}
+                session={session}
+                snapshot={marketSnapshot.snapshot}
+              />
+            )}
+
             {/* Market Snapshot */}
             <Card className="pdf-section pdf-avoid-break overflow-hidden">
               <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
@@ -619,6 +654,26 @@ const SellerReport = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Competitive Analysis */}
+            {marketSnapshot && (
+              <SellerCompetitiveAnalysis
+                session={session}
+                snapshot={marketSnapshot.snapshot}
+                isGenericBaseline={marketSnapshot.isGenericBaseline}
+              />
+            )}
+
+            {/* AI-Powered Insights */}
+            {marketSnapshot && (
+              <AIInsights
+                session={session}
+                snapshot={marketSnapshot.snapshot}
+                isGenericBaseline={marketSnapshot.isGenericBaseline}
+                likelihood={likelihood30}
+                reportType="seller"
+              />
+            )}
 
             {/* How This Analysis Is Formed - Collapsible */}
             <AnalysisMethodology />
