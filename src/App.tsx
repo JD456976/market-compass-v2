@@ -28,12 +28,15 @@ import Templates from "./pages/Templates";
 import Admin from "./pages/Admin";
 import BetaAccess from "./pages/BetaAccess";
 import Subscription from "./pages/Subscription";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import AccountSettings from "./pages/AccountSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 // Routes that bypass beta gate (shared links, admin, and beta access page itself)
-const PUBLIC_ROUTES = ['/share/', '/admin', '/beta'];
+const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms'];
 
 function AppRoutes() {
   const location = useLocation();
@@ -64,6 +67,9 @@ function AppRoutes() {
       <Route path="/agent-profile" element={<AgentProfile />} />
       <Route path="/templates" element={<Templates />} />
       <Route path="/subscription" element={<Subscription />} />
+      <Route path="/settings" element={<AccountSettings />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/share/:sessionId" element={<SharedReport />} />
       <Route path="/share/compare" element={<SharedComparisonReport />} />

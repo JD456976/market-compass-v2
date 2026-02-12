@@ -284,6 +284,21 @@ const SellerFlow = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   });
 
+  // Auto-save draft every 30 seconds when client name exists
+  useEffect(() => {
+    if (!clientName.trim()) return;
+    const timer = setInterval(async () => {
+      try {
+        const session = buildSession();
+        await upsertSessionAsync(session);
+        console.log('Auto-saved draft');
+      } catch {
+        // Silent fail for auto-save
+      }
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [clientName, location, propertyType, condition, selectedScenarioId, listPrice, timeframe, strategy, agentNotes, clientNotes, draftId]);
+
   const selectedScenario = selectedScenarioId ? getMarketScenarioById(selectedScenarioId) : undefined;
 
   const slideVariants = {

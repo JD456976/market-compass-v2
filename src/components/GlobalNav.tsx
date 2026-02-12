@@ -6,7 +6,7 @@ import { isAllowedAdmin } from '@/lib/adminConfig';
 import { getBetaAccessSession } from '@/lib/betaAccess';
 import { 
   Home, FolderOpen, Send, Settings, Compass, Sparkles, Menu,
-  TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight
+  TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield, Settings as SettingsIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
@@ -68,7 +68,9 @@ const drawerLinks: DrawerLink[] = [
   { to: '/market-data', label: 'Market Data', icon: <Database className="h-5 w-5" /> },
   { to: '/agent-profile', label: 'Agent Profile', icon: <User className="h-5 w-5" /> },
   { to: '/methodology', label: 'Data & Methodology', icon: <BookOpen className="h-5 w-5" /> },
+  { to: '/settings', label: 'Account Settings', icon: <SettingsIcon className="h-5 w-5" /> },
   { to: '/subscription', label: 'Pro', icon: <Sparkles className="h-5 w-5" /> },
+  { to: '/privacy', label: 'Privacy Policy', icon: <Shield className="h-5 w-5" /> },
   { to: '/admin', label: 'Admin', icon: <Settings className="h-5 w-5" />, adminOnly: true },
 ];
 
@@ -89,6 +91,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
       <nav 
         className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        aria-label="Main navigation"
       >
         <div className="flex items-center justify-around h-16">
           <NavLink
@@ -118,6 +121,8 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
           </NavLink>
           <button
             onClick={() => setDrawerOpen(true)}
+            aria-label="Open menu"
+            aria-expanded={drawerOpen}
             className={cn(
               "flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] transition-colors",
               drawerOpen ? "text-primary" : "text-muted-foreground"
@@ -159,6 +164,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
                 </div>
                 <button
                   onClick={() => setDrawerOpen(false)}
+                  aria-label="Close menu"
                   className="p-2 rounded-full hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   <X className="h-5 w-5" />
