@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2, Eye, Archive, ArchiveRestore, Search } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2, Eye, Archive, ArchiveRestore, Search, Trash2 } from 'lucide-react';
 import { SkeletonList } from '@/components/ui/skeleton-card';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Session } from '@/types';
@@ -299,15 +299,26 @@ const SharedReports = () => {
                   </Button>
                 </Link>
                 {isArchived ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => { e.stopPropagation(); handleUnarchive(session); }}
-                    title="Restore"
-                    className="min-h-[44px] min-w-[44px]"
-                  >
-                    <ArchiveRestore className="h-4 w-4" />
-                  </Button>
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => { e.stopPropagation(); handleUnarchive(session); }}
+                      title="Restore"
+                      className="min-h-[44px] min-w-[44px]"
+                    >
+                      <ArchiveRestore className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteArchived(session); }}
+                      title="Delete permanently"
+                      className="min-h-[44px] min-w-[44px] text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
                 ) : (
                   <Button
                     variant="ghost"

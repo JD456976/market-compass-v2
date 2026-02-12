@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, MessageSquare, Layers, Clock, ExternalLink, ArrowLeft, Shield, GitCompare } from 'lucide-react';
+import { FileText, MessageSquare, Layers, Clock, ExternalLink, ArrowLeft, Shield, GitCompare, Check } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { SkeletonList } from '@/components/ui/skeleton-card';
 import { EmptyClientReports } from '@/components/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +29,8 @@ interface ClientReport {
 export default function ClientDashboard() {
   const [reports, setReports] = useState<ClientReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -196,16 +199,29 @@ export default function ClientDashboard() {
 
         {/* Compare Button */}
         {reports.length >= 2 && (
-          <div className="mb-4">
+          <div className="mb-4 flex items-center gap-2">
             <Button
-              variant="outline"
+              variant={compareMode ? 'default' : 'outline'}
               size="sm"
-              className="w-full sm:w-auto"
-              onClick={() => navigate('/my-reports/compare')}
+              onClick={() => {
+                setCompareMode(!compareMode);
+                setSelectedIds([]);
+              }}
             >
               <GitCompare className="h-4 w-4 mr-2" />
-              Compare Properties
+              {compareMode ? 'Cancel' : 'Compare Properties'}
             </Button>
+            {compareMode && selectedIds.length >= 2 && (
+              <Button
+                size="sm"
+                onClick={() => navigate(`/my-reports/compare?ids=${selectedIds.join(',')}`)}
+              >
+                Compare {selectedIds.length} Reports
+              </Button>
+            )}
+            {compareMode && (
+              <span className="text-xs text-muted-foreground">{selectedIds.length}/3 selected</span>
+            )}
           </div>
         )}
 
@@ -218,11 +234,38 @@ export default function ClientDashboard() {
             {reports.map(report => (
               <Card
                 key={report.report_id}
-                className="cursor-pointer hover:border-accent/40 transition-colors"
-                onClick={() => navigate(`/share/${report.report_id}`)}
+                className={`cursor-pointer transition-colors ${
+                  compareMode && selectedIds.includes(report.report_id) 
+                    ? 'border-accent ring-1 ring-accent/30' 
+                    : 'hover:border-accent/40'
+                }`}
+                onClick={() => {
+                  if (compareMode) {
+                    setSelectedIds(prev => {
+                      if (prev.includes(report.report_id)) return prev.filter(x => x !== report.report_id);
+                      if (prev.length >= 3) return [...prev.slice(1), report.report_id];
+                      return [...prev, report.report_id];
+                    });
+                  } else {
+                    navigate(`/share/${report.report_id}`);
+                  }
+                }}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-3">
+                    {compareMode && (
+                      <Checkbox
+                        checked={selectedIds.includes(report.report_id)}
+                        className="mt-1 shrink-0"
+                        onCheckedChange={() => {
+                          setSelectedIds(prev => {
+                            if (prev.includes(report.report_id)) return prev.filter(x => x !== report.report_id);
+                            if (prev.length >= 3) return [...prev.slice(1), report.report_id];
+                            return [...prev, report.report_id];
+                          });
+                        }}
+                      />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-serif font-semibold truncate">{report.client_name}</h3>
@@ -256,7 +299,7 @@ export default function ClientDashboard() {
                           Pending
                         </Badge>
                       )}
-                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      {!compareMode && <ExternalLink className="h-4 w-4 text-muted-foreground" />}
                     </div>
                   </div>
                 </CardContent>
