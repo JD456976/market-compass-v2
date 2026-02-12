@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_branding: {
+        Row: {
+          accent_color: string | null
+          created_at: string
+          footer_text: string | null
+          headshot_url: string | null
+          id: string
+          logo_url: string | null
+          primary_color: string | null
+          report_template: string | null
+          social_links: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accent_color?: string | null
+          created_at?: string
+          footer_text?: string | null
+          headshot_url?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          report_template?: string | null
+          social_links?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accent_color?: string | null
+          created_at?: string
+          footer_text?: string | null
+          headshot_url?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          report_template?: string | null
+          social_links?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       beta_access_codes: {
         Row: {
           code: string
@@ -330,6 +372,36 @@ export type Database = {
           suspended_at?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      report_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating: string
+          report_id: string
+          share_token: string
+          viewer_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: string
+          report_id: string
+          share_token: string
+          viewer_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: string
+          report_id?: string
+          share_token?: string
+          viewer_id?: string
         }
         Relationships: []
       }
