@@ -59,6 +59,11 @@ import { DraftStatusIndicator } from '@/components/DraftStatusIndicator';
 import { ScenarioExplorer, ScenarioExplorerCard } from '@/components/ScenarioExplorer';
 import { openScenarioExplorer } from '@/lib/scenarioExplorerEvents';
 import { BuyerInputs } from '@/types';
+import { HistoricalTrends } from '@/components/report/HistoricalTrends';
+import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore';
+import { BuyerCompetitiveAnalysis } from '@/components/report/CompetitiveAnalysis';
+import { SuccessPrediction } from '@/components/report/SuccessPrediction';
+import { AIInsights } from '@/components/report/AIInsights';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -534,6 +539,36 @@ const BuyerReport = () => {
               </p>
             )}
 
+            {/* Market Confidence Score */}
+            {marketSnapshot && (
+              <div className="flex justify-center">
+                <MarketConfidenceScore
+                  snapshot={marketSnapshot.snapshot}
+                  isGenericBaseline={marketSnapshot.isGenericBaseline}
+                  session={session}
+                />
+              </div>
+            )}
+
+            {/* Historical Trends & Market Context */}
+            {marketSnapshot && (
+              <HistoricalTrends
+                snapshot={marketSnapshot.snapshot}
+                isGenericBaseline={marketSnapshot.isGenericBaseline}
+                isClientMode={isClientMode}
+              />
+            )}
+
+            {/* Success Prediction */}
+            {marketSnapshot && (
+              <SuccessPrediction
+                type="buyer"
+                likelihood={acceptanceLikelihood}
+                session={session}
+                snapshot={marketSnapshot.snapshot}
+              />
+            )}
+
             {/* Acceptance Likelihood */}
             <Card className="pdf-section pdf-avoid-break overflow-hidden">
               <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
@@ -669,6 +704,27 @@ const BuyerReport = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Competitive Analysis */}
+            {marketSnapshot && (
+              <BuyerCompetitiveAnalysis
+                session={session}
+                snapshot={marketSnapshot.snapshot}
+                isGenericBaseline={marketSnapshot.isGenericBaseline}
+                acceptanceLikelihood={acceptanceLikelihood}
+              />
+            )}
+
+            {/* AI-Powered Insights */}
+            {marketSnapshot && (
+              <AIInsights
+                session={session}
+                snapshot={marketSnapshot.snapshot}
+                isGenericBaseline={marketSnapshot.isGenericBaseline}
+                likelihood={acceptanceLikelihood}
+                reportType="buyer"
+              />
+            )}
 
             {/* How This Analysis Is Formed - Collapsible */}
             <AnalysisMethodology />
