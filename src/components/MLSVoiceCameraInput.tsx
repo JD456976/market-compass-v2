@@ -31,6 +31,8 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
 
+  const finalTranscriptRef = useRef('');
+
   // Speech-to-text using Web Speech API
   const startRecording = useCallback(async () => {
     try {
@@ -49,30 +51,38 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
       recognition.interimResults = true;
       recognition.lang = 'en-US';
 
-      let finalTranscript = '';
+      finalTranscriptRef.current = '';
 
       recognition.onresult = (event: any) => {
         let interim = '';
+        let finalText = finalTranscriptRef.current;
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const t = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            finalTranscript += t + ' ';
+            finalText += t + ' ';
           } else {
             interim = t;
           }
         }
-        setTranscript(finalTranscript + interim);
+        finalTranscriptRef.current = finalText;
+        setTranscript(finalText + interim);
       };
 
       recognition.onerror = (event: any) => {
+        // "no-speech" and "aborted" are expected when user stops quickly
+        if (event.error === 'no-speech' || event.error === 'aborted') {
+          console.log('Speech recognition ended:', event.error);
+          return;
+        }
         console.error('Speech recognition error:', event.error);
         setIsRecording(false);
       };
 
       recognition.onend = () => {
         setIsRecording(false);
-        if (finalTranscript.trim()) {
-          processTextInput(finalTranscript.trim());
+        const text = finalTranscriptRef.current.trim();
+        if (text) {
+          processTextInput(text);
         }
       };
 
