@@ -3,12 +3,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import { ClientModeProvider } from "@/contexts/ClientModeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BetaAccessGate } from "@/components/BetaAccessGate";
 import { GlobalNav, MobileNavSpacer } from "@/components/GlobalNav";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { PageTransition } from "@/components/PageTransition";
 import Index from "./pages/Index";
 import MarketProfiles from "./pages/MarketProfiles";
 import MarketScenarios from "./pages/MarketScenarios";
@@ -39,6 +41,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import PublicMarketTrends from "./pages/PublicMarketTrends";
 import ClientDashboard from "./pages/ClientDashboard";
+import ClientPropertyComparison from "./pages/ClientPropertyComparison";
 
 const queryClient = new QueryClient();
 
@@ -51,40 +54,45 @@ function AppRoutes() {
   const isPublicRoute = PUBLIC_ROUTES.some(route => location.pathname.startsWith(route));
 
   const routes = (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/beta" element={<BetaAccess />} />
-      <Route path="/market-profiles" element={<MarketProfiles />} />
-      <Route path="/market-scenarios" element={<MarketScenarios />} />
-      <Route path="/market-data" element={<MarketData />} />
-      <Route path="/methodology" element={<Methodology />} />
-      <Route path="/seller" element={<SellerFlow />} />
-      <Route path="/seller/report" element={<SellerReport />} />
-      <Route path="/buyer" element={<BuyerFlow />} />
-      <Route path="/buyer/report" element={<BuyerReport />} />
-      <Route path="/drafts" element={<DraftAnalyses />} />
-      <Route path="/saved-sessions" element={<DraftAnalyses />} />
-      <Route path="/shared-reports" element={<SharedReports />} />
-      <Route path="/client-deliverables" element={<SharedReports />} />
-      <Route path="/compare" element={<CompareSessions />} />
-      <Route path="/compare/client" element={<ClientComparisonReport />} />
-      <Route path="/agent-profile" element={<AgentProfile />} />
-      <Route path="/templates" element={<Templates />} />
-      <Route path="/subscription" element={<Subscription />} />
-      <Route path="/settings" element={<AccountSettings />} />
-      <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/terms" element={<TermsOfService />} />
-      <Route path="/admin" element={<Admin />} />
-      <Route path="/share/:sessionId" element={<SharedReport />} />
-      <Route path="/share/compare" element={<SharedComparisonReport />} />
-      <Route path="/market-trends" element={<PublicMarketTrends />} />
-      <Route path="/my-reports" element={<ClientDashboard />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <AnimatePresence mode="wait">
+      <PageTransition key={location.pathname}>
+        <Routes location={location}>
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/beta" element={<BetaAccess />} />
+          <Route path="/market-profiles" element={<MarketProfiles />} />
+          <Route path="/market-scenarios" element={<MarketScenarios />} />
+          <Route path="/market-data" element={<MarketData />} />
+          <Route path="/methodology" element={<Methodology />} />
+          <Route path="/seller" element={<SellerFlow />} />
+          <Route path="/seller/report" element={<SellerReport />} />
+          <Route path="/buyer" element={<BuyerFlow />} />
+          <Route path="/buyer/report" element={<BuyerReport />} />
+          <Route path="/drafts" element={<DraftAnalyses />} />
+          <Route path="/saved-sessions" element={<DraftAnalyses />} />
+          <Route path="/shared-reports" element={<SharedReports />} />
+          <Route path="/client-deliverables" element={<SharedReports />} />
+          <Route path="/compare" element={<CompareSessions />} />
+          <Route path="/compare/client" element={<ClientComparisonReport />} />
+          <Route path="/agent-profile" element={<AgentProfile />} />
+          <Route path="/templates" element={<Templates />} />
+          <Route path="/subscription" element={<Subscription />} />
+          <Route path="/settings" element={<AccountSettings />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/share/:sessionId" element={<SharedReport />} />
+          <Route path="/share/compare" element={<SharedComparisonReport />} />
+          <Route path="/market-trends" element={<PublicMarketTrends />} />
+          <Route path="/my-reports" element={<ClientDashboard />} />
+          <Route path="/my-reports/compare" element={<ClientPropertyComparison />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </PageTransition>
+    </AnimatePresence>
   );
 
   if (isPublicRoute) {

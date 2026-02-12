@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, MessageSquare, Layers, Clock, ExternalLink, ArrowLeft, Shield } from 'lucide-react';
+import { FileText, MessageSquare, Layers, Clock, ExternalLink, ArrowLeft, Shield, GitCompare } from 'lucide-react';
+import { SkeletonList } from '@/components/ui/skeleton-card';
+import { EmptyClientReports } from '@/components/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -188,27 +190,25 @@ export default function ClientDashboard() {
           <NotificationBell role="client" viewerId={viewerId || undefined} />
         </div>
 
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-6">
-                  <div className="h-4 bg-muted rounded w-1/3 mb-2" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
-                </CardContent>
-              </Card>
-            ))}
+        {/* Compare Button */}
+        {reports.length >= 2 && (
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-auto"
+              onClick={() => navigate('/my-reports/compare')}
+            >
+              <GitCompare className="h-4 w-4 mr-2" />
+              Compare Properties
+            </Button>
           </div>
+        )}
+
+        {loading ? (
+          <SkeletonList count={3} showBadge />
         ) : reports.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">No reports found</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Reports shared with you by your agent will appear here.
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyClientReports />
         ) : (
           <div className="space-y-3">
             {reports.map(report => (

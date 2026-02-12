@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Eye, Copy, Building2, Users, FileEdit, Calendar, GitCompare, Check, X, Loader2, Search } from 'lucide-react';
+import { SkeletonList } from '@/components/ui/skeleton-card';
+import { EmptyDrafts } from '@/components/EmptyState';
 import { Session } from '@/types';
 import { useDraftSessions } from '@/hooks/useSessions';
 import { useToast } from '@/hooks/use-toast';
@@ -113,10 +115,9 @@ const DraftAnalyses = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading drafts...</p>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8 max-w-3xl">
+          <SkeletonList count={4} showBadge />
         </div>
       </div>
     );
