@@ -59,6 +59,9 @@ import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore
 import { SellerCompetitiveAnalysis } from '@/components/report/CompetitiveAnalysis';
 import { SuccessPrediction } from '@/components/report/SuccessPrediction';
 import { AIInsights } from '@/components/report/AIInsights';
+import { ReportWatermark } from '@/components/report/ReportWatermark';
+import { ViewStatsPanel } from '@/components/report/ViewStatsPanel';
+import { EducationalTooltip } from '@/components/report/EducationalTooltip';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -408,7 +411,7 @@ const SellerReport = () => {
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 likelihood-cards-mobile">
                   <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">List Price</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1"><EducationalTooltip termKey="listPrice">List Price</EducationalTooltip></p>
                     <p className="text-base sm:text-xl font-serif font-bold break-words">{formatCurrency(inputs.seller_selected_list_price)}</p>
                   </div>
                   <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
@@ -683,7 +686,21 @@ const SellerReport = () => {
               <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
               <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
             </div>
+
+            {/* Report Watermark */}
+            <ReportWatermark
+              reportId={session.id}
+              createdAt={session.created_at}
+              updatedAt={session.updated_at}
+              isPdfExported={session.pdf_exported ?? false}
+              isShareLinkCreated={session.share_link_created ?? false}
+            />
           </div>
+
+          {/* View Stats - Agent Only, Outside PDF export */}
+          {!isClientMode && session.share_link_created && (
+            <ViewStatsPanel reportId={session.id} />
+          )}
 
           {/* Actions - OUTSIDE report-export container */}
           <div className="flex flex-wrap gap-3 pt-4 report-actions">

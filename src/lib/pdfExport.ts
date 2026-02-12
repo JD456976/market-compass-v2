@@ -227,14 +227,22 @@ export async function exportReportToPdf(
     }
 
     // Add footers to all pages
+    const reportShortId = element.closest('[id]')?.id || elementId;
+    const reportDate = new Date().toISOString().split('T')[0];
+    
     for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
       pdf.setPage(pageNum);
       const footerY = pageHeight - margin;
       
-      // Page number
+      // Page number and watermark
       pdf.setFontSize(9);
       pdf.setTextColor(100, 100, 100);
-      pdf.text(`Page ${pageNum} of ${totalPages}`, pageWidth / 2, footerY - 10, { align: 'center' });
+      pdf.text(`Page ${pageNum} of ${totalPages}`, pageWidth / 2, footerY - 12, { align: 'center' });
+      
+      // Watermark line: report ID, version, date
+      pdf.setFontSize(7);
+      pdf.setTextColor(160, 160, 160);
+      pdf.text(`Report ID: ${reportShortId.substring(0, 8).toUpperCase()} • Generated: ${reportDate} • ${agentProfile.agent_name}`, pageWidth / 2, footerY - 8, { align: 'center' });
       
       // Disclaimer
       pdf.setFontSize(6);

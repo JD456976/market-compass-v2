@@ -64,6 +64,9 @@ import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore
 import { BuyerCompetitiveAnalysis } from '@/components/report/CompetitiveAnalysis';
 import { SuccessPrediction } from '@/components/report/SuccessPrediction';
 import { AIInsights } from '@/components/report/AIInsights';
+import { ReportWatermark } from '@/components/report/ReportWatermark';
+import { ViewStatsPanel } from '@/components/report/ViewStatsPanel';
+import { EducationalTooltip } from '@/components/report/EducationalTooltip';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -470,7 +473,7 @@ const BuyerReport = () => {
                     <p className="text-base sm:text-lg font-serif font-bold break-words">{formatCurrency(inputs.offer_price)}</p>
                   </div>
                   <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Financing</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1"><EducationalTooltip termKey="financing">Financing</EducationalTooltip></p>
                     <p className="text-base sm:text-lg font-serif font-bold">{inputs.financing_type}</p>
                   </div>
                   {/* Hide Down Payment for Cash offers */}
@@ -487,7 +490,7 @@ const BuyerReport = () => {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="p-3 sm:p-4 rounded-xl bg-muted/50">
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Contingencies</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1"><EducationalTooltip termKey="contingency">Contingencies</EducationalTooltip></p>
                     <p className="font-medium text-sm sm:text-base contingencies-list">{inputs.contingencies.length > 0 ? inputs.contingencies.join(', ') : 'None'}</p>
                   </div>
                   <div className="p-3 sm:p-4 rounded-xl bg-muted/50">
@@ -734,7 +737,21 @@ const BuyerReport = () => {
               <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
               <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
             </div>
+
+            {/* Report Watermark */}
+            <ReportWatermark
+              reportId={session.id}
+              createdAt={session.created_at}
+              updatedAt={session.updated_at}
+              isPdfExported={session.pdf_exported ?? false}
+              isShareLinkCreated={session.share_link_created ?? false}
+            />
           </div>
+
+          {/* View Stats - Agent Only, Outside PDF export */}
+          {!isClientMode && session.share_link_created && (
+            <ViewStatsPanel reportId={session.id} />
+          )}
 
           {/* Actions - OUTSIDE report-export container */}
           <div className="flex flex-wrap gap-3 pt-4 report-actions">
