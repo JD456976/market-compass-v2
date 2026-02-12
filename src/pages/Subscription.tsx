@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,15 @@ interface PendingScenario {
   client_name?: string;
 }
 
+interface AnalyticsData {
+  totalViews: number;
+  uniqueViewers: number;
+  feedbackCount: number;
+  messageCount: number;
+  scenarioCount: number;
+  viewsByReport: { report_id: string; client_name: string; views: number }[];
+}
+
 export default function Subscription() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -50,6 +59,7 @@ export default function Subscription() {
   const [clientMessages, setClientMessages] = useState<ClientMessage[]>([]);
   const [pendingScenarios, setPendingScenarios] = useState<PendingScenario[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   
   const session = getBetaAccessSession();
   const hasBetaAccess = !!session;
@@ -116,6 +126,44 @@ export default function Subscription() {
     };
     fetchData();
   }, []);
+
+  // Fetch analytics data
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      const [viewsRes, feedbackRes, msgsRes, scenariosRes] = await Promise.all([
+        supabase.from('shared_report_views').select('report_id, viewer_id'),
+        supabase.from('report_feedback').select('id'),
+        supabase.from('report_messages').select('id'),
+        supabase.from('report_scenarios').select('id'),
+      ]);
+
+      const views = viewsRes.data || [];
+      const uniqueViewers = new Set(views.map(v => v.viewer_id)).size;
+
+      // Count views per report
+      const viewMap = new Map<string, number>();
+      views.forEach(v => viewMap.set(v.report_id, (viewMap.get(v.report_id) || 0) + 1));
+
+      // Map to session names
+      const viewsByReport = Array.from(viewMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([report_id, viewCount]) => {
+          const s = sessions.find(sess => sess.id === report_id);
+          return { report_id, client_name: s?.client_name || 'Unknown', views: viewCount };
+        });
+
+      setAnalytics({
+        totalViews: views.length,
+        uniqueViewers,
+        feedbackCount: feedbackRes.data?.length || 0,
+        messageCount: msgsRes.data?.length || 0,
+        scenarioCount: scenariosRes.data?.length || 0,
+        viewsByReport,
+      });
+    };
+    if (sessions.length > 0) fetchAnalytics();
+  }, [sessions]);
 
   const handleRestorePurchases = async () => {
     setIsRestoring(true);
@@ -428,6 +476,57 @@ export default function Subscription() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Analytics & Engagement */}
+        {analytics && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-accent" />
+                  Analytics & Engagement
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: 'Report Views', value: analytics.totalViews },
+                    { label: 'Unique Viewers', value: analytics.uniqueViewers },
+                    { label: 'Client Feedback', value: analytics.feedbackCount },
+                  ].map((stat, i) => (
+                    <div key={i} className="text-center p-2 rounded-lg bg-secondary/30">
+                      <p className="text-xl font-serif font-bold">{stat.value}</p>
+                      <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center p-2 rounded-lg bg-secondary/30">
+                    <p className="text-lg font-serif font-bold">{analytics.messageCount}</p>
+                    <p className="text-[10px] text-muted-foreground">Messages</p>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-secondary/30">
+                    <p className="text-lg font-serif font-bold">{analytics.scenarioCount}</p>
+                    <p className="text-[10px] text-muted-foreground">Scenarios Submitted</p>
+                  </div>
+                </div>
+                {analytics.viewsByReport.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Most Viewed Reports</p>
+                    <div className="space-y-1.5">
+                      {analytics.viewsByReport.map((r, i) => (
+                        <div key={r.report_id} className="flex items-center justify-between text-xs p-2 rounded-lg bg-secondary/20">
+                          <span className="truncate flex-1">{r.client_name}</span>
+                          <span className="text-muted-foreground shrink-0 ml-2">{r.views} view{r.views > 1 ? 's' : ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Pro Features Summary */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>

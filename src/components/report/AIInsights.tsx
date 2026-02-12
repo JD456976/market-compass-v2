@@ -106,7 +106,7 @@ export function AIInsights({ session, snapshot, isGenericBaseline, likelihood, r
                 <Sparkles className="h-5 w-5 text-accent" />
                 AI-Powered Insights
               </CardTitle>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 pdf-exclude">
                 {hasFetched && !isLoading && (
                   <Button
                     variant="ghost"
@@ -150,6 +150,12 @@ export function AIInsights({ session, snapshot, isGenericBaseline, likelihood, r
                   </div>
                 ))}
               </div>
+            )}
+
+            {!isLoading && !error && insights.length === 0 && (
+              <p className="text-xs text-muted-foreground italic p-3">
+                Expand this section to generate AI insights for this report.
+              </p>
             )}
 
             <p className="text-[10px] text-muted-foreground italic">
