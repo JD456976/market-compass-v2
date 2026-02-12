@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { ArrowLeft, ArrowRight, Building2, Home, Sparkles, DollarSign, RotateCcw, Check, FileText, ClipboardList, Pencil, Save, Loader2 } from 'lucide-react';
+import { MLSVoiceCameraInput } from '@/components/MLSVoiceCameraInput';
 import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference } from '@/types';
 import { generateId } from '@/lib/storage';
 import { upsertSessionAsync } from '@/lib/storage';
@@ -388,6 +389,7 @@ const SellerFlow = () => {
           >
             {/* Step 0: Property & Client */}
             {step === 0 && (
+              <>
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -527,6 +529,19 @@ const SellerFlow = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Smart Input - Voice & Camera */}
+              <MLSVoiceCameraInput
+                reportType="seller"
+                onDataExtracted={(data) => {
+                  if (data.location) setLocation(data.location);
+                  if (data.propertyType) setPropertyType(data.propertyType as PropertyType);
+                  if (data.condition) setCondition(data.condition as Condition);
+                  if (data.listPrice) setListPrice(String(data.listPrice));
+                  if (data.notes) setClientNotes(prev => prev ? `${prev}\n${data.notes}` : data.notes || '');
+                }}
+              />
+              </>
             )}
 
             {/* Step 1: Listing Strategy */}

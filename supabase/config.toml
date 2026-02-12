@@ -1,1 +1,7 @@
 project_id = "zjxikfcjatjzbhkzciji"
+
+[functions.ai-report-insights]
+verify_jwt = false
+
+[functions.parse-mls-input]
+verify_jwt = false
