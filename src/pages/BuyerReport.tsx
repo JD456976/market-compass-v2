@@ -66,6 +66,7 @@ import { SuccessPrediction } from '@/components/report/SuccessPrediction';
 import { AIInsights } from '@/components/report/AIInsights';
 import { ReportWatermark } from '@/components/report/ReportWatermark';
 import { ViewStatsPanel } from '@/components/report/ViewStatsPanel';
+import { ClientActivityTimeline } from '@/components/report/ClientActivityTimeline';
 import { EducationalTooltip } from '@/components/report/EducationalTooltip';
 import { CommunicationHub } from '@/components/report/CommunicationHub';
 import { ShareableInsight, generateInsights } from '@/components/report/ShareableInsight';
@@ -767,6 +768,11 @@ const BuyerReport = () => {
           {/* View Stats - Agent Only, Outside PDF export */}
           {!isClientMode && session.share_link_created && (
             <ViewStatsPanel reportId={session.id} />
+          )}
+
+          {/* Client Activity Timeline - Agent Only */}
+          {!isClientMode && session.share_link_created && (
+            <ClientActivityTimeline reportId={session.id} />
           )}
 
           {/* Actions - OUTSIDE report-export container */}

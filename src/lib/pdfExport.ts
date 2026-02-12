@@ -8,7 +8,13 @@ interface ExportOptions {
   reportType: 'Seller' | 'Buyer' | 'Comparison';
   snapshotTimestamp?: string;
   isClientMode?: boolean;
-  customNotice?: string; // Optional notice for what-if exports
+  customNotice?: string;
+  branding?: {
+    logo_url?: string | null;
+    primary_color?: string;
+    accent_color?: string;
+    footer_text?: string | null;
+  };
 }
 
 interface ComparisonExportOptions {
@@ -124,19 +130,68 @@ export async function exportReportToPdf(
     const contentWidth = pageWidth - margin * 2;
     
     // Calculate header height for page 1
-    const headerHeight = 45; // Approximate height for header block
+    const headerHeight = 55;
     const footerHeight = 18;
     const availableHeightPage1 = pageHeight - margin - headerHeight - footerHeight;
     const availableHeightOther = pageHeight - margin - footerHeight - 5;
 
-    // Add header to page 1
+    // Track pages for numbering
+    let totalPages = 1;
     let currentY = margin;
     let currentPage = 1;
 
-    // PDF Header on page 1
+    // Parse branding colors
+    const primaryHex = options.branding?.primary_color || '#2d3a4a';
+    const accentHex = options.branding?.accent_color || '#c8842e';
+    const hexToRgb = (hex: string) => {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return [r, g, b] as const;
+    };
+    const [pr, pg, pb] = hexToRgb(primaryHex);
+    const [ar, ag, ab] = hexToRgb(accentHex);
+
+    // Colored header bar
+    pdf.setFillColor(pr, pg, pb);
+    pdf.rect(0, 0, pageWidth, 4, 'F');
+    
+    // Accent accent line below
+    pdf.setFillColor(ar, ag, ab);
+    pdf.rect(0, 4, pageWidth, 1.5, 'F');
+
+    currentY = margin + 6;
+
+    // Add logo if available
+    if (options.branding?.logo_url) {
+      try {
+        const logoImg = new Image();
+        logoImg.crossOrigin = 'anonymous';
+        await new Promise<void>((resolve) => {
+          logoImg.onload = () => resolve();
+          logoImg.onerror = () => resolve();
+          logoImg.src = options.branding!.logo_url!;
+        });
+        if (logoImg.naturalWidth > 0) {
+          const logoCanvas = document.createElement('canvas');
+          logoCanvas.width = logoImg.naturalWidth;
+          logoCanvas.height = logoImg.naturalHeight;
+          const ctx = logoCanvas.getContext('2d');
+          ctx?.drawImage(logoImg, 0, 0);
+          const logoData = logoCanvas.toDataURL('image/png');
+          const logoMaxH = 12;
+          const logoW = (logoImg.naturalWidth / logoImg.naturalHeight) * logoMaxH;
+          pdf.addImage(logoData, 'PNG', margin, currentY, logoW, logoMaxH);
+          currentY += logoMaxH + 4;
+        }
+      } catch {
+        // Logo loading failed, continue without it
+      }
+    }
+
     pdf.setFontSize(16);
     pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(30, 30, 30);
+    pdf.setTextColor(pr, pg, pb);
     pdf.text(`${options.reportType} Report`, margin, currentY + 5);
     
     pdf.setFontSize(9);
@@ -173,9 +228,9 @@ export async function exportReportToPdf(
       currentY += 5;
     }
     
-    // Add separator line
+    // Add separator line using accent color
     currentY += 3;
-    pdf.setDrawColor(200, 200, 200);
+    pdf.setDrawColor(ar, ag, ab);
     pdf.line(margin, currentY, pageWidth - margin, currentY);
     currentY += 4;
     
@@ -191,8 +246,7 @@ export async function exportReportToPdf(
       currentY += 4;
     }
 
-    // Track pages for numbering
-    let totalPages = 1;
+    // (totalPages already declared above)
 
     // Add each section, checking page space
     for (let i = 0; i < sectionCanvases.length; i++) {
