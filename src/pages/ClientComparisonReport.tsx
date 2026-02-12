@@ -8,6 +8,7 @@ import { Session, SellerReportData, BuyerReportData } from '@/types';
 import { getSessionById, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { formatLocation } from '@/lib/utils';
+import { getShareUrl } from '@/lib/shareUrl';
 import { 
   buildComparisonOptions, 
   buildComparisonTable, 
@@ -204,7 +205,8 @@ const ClientComparisonReport = () => {
       return;
     }
     
-    const shareUrl = `${window.location.origin}/share/compare?a=${sessionIdA}&b=${sessionIdB}`;
+    const origin = import.meta.env.PROD ? 'https://market-compass-v2.lovable.app' : window.location.origin;
+    const shareUrl = `${origin}/share/compare?a=${sessionIdA}&b=${sessionIdB}`;
     navigator.clipboard.writeText(shareUrl);
     toast({
       title: "Share link copied",

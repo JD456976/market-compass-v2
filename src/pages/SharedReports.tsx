@@ -16,6 +16,7 @@ import { useBatchViewStats, useReportViewNotifications } from '@/hooks/useReport
 import { useToast } from '@/hooks/use-toast';
 import { formatLocation } from '@/lib/utils';
 import { exportReportToPdf } from '@/lib/pdfExport';
+import { getShareUrl } from '@/lib/shareUrl';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { getMarketProfileByIdFromSupabase } from '@/lib/supabaseStorage';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -61,7 +62,8 @@ const SharedReports = () => {
   usePushNotifications('agent', reportIds);
 
   const handleCopyLink = (session: Session) => {
-    const url = `${window.location.origin}/share/${session.id}`;
+    const token = (session as any).share_token || session.id;
+    const url = getShareUrl(token);
     navigator.clipboard.writeText(url);
     toast({
       title: "Link copied",
