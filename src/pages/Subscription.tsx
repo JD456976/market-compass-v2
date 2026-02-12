@@ -41,6 +41,7 @@ interface ClientMessage {
   report_id: string;
   client_name?: string;
   session_type?: string;
+  share_token?: string | null;
 }
 
 export default function Subscription() {
@@ -75,7 +76,7 @@ export default function Subscription() {
         const reportIds = [...new Set(notes.map(n => n.report_id))];
         const { data: relatedSessions } = await supabase
           .from('sessions')
-          .select('id, client_name, session_type')
+          .select('id, client_name, session_type, share_token')
           .in('id', reportIds);
 
         const sessionMap = new Map(relatedSessions?.map(s => [s.id, s]) || []);
@@ -83,6 +84,7 @@ export default function Subscription() {
           ...n,
           client_name: sessionMap.get(n.report_id)?.client_name,
           session_type: sessionMap.get(n.report_id)?.session_type,
+          share_token: sessionMap.get(n.report_id)?.share_token,
         }));
         setClientMessages(enriched);
       }
@@ -246,7 +248,7 @@ export default function Subscription() {
                   {clientMessages.map((msg) => (
                     <Link
                       key={msg.id}
-                      to={msg.session_type === 'Seller' ? `/seller-report/${msg.report_id}` : `/buyer-report/${msg.report_id}`}
+                      to={msg.share_token ? `/share/${msg.report_id}` : `/drafts`}
                       className="block"
                     >
                       <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors border border-border/50">
