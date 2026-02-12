@@ -206,28 +206,32 @@ const SharedReportContent = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Shared Report Banner with PDF Export */}
+      {/* Client Navigation Bar */}
       <div className="bg-muted border-b border-border">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-sm text-muted-foreground font-medium">
-                Shared Report
-              </p>
-              <p className="text-xs text-muted-foreground/70 break-words">
-                Changes are for exploration only.
-              </p>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleExportPdf}
-              disabled={exporting}
-              className="min-h-[44px] px-4 text-sm shrink-0 self-start sm:self-auto"
+        <div className="container mx-auto px-4 py-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <Link
+              to="/my-reports"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[44px]"
             >
-              <FileDown className="h-4 w-4 mr-2" />
-              {exporting ? 'Exporting...' : 'Download PDF'}
-            </Button>
+              <LayoutDashboard className="h-4 w-4" />
+              <span>My Reports</span>
+            </Link>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground hidden sm:inline">
+                Changes are for exploration only.
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportPdf}
+                disabled={exporting}
+                className="min-h-[36px] px-3 text-xs shrink-0"
+              >
+                <FileDown className="h-3.5 w-3.5 mr-1.5" />
+                {exporting ? 'Exporting...' : 'PDF'}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -614,16 +618,6 @@ const SharedReportContent = () => {
             <MethodologyFooter />
           </div>
 
-          {/* Client Dashboard Link */}
-          <div className="text-center pt-2 pb-4 no-pdf">
-            <Link
-              to="/my-reports"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-accent transition-colors"
-            >
-              <LayoutDashboard className="h-3.5 w-3.5" />
-              View all your reports
-            </Link>
-          </div>
         </motion.div>
       </div>
 
