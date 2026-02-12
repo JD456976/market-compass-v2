@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { ClipboardCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +21,6 @@ import { IssueCodePanel } from './IssueCodePanel';
 import { BetaCodesTable, BetaCode } from './BetaCodesTable';
 import { ActivationsTable, BetaActivation } from './ActivationsTable';
 import { OwnerDevicesTable, OwnerDevice } from './OwnerDevicesTable';
-import { QAChecklist } from './QAChecklist';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDeviceId, setOwnerDevice, clearBetaAccessSession, clearOwnerDevice, isOwnerDevice as checkIsOwnerDevice } from '@/lib/betaAccess';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -103,6 +101,12 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  // Auto-refetch every 15 seconds for real-time feel
+  useEffect(() => {
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   // Calculate stats from new data model
@@ -348,10 +352,6 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
               <Monitor className="h-4 w-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Owner </span>Devices ({stats.ownerDevices})
             </TabsTrigger>
-            <TabsTrigger value="qa" className="flex-1 min-w-fit">
-              <ClipboardCheck className="h-4 w-4 mr-1 md:mr-2" />
-              QA
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="codes">
@@ -364,10 +364,6 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
 
           <TabsContent value="owner-devices">
             <OwnerDevicesTable devices={ownerDevices} onRefresh={fetchData} />
-          </TabsContent>
-
-          <TabsContent value="qa">
-            <QAChecklist />
           </TabsContent>
         </Tabs>
         

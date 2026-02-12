@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ClientModeProvider } from "@/contexts/ClientModeContext";
 import { BetaAccessGate } from "@/components/BetaAccessGate";
 import { GlobalNav, MobileNavSpacer } from "@/components/GlobalNav";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import MarketProfiles from "./pages/MarketProfiles";
 import MarketScenarios from "./pages/MarketScenarios";
@@ -81,6 +82,7 @@ function AppRoutes() {
 function AppLayout() {
   return (
     <>
+      <ScrollToTop />
       <GlobalNav />
       <main className="flex-1">
         <AppRoutes />
