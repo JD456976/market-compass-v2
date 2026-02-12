@@ -26,6 +26,9 @@ import { getDeviceId, setOwnerDevice, clearBetaAccessSession, clearOwnerDevice, 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { MobileNavSpacer } from '@/components/GlobalNav';
+import { AdminUsersPanel } from './AdminUsersPanel';
+import { AdminReportsPanel } from './AdminReportsPanel';
+import { AdminAnalyticsPanel } from './AdminAnalyticsPanel';
 import {
   Dialog,
   DialogContent,
@@ -352,6 +355,15 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
               <Monitor className="h-4 w-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Owner </span>Devices ({stats.ownerDevices})
             </TabsTrigger>
+            <TabsTrigger value="users" className="flex-1 min-w-fit">
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex-1 min-w-fit">
+              Reports
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex-1 min-w-fit">
+              Analytics
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="codes">
@@ -364,6 +376,18 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
 
           <TabsContent value="owner-devices">
             <OwnerDevicesTable devices={ownerDevices} onRefresh={fetchData} />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <AdminUsersPanel />
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <AdminReportsPanel />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <AdminAnalyticsPanel />
           </TabsContent>
         </Tabs>
         

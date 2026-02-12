@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ClientModeProvider } from "@/contexts/ClientModeContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { BetaAccessGate } from "@/components/BetaAccessGate";
 import { GlobalNav, MobileNavSpacer } from "@/components/GlobalNav";
 import { ScrollToTop } from "@/components/ScrollToTop";
@@ -31,22 +32,29 @@ import Subscription from "./pages/Subscription";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import AccountSettings from "./pages/AccountSettings";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Routes that bypass beta gate (shared links, admin, and beta access page itself)
-const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms'];
+// Routes that bypass beta gate (shared links, admin, beta access, auth pages, legal)
+const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password'];
 
 function AppRoutes() {
   const location = useLocation();
   
-  // Check if current route is public (shared links, admin, or beta access)
   const isPublicRoute = PUBLIC_ROUTES.some(route => location.pathname.startsWith(route));
 
   const routes = (
     <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/beta" element={<BetaAccess />} />
       <Route path="/market-profiles" element={<MarketProfiles />} />
       <Route path="/market-scenarios" element={<MarketScenarios />} />
@@ -56,12 +64,10 @@ function AppRoutes() {
       <Route path="/seller/report" element={<SellerReport />} />
       <Route path="/buyer" element={<BuyerFlow />} />
       <Route path="/buyer/report" element={<BuyerReport />} />
-      {/* Draft Analyses (internal working sessions) */}
       <Route path="/drafts" element={<DraftAnalyses />} />
-      <Route path="/saved-sessions" element={<DraftAnalyses />} /> {/* Legacy redirect */}
-      {/* Shared Reports (read-only log of shared/exported) */}
+      <Route path="/saved-sessions" element={<DraftAnalyses />} />
       <Route path="/shared-reports" element={<SharedReports />} />
-      <Route path="/client-deliverables" element={<SharedReports />} /> {/* Legacy redirect */}
+      <Route path="/client-deliverables" element={<SharedReports />} />
       <Route path="/compare" element={<CompareSessions />} />
       <Route path="/compare/client" element={<ClientComparisonReport />} />
       <Route path="/agent-profile" element={<AgentProfile />} />
@@ -77,12 +83,10 @@ function AppRoutes() {
     </Routes>
   );
 
-  // Public routes bypass beta gate
   if (isPublicRoute) {
     return routes;
   }
 
-  // All other routes require beta access
   return <BetaAccessGate>{routes}</BetaAccessGate>;
 }
 
@@ -102,17 +106,19 @@ function AppLayout() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ClientModeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <div className="min-h-screen flex flex-col">
-            <AppLayout />
-          </div>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ClientModeProvider>
+    <AuthProvider>
+      <ClientModeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <div className="min-h-screen flex flex-col">
+              <AppLayout />
+            </div>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ClientModeProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
