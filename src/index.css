@@ -273,6 +273,21 @@ body.is-exporting .pdf-exclude {
   display: none !important;
 }
 
+/* Force collapsible content open during PDF export (e.g., AI Insights) */
+.pdf-export [data-state="closed"] {
+  display: block !important;
+}
+.pdf-export [data-state="closed"] > [data-radix-collapsible-content] {
+  display: block !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+.pdf-export [data-radix-collapsible-content][data-state="closed"] {
+  display: block !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
 /* Hide agent notes in PDF export when in client mode */
 .pdf-export.client-mode .pdf-hide-agent-notes,
 body.is-exporting .client-mode .pdf-hide-agent-notes {

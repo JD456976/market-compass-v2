@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
     }
 
     if (emailPayload) {
-      // Queue the email — when an email provider is configured, this can be sent directly
+      // Queue the email
       const { error: queueError } = await supabase
         .from("email_queue")
         .insert(emailPayload);
@@ -146,6 +146,22 @@ Deno.serve(async (req) => {
           JSON.stringify({ success: true, email_queued: false, error: queueError.message }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
+      }
+
+      // Trigger immediate send attempt (fire-and-forget)
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+        fetch(`${supabaseUrl}/functions/v1/send-emails`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}),
+        }).catch((e) => console.log("Fire-and-forget send-emails:", e));
+      } catch (_) {
+        // Non-critical: emails will be picked up later
       }
 
       return new Response(

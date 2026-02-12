@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.report-notifications]
 verify_jwt = false
+
+[functions.send-emails]
+verify_jwt = false
