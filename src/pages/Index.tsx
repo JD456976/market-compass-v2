@@ -126,29 +126,29 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <h3 className="text-sm font-medium text-muted-foreground mb-3 px-1">Session Management</h3>
-          <div className="flex flex-wrap gap-3">
-            <Link to="/drafts">
-              <Button variant="outline" size="lg" className="min-w-[160px]">
-                <FolderOpen className="mr-2 h-4 w-4" />
-                Draft Analyses
+          <h3 className="text-sm font-sans font-medium text-muted-foreground mb-3 px-1">Session Management</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Link to="/drafts" className="block">
+              <Button variant="outline" size="lg" className="w-full justify-start">
+                <FolderOpen className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Draft Analyses</span>
                 {drafts.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs">{drafts.length}</Badge>
+                  <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">{drafts.length}</Badge>
                 )}
               </Button>
             </Link>
-            <Link to="/templates">
-              <Button variant="outline" size="lg" className="min-w-[160px]">
-                <FileText className="mr-2 h-4 w-4" />
-                Templates
+            <Link to="/templates" className="block">
+              <Button variant="outline" size="lg" className="w-full justify-start">
+                <FileText className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Templates</span>
               </Button>
             </Link>
-            <Link to="/shared-reports">
-              <Button variant="outline" size="lg" className="min-w-[160px]">
-                <Send className="mr-2 h-4 w-4" />
-                Shared Reports
+            <Link to="/shared-reports" className="block">
+              <Button variant="outline" size="lg" className="w-full justify-start">
+                <Send className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Shared Reports</span>
                 {shared.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs">{shared.length}</Badge>
+                  <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">{shared.length}</Badge>
                 )}
               </Button>
             </Link>
@@ -162,24 +162,24 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          <h3 className="text-sm font-medium text-muted-foreground mb-3 px-1">Market & Settings</h3>
-          <div className="flex flex-wrap gap-3">
-            <Link to="/market-scenarios">
-              <Button variant="outline" size="lg" className="min-w-[160px]">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                Market Scenarios
+          <h3 className="text-sm font-sans font-medium text-muted-foreground mb-3 px-1">Market & Settings</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Link to="/market-scenarios" className="block">
+              <Button variant="outline" size="lg" className="w-full justify-start">
+                <TrendingUp className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Market Scenarios</span>
               </Button>
             </Link>
-            <Link to="/market-data">
-              <Button variant="outline" size="lg" className="min-w-[160px]">
-                <Database className="mr-2 h-4 w-4" />
-                Market Data
+            <Link to="/market-data" className="block">
+              <Button variant="outline" size="lg" className="w-full justify-start">
+                <Database className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Market Data</span>
               </Button>
             </Link>
-            <Link to="/agent-profile">
-              <Button variant="outline" size="lg" className="min-w-[160px]">
-                <User className="mr-2 h-4 w-4" />
-                Agent Profile
+            <Link to="/agent-profile" className="block">
+              <Button variant="outline" size="lg" className="w-full justify-start">
+                <User className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Agent Profile</span>
               </Button>
             </Link>
           </div>
@@ -192,12 +192,12 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <h3 className="text-sm font-medium text-muted-foreground mb-3 px-1">Help & Info</h3>
-          <div className="flex flex-wrap gap-3">
-            <Link to="/methodology">
-              <Button variant="outline" size="lg" className="min-w-[160px]">
-                <BookOpen className="mr-2 h-4 w-4" />
-                Data & Methodology
+          <h3 className="text-sm font-sans font-medium text-muted-foreground mb-3 px-1">Help & Info</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Link to="/methodology" className="block">
+              <Button variant="outline" size="lg" className="w-full justify-start">
+                <BookOpen className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Data & Methodology</span>
               </Button>
             </Link>
             <OnboardingTrigger />
