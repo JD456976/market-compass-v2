@@ -26,7 +26,7 @@ const Index = () => {
   const { activeSessions: shared } = useSharedSessions();
 
   return (
-    <div className="bg-background">
+    <div className="bg-background" role="main" aria-label="Market Compass Home">
       {/* Agent Onboarding Modal */}
       <AgentOnboarding />
 
@@ -208,7 +208,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t border-border/50 mt-16">
         <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Compass className="h-4 w-4" />
               <span>Market Compass v0</span>
@@ -217,6 +217,14 @@ const Index = () => {
               Uses public market trend research and transaction logic. 
               Does not use MLS data or provide valuations.
             </p>
+            <div className="flex items-center gap-4 text-xs">
+              <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+              <span>·</span>
+              <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+              <span>·</span>
+              <a href="mailto:support@market-compass.com" className="hover:text-foreground transition-colors">Contact</a>
+            </div>
+            <p className="text-xs">© {new Date().getFullYear()} Market Compass. All rights reserved.</p>
           </div>
         </div>
       </footer>

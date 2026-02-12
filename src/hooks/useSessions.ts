@@ -117,6 +117,27 @@ export function useSharedSessions(): UseSessionsResult & {
   const activeSessions = sharedSessions.filter(s => !s.archived);
   const archivedSessions = sharedSessions.filter(s => s.archived);
 
+  // Auto-archive reports older than 90 days
+  useEffect(() => {
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    
+    const staleReports = activeSessions.filter(s => {
+      const updated = new Date(s.updated_at);
+      return updated < ninetyDaysAgo && !s.archived;
+    });
+
+    if (staleReports.length > 0) {
+      staleReports.forEach(async (s) => {
+        await result.upsertSession({
+          ...s,
+          archived: true,
+          archived_at: new Date().toISOString(),
+        } as Session);
+      });
+    }
+  }, [activeSessions.length]); // Only run when active count changes
+
   const archiveSession = useCallback(async (id: string) => {
     const session = result.sessions.find(s => s.id === id);
     if (session) {

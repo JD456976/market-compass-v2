@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Eye, Copy, Building2, Users, FileEdit, Calendar, GitCompare, Check, X, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, Eye, Copy, Building2, Users, FileEdit, Calendar, GitCompare, Check, X, Loader2, Search } from 'lucide-react';
 import { Session } from '@/types';
 import { useDraftSessions } from '@/hooks/useSessions';
 import { useToast } from '@/hooks/use-toast';
@@ -16,9 +18,24 @@ const DraftAnalyses = () => {
   const { toast } = useToast();
   const { sessions, loading, upsertSession, deleteSession } = useDraftSessions();
   
+  // Search & filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'Seller' | 'Buyer'>('all');
+  
   // Compare mode state
   const [compareMode, setCompareMode] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState<string[]>([]);
+
+  // Filtered sessions
+  const filteredSessions = useMemo(() => {
+    return sessions.filter(s => {
+      const matchesSearch = !searchTerm || 
+        s.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.location.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = typeFilter === 'all' || s.session_type === typeFilter;
+      return matchesSearch && matchesType;
+    });
+  }, [sessions, searchTerm, typeFilter]);
 
   const handleOpen = (session: Session) => {
     if (compareMode) {
@@ -178,13 +195,38 @@ const DraftAnalyses = () => {
       </div>
 
       <div className="container mx-auto px-4 py-6 max-w-4xl">
+        {/* Search & Filter Bar */}
+        {sessions.length > 0 && (
+          <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name or location..."
+                className="pl-9 h-11"
+              />
+            </div>
+            <Select value={typeFilter} onValueChange={(v: 'all' | 'Seller' | 'Buyer') => setTypeFilter(v)}>
+              <SelectTrigger className="w-[120px] h-11">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="Seller">Seller</SelectItem>
+                <SelectItem value="Buyer">Buyer</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {/* Swipe hint for mobile */}
         <p className="text-xs text-muted-foreground mb-4 sm:hidden">
           ← Swipe left to delete
         </p>
 
         <AnimatePresence mode="wait">
-          {sessions.length === 0 ? (
+          {filteredSessions.length === 0 && sessions.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -214,13 +256,24 @@ const DraftAnalyses = () => {
                 </CardContent>
               </Card>
             </motion.div>
+          ) : filteredSessions.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <Card className="border-dashed border-2">
+                <CardContent className="py-12 text-center">
+                  <p className="text-muted-foreground">No drafts match your search.</p>
+                </CardContent>
+              </Card>
+            </motion.div>
           ) : (
             <motion.div 
               className="space-y-3"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
-              {sessions.map((session, index) => {
+              {filteredSessions.map((session, index) => {
                 const isSelected = selectedForCompare.includes(session.id);
                 
                 return (

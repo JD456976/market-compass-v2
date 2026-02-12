@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2, Eye, Archive, ArchiveRestore } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2, Eye, Archive, ArchiveRestore, Search } from 'lucide-react';
 import { Session } from '@/types';
 import { useSharedSessions } from '@/hooks/useSessions';
 import { useBatchViewStats, useReportViewNotifications } from '@/hooks/useReportViewStats';
@@ -22,6 +24,29 @@ const SharedReports = () => {
   const { sessions, loading, activeSessions, archivedSessions, archiveSession, unarchiveSession } = useSharedSessions();
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('active');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'Seller' | 'Buyer'>('all');
+
+  // Filtered sessions
+  const filteredActive = useMemo(() => {
+    return activeSessions.filter(s => {
+      const matchesSearch = !searchTerm || 
+        s.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.location.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = typeFilter === 'all' || s.session_type === typeFilter;
+      return matchesSearch && matchesType;
+    });
+  }, [activeSessions, searchTerm, typeFilter]);
+
+  const filteredArchived = useMemo(() => {
+    return archivedSessions.filter(s => {
+      const matchesSearch = !searchTerm || 
+        s.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.location.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = typeFilter === 'all' || s.session_type === typeFilter;
+      return matchesSearch && matchesType;
+    });
+  }, [archivedSessions, searchTerm, typeFilter]);
 
   // Get report IDs for view stats and real-time notifications
   const reportIds = useMemo(() => sessions.map(s => s.id), [sessions]);
@@ -344,6 +369,31 @@ const SharedReports = () => {
       </div>
 
       <div className="container mx-auto px-4 py-6 max-w-4xl">
+        {/* Search & Filter Bar */}
+        {sessions.length > 0 && (
+          <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name or location..."
+                className="pl-9 h-11"
+              />
+            </div>
+            <Select value={typeFilter} onValueChange={(v: 'all' | 'Seller' | 'Buyer') => setTypeFilter(v)}>
+              <SelectTrigger className="w-[120px] h-11">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="Seller">Seller</SelectItem>
+                <SelectItem value="Buyer">Buyer</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {/* Swipe hint for mobile */}
         <p className="text-xs text-muted-foreground mb-4 sm:hidden">
           ← Swipe left to {activeTab === 'active' ? 'archive' : 'restore'}
@@ -362,11 +412,11 @@ const SharedReports = () => {
 
           <TabsContent value="active">
             <AnimatePresence mode="wait">
-              {activeSessions.length === 0 
+              {filteredActive.length === 0 
                 ? renderEmptyState(false)
                 : (
                   <motion.div className="space-y-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    {activeSessions.map((session, index) => renderSessionCard(session, index, false))}
+                    {filteredActive.map((session, index) => renderSessionCard(session, index, false))}
                   </motion.div>
                 )
               }
@@ -375,11 +425,11 @@ const SharedReports = () => {
 
           <TabsContent value="archived">
             <AnimatePresence mode="wait">
-              {archivedSessions.length === 0 
+              {filteredArchived.length === 0 
                 ? renderEmptyState(true)
                 : (
                   <motion.div className="space-y-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    {archivedSessions.map((session, index) => renderSessionCard(session, index, true))}
+                    {filteredArchived.map((session, index) => renderSessionCard(session, index, true))}
                   </motion.div>
                 )
               }
