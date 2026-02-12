@@ -18,12 +18,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, ArrowRight, Users, Home, Sparkles, DollarSign, FileCheck, RotateCcw, Check, ClipboardList, Pencil } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Users, Home, Sparkles, DollarSign, FileCheck, RotateCcw, Check, ClipboardList, Pencil, Save, Loader2 } from 'lucide-react';
 import { 
   Session, PropertyType, Condition, FinancingType, 
   DownPaymentPercent, Contingency, ClosingTimeline, BuyerPreference 
 } from '@/types';
 import { generateId } from '@/lib/storage';
+import { upsertSessionAsync } from '@/lib/storage';
 import { LocationAutocomplete } from '@/components/LocationAutocomplete';
 import { AddressInput, LocationMode, stubGeocode } from '@/components/AddressInput';
 import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
@@ -77,6 +78,8 @@ const BuyerFlow = () => {
   const [marketScenarios, setMarketScenarios] = useState<MarketScenario[]>([]);
   const [appliedTemplate, setAppliedTemplate] = useState<SessionTemplate | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [draftId, setDraftId] = useState<string>(() => generateId());
   
   const [clientName, setClientName] = useState(DEFAULT_VALUES.clientName);
   const [location, setLocation] = useState(DEFAULT_VALUES.location);
@@ -186,6 +189,7 @@ const BuyerFlow = () => {
     setShowOverrides(false);
     setAttempted(false);
     setAppliedTemplate(null);
+    setDraftId(generateId());
     setStep(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     toast({
@@ -206,47 +210,69 @@ const BuyerFlow = () => {
     }
   };
 
+  const buildSession = (): Session => ({
+    id: draftId,
+    session_type: 'Buyer',
+    client_name: clientName,
+    location,
+    property_type: propertyType,
+    condition,
+    market_scenario_id: selectedScenarioId || undefined,
+    market_scenario_overrides: (demandOverride || competitionOverride || pricingOverride) ? {
+      demandLevel: demandOverride,
+      competitionLevel: competitionOverride,
+      pricingSensitivity: pricingOverride,
+    } : undefined,
+    address_fields: locationMode === 'address' && fullAddress ? {
+      address_line: fullAddress,
+      city: location.split(',')[0]?.trim(),
+      state: location.split(',')[1]?.trim(),
+    } : undefined,
+    client_privacy: true,
+    buyer_inputs: {
+      offer_price: parseFloat(offerPrice) || 0,
+      reference_price: referencePrice ? parseFloat(referencePrice) : undefined,
+      market_conditions: marketConditions,
+      days_on_market: daysOnMarket ? parseInt(daysOnMarket) : undefined,
+      investment_type: investmentType,
+      financing_type: financingType,
+      down_payment_percent: downPayment,
+      contingencies,
+      closing_timeline: closingTimeline,
+      buyer_preference: buyerPreference,
+      agent_notes: agentNotes || undefined,
+      client_notes: clientNotes || undefined,
+    },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  });
+
   const handleGenerate = () => {
-    const session: Session = {
-      id: generateId(),
-      session_type: 'Buyer',
-      client_name: clientName,
-      location,
-      property_type: propertyType,
-      condition,
-      market_scenario_id: selectedScenarioId || undefined,
-      market_scenario_overrides: (demandOverride || competitionOverride || pricingOverride) ? {
-        demandLevel: demandOverride,
-        competitionLevel: competitionOverride,
-        pricingSensitivity: pricingOverride,
-      } : undefined,
-      address_fields: locationMode === 'address' && fullAddress ? {
-        address_line: fullAddress,
-        city: location.split(',')[0]?.trim(),
-        state: location.split(',')[1]?.trim(),
-      } : undefined,
-      client_privacy: true,
-      buyer_inputs: {
-        offer_price: parseFloat(offerPrice) || 0,
-        reference_price: referencePrice ? parseFloat(referencePrice) : undefined,
-        market_conditions: marketConditions,
-        days_on_market: daysOnMarket ? parseInt(daysOnMarket) : undefined,
-        investment_type: investmentType,
-        financing_type: financingType,
-        down_payment_percent: downPayment,
-        contingencies,
-        closing_timeline: closingTimeline,
-        buyer_preference: buyerPreference,
-        agent_notes: agentNotes || undefined,
-        client_notes: clientNotes || undefined,
-      },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    
+    const session = buildSession();
     sessionStorage.removeItem('report_entry_context');
     sessionStorage.setItem('current_session', JSON.stringify(session));
     navigate('/buyer/report');
+  };
+
+  const saveDraft = async () => {
+    setSaving(true);
+    try {
+      const session = buildSession();
+      await upsertSessionAsync(session);
+      toast({
+        title: "Draft saved",
+        description: `"${clientName || 'Untitled'}" saved to Drafts.`,
+      });
+      navigate('/drafts');
+    } catch {
+      toast({
+        title: "Save failed",
+        description: "Could not save draft. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Per-step validation
@@ -842,15 +868,26 @@ const BuyerFlow = () => {
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
-            <Button
-              variant="accent"
-              onClick={onGenerateReport}
-              size="lg"
-              className="min-w-[180px]"
-            >
-              Generate Report
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={saveDraft}
+                disabled={saving || !clientName.trim()}
+                className="min-w-[120px]"
+              >
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Save Draft
+              </Button>
+              <Button
+                variant="accent"
+                onClick={onGenerateReport}
+                size="lg"
+                className="min-w-[180px]"
+              >
+                Generate Report
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           )}
         </div>
 
