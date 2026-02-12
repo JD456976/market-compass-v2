@@ -120,6 +120,31 @@ const AgentProfile = () => {
               <CardDescription>This appears in the "Prepared by" section of reports.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Agent Photo */}
+              <div className="space-y-2">
+                <Label>Your Photo</Label>
+                <div className="flex items-center gap-4">
+                  {branding?.headshot_url ? (
+                    <img src={branding.headshot_url} alt="Agent headshot" className="h-20 w-20 rounded-full object-cover border-2 border-border" />
+                  ) : (
+                    <div className="h-20 w-20 rounded-full border-2 border-dashed border-border flex items-center justify-center bg-muted">
+                      <User className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-1">
+                    <label className="cursor-pointer">
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload('headshot', e)} disabled={!user} />
+                      <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${user ? 'text-accent hover:underline' : 'text-muted-foreground'}`}>
+                        <Upload className="h-4 w-4" />
+                        {uploading === 'headshot' ? 'Uploading...' : branding?.headshot_url ? 'Change Photo' : 'Upload Photo'}
+                      </span>
+                    </label>
+                    {!user && <p className="text-xs text-muted-foreground">Sign in to upload a photo</p>}
+                    <p className="text-xs text-muted-foreground">Max 2MB, JPG or PNG</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="agent_name">Agent Name *</Label>
                 <Input id="agent_name" value={profile.agent_name} onChange={(e) => handleChange('agent_name', e.target.value)} placeholder="Your full name" />
