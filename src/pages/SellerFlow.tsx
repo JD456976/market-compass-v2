@@ -17,9 +17,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, ArrowRight, Building2, Home, Sparkles, DollarSign, RotateCcw, Check, FileText, ClipboardList, Pencil } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, Home, Sparkles, DollarSign, RotateCcw, Check, FileText, ClipboardList, Pencil, Save, Loader2 } from 'lucide-react';
 import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference } from '@/types';
 import { generateId } from '@/lib/storage';
+import { upsertSessionAsync } from '@/lib/storage';
 import { LocationAutocomplete } from '@/components/LocationAutocomplete';
 import { AddressInput, LocationMode, stubGeocode } from '@/components/AddressInput';
 import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
@@ -57,6 +58,8 @@ const SellerFlow = () => {
   const [marketScenarios, setMarketScenarios] = useState<MarketScenario[]>([]);
   const [appliedTemplate, setAppliedTemplate] = useState<SessionTemplate | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [draftId, setDraftId] = useState<string>(() => generateId());
   
   const [clientName, setClientName] = useState(DEFAULT_VALUES.clientName);
   const [location, setLocation] = useState(DEFAULT_VALUES.location);
@@ -146,6 +149,7 @@ const SellerFlow = () => {
     setShowOverrides(false);
     setAttempted(false);
     setAppliedTemplate(null);
+    setDraftId(generateId());
     setStep(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     toast({
@@ -154,34 +158,56 @@ const SellerFlow = () => {
     });
   }, [toast]);
 
+  const buildSession = (): Session => ({
+    id: draftId,
+    session_type: 'Seller',
+    client_name: clientName,
+    location,
+    property_type: propertyType,
+    condition,
+    market_scenario_id: selectedScenarioId || undefined,
+    market_scenario_overrides: (demandOverride || competitionOverride || pricingOverride) ? {
+      demandLevel: demandOverride,
+      competitionLevel: competitionOverride,
+      pricingSensitivity: pricingOverride,
+    } : undefined,
+    seller_inputs: {
+      seller_selected_list_price: parseFloat(listPrice) || 0,
+      desired_timeframe: timeframe,
+      strategy_preference: strategy,
+      agent_notes: agentNotes || undefined,
+      client_notes: clientNotes || undefined,
+    },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  });
+
   const handleGenerate = () => {
-    const session: Session = {
-      id: generateId(),
-      session_type: 'Seller',
-      client_name: clientName,
-      location,
-      property_type: propertyType,
-      condition,
-      market_scenario_id: selectedScenarioId || undefined,
-      market_scenario_overrides: (demandOverride || competitionOverride || pricingOverride) ? {
-        demandLevel: demandOverride,
-        competitionLevel: competitionOverride,
-        pricingSensitivity: pricingOverride,
-      } : undefined,
-      seller_inputs: {
-        seller_selected_list_price: parseFloat(listPrice) || 0,
-        desired_timeframe: timeframe,
-        strategy_preference: strategy,
-        agent_notes: agentNotes || undefined,
-        client_notes: clientNotes || undefined,
-      },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    
+    const session = buildSession();
     sessionStorage.removeItem('report_entry_context');
     sessionStorage.setItem('current_session', JSON.stringify(session));
     navigate('/seller/report');
+  };
+
+  const saveDraft = async () => {
+    setSaving(true);
+    try {
+      const session = buildSession();
+      await upsertSessionAsync(session);
+      toast({
+        title: "Draft saved",
+        description: `"${clientName || 'Untitled'}" saved to Drafts.`,
+      });
+      navigate('/drafts');
+    } catch {
+      toast({
+        title: "Save failed",
+        description: "Could not save draft. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Per-step validation
@@ -637,15 +663,26 @@ const SellerFlow = () => {
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
-            <Button
-              variant="accent"
-              onClick={onGenerateReport}
-              size="lg"
-              className="min-w-[180px]"
-            >
-              Generate Report
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={saveDraft}
+                disabled={saving || !clientName.trim()}
+                className="min-w-[120px]"
+              >
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Save Draft
+              </Button>
+              <Button
+                variant="accent"
+                onClick={onGenerateReport}
+                size="lg"
+                className="min-w-[180px]"
+              >
+                Generate Report
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           )}
         </div>
 

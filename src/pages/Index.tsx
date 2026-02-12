@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen } from 'lucide-react';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
+import { useDraftSessions, useSharedSessions } from '@/hooks/useSessions';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -20,6 +22,9 @@ const staggerContainer = {
 };
 
 const Index = () => {
+  const { sessions: drafts } = useDraftSessions();
+  const { activeSessions: shared } = useSharedSessions();
+
   return (
     <div className="bg-background">
       {/* Agent Onboarding Modal */}
@@ -127,6 +132,9 @@ const Index = () => {
               <Button variant="outline" size="lg" className="min-w-[160px]">
                 <FolderOpen className="mr-2 h-4 w-4" />
                 Draft Analyses
+                {drafts.length > 0 && (
+                  <Badge variant="secondary" className="ml-2 text-xs">{drafts.length}</Badge>
+                )}
               </Button>
             </Link>
             <Link to="/templates">
@@ -139,6 +147,9 @@ const Index = () => {
               <Button variant="outline" size="lg" className="min-w-[160px]">
                 <Send className="mr-2 h-4 w-4" />
                 Shared Reports
+                {shared.length > 0 && (
+                  <Badge variant="secondary" className="ml-2 text-xs">{shared.length}</Badge>
+                )}
               </Button>
             </Link>
           </div>
