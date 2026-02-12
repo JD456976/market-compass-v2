@@ -37,11 +37,12 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import PublicMarketTrends from "./pages/PublicMarketTrends";
 
 const queryClient = new QueryClient();
 
-// Routes that bypass beta gate (shared links, admin, beta access, auth pages, legal)
-const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password'];
+// Routes that bypass beta gate (shared links, admin, beta access, auth pages, legal, public market)
+const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password', '/market-trends'];
 
 function AppRoutes() {
   const location = useLocation();
@@ -79,6 +80,7 @@ function AppRoutes() {
       <Route path="/admin" element={<Admin />} />
       <Route path="/share/:sessionId" element={<SharedReport />} />
       <Route path="/share/compare" element={<SharedComparisonReport />} />
+      <Route path="/market-trends" element={<PublicMarketTrends />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

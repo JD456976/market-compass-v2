@@ -67,6 +67,8 @@ import { AIInsights } from '@/components/report/AIInsights';
 import { ReportWatermark } from '@/components/report/ReportWatermark';
 import { ViewStatsPanel } from '@/components/report/ViewStatsPanel';
 import { EducationalTooltip } from '@/components/report/EducationalTooltip';
+import { CommunicationHub } from '@/components/report/CommunicationHub';
+import { ShareableInsight, generateInsights } from '@/components/report/ShareableInsight';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -747,6 +749,20 @@ const BuyerReport = () => {
               isShareLinkCreated={session.share_link_created ?? false}
             />
           </div>
+
+          {/* Shareable Insights - Agent Only */}
+          {!isClientMode && (
+            <ShareableInsight
+              insights={generateInsights('Buyer', reportData, formatLocation(session.location))}
+              location={formatLocation(session.location)}
+              reportType="Buyer"
+            />
+          )}
+
+          {/* Communication Hub - Agent Only */}
+          {!isClientMode && session.share_link_created && (
+            <CommunicationHub reportId={session.id} isAgent={true} />
+          )}
 
           {/* View Stats - Agent Only, Outside PDF export */}
           {!isClientMode && session.share_link_created && (

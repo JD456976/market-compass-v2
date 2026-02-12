@@ -28,6 +28,7 @@ import { logSharedReportView } from '@/lib/viewTracking';
 import { ClientFeedback } from '@/components/report/ClientFeedback';
 import { loadBrandingForSession, AgentBranding } from '@/lib/agentBranding';
 import { ReportWatermark } from '@/components/report/ReportWatermark';
+import { CommunicationHub } from '@/components/report/CommunicationHub';
 import { 
   getTitle, 
   buyerWhatThisMeans, 
@@ -570,6 +571,9 @@ const SharedReportContent = () => {
               </Card>
             </>
           )}
+
+          {/* Communication Hub - Client View */}
+          <CommunicationHub reportId={session.id} isAgent={false} />
 
           {/* Client Feedback */}
           {shareToken && (

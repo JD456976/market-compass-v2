@@ -405,6 +405,39 @@ export type Database = {
         }
         Relationships: []
       }
+      report_notes: {
+        Row: {
+          author_name: string | null
+          author_type: string
+          content: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          report_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_name?: string | null
+          author_type: string
+          content: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          report_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string | null
+          author_type?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          report_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           archived: boolean
