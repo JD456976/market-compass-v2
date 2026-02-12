@@ -239,6 +239,8 @@ export type Database = {
       }
       sessions: {
         Row: {
+          archived: boolean
+          archived_at: string | null
           buyer_inputs: Json | null
           client_name: string
           condition: string
@@ -261,6 +263,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived?: boolean
+          archived_at?: string | null
           buyer_inputs?: Json | null
           client_name: string
           condition: string
@@ -283,6 +287,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived?: boolean
+          archived_at?: string | null
           buyer_inputs?: Json | null
           client_name?: string
           condition?: string

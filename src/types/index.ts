@@ -87,6 +87,9 @@ export interface Session {
   // Deliverable tracking
   share_link_created?: boolean;
   pdf_exported?: boolean;
+  // Archive
+  archived?: boolean;
+  archived_at?: string | null;
   created_at: string;
   updated_at: string;
 }
