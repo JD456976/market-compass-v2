@@ -1,11 +1,17 @@
 import { useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { NavLink } from '@/components/NavLink';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { isAllowedAdmin } from '@/lib/adminConfig';
 import { getBetaAccessSession } from '@/lib/betaAccess';
-import { Home, FolderOpen, Send, Settings, Compass, Sparkles } from 'lucide-react';
+import { 
+  Home, FolderOpen, Send, Settings, Compass, Sparkles, Menu,
+  TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect } from 'react';
 
 interface NavItem {
   to: string;
@@ -13,14 +19,6 @@ interface NavItem {
   icon: React.ReactNode;
   adminOnly?: boolean;
 }
-
-const navItems: NavItem[] = [
-  { to: '/', label: 'Home', icon: <Home className="h-5 w-5" /> },
-  { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-5 w-5" /> },
-  { to: '/shared-reports', label: 'Shared', icon: <Send className="h-5 w-5" /> },
-  { to: '/subscription', label: 'Pro', icon: <Sparkles className="h-5 w-5" /> },
-  { to: '/admin', label: 'Admin', icon: <Settings className="h-5 w-5" />, adminOnly: true },
-];
 
 export function GlobalNav() {
   const location = useLocation();
@@ -39,50 +37,172 @@ export function GlobalNav() {
     return null;
   }
 
-  const visibleItems = navItems.filter(item => !item.adminOnly || isAdmin);
-
   if (isMobile) {
-    return <MobileNav items={visibleItems} />;
+    return <MobileNav isAdmin={isAdmin} />;
   }
 
+  const desktopItems: NavItem[] = [
+    { to: '/', label: 'Home', icon: <Home className="h-5 w-5" /> },
+    { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-5 w-5" /> },
+    { to: '/shared-reports', label: 'Shared', icon: <Send className="h-5 w-5" /> },
+    { to: '/subscription', label: 'Pro', icon: <Sparkles className="h-5 w-5" /> },
+    { to: '/admin', label: 'Admin', icon: <Settings className="h-5 w-5" />, adminOnly: true },
+  ];
+
+  const visibleItems = desktopItems.filter(item => !item.adminOnly || isAdmin);
   return <DesktopNav items={visibleItems} />;
 }
 
-function MobileNav({ items }: { items: NavItem[] }) {
+// ─── Mobile Bottom Nav ───────────────────────────────────────────────────────
+
+interface DrawerLink {
+  to: string;
+  label: string;
+  icon: React.ReactNode;
+  adminOnly?: boolean;
+}
+
+const drawerLinks: DrawerLink[] = [
+  { to: '/templates', label: 'Templates', icon: <FileText className="h-5 w-5" /> },
+  { to: '/market-scenarios', label: 'Market Scenarios', icon: <TrendingUp className="h-5 w-5" /> },
+  { to: '/market-data', label: 'Market Data', icon: <Database className="h-5 w-5" /> },
+  { to: '/agent-profile', label: 'Agent Profile', icon: <User className="h-5 w-5" /> },
+  { to: '/methodology', label: 'Data & Methodology', icon: <BookOpen className="h-5 w-5" /> },
+  { to: '/subscription', label: 'Pro', icon: <Sparkles className="h-5 w-5" /> },
+  { to: '/admin', label: 'Admin', icon: <Settings className="h-5 w-5" />, adminOnly: true },
+];
+
+function MobileNav({ isAdmin }: { isAdmin: boolean }) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const location = useLocation();
+
+  // Close drawer on route change
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [location.pathname]);
+
+  const visibleDrawerLinks = drawerLinks.filter(l => !l.adminOnly || isAdmin);
+
   return (
-    <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-    >
-      <div className="flex items-center justify-around h-16">
-        {items.map((item) => (
+    <>
+      {/* Bottom Tab Bar */}
+      <nav 
+        className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="flex items-center justify-around h-16">
           <NavLink
-            key={item.to}
-            to={item.to}
+            to="/"
+            end
             className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] text-muted-foreground transition-colors"
             activeClassName="text-primary"
           >
-            {item.icon}
-            <span className="text-[10px] font-medium leading-none">{item.label}</span>
+            <Home className="h-5 w-5" />
+            <span className="text-[10px] font-medium leading-none">Home</span>
           </NavLink>
-        ))}
-      </div>
-    </nav>
+          <NavLink
+            to="/drafts"
+            className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] text-muted-foreground transition-colors"
+            activeClassName="text-primary"
+          >
+            <FolderOpen className="h-5 w-5" />
+            <span className="text-[10px] font-medium leading-none">Drafts</span>
+          </NavLink>
+          <NavLink
+            to="/shared-reports"
+            className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] text-muted-foreground transition-colors"
+            activeClassName="text-primary"
+          >
+            <Send className="h-5 w-5" />
+            <span className="text-[10px] font-medium leading-none">Shared</span>
+          </NavLink>
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] transition-colors",
+              drawerOpen ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <Menu className="h-5 w-5" />
+            <span className="text-[10px] font-medium leading-none">Menu</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* Menu Drawer */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
+              onClick={() => setDrawerOpen(false)}
+            />
+            {/* Drawer Panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed right-0 top-0 bottom-0 z-[70] w-72 bg-background border-l border-border shadow-xl"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+            >
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between p-4 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <Compass className="h-5 w-5 text-primary" />
+                  <span className="font-serif font-semibold">Menu</span>
+                </div>
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  className="p-2 rounded-full hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Drawer Links */}
+              <div className="py-2 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 80px)' }}>
+                {visibleDrawerLinks.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 mx-2 rounded-lg text-sm font-medium transition-colors min-h-[44px]",
+                      location.pathname === link.to
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground hover:bg-muted"
+                    )}
+                  >
+                    {link.icon}
+                    <span className="flex-1">{link.label}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
+
+// ─── Desktop Nav (unchanged) ─────────────────────────────────────────────────
 
 function DesktopNav({ items }: { items: NavItem[] }) {
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
-          {/* Logo / Brand */}
           <NavLink to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
             <Compass className="h-5 w-5 text-primary" />
             <span className="font-serif font-semibold text-lg">Market Compass</span>
           </NavLink>
-
-          {/* Navigation Links */}
           <nav className="flex items-center gap-1">
             {items.map((item) => (
               <NavLink
@@ -105,16 +225,15 @@ function DesktopNav({ items }: { items: NavItem[] }) {
   );
 }
 
-// Spacer component to prevent content from being hidden behind mobile nav
+// ─── Spacer ──────────────────────────────────────────────────────────────────
+
 export function MobileNavSpacer() {
   const isMobile = useIsMobile();
   const location = useLocation();
 
-  // Don't add spacer on shared pages (no nav shown)
   if (location.pathname.startsWith('/share/') || location.pathname === '/share') {
     return null;
   }
-
   if (!isMobile) {
     return null;
   }

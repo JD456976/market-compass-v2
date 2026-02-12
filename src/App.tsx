@@ -7,6 +7,7 @@ import { ClientModeProvider } from "@/contexts/ClientModeContext";
 import { BetaAccessGate } from "@/components/BetaAccessGate";
 import { GlobalNav, MobileNavSpacer } from "@/components/GlobalNav";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 import Index from "./pages/Index";
 import MarketProfiles from "./pages/MarketProfiles";
 import MarketScenarios from "./pages/MarketScenarios";
@@ -87,6 +88,7 @@ function AppLayout() {
       <main className="flex-1">
         <AppRoutes />
       </main>
+      <FloatingActionButton />
       <MobileNavSpacer />
     </>
   );
