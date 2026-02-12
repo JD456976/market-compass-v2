@@ -238,6 +238,23 @@ const SellerFlow = () => {
     handleGenerate();
   };
 
+  // Keyboard navigation: Enter = next/generate, Escape = back
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'TEXTAREA') return;
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (step < STEPS.length - 1) goNext();
+        else onGenerateReport();
+      } else if (e.key === 'Escape') {
+        goPrev();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
+
   const selectedScenario = selectedScenarioId ? getMarketScenarioById(selectedScenarioId) : undefined;
 
   const slideVariants = {
