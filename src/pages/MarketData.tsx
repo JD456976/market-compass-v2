@@ -387,7 +387,7 @@ const MarketData = () => {
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.02 }}
                 >
-                  <Card className="group">
+                  <Card>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -412,10 +412,13 @@ const MarketData = () => {
                               </span>
                               {getInventoryBadge(snapshot.inventorySignal)}
                             </div>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              Updated {snapshot.lastUpdated} · {snapshot.sourceLabel}
+                            </p>
                           </div>
                         </div>
                         {isCustomSnapshot(snapshot.id) && (
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex gap-1">
                             <Button 
                               variant="ghost" 
                               size="icon" 

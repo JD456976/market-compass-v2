@@ -75,18 +75,27 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
       if (activationsError) throw activationsError;
       setActivations(activationsData || []);
 
-      // Fetch owner devices
+      // Fetch owner devices via RPC (bypasses RLS)
+      const currentDeviceId = getDeviceId();
+      const { data: ownerCheckData } = await supabase.rpc('check_owner_device', {
+        p_device_id: currentDeviceId,
+      });
+      
+      // Try direct table query (may fail without auth), fall back to RPC data
+      let ownerDevicesList: OwnerDevice[] = [];
       const { data: ownerDevicesData, error: ownerDevicesError } = await supabase
         .from('owner_devices')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (ownerDevicesError) throw ownerDevicesError;
-      setOwnerDevices(ownerDevicesData || []);
+      if (!ownerDevicesError && ownerDevicesData) {
+        ownerDevicesList = ownerDevicesData;
+      }
+      setOwnerDevices(ownerDevicesList);
 
-      // Check if current device is an owner device
-      const currentDeviceId = getDeviceId();
-      const isOwner = (ownerDevicesData || []).some(
+      // Check if current device is an owner device using RPC result
+      const ownerCheck = ownerCheckData as { is_owner: boolean } | null;
+      const isOwner = ownerCheck?.is_owner || ownerDevicesList.some(
         (d: OwnerDevice) => d.device_id === currentDeviceId && !d.revoked_at
       );
       setIsCurrentDeviceOwner(isOwner);
@@ -342,29 +351,31 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
 
         {/* Tables */}
         <Tabs defaultValue="codes" className="space-y-4">
-          <TabsList className="flex flex-wrap h-auto gap-1">
-            <TabsTrigger value="codes" className="flex-1 min-w-fit">
-              <KeyRound className="h-4 w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Access </span>Codes ({codes.length})
-            </TabsTrigger>
-            <TabsTrigger value="activations" className="flex-1 min-w-fit">
-              <Smartphone className="h-4 w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Activations</span><span className="sm:hidden">Active</span> ({activations.length})
-            </TabsTrigger>
-            <TabsTrigger value="owner-devices" className="flex-1 min-w-fit">
-              <Monitor className="h-4 w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Owner </span>Devices ({stats.ownerDevices})
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex-1 min-w-fit">
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="flex-1 min-w-fit">
-              Reports
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex-1 min-w-fit">
-              Analytics
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-4 px-4">
+            <TabsList className="inline-flex w-auto min-w-full h-auto gap-1">
+              <TabsTrigger value="codes" className="text-xs px-3 py-2 whitespace-nowrap">
+                <KeyRound className="h-3.5 w-3.5 mr-1" />
+                Codes ({codes.length})
+              </TabsTrigger>
+              <TabsTrigger value="activations" className="text-xs px-3 py-2 whitespace-nowrap">
+                <Smartphone className="h-3.5 w-3.5 mr-1" />
+                Active ({activations.length})
+              </TabsTrigger>
+              <TabsTrigger value="owner-devices" className="text-xs px-3 py-2 whitespace-nowrap">
+                <Monitor className="h-3.5 w-3.5 mr-1" />
+                Devices ({stats.ownerDevices})
+              </TabsTrigger>
+              <TabsTrigger value="users" className="text-xs px-3 py-2 whitespace-nowrap">
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="reports" className="text-xs px-3 py-2 whitespace-nowrap">
+                Reports
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="text-xs px-3 py-2 whitespace-nowrap">
+                Analytics
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="codes">
             <BetaCodesTable codes={codes} onRefresh={fetchData} />

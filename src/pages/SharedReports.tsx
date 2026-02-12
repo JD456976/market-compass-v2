@@ -21,7 +21,7 @@ import { SwipeableCard } from '@/components/SwipeableCard';
 
 const SharedReports = () => {
   const { toast } = useToast();
-  const { sessions, loading, activeSessions, archivedSessions, archiveSession, unarchiveSession } = useSharedSessions();
+  const { sessions, loading, activeSessions, archivedSessions, archiveSession, unarchiveSession, deleteSession } = useSharedSessions();
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('active');
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,6 +69,14 @@ const SharedReports = () => {
     toast({
       title: "Report archived",
       description: `"${session.client_name}" moved to Archived.`,
+    });
+  };
+
+  const handleDeleteArchived = async (session: Session) => {
+    await deleteSession(session.id);
+    toast({
+      title: "Report deleted",
+      description: `"${session.client_name}" has been permanently deleted.`,
     });
   };
 
@@ -201,8 +209,8 @@ const SharedReports = () => {
       transition={{ delay: index * 0.03 }}
     >
       <SwipeableCard
-        onDelete={() => isArchived ? handleUnarchive(session) : handleArchive(session)}
-        deleteLabel={isArchived ? 'Restore' : 'Archive'}
+        onDelete={() => isArchived ? handleDeleteArchived(session) : handleArchive(session)}
+        deleteLabel={isArchived ? 'Delete' : 'Archive'}
       >
         <Card>
           <CardContent className="p-4">
@@ -285,15 +293,27 @@ const SharedReports = () => {
                     <ExternalLink className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={(e) => { e.stopPropagation(); isArchived ? handleUnarchive(session) : handleArchive(session); }}
-                  title={isArchived ? 'Restore' : 'Archive'}
-                  className="min-h-[44px] min-w-[44px]"
-                >
-                  {isArchived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
-                </Button>
+                {isArchived ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => { e.stopPropagation(); handleUnarchive(session); }}
+                    title="Restore"
+                    className="min-h-[44px] min-w-[44px]"
+                  >
+                    <ArchiveRestore className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => { e.stopPropagation(); handleArchive(session); }}
+                    title="Archive"
+                    className="min-h-[44px] min-w-[44px]"
+                  >
+                    <Archive className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
           </CardContent>
