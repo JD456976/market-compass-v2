@@ -83,6 +83,8 @@ export async function upsertSessionToSupabase(session: Session): Promise<Session
     share_link_created: session.share_link_created || false,
     share_token: existing?.share_token || (session.share_link_created ? generateShareToken() : null),
     pdf_exported: session.pdf_exported || false,
+    archived: session.archived || false,
+    archived_at: session.archived_at || null,
     updated_at: now,
   };
 
@@ -232,6 +234,8 @@ function mapDbSessionToSession(db: any): Session {
     buyer_inputs: db.buyer_inputs as Session['buyer_inputs'],
     share_link_created: db.share_link_created || false,
     pdf_exported: db.pdf_exported || false,
+    archived: db.archived || false,
+    archived_at: db.archived_at || null,
     created_at: db.created_at,
     updated_at: db.updated_at,
   };

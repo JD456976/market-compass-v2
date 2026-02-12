@@ -235,6 +235,9 @@ const MarketScenarios = () => {
                       <span>Leverage</span>
                       <span className="font-medium text-foreground">{getLeverageLabel(scenario.assumptions.negotiationLeverage)}</span>
                     </div>
+                    <div className="pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
+                      Added {new Date(scenario.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -279,11 +282,11 @@ const MarketScenarios = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <Card className="h-full group">
+                    <Card className="h-full">
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <CardTitle className="text-base">{scenario.name}</CardTitle>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex gap-1">
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(scenario)}>
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
@@ -308,6 +311,12 @@ const MarketScenarios = () => {
                         <div className="flex items-center justify-between text-muted-foreground">
                           <span>Leverage</span>
                           <span className="font-medium text-foreground">{getLeverageLabel(scenario.assumptions.negotiationLeverage)}</span>
+                        </div>
+                        <div className="pt-2 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground">
+                          <span>Created {new Date(scenario.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          {scenario.updated_at !== scenario.created_at && (
+                            <span>Updated {new Date(scenario.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

@@ -211,7 +211,7 @@ const Index = () => {
           <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Compass className="h-4 w-4" />
-              <span>Market Compass v0</span>
+              <span>Market Compass</span>
             </div>
             <p className="text-xs text-center max-w-md">
               Uses public market trend research and transaction logic. 
