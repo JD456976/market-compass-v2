@@ -13,6 +13,7 @@ import { useSharedSession } from '@/hooks/useSession';
 import { getReportErrorMessage } from '@/lib/supabaseStorage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { ReportHeader } from '@/components/ReportHeader';
+import { BrandedReportHeader } from '@/components/report/BrandedReportHeader';
 import { MethodologyFooter } from '@/components/MethodologyFooter';
 import { formatLocation } from '@/lib/utils';
 import { LikelihoodBar } from '@/components/ClientVisuals';
@@ -24,6 +25,8 @@ import { LikelihoodHelperText, LikelihoodDefinitions } from '@/components/Likeli
 import { ScenarioExplorer } from '@/components/ScenarioExplorer';
 import { openScenarioExplorer } from '@/lib/scenarioExplorerEvents';
 import { logSharedReportView } from '@/lib/viewTracking';
+import { ClientFeedback } from '@/components/report/ClientFeedback';
+import { loadBrandingForSession, AgentBranding } from '@/lib/agentBranding';
 import { 
   getTitle, 
   buyerWhatThisMeans, 
@@ -55,6 +58,7 @@ const SharedReportContent = () => {
   const { session, marketProfile, shareToken, loading, error } = useSharedSession(sessionId);
   const [exporting, setExporting] = useState(false);
   const viewLoggedRef = useRef(false);
+  const [agentBranding, setAgentBranding] = useState<AgentBranding | null>(null);
   
   // What-If state for buyer reports
   const [originalBuyerInputs, setOriginalBuyerInputs] = useState<BuyerInputs | null>(null);
@@ -80,6 +84,13 @@ const SharedReportContent = () => {
       logSharedReportView(shareToken, session.id);
     }
   }, [session, shareToken]);
+
+  // Load agent branding for the session owner
+  useEffect(() => {
+    if (session && (session as any).owner_user_id) {
+      loadBrandingForSession((session as any).owner_user_id).then(setAgentBranding);
+    }
+  }, [session]);
 
   // Handle what-if input changes
   const handleWhatIfChange = useCallback((inputs: BuyerInputs) => {
@@ -261,10 +272,11 @@ const SharedReportContent = () => {
         >
           {/* Prepared For/By Header Block */}
           <div className="pdf-section pdf-header-section">
-            <ReportHeader
+            <BrandedReportHeader
               reportType={isSeller ? 'Seller' : 'Buyer'}
               clientName={session.client_name}
               snapshotTimestamp={reportData.snapshotTimestamp}
+              branding={agentBranding}
             />
           </div>
 
@@ -558,6 +570,11 @@ const SharedReportContent = () => {
             </>
           )}
 
+          {/* Client Feedback */}
+          {shareToken && (
+            <ClientFeedback reportId={session.id} shareToken={shareToken} />
+          )}
+
           {/* Methodology */}
           <div className="pdf-section">
             <AnalysisMethodology />
@@ -569,6 +586,13 @@ const SharedReportContent = () => {
               <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
             </CardContent>
           </Card>
+
+          {/* Custom Footer */}
+          {agentBranding?.footer_text && (
+            <div className="pdf-section text-center">
+              <p className="text-xs text-muted-foreground italic">{agentBranding.footer_text}</p>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="pdf-section">
