@@ -213,6 +213,54 @@ export type Database = {
         }
         Relationships: []
       }
+      market_scenarios: {
+        Row: {
+          competition_level: string
+          created_at: string
+          demand_level: string
+          id: string
+          is_built_in: boolean
+          name: string
+          negotiation_leverage: string
+          owner_device_id: string | null
+          owner_user_id: string | null
+          pricing_sensitivity: string
+          summary: string
+          typical_dom_band: string
+          updated_at: string
+        }
+        Insert: {
+          competition_level?: string
+          created_at?: string
+          demand_level?: string
+          id?: string
+          is_built_in?: boolean
+          name: string
+          negotiation_leverage?: string
+          owner_device_id?: string | null
+          owner_user_id?: string | null
+          pricing_sensitivity?: string
+          summary: string
+          typical_dom_band?: string
+          updated_at?: string
+        }
+        Update: {
+          competition_level?: string
+          created_at?: string
+          demand_level?: string
+          id?: string
+          is_built_in?: boolean
+          name?: string
+          negotiation_leverage?: string
+          owner_device_id?: string | null
+          owner_user_id?: string | null
+          pricing_sensitivity?: string
+          summary?: string
+          typical_dom_band?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       owner_devices: {
         Row: {
           admin_email: string
@@ -446,6 +494,22 @@ export type Database = {
         Returns: boolean
       }
       is_admin_user: { Args: never; Returns: boolean }
+      list_owner_devices: {
+        Args: never
+        Returns: {
+          admin_email: string
+          created_at: string
+          device_id: string
+          id: string
+          revoked_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "owner_devices"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       record_admin_activation: {
         Args: { p_device_id: string; p_email: string }
         Returns: Json

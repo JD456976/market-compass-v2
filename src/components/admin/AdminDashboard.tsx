@@ -81,15 +81,13 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
         p_device_id: currentDeviceId,
       });
       
-      // Try direct table query (may fail without auth), fall back to RPC data
+      // Use RPC to list owner devices (bypasses RLS)
       let ownerDevicesList: OwnerDevice[] = [];
       const { data: ownerDevicesData, error: ownerDevicesError } = await supabase
-        .from('owner_devices')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('list_owner_devices');
 
       if (!ownerDevicesError && ownerDevicesData) {
-        ownerDevicesList = ownerDevicesData;
+        ownerDevicesList = (ownerDevicesData as unknown as OwnerDevice[]);
       }
       setOwnerDevices(ownerDevicesList);
 
