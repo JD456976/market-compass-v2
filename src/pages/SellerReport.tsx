@@ -10,6 +10,7 @@ import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport } from '@/lib/scoring';
 import { useToast } from '@/hooks/use-toast';
 import { exportReportToPdf } from '@/lib/pdfExport';
+import { getShareUrl } from '@/lib/shareUrl';
 import { ReportHeader } from '@/components/ReportHeader';
 import { formatLocation } from '@/lib/utils';
 import { ModeSwitcher } from '@/components/ModeSwitcher';
@@ -188,7 +189,8 @@ const SellerReport = () => {
       const updatedSession = { ...reportData.session, share_link_created: true };
       upsertSession(updatedSession);
       setReportData({ ...reportData, session: updatedSession });
-      const url = `${window.location.origin}/share/${reportData.session.id}`;
+      const token = (reportData.session as any).share_token || reportData.session.id;
+      const url = getShareUrl(token);
       navigator.clipboard.writeText(url);
       
       // Notify about lifecycle transition
