@@ -28,7 +28,7 @@ import { logSharedReportView } from '@/lib/viewTracking';
 import { ClientFeedback } from '@/components/report/ClientFeedback';
 import { loadBrandingForSession, AgentBranding } from '@/lib/agentBranding';
 import { ReportWatermark } from '@/components/report/ReportWatermark';
-import { CommunicationHub } from '@/components/report/CommunicationHub';
+import { ReportMessages } from '@/components/report/ReportMessages';
 import { 
   getTitle, 
   buyerWhatThisMeans, 
@@ -572,8 +572,8 @@ const SharedReportContent = () => {
             </>
           )}
 
-          {/* Communication Hub - Client View */}
-          <CommunicationHub reportId={session.id} isAgent={false} />
+          {/* Messages Thread - Client View */}
+          <ReportMessages reportId={session.id} isAgent={false} />
 
           {/* Client Feedback */}
           {shareToken && (
@@ -621,6 +621,7 @@ const SharedReportContent = () => {
           originalInputs={originalBuyerInputs}
           currentInputs={whatIfInputs}
           onInputsChange={handleWhatIfChange}
+          reportId={session.id}
         />
       )}
     </div>

@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.parse-mls-input]
 verify_jwt = false
+
+[functions.report-notifications]
+verify_jwt = false
