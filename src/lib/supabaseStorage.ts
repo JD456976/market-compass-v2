@@ -59,10 +59,13 @@ export async function getSessionByShareToken(shareToken: string): Promise<Sessio
 export async function upsertSessionToSupabase(session: Session): Promise<Session | null> {
   const now = new Date().toISOString();
   
+  // Get current user for owner_user_id
+  const { data: { user } } = await supabase.auth.getUser();
+  
   // Check if session exists to preserve share_token
   const { data: existing } = await supabase
     .from('sessions')
-    .select('id, share_token, created_at')
+    .select('id, share_token, created_at, owner_user_id')
     .eq('id', session.id)
     .maybeSingle();
 
@@ -85,6 +88,7 @@ export async function upsertSessionToSupabase(session: Session): Promise<Session
     pdf_exported: session.pdf_exported || false,
     archived: session.archived || false,
     archived_at: session.archived_at || null,
+    owner_user_id: existing?.owner_user_id || user?.id || null,
     updated_at: now,
   };
 

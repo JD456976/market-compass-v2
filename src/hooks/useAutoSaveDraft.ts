@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { Session } from '@/types';
 import { upsertSessionAsync } from '@/lib/storage';
 
@@ -16,21 +16,28 @@ export function useAutoSaveDraft(
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(false);
   const savingRef = useRef(false);
+  // Keep latest references so unmount/debounce always use current values
+  const buildSessionRef = useRef(buildSession);
+  const shouldSaveRef = useRef(shouldSave);
+  buildSessionRef.current = buildSession;
+  shouldSaveRef.current = shouldSave;
 
-  const save = useCallback(async () => {
+  const doSave = () => {
     if (savingRef.current) return;
+    if (!shouldSaveRef.current) return;
     savingRef.current = true;
     try {
-      const session = buildSession();
-      await upsertSessionAsync(session);
-      console.log('Auto-saved draft:', session.id);
+      const session = buildSessionRef.current();
+      upsertSessionAsync(session)
+        .then(() => console.log('Auto-saved draft:', session.id))
+        .catch(() => {})
+        .finally(() => { savingRef.current = false; });
     } catch {
-      // Silent fail
-    } finally {
       savingRef.current = false;
     }
-  }, [buildSession]);
+  };
 
+  // Debounced save on input changes
   useEffect(() => {
     // Skip the initial mount to avoid saving defaults
     if (!isMountedRef.current) {
@@ -38,15 +45,13 @@ export function useAutoSaveDraft(
       return;
     }
 
-    if (!shouldSave) return;
+    if (!shouldSaveRef.current) return;
 
     // Clear previous timer
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
     // Debounce: save 1.5s after last change
-    timeoutRef.current = setTimeout(() => {
-      save();
-    }, 1500);
+    timeoutRef.current = setTimeout(doSave, 1500);
 
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -54,21 +59,12 @@ export function useAutoSaveDraft(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
-  // Also save immediately on unmount (navigating away)
+  // Save immediately on unmount (navigating away)
   useEffect(() => {
     return () => {
-      if (shouldSave) {
-        // Fire-and-forget save on unmount
-        try {
-          const session = buildSession();
-          upsertSessionAsync(session).catch(() => {});
-        } catch {
-          // ignore
-        }
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      doSave();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldSave]);
-
-  return { saveNow: save };
+  }, []);
 }
