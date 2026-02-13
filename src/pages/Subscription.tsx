@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { NotificationBell } from '@/components/NotificationBell';
 import { ScenarioCompareSheet } from '@/components/ScenarioCompareSheet';
-import { BuyerInputs } from '@/types';
+import { BuyerInputs, SellerInputs } from '@/types';
 import { getBetaAccessSession } from '@/lib/betaAccess';
 import { useSessions } from '@/hooks/useSessions';
 import { loadAgentProfile, AgentProfile } from '@/lib/agentProfile';
@@ -49,7 +49,7 @@ interface PendingScenario {
   submitted_at: string | null;
   created_at: string;
   client_name?: string;
-  scenario_payload: BuyerInputs;
+  scenario_payload: BuyerInputs | SellerInputs;
 }
 
 interface AnalyticsData {
@@ -266,7 +266,7 @@ export default function Subscription() {
           setPendingScenarios(scenarios.map(s => ({
             ...s,
             client_name: sessionMap.get(s.report_id)?.client_name,
-            scenario_payload: s.scenario_payload as unknown as BuyerInputs,
+            scenario_payload: s.scenario_payload as unknown as BuyerInputs | SellerInputs,
           })));
         }
       }
@@ -576,7 +576,7 @@ export default function Subscription() {
         </motion.div>
 
         {clientMessages.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+          <motion.div id="messages-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
             <Card className="border-accent/20">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -634,7 +634,7 @@ export default function Subscription() {
 
         {/* Pending Scenario Reviews */}
         {pendingScenarios.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.13 }}>
+          <motion.div id="scenarios-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.13 }}>
             <Card className="border-accent/20">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">

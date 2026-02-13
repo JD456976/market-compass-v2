@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2, AlertCircle, Send, ArrowRight } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { BuyerInputs } from '@/types';
+import { BuyerInputs, SellerInputs } from '@/types';
 import { cn } from '@/lib/utils';
 
 interface ScenarioCompareSheetProps {
@@ -18,14 +18,14 @@ interface ScenarioCompareSheetProps {
   clientName?: string;
   scenarioTitle?: string;
   noteToAgent?: string;
-  scenarioPayload: BuyerInputs;
+  scenarioPayload: BuyerInputs | SellerInputs;
   onAction?: (id: string, action: 'accepted' | 'needs_changes') => void;
 }
 
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v);
 
-const FIELD_LABELS: Record<string, string> = {
+const BUYER_FIELD_LABELS: Record<string, string> = {
   offer_price: 'Offer Price',
   financing_type: 'Financing Type',
   down_payment_percent: 'Down Payment',
@@ -34,8 +34,15 @@ const FIELD_LABELS: Record<string, string> = {
   buyer_preference: 'Buyer Preference',
 };
 
+const SELLER_FIELD_LABELS: Record<string, string> = {
+  seller_selected_list_price: 'List Price',
+  desired_timeframe: 'Desired Timeframe',
+  strategy_preference: 'Strategy Preference',
+};
+
 function formatValue(key: string, value: any): string {
-  if (key === 'offer_price') return formatCurrency(value as number);
+  if (value == null || value === undefined) return '—';
+  if (key === 'offer_price' || key === 'seller_selected_list_price') return formatCurrency(value as number);
   if (key === 'contingencies' && Array.isArray(value)) return value.length === 0 ? 'None' : value.join(', ');
   if (key === 'down_payment_percent') {
     const labels: Record<string, string> = { '<10': 'Less than 10%', '10-19': '10–19%', '20+': '20% or more' };
@@ -43,6 +50,10 @@ function formatValue(key: string, value: any): string {
   }
   if (key === 'closing_timeline') {
     const labels: Record<string, string> = { '<21': 'Under 21 days', '21-30': '21–30 days', '31-45': '31–45 days', '45+': 'Over 45 days' };
+    return labels[value] || String(value);
+  }
+  if (key === 'desired_timeframe') {
+    const labels: Record<string, string> = { '30': '30 days', '60': '60 days', '90+': '90+ days' };
     return labels[value] || String(value);
   }
   return String(value);
@@ -69,55 +80,68 @@ export function ScenarioCompareSheet({
   onAction,
 }: ScenarioCompareSheetProps) {
   const { toast } = useToast();
-  const [original, setOriginal] = useState<BuyerInputs | null>(null);
+  const [original, setOriginal] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
+  const [sessionType, setSessionType] = useState<'Buyer' | 'Seller'>('Buyer');
 
   useEffect(() => {
     if (!open || !reportId) return;
+    const fetchOriginal = async () => {
+      setLoading(true);
+      try {
+        const { data } = await supabase
+          .from('sessions')
+          .select('buyer_inputs, seller_inputs, session_type')
+          .eq('id', reportId)
+          .single();
+        if (data) {
+          const type = data.session_type === 'Seller' ? 'Seller' : 'Buyer';
+          setSessionType(type);
+          const inputs = type === 'Seller' ? data.seller_inputs : data.buyer_inputs;
+          setOriginal(inputs as Record<string, any> || null);
+        }
+      } catch (err) {
+        console.error('Error fetching original:', err);
+      }
+      setLoading(false);
+    };
     fetchOriginal();
   }, [open, reportId]);
 
-  const fetchOriginal = async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from('sessions')
-      .select('buyer_inputs')
-      .eq('id', reportId)
-      .single();
-    if (data?.buyer_inputs) {
-      setOriginal(data.buyer_inputs as unknown as BuyerInputs);
-    }
-    setLoading(false);
-  };
+  const fieldLabels = sessionType === 'Seller' ? SELLER_FIELD_LABELS : BUYER_FIELD_LABELS;
+  const compareFields = Object.keys(fieldLabels);
 
-  const compareFields = Object.keys(FIELD_LABELS);
-
-  const handleSendComment = async () => {
-    if (!comment.trim()) return;
+  const handleAction = async (action: 'accepted' | 'needs_changes') => {
     setSending(true);
-    const { error } = await supabase.from('report_messages').insert({
-      report_id: reportId,
-      sender_role: 'agent',
-      sender_id: 'agent',
-      body: `Re: ${scenarioTitle || 'Scenario'} — ${comment.trim()}`,
-      read_by_agent_at: new Date().toISOString(),
-    });
-    if (!error) {
-      // Notify client
-      supabase.functions.invoke('report-notifications', {
-        body: {
-          type: 'agent_reply',
+    try {
+      // If there's a comment, send it as a message first
+      if (comment.trim()) {
+        await supabase.from('report_messages').insert({
           report_id: reportId,
-          sender_name: 'Agent',
-          message_snippet: comment.trim().slice(0, 200),
-        },
-      }).catch(() => {});
-      toast({ title: 'Comment sent to client' });
+          sender_role: 'agent',
+          sender_id: 'agent',
+          body: `Re: ${scenarioTitle || 'Scenario'} — ${comment.trim()}`,
+          read_by_agent_at: new Date().toISOString(),
+        });
+        supabase.functions.invoke('report-notifications', {
+          body: {
+            type: 'agent_reply',
+            report_id: reportId,
+            sender_name: 'Agent',
+            message_snippet: comment.trim().slice(0, 200),
+          },
+        }).catch(() => {});
+      }
+
+      onAction?.(scenarioId, action);
+      toast({ title: action === 'accepted' ? 'Scenario accepted' : 'Changes requested' });
       setComment('');
-    } else {
-      toast({ title: 'Failed to send comment', variant: 'destructive' });
+      onOpenChange(false);
+    } catch (err) {
+      console.error('Error handling action:', err);
+      toast({ title: 'Something went wrong', variant: 'destructive' });
     }
     setSending(false);
   };
@@ -143,11 +167,14 @@ export function ScenarioCompareSheet({
           </Card>
         )}
 
-        {loading || !original ? (
+        {loading ? (
           <div className="text-sm text-muted-foreground text-center py-8">Loading comparison…</div>
+        ) : !original ? (
+          <div className="text-sm text-muted-foreground text-center py-8">
+            No baseline data found for this report.
+          </div>
         ) : (
           <div className="space-y-1">
-            {/* Column headers */}
             <div className="grid grid-cols-[1fr_auto_1fr] gap-2 px-1 pb-2 border-b border-border mb-2">
               <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Original</span>
               <span />
@@ -168,7 +195,7 @@ export function ScenarioCompareSheet({
                   )}
                 >
                   <div>
-                    <p className="text-[10px] text-muted-foreground mb-0.5">{FIELD_LABELS[key]}</p>
+                    <p className="text-[10px] text-muted-foreground mb-0.5">{fieldLabels[key]}</p>
                     <p className={cn('text-sm', changed ? 'text-muted-foreground line-through' : '')}>{formatValue(key, origVal)}</p>
                   </div>
                   <div className="flex items-center justify-center">
@@ -184,7 +211,6 @@ export function ScenarioCompareSheet({
               );
             })}
 
-            {/* Changes summary */}
             {(() => {
               const changedCount = compareFields.filter(k => hasChanged(k, (original as any)[k], (scenarioPayload as any)[k])).length;
               return (
@@ -198,25 +224,15 @@ export function ScenarioCompareSheet({
           </div>
         )}
 
-        {/* Comment section */}
+        {/* Optional comment (inline, no separate send button) */}
         <div className="mt-6 space-y-3 border-t border-border pt-4">
-          <p className="text-xs font-medium text-muted-foreground">Send a comment to the client</p>
-          <div className="flex gap-2">
-            <Textarea
-              placeholder="Your feedback on this scenario…"
-              value={comment}
-              onChange={e => setComment(e.target.value)}
-              className="text-sm min-h-[60px] resize-none flex-1"
-            />
-            <Button
-              size="icon"
-              onClick={handleSendComment}
-              disabled={sending || !comment.trim()}
-              className="shrink-0 self-end"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+          <p className="text-xs font-medium text-muted-foreground">Optional feedback for the client</p>
+          <Textarea
+            placeholder="Add a note about your decision…"
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            className="text-sm min-h-[60px] resize-none"
+          />
         </div>
 
         {/* Action buttons */}
@@ -224,20 +240,16 @@ export function ScenarioCompareSheet({
           <Button
             variant="outline"
             className="flex-1 min-h-[44px]"
-            onClick={() => {
-              onAction?.(scenarioId, 'needs_changes');
-              onOpenChange(false);
-            }}
+            onClick={() => handleAction('needs_changes')}
+            disabled={sending}
           >
             <AlertCircle className="h-4 w-4 mr-1.5" />
             Needs Changes
           </Button>
           <Button
             className="flex-1 min-h-[44px]"
-            onClick={() => {
-              onAction?.(scenarioId, 'accepted');
-              onOpenChange(false);
-            }}
+            onClick={() => handleAction('accepted')}
+            disabled={sending}
           >
             <CheckCircle2 className="h-4 w-4 mr-1.5" />
             Accept
