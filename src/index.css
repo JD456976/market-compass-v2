@@ -182,12 +182,21 @@
 }
 
 /* ============================================
-   Report Design System Tokens
+   Report Design System — Unified Tokens
    ============================================ */
 
-/* Report section spacing */
-.report-section-gap {
-  margin-top: 1.5rem;
+/* Base report typography — always Inter body + Playfair headings */
+.report-styled {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+}
+
+.report-styled h1,
+.report-styled h2,
+.report-styled h3,
+.report-styled [class*="CardTitle"] {
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
 /* Report heading hierarchy */
@@ -208,7 +217,7 @@
 
 .report-h3 {
   font-family: 'Inter', sans-serif;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.4;
   text-transform: uppercase;
@@ -230,17 +239,145 @@
   margin-top: 1.5rem;
 }
 
-/* Template-specific density overrides */
-.template-executive .pdf-section {
-  margin-bottom: 1.25rem;
+/* ============================================
+   Template: Modern — Airy, generous spacing
+   ============================================ */
+.template-modern .pdf-section {
+  margin-bottom: 1.75rem;
 }
 
+.template-modern [class*="CardHeader"] {
+  padding-bottom: 0.75rem;
+  padding-top: 1.5rem;
+}
+
+.template-modern [class*="CardContent"] {
+  padding-bottom: 1.5rem;
+}
+
+.template-modern [class*="CardTitle"] {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.template-modern .pdf-stat-tile {
+  padding: 1.25rem !important;
+  border-radius: 0.875rem;
+}
+
+.template-modern .report-info-block {
+  gap: 1.25rem;
+}
+
+/* Modern: lighter card borders */
+.template-modern [class*="Card"] {
+  border-color: hsl(var(--border) / 0.5);
+}
+
+/* ============================================
+   Template: Executive — Dense, data-forward
+   ============================================ */
+.template-executive .pdf-section {
+  margin-bottom: 1rem;
+}
+
+.template-executive [class*="CardHeader"] {
+  padding-top: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.template-executive [class*="CardContent"] {
+  padding-bottom: 1rem;
+}
+
+.template-executive [class*="CardTitle"] {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.template-executive .pdf-stat-tile {
+  padding: 0.875rem !important;
+  border-radius: 0.625rem;
+}
+
+.template-executive .report-info-block {
+  gap: 0.75rem;
+}
+
+/* Executive: body text slightly smaller for density */
+.template-executive p,
+.template-executive li,
+.template-executive span:not([class*="CardTitle"]) {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+/* Executive: tighter section label uppercase */
+.template-executive .text-muted-foreground.uppercase {
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+}
+
+/* Executive: stronger card borders */
+.template-executive [class*="Card"] {
+  border-color: hsl(var(--border));
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.04);
+}
+
+/* ============================================
+   Template: Snapshot — Compact, single-page
+   ============================================ */
 .template-snapshot .pdf-section {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.625rem;
+}
+
+.template-snapshot [class*="CardHeader"] {
+  padding-top: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+.template-snapshot [class*="CardContent"] {
+  padding: 0.75rem 1rem;
+}
+
+.template-snapshot [class*="CardTitle"] {
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .template-snapshot .pdf-stat-tile {
-  padding: 0.75rem !important;
+  padding: 0.625rem !important;
+  border-radius: 0.5rem;
+}
+
+.template-snapshot .report-info-block {
+  gap: 0.5rem;
+}
+
+/* Snapshot: compact body text */
+.template-snapshot p,
+.template-snapshot li,
+.template-snapshot span:not([class*="CardTitle"]) {
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+/* Snapshot: reduced card elevation */
+.template-snapshot [class*="Card"] {
+  border-color: hsl(var(--border) / 0.4);
+  box-shadow: none;
+}
+
+/* Snapshot: metric values stay readable */
+.template-snapshot .font-serif.font-bold {
+  font-size: 1rem;
+}
+
+/* Snapshot: tighter grid gaps */
+.template-snapshot .grid {
+  gap: 0.5rem;
 }
 
 /* PDF Export Styles */

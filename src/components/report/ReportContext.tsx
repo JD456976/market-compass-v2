@@ -27,10 +27,11 @@ interface ReportProviderProps {
 }
 
 export function ReportProvider({ template, children }: ReportProviderProps) {
-  // isFirstPage is used for disclaimer placement
   return (
     <ReportCtx.Provider value={{ template, isFirstPage: true, setIsFirstPage: () => {} }}>
-      {children}
+      <div className={`template-${template} report-styled space-y-6`}>
+        {children}
+      </div>
     </ReportCtx.Provider>
   );
 }
