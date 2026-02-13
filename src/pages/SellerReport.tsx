@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, Clock, Building2, Target, TrendingUp, AlertCircle, CheckCircle2, FileDown, Share2, FileText, Pencil } from 'lucide-react';
-import { Session, SellerReportData, LikelihoodBand } from '@/types';
+import { Session, SellerReportData, LikelihoodBand, SellerInputs } from '@/types';
 import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport } from '@/lib/scoring';
 import { useToast } from '@/hooks/use-toast';
@@ -79,6 +79,7 @@ import { SellerRegretRiskMeter } from '@/components/report/SellerRegretRiskMeter
 import { calculateSellerRegretRisk } from '@/lib/sellerRegretRiskScoring';
 import { SellerWaitSimulatorCard } from '@/components/report/SellerWaitSimulatorCard';
 import { AddressIntelligenceCard } from '@/components/report/AddressIntelligenceCard';
+import { SellerScenarioExplorer, SellerScenarioExplorerCard, openSellerScenarioExplorer } from '@/components/SellerScenarioExplorer';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
   if (band === 'High') {
@@ -102,7 +103,9 @@ const SellerReport = () => {
   const [marketSnapshot, setMarketSnapshot] = useState<{ snapshot: MarketSnapshot; isGenericBaseline: boolean } | null>(null);
   const [mlsDetails, setMlsDetails] = useState<Record<string, string> | null>(null);
   const [reportTemplate, setReportTemplate] = useState<ReportTemplate>('modern');
-
+  const [originalSellerInputs, setOriginalSellerInputs] = useState<SellerInputs | null>(null);
+  const [scenarioInputs, setScenarioInputs] = useState<SellerInputs | null>(null);
+  const [scenarioHasChanges, setScenarioHasChanges] = useState(false);
   useEffect(() => {
     const sessionData = sessionStorage.getItem('current_session');
     if (!sessionData) {
@@ -131,6 +134,8 @@ const SellerReport = () => {
 
         const data = calculateSellerReport(session, marketProfile);
         setReportData(data);
+        setOriginalSellerInputs(session.seller_inputs!);
+        setScenarioInputs(session.seller_inputs!);
         
         // Load MLS details from sessionStorage
         try {
@@ -258,43 +263,14 @@ const SellerReport = () => {
     return '/seller';
   };
 
-  if (!reportData) return null;
-
-  const { session, marketProfile, likelihood30, likelihood60, likelihood90, snapshotTimestamp } = reportData;
-  const inputs = session.seller_inputs!;
-
-  const formatCurrency = (value: number) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
-
-  // Get mode-appropriate text
-  const mode = isClientMode ? 'client' : 'agent';
-  const whatThisMeansText = likelihood30 === 'High' 
-    ? sellerWhatThisMeans[mode].high
-    : likelihood30 === 'Moderate'
-    ? sellerWhatThisMeans[mode].moderate
-    : sellerWhatThisMeans[mode].low;
-
-  // Get tradeoff position for client visual
-  const tradeoffPosition = getSellerTradeoffPosition(
-    inputs.strategy_preference,
-    inputs.desired_timeframe
-  );
-
-  // Agent-only: consistency checks and limiting factor
-  const consistencyIssues = getConsistencyIssues(session);
-  const limitingFactor = marketSnapshot 
-    ? getPrimaryLimitingFactor(session, marketSnapshot.snapshot, likelihood30)
-    : null;
-
-  // Client-mode market reference
-  const cityName = parseCityFromLocation(session.location) || formatLocation(session.location);
-
   const handleDraftUpdate = (updatedSession: Session) => {
-    const updatedData = calculateSellerReport(updatedSession, marketProfile);
+    if (!reportData) return;
+    const updatedData = calculateSellerReport(updatedSession, reportData.marketProfile);
     setReportData(updatedData);
+    setScenarioInputs(updatedSession.seller_inputs!);
+    setOriginalSellerInputs(updatedSession.seller_inputs!);
     sessionStorage.setItem('current_session', JSON.stringify(updatedSession));
     
-    // Update market snapshot if location changed
     const newSnapshot = getMarketSnapshotOrBaseline(updatedSession.location);
     setMarketSnapshot(newSnapshot);
     
@@ -305,14 +281,12 @@ const SellerReport = () => {
     });
   };
 
-  // Reset to market baseline defaults (Agent-only)
   const handleResetToBaseline = () => {
-    if (!marketSnapshot) return;
+    if (!marketSnapshot || !reportData) return;
     
     const snapshot = marketSnapshot.snapshot;
     const context = getMarketContext(snapshot);
     
-    // Derive defaults from market context - properly typed
     const baselineTimeframe: '30' | '60' | '90+' = context.speedContext === 'faster' 
       ? '30' 
       : context.speedContext === 'slower' 
@@ -326,14 +300,15 @@ const SellerReport = () => {
         ? 'Prioritize speed'
         : 'Balanced';
 
+    const currentInputs = reportData.session.seller_inputs!;
     const updatedInputs = {
-      ...inputs,
+      ...currentInputs,
       desired_timeframe: baselineTimeframe,
       strategy_preference: baselineStrategy,
     };
 
     const updatedSession: Session = {
-      ...session,
+      ...reportData.session,
       seller_inputs: updatedInputs,
       updated_at: new Date().toISOString(),
     };
@@ -344,6 +319,52 @@ const SellerReport = () => {
       description: "Strategy defaults derived from market conditions.",
     });
   };
+
+  const handleScenarioChange = useCallback((newInputs: SellerInputs) => {
+    if (!reportData) return;
+    setScenarioInputs(newInputs);
+    const updatedSession: Session = {
+      ...reportData.session,
+      seller_inputs: newInputs,
+      updated_at: new Date().toISOString(),
+    };
+    const updatedData = calculateSellerReport(updatedSession, reportData.marketProfile);
+    setReportData(updatedData);
+    setScenarioHasChanges(
+      originalSellerInputs != null && (
+        newInputs.seller_selected_list_price !== originalSellerInputs.seller_selected_list_price ||
+        newInputs.desired_timeframe !== originalSellerInputs.desired_timeframe ||
+        newInputs.strategy_preference !== originalSellerInputs.strategy_preference
+      )
+    );
+  }, [reportData, originalSellerInputs]);
+
+  if (!reportData || !originalSellerInputs || !scenarioInputs) return null;
+
+  const { session, marketProfile, likelihood30, likelihood60, likelihood90, snapshotTimestamp } = reportData;
+  const inputs = scenarioInputs;
+
+  const formatCurrency = (value: number) => 
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+
+  const mode = isClientMode ? 'client' : 'agent';
+  const whatThisMeansText = likelihood30 === 'High' 
+    ? sellerWhatThisMeans[mode].high
+    : likelihood30 === 'Moderate'
+    ? sellerWhatThisMeans[mode].moderate
+    : sellerWhatThisMeans[mode].low;
+
+  const tradeoffPosition = getSellerTradeoffPosition(
+    inputs.strategy_preference,
+    inputs.desired_timeframe
+  );
+
+  const consistencyIssues = getConsistencyIssues(session);
+  const limitingFactor = marketSnapshot 
+    ? getPrimaryLimitingFactor(session, marketSnapshot.snapshot, likelihood30)
+    : null;
+
+  const cityName = parseCityFromLocation(session.location) || formatLocation(session.location);
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -385,6 +406,15 @@ const SellerReport = () => {
             <div className="pdf-hide-agent-notes">
               <ReportTemplateSelector selected={reportTemplate} onSelect={setReportTemplate} />
             </div>
+
+            {/* Seller Scenario Explorer Card - Client Mode */}
+            {isClientMode && (
+              <SellerScenarioExplorerCard
+                hasChanges={scenarioHasChanges}
+                onClick={() => openSellerScenarioExplorer()}
+                className="pdf-exclude"
+              />
+            )}
 
             {/* Draft Status - Agent Mode Only */}
             {!isClientMode && (
@@ -944,6 +974,18 @@ const SellerReport = () => {
         onOpenChange={setEditSheetOpen}
         onSave={handleDraftUpdate}
       />
+
+      {/* Seller Scenario Explorer - Client Mode */}
+      {isClientMode && (
+        <SellerScenarioExplorer
+          originalInputs={originalSellerInputs}
+          onInputsChange={handleScenarioChange}
+          currentInputs={scenarioInputs}
+          likelihood30={likelihood30}
+          snapshot={marketSnapshot?.snapshot}
+          reportId={session.id}
+        />
+      )}
     </div>
   );
 };
