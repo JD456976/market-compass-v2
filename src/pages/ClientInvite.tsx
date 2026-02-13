@@ -14,6 +14,8 @@ const ClientInvite = () => {
   const [status, setStatus] = useState<'loading' | 'valid' | 'invalid' | 'already_accepted'>('loading');
   const [agentName, setAgentName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
+  const clientFirstName = searchParams.get('fn') || '';
+  const clientLastName = searchParams.get('ln') || '';
 
   useEffect(() => {
     if (!token) {
@@ -138,7 +140,7 @@ const ClientInvite = () => {
           </p>
 
           <div className="space-y-3">
-            <Link to={`/signup?email=${encodeURIComponent(clientEmail)}&invite=${encodeURIComponent(token || '')}`}>
+            <Link to={`/signup?email=${encodeURIComponent(clientEmail)}&invite=${encodeURIComponent(token || '')}${clientFirstName ? `&fn=${encodeURIComponent(clientFirstName)}` : ''}${clientLastName ? `&ln=${encodeURIComponent(clientLastName)}` : ''}`}>
               <Button className="w-full" size="lg">Create Client Account</Button>
             </Link>
             <Link to={`/login?email=${encodeURIComponent(clientEmail)}`}>

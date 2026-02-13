@@ -248,6 +248,8 @@ export type Database = {
           accepted_by_user_id: string | null
           agent_user_id: string
           client_email: string
+          client_first_name: string | null
+          client_last_name: string | null
           created_at: string
           id: string
           invite_token: string
@@ -260,6 +262,8 @@ export type Database = {
           accepted_by_user_id?: string | null
           agent_user_id: string
           client_email: string
+          client_first_name?: string | null
+          client_last_name?: string | null
           created_at?: string
           id?: string
           invite_token?: string
@@ -272,6 +276,8 @@ export type Database = {
           accepted_by_user_id?: string | null
           agent_user_id?: string
           client_email?: string
+          client_first_name?: string | null
+          client_last_name?: string | null
           created_at?: string
           id?: string
           invite_token?: string
