@@ -142,10 +142,16 @@ const Login = () => {
               </Button>
             </form>
 
-            <p className="text-center text-sm text-muted-foreground mt-6">
-              Need access?{' '}
-              <span className="text-foreground font-medium">Ask your agent for an invitation link.</span>
-            </p>
+            <div className="text-center text-sm text-muted-foreground mt-6 space-y-2">
+              <p>
+                Are you an agent?{' '}
+                <Link to="/signup" className="text-primary font-medium hover:underline">Create an account</Link>
+              </p>
+              <p>
+                Are you a client?{' '}
+                <span className="text-foreground font-medium">Ask your agent for an invitation link.</span>
+              </p>
+            </div>
           </CardContent>
         </Card>
 

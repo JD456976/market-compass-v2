@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   getBetaAccessSession, 
   setBetaAccessSession,
@@ -18,10 +19,21 @@ export function BetaAccessGate({ children }: BetaAccessGateProps) {
   const [hasAccess, setHasAccess] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
+    // Wait for auth to finish loading before checking beta access
+    if (authLoading) return;
+
     const checkAccess = async () => {
-      // First check if there's an existing session
+      // Authenticated users with valid Supabase sessions bypass beta gate
+      if (user) {
+        setHasAccess(true);
+        setIsChecking(false);
+        return;
+      }
+
+      // First check if there's an existing beta session in localStorage
       const session = getBetaAccessSession();
       
       if (session) {
@@ -66,7 +78,7 @@ export function BetaAccessGate({ children }: BetaAccessGateProps) {
     };
 
     checkAccess();
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, user, authLoading]);
 
   if (isChecking) {
     return (

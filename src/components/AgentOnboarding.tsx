@@ -192,26 +192,32 @@ export function AgentOnboarding({ onComplete, forceShow = false }: AgentOnboardi
 }
 
 // Trigger button to re-open onboarding - matches other nav buttons
-export function OnboardingTrigger({ className }: { className?: string }) {
-  const [showOnboarding, setShowOnboarding] = useState(false);
+import { forwardRef } from 'react';
 
-  return (
-    <>
-      <Button 
-        variant="outline" 
-        size="lg"
-        onClick={() => setShowOnboarding(true)}
-        className={`min-w-[160px] ${className || ''}`}
-      >
-        <Compass className="mr-2 h-4 w-4" />
-        How It Works
-      </Button>
-      {showOnboarding && (
-        <AgentOnboarding 
-          forceShow={true} 
-          onComplete={() => setShowOnboarding(false)} 
-        />
-      )}
-    </>
-  );
-}
+export const OnboardingTrigger = forwardRef<HTMLButtonElement, { className?: string }>(
+  ({ className }, ref) => {
+    const [showOnboarding, setShowOnboarding] = useState(false);
+
+    return (
+      <>
+        <Button 
+          ref={ref}
+          variant="outline" 
+          size="lg"
+          onClick={() => setShowOnboarding(true)}
+          className={`min-w-[160px] ${className || ''}`}
+        >
+          <Compass className="mr-2 h-4 w-4" />
+          How It Works
+        </Button>
+        {showOnboarding && (
+          <AgentOnboarding 
+            forceShow={true} 
+            onComplete={() => setShowOnboarding(false)} 
+          />
+        )}
+      </>
+    );
+  }
+);
+OnboardingTrigger.displayName = 'OnboardingTrigger';
