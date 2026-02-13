@@ -749,7 +749,12 @@ const BuyerFlow = () => {
                   <div className={`grid gap-4 ${financingType === 'Cash' ? 'md:grid-cols-1' : 'md:grid-cols-2'}`}>
                     <div className="space-y-2">
                       <Label>Financing Type</Label>
-                      <Select value={financingType} onValueChange={(v: FinancingType) => setFinancingType(v)}>
+                      <Select value={financingType} onValueChange={(v: FinancingType) => {
+                        setFinancingType(v);
+                        if (v === 'Cash') {
+                          setContingencies(prev => prev.filter(c => c !== 'Financing'));
+                        }
+                      }}>
                         <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Cash">Cash</SelectItem>

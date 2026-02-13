@@ -322,7 +322,13 @@ function ScenarioForm({
               <Select
                 value={localInputs.financing_type}
                 onValueChange={(value: FinancingType) => 
-                  setLocalInputs(prev => ({ ...prev, financing_type: value }))
+                  setLocalInputs(prev => ({
+                    ...prev,
+                    financing_type: value,
+                    contingencies: value === 'Cash'
+                      ? (prev.contingencies || []).filter(c => c !== 'Financing')
+                      : prev.contingencies,
+                  }))
                 }
               >
                 <SelectTrigger className="h-11 min-h-[44px] w-full">
