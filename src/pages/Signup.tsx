@@ -29,9 +29,12 @@ const Signup = () => {
   const [searchParams] = useSearchParams();
   const inviteEmail = searchParams.get('email') || '';
   const inviteToken = searchParams.get('invite') || '';
+  const inviteFirstName = searchParams.get('fn') || '';
+  const inviteLastName = searchParams.get('ln') || '';
   const isClientInvite = !!inviteToken;
 
-  const [fullName, setFullName] = useState('');
+  const defaultName = [inviteFirstName, inviteLastName].filter(Boolean).join(' ');
+  const [fullName, setFullName] = useState(defaultName);
   const [email, setEmail] = useState(inviteEmail);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

@@ -60,6 +60,7 @@ import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore
 import { SellerCompetitiveAnalysis } from '@/components/report/CompetitiveAnalysis';
 import { SuccessPrediction } from '@/components/report/SuccessPrediction';
 import { PropertyFactorsCard } from '@/components/report/PropertyFactorsCard';
+import { PropertyDetailsCard } from '@/components/report/PropertyDetailsCard';
 
 import { ReportWatermark } from '@/components/report/ReportWatermark';
 import { ViewStatsPanel } from '@/components/report/ViewStatsPanel';
@@ -91,6 +92,7 @@ const SellerReport = () => {
   const [templateName, setTemplateName] = useState('');
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [marketSnapshot, setMarketSnapshot] = useState<{ snapshot: MarketSnapshot; isGenericBaseline: boolean } | null>(null);
+  const [mlsDetails, setMlsDetails] = useState<Record<string, string> | null>(null);
 
   useEffect(() => {
     const sessionData = sessionStorage.getItem('current_session');
@@ -121,6 +123,12 @@ const SellerReport = () => {
         const data = calculateSellerReport(session, marketProfile);
         setReportData(data);
         
+        // Load MLS details from sessionStorage
+        try {
+          const mlsData = sessionStorage.getItem('current_mls_details');
+          if (mlsData) setMlsDetails(JSON.parse(mlsData));
+        } catch { /* ignore */ }
+
         // Get market snapshot based on location
         const snapshotData = getMarketSnapshotOrBaseline(session.location);
         setMarketSnapshot(snapshotData);
@@ -501,9 +509,22 @@ const SellerReport = () => {
               />
             )}
 
+            {/* Property Details from MLS */}
+            {mlsDetails && <PropertyDetailsCard details={mlsDetails} />}
+
             {/* Property Intelligence Factors */}
             {session.property_factors && session.property_factors.length > 0 && (
-              <PropertyFactorsCard factors={session.property_factors} />
+              <PropertyFactorsCard
+                factors={session.property_factors}
+                editable={!isClientMode}
+                onFactorsChange={(newFactors) => {
+                  const updatedSession = { ...session, property_factors: newFactors };
+                  const newData = calculateSellerReport(updatedSession, marketProfile);
+                  setReportData(newData);
+                  sessionStorage.setItem('current_session', JSON.stringify(updatedSession));
+                  setSaved(false);
+                }}
+              />
             )}
 
             {/* Success Prediction */}

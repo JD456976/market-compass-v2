@@ -589,7 +589,17 @@ const BuyerReport = () => {
 
             {/* Property Intelligence Factors */}
             {session.property_factors && session.property_factors.length > 0 && (
-              <PropertyFactorsCard factors={session.property_factors} />
+              <PropertyFactorsCard
+                factors={session.property_factors}
+                editable={!isClientMode}
+                onFactorsChange={(newFactors) => {
+                  const updatedSession = { ...session, property_factors: newFactors };
+                  const newData = calculateBuyerReport(updatedSession, marketProfile);
+                  setReportData(newData);
+                  sessionStorage.setItem('current_session', JSON.stringify(updatedSession));
+                  setSaved(false);
+                }}
+              />
             )}
 
             {/* Success Prediction */}

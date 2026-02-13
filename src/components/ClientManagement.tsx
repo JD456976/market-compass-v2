@@ -94,12 +94,16 @@ export function ClientManagement() {
 
     setSending(true);
 
+    const insertData: any = {
+      agent_user_id: user.id,
+      client_email: trimmedEmail,
+    };
+    if (firstName.trim()) insertData.client_first_name = firstName.trim();
+    if (lastName.trim()) insertData.client_last_name = lastName.trim();
+
     const { data, error } = await supabase
       .from('client_invitations')
-      .insert({
-        agent_user_id: user.id,
-        client_email: trimmedEmail,
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -121,8 +125,11 @@ export function ClientManagement() {
     loadData();
   };
 
-  const copyInviteLink = (token: string) => {
-    const link = `${window.location.origin}/invite?token=${token}`;
+    const copyInviteLink = (token: string, inv: Invitation) => {
+    const params = new URLSearchParams({ token });
+    if ((inv as any).client_first_name) params.set('fn', (inv as any).client_first_name);
+    if ((inv as any).client_last_name) params.set('ln', (inv as any).client_last_name);
+    const link = `${window.location.origin}/invite?${params.toString()}`;
     navigator.clipboard.writeText(link);
     toast({ title: 'Invite link copied to clipboard' });
   };
@@ -263,7 +270,7 @@ export function ClientManagement() {
                     {statusBadge(inv.status)}
                     {inv.status === 'pending' && (
                       <>
-                        <Button size="sm" variant="ghost" onClick={() => copyInviteLink(inv.invite_token)}>
+                        <Button size="sm" variant="ghost" onClick={() => copyInviteLink(inv.invite_token, inv)}>
                           <Copy className="h-3.5 w-3.5" />
                         </Button>
                         <Button size="sm" variant="ghost" className="text-destructive" onClick={() => revokeInvite(inv.id)}>
