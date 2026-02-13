@@ -11,7 +11,7 @@ import {
   AlertTriangle, ShieldAlert, FileDown, Compass, Loader2, LayoutDashboard
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Session, LikelihoodBand, ExtendedLikelihoodBand, BuyerInputs } from '@/types';
+import { Session, LikelihoodBand, ExtendedLikelihoodBand, BuyerInputs, SellerInputs } from '@/types';
 import { useSharedSession } from '@/hooks/useSession';
 import { getReportErrorMessage } from '@/lib/supabaseStorage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
@@ -27,6 +27,7 @@ import { AnalysisMethodology } from '@/components/AnalysisMethodology';
 import { LikelihoodHelperText, LikelihoodDefinitions } from '@/components/LikelihoodDefinitions';
 import { ScenarioExplorer } from '@/components/ScenarioExplorer';
 import { openScenarioExplorer } from '@/lib/scenarioExplorerEvents';
+import { SellerScenarioExplorer, openSellerScenarioExplorer } from '@/components/SellerScenarioExplorer';
 import { logSharedReportView } from '@/lib/viewTracking';
 import { ClientFeedback } from '@/components/report/ClientFeedback';
 import { loadBrandingForSession, AgentBranding } from '@/lib/agentBranding';
@@ -85,6 +86,10 @@ const SharedReportContent = () => {
   const [originalBuyerInputs, setOriginalBuyerInputs] = useState<BuyerInputs | null>(null);
   const [whatIfInputs, setWhatIfInputs] = useState<BuyerInputs | null>(null);
   const [isWhatIfModified, setIsWhatIfModified] = useState(false);
+  // What-If state for seller reports
+  const [originalSellerInputs, setOriginalSellerInputs] = useState<SellerInputs | null>(null);
+  const [whatIfSellerInputs, setWhatIfSellerInputs] = useState<SellerInputs | null>(null);
+  const [isSellerWhatIfModified, setIsSellerWhatIfModified] = useState(false);
 
   // Always use client mode language for shared reports - NO TOGGLE
   const isClientMode = true;
@@ -95,6 +100,10 @@ const SharedReportContent = () => {
     if (session?.session_type === 'Buyer' && session.buyer_inputs) {
       setOriginalBuyerInputs({ ...session.buyer_inputs });
       setWhatIfInputs({ ...session.buyer_inputs });
+    }
+    if (session?.session_type === 'Seller' && session.seller_inputs) {
+      setOriginalSellerInputs({ ...session.seller_inputs });
+      setWhatIfSellerInputs({ ...session.seller_inputs });
     }
   }, [session]);
 
@@ -121,7 +130,7 @@ const SharedReportContent = () => {
     }
   }, [session]);
 
-  // Handle what-if input changes
+  // Handle what-if input changes (buyer)
   const handleWhatIfChange = useCallback((inputs: BuyerInputs) => {
     setWhatIfInputs(inputs);
     if (originalBuyerInputs) {
@@ -130,14 +139,29 @@ const SharedReportContent = () => {
     }
   }, [originalBuyerInputs]);
 
+  // Handle what-if input changes (seller)
+  const handleSellerWhatIfChange = useCallback((inputs: SellerInputs) => {
+    setWhatIfSellerInputs(inputs);
+    if (originalSellerInputs) {
+      setIsSellerWhatIfModified(
+        inputs.seller_selected_list_price !== originalSellerInputs.seller_selected_list_price ||
+        inputs.desired_timeframe !== originalSellerInputs.desired_timeframe ||
+        inputs.strategy_preference !== originalSellerInputs.strategy_preference
+      );
+    }
+  }, [originalSellerInputs]);
+
   // Create modified session for what-if calculations
   const getEffectiveSession = useCallback((): Session | null => {
     if (!session) return null;
     if (session.session_type === 'Buyer' && whatIfInputs) {
       return { ...session, buyer_inputs: whatIfInputs };
     }
+    if (session.session_type === 'Seller' && whatIfSellerInputs) {
+      return { ...session, seller_inputs: whatIfSellerInputs };
+    }
     return session;
-  }, [session, whatIfInputs]);
+  }, [session, whatIfInputs, whatIfSellerInputs]);
 
   const effectiveSession = getEffectiveSession();
 
@@ -275,7 +299,7 @@ const SharedReportContent = () => {
                 <p className="text-sm text-primary-foreground/70 truncate">{session.client_name} • {formatLocation(session.location)}</p>
               </div>
             </div>
-            {/* Desktop Scenario Explorer CTA for Buyer reports */}
+            {/* Desktop Scenario Explorer CTA */}
             {!isSeller && (
               <Button
                 variant="outline"
@@ -290,12 +314,26 @@ const SharedReportContent = () => {
                 )}
               </Button>
             )}
+            {isSeller && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openSellerScenarioExplorer}
+                className="hidden md:flex items-center gap-2 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20 relative min-h-[44px]"
+              >
+                <Compass className="h-4 w-4" />
+                Listing Scenarios
+                {isSellerWhatIfModified && (
+                  <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Add bottom padding on mobile for Scenario Explorer pill */}
-      <div className={`container mx-auto px-4 py-8 max-w-3xl -mt-4 ${!isSeller ? 'pb-28 md:pb-8' : ''}`}>
+      <div className={`container mx-auto px-4 py-8 max-w-3xl -mt-4 pb-28 md:pb-8`}>
         <motion.div
           id="shared-report-export"
           initial={{ opacity: 0, y: 20 }}
@@ -352,6 +390,22 @@ const SharedReportContent = () => {
           {/* Seller-specific content */}
           {isSeller && session.seller_inputs && (
             <>
+              {/* Seller What-If Modified Banner */}
+              {isSellerWhatIfModified && (
+                <Card className="border-accent bg-accent/5">
+                  <CardContent className="py-3 px-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="accent" className="text-xs">Modified</Badge>
+                        <span className="text-sm text-muted-foreground">
+                          Viewing adjusted listing scenario
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               <Card className="pdf-section pdf-avoid-break">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -363,15 +417,15 @@ const SharedReportContent = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 likelihood-cards-mobile">
                     <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-sm text-muted-foreground mb-1">List Price</p>
-                      <p className="text-lg sm:text-xl font-serif font-bold break-words">{formatCurrency(session.seller_inputs.seller_selected_list_price)}</p>
+                      <p className="text-lg sm:text-xl font-serif font-bold break-words">{formatCurrency(whatIfSellerInputs?.seller_selected_list_price || session.seller_inputs.seller_selected_list_price)}</p>
                     </div>
                     <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-sm text-muted-foreground mb-1">Timeframe</p>
-                      <p className="text-lg sm:text-xl font-serif font-bold">{session.seller_inputs.desired_timeframe} days</p>
+                      <p className="text-lg sm:text-xl font-serif font-bold">{whatIfSellerInputs?.desired_timeframe || session.seller_inputs.desired_timeframe} days</p>
                     </div>
                     <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile col-span-2 sm:col-span-1">
                       <p className="text-sm text-muted-foreground mb-1">Strategy</p>
-                      <p className="text-lg sm:text-xl font-serif font-bold">{session.seller_inputs.strategy_preference}</p>
+                      <p className="text-lg sm:text-xl font-serif font-bold">{whatIfSellerInputs?.strategy_preference || session.seller_inputs.strategy_preference}</p>
                     </div>
                   </div>
                   {/* Only show client notes - NEVER agent notes */}
@@ -456,11 +510,17 @@ const SharedReportContent = () => {
               </Card>
 
               {/* Seller Pricing Regret Risk */}
-              {session.seller_inputs && (
-                <SellerRegretRiskMeter
-                  result={calculateSellerRegretRisk(session.seller_inputs, sellerLikelihood30, marketSnapshot?.snapshot)}
-                />
-              )}
+              {(() => {
+                const effectiveInputs = whatIfSellerInputs || session.seller_inputs!;
+                return (
+                  <SellerRegretRiskMeter
+                    result={calculateSellerRegretRisk(effectiveInputs, sellerLikelihood30, marketSnapshot?.snapshot)}
+                  />
+                );
+              })()}
+
+              {/* Improvement Panel */}
+              <ImprovementPanel type="seller" session={effectiveSession!} />
 
               {/* What If You Wait to List? */}
               <SellerWaitSimulatorCard
@@ -738,6 +798,18 @@ const SharedReportContent = () => {
           originalInputs={originalBuyerInputs}
           currentInputs={whatIfInputs}
           onInputsChange={handleWhatIfChange}
+          reportId={session.id}
+        />
+      )}
+
+      {/* Scenario Explorer for Seller reports */}
+      {isSeller && session.seller_inputs && originalSellerInputs && whatIfSellerInputs && (
+        <SellerScenarioExplorer
+          originalInputs={originalSellerInputs}
+          onInputsChange={handleSellerWhatIfChange}
+          currentInputs={whatIfSellerInputs}
+          likelihood30={sellerLikelihood30}
+          snapshot={marketSnapshot?.snapshot}
           reportId={session.id}
         />
       )}

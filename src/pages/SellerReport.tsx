@@ -80,6 +80,8 @@ import { calculateSellerRegretRisk } from '@/lib/sellerRegretRiskScoring';
 import { SellerWaitSimulatorCard } from '@/components/report/SellerWaitSimulatorCard';
 import { AddressIntelligenceCard } from '@/components/report/AddressIntelligenceCard';
 import { SellerScenarioExplorer, SellerScenarioExplorerCard, openSellerScenarioExplorer } from '@/components/SellerScenarioExplorer';
+import { ScenarioComparisonBanner } from '@/components/report/ScenarioComparisonBanner';
+import { MetricCallout, MetricCalloutGrid } from '@/components/report/MetricCallout';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
   if (band === 'High') {
@@ -392,7 +394,8 @@ const SellerReport = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 max-w-3xl -mt-4">
+      {/* Add bottom padding on mobile when Scenario Explorer pill is visible (client mode) */}
+      <div className={`container mx-auto px-4 py-8 max-w-3xl -mt-4 ${isClientMode ? 'pb-24 md:pb-8' : ''}`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -788,6 +791,37 @@ const SellerReport = () => {
                 reportType="Seller"
               />
             )}
+
+            {/* Scenario Comparison Banner */}
+            {originalSellerInputs && scenarioInputs && (
+              <ScenarioComparisonBanner
+                original={{ acceptance: likelihood30 }}
+                current={{ acceptance: likelihood30 }}
+                isModified={scenarioHasChanges}
+              />
+            )}
+
+            {/* Metric Callout Cards */}
+            <MetricCalloutGrid>
+              <MetricCallout
+                type="acceptance"
+                band={likelihood30}
+                label="Sale Likelihood (30 Days)"
+                description={likelihood30 === 'High' ? 'Strong probability of sale at current list price' : likelihood30 === 'Moderate' ? 'Reasonable chance of sale with current strategy' : 'May require adjustments to attract buyers'}
+              />
+              <MetricCallout
+                type="risk-losing"
+                band={likelihood30 === 'High' ? 'Low' : likelihood30 === 'Moderate' ? 'Moderate' : 'High'}
+                label="Stale Listing Risk"
+                description={likelihood30 === 'High' ? 'Low risk of listing going stale' : 'Consider strategy adjustments to maintain momentum'}
+              />
+              <MetricCallout
+                type="risk-overpay"
+                band={inputs.strategy_preference === 'Maximize price' ? 'High' : inputs.strategy_preference === 'Prioritize speed' ? 'Low' : 'Moderate'}
+                label="Pricing Regret Risk"
+                description={inputs.strategy_preference === 'Maximize price' ? 'Aggressive pricing may lead to extended market time' : 'Current strategy balances price and timing'}
+              />
+            </MetricCalloutGrid>
 
             <TemplateSection show={['executive']}>
             {/* Competitive Analysis */}
