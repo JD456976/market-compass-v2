@@ -794,35 +794,57 @@ const SellerReport = () => {
                 Back
               </Button>
             </Link>
-            <Button onClick={handleSave} disabled={saved} size="lg" variant={saved ? "secondary" : "accent"} className="min-h-[44px]">
-              {saved ? (
-                <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Saved
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Draft
-                </>
-              )}
-            </Button>
-            <Button onClick={() => setTemplateDialogOpen(true)} size="lg" variant="outline" className="min-h-[44px]">
-              <FileText className="mr-2 h-4 w-4" />
-              Template
-            </Button>
-            {/* Agent-only: Edit Draft and Reset */}
-            {!isClientMode && (
+            {/* Only show editing controls when NOT shared */}
+            {!session.share_link_created && (
               <>
-                <Button onClick={() => setEditSheetOpen(true)} size="lg" variant="outline" className="min-h-[44px]">
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit Draft
+                <Button onClick={handleSave} disabled={saved} size="lg" variant={saved ? "secondary" : "accent"} className="min-h-[44px]">
+                  {saved ? (
+                    <>
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Saved
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Draft
+                    </>
+                  )}
                 </Button>
-                <Button onClick={handleResetToBaseline} size="lg" variant="ghost" className="min-h-[44px] text-muted-foreground">
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Reset
+                <Button onClick={() => setTemplateDialogOpen(true)} size="lg" variant="outline" className="min-h-[44px]">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Template
                 </Button>
+                {/* Agent-only: Edit in Flow and Quick Edit */}
+                {!isClientMode && (
+                  <>
+                    <Button 
+                      onClick={() => {
+                        sessionStorage.setItem('returning_to_edit', 'true');
+                        sessionStorage.setItem('current_session', JSON.stringify(session));
+                        navigate('/seller');
+                      }} 
+                      size="lg" variant="outline" className="min-h-[44px]"
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit in Flow
+                    </Button>
+                    <Button onClick={() => setEditSheetOpen(true)} size="lg" variant="outline" className="min-h-[44px]">
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Quick Edit
+                    </Button>
+                    <Button onClick={handleResetToBaseline} size="lg" variant="ghost" className="min-h-[44px] text-muted-foreground">
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Reset
+                    </Button>
+                  </>
+                )}
               </>
+            )}
+            {session.share_link_created && !isClientMode && (
+              <Badge variant="secondary" className="h-11 px-4 flex items-center gap-2 text-sm">
+                <Share2 className="h-4 w-4" />
+                Shared — Read Only
+              </Badge>
             )}
             {/* Share/Export only visible in Client mode */}
             {isClientMode && (
