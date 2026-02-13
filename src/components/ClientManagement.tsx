@@ -32,6 +32,8 @@ export function ClientManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [sending, setSending] = useState(false);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [clients, setClients] = useState<AgentClient[]>([]);
@@ -113,6 +115,8 @@ export function ClientManagement() {
     }
 
     setEmail('');
+    setFirstName('');
+    setLastName('');
     toast({ title: 'Invitation created' });
     loadData();
   };
@@ -167,22 +171,46 @@ export function ClientManagement() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleInvite} className="flex gap-3">
-            <div className="flex-1">
-              <Label htmlFor="client-email" className="sr-only">Client Email</Label>
-              <Input
-                id="client-email"
-                type="email"
-                placeholder="client@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-              />
+          <form onSubmit={handleInvite} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="first-name" className="sr-only">First Name</Label>
+                <Input
+                  id="first-name"
+                  type="text"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="last-name" className="sr-only">Last Name</Label>
+                <Input
+                  id="last-name"
+                  type="text"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                />
+              </div>
             </div>
-            <Button type="submit" disabled={sending}>
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
-              Invite
-            </Button>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Label htmlFor="client-email" className="sr-only">Client Email</Label>
+                <Input
+                  id="client-email"
+                  type="email"
+                  placeholder="client@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" disabled={sending}>
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                Invite
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
