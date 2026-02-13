@@ -27,8 +27,7 @@ import {
 import { generateId } from '@/lib/storage';
 import { upsertSessionAsync } from '@/lib/storage';
 import { formatPriceDisplay, parsePriceValue, stripCurrencyChars } from '@/lib/currencyFormat';
-import { LocationAutocomplete } from '@/components/LocationAutocomplete';
-import { AddressInput, LocationMode, stubGeocode } from '@/components/AddressInput';
+import { AddressInput, stubGeocode } from '@/components/AddressInput';
 import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
 import { SessionTemplate } from '@/lib/templates';
 import { loadMarketScenarios, MarketScenario, getMarketScenarioById } from '@/lib/marketScenarios';
@@ -85,7 +84,6 @@ const BuyerFlow = () => {
   
   const [clientName, setClientName] = useState(DEFAULT_VALUES.clientName);
   const [location, setLocation] = useState(DEFAULT_VALUES.location);
-  const [locationMode, setLocationMode] = useState<LocationMode>('town');
   const [fullAddress, setFullAddress] = useState('');
   const [propertyType, setPropertyType] = useState<PropertyType>(DEFAULT_VALUES.propertyType);
   const [condition, setCondition] = useState<Condition>(DEFAULT_VALUES.condition);
@@ -168,7 +166,6 @@ const BuyerFlow = () => {
   const handleFullReset = useCallback(() => {
     setClientName(DEFAULT_VALUES.clientName);
     setLocation(DEFAULT_VALUES.location);
-    setLocationMode('town');
     setFullAddress('');
     setPropertyType(DEFAULT_VALUES.propertyType);
     setCondition(DEFAULT_VALUES.condition);
@@ -225,7 +222,7 @@ const BuyerFlow = () => {
       competitionLevel: competitionOverride,
       pricingSensitivity: pricingOverride,
     } : undefined,
-    address_fields: locationMode === 'address' && fullAddress ? {
+    address_fields: fullAddress ? {
       address_line: fullAddress,
       city: location.split(',')[0]?.trim(),
       state: location.split(',')[1]?.trim(),
@@ -483,23 +480,14 @@ const BuyerFlow = () => {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <AddressInput
-                        locationMode={locationMode}
-                        onLocationModeChange={setLocationMode}
-                        town={location}
-                        onTownChange={setLocation}
-                        fullAddress={fullAddress}
-                        onFullAddressChange={setFullAddress}
-                        hasError={attempted && !location.trim()}
-                        attempted={attempted}
-                      >
-                        <LocationAutocomplete
-                          value={location}
-                          onChange={setLocation}
-                          placeholder="Seattle, WA"
-                          hasError={attempted && !location.trim()}
-                        />
-                      </AddressInput>
+                    <AddressInput
+                      town={location}
+                      onTownChange={setLocation}
+                      fullAddress={fullAddress}
+                      onFullAddressChange={setFullAddress}
+                      hasError={attempted && !location.trim()}
+                      attempted={attempted}
+                    />
                     </div>
                   </div>
 
