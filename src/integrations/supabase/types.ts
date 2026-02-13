@@ -56,6 +56,38 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_clients: {
+        Row: {
+          agent_user_id: string
+          client_user_id: string
+          created_at: string
+          id: string
+          invitation_id: string | null
+        }
+        Insert: {
+          agent_user_id: string
+          client_user_id: string
+          created_at?: string
+          id?: string
+          invitation_id?: string | null
+        }
+        Update: {
+          agent_user_id?: string
+          client_user_id?: string
+          created_at?: string
+          id?: string
+          invitation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_clients_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "client_invitations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       beta_access_codes: {
         Row: {
           code: string
@@ -207,6 +239,45 @@ export type Database = {
           used_at?: string | null
           used_by_device_id?: string | null
           used_by_user_agent?: string | null
+        }
+        Relationships: []
+      }
+      client_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by_user_id: string | null
+          agent_user_id: string
+          client_email: string
+          created_at: string
+          id: string
+          invite_token: string
+          revoked_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          agent_user_id: string
+          client_email: string
+          created_at?: string
+          id?: string
+          invite_token?: string
+          revoked_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          agent_user_id?: string
+          client_email?: string
+          created_at?: string
+          id?: string
+          invite_token?: string
+          revoked_at?: string | null
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -756,7 +827,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "agent" | "client"
       beta_code_status: "active" | "used" | "revoked" | "expired"
     }
     CompositeTypes: {
@@ -885,7 +956,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "agent", "client"],
       beta_code_status: ["active", "used", "revoked", "expired"],
     },
   },

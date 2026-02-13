@@ -42,11 +42,13 @@ import NotFound from "./pages/NotFound";
 import PublicMarketTrends from "./pages/PublicMarketTrends";
 import ClientDashboard from "./pages/ClientDashboard";
 import ClientPropertyComparison from "./pages/ClientPropertyComparison";
+import ClientInvite from "./pages/ClientInvite";
+import Clients from "./pages/Clients";
 
 const queryClient = new QueryClient();
 
 // Routes that bypass beta gate (shared links, admin, beta access, auth pages, legal, public market, client dashboard)
-const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password', '/market-trends', '/my-reports'];
+const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password', '/market-trends', '/my-reports', '/invite'];
 
 function AppRoutes() {
   const location = useLocation();
@@ -80,6 +82,7 @@ function AppRoutes() {
           <Route path="/agent-profile" element={<AgentProfile />} />
           <Route path="/templates" element={<Templates />} />
           <Route path="/subscription" element={<Subscription />} />
+          <Route path="/clients" element={<Clients />} />
           <Route path="/settings" element={<AccountSettings />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
@@ -89,6 +92,7 @@ function AppRoutes() {
           <Route path="/market-trends" element={<PublicMarketTrends />} />
           <Route path="/my-reports" element={<ClientDashboard />} />
           <Route path="/my-reports/compare" element={<ClientPropertyComparison />} />
+          <Route path="/invite" element={<ClientInvite />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </PageTransition>
