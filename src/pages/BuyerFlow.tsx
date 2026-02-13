@@ -123,7 +123,7 @@ const BuyerFlow = () => {
       sessionStorage.removeItem('returning_to_edit');
       try {
         const session: Session = JSON.parse(sessionData);
-        if (session.session_type === 'Buyer' && session.buyer_inputs) {
+        if (session.session_type === 'Buyer') {
           setClientName(session.client_name || '');
           setLocation(session.location || '');
           if (session.address_fields?.address_line) setFullAddress(session.address_fields.address_line);
@@ -131,23 +131,24 @@ const BuyerFlow = () => {
           setCondition(session.condition);
           if (session.market_scenario_id) setSelectedScenarioId(session.market_scenario_id);
           setDraftId(session.id);
-          const bi = session.buyer_inputs;
-          if (bi.offer_price) setOfferPrice(String(bi.offer_price));
-          if (bi.reference_price) setReferencePrice(String(bi.reference_price));
-          if (bi.market_conditions) setMarketConditions(bi.market_conditions);
-          if (bi.days_on_market) setDaysOnMarket(String(bi.days_on_market));
-          if (bi.investment_type) setInvestmentType(bi.investment_type);
-          if (bi.financing_type) setFinancingType(bi.financing_type);
-          if (bi.down_payment_percent) setDownPayment(bi.down_payment_percent);
-          if (bi.contingencies) setContingencies(bi.contingencies);
-          if (bi.closing_timeline) setClosingTimeline(bi.closing_timeline);
-          if (bi.buyer_preference) setBuyerPreference(bi.buyer_preference);
-          if (bi.agent_notes) setAgentNotes(bi.agent_notes);
-          if (bi.client_notes) setClientNotes(bi.client_notes);
           if (session.property_factors) setPropertyFactors(session.property_factors);
+          const bi = session.buyer_inputs;
+          if (bi) {
+            if (bi.offer_price) setOfferPrice(String(bi.offer_price));
+            if (bi.reference_price) setReferencePrice(String(bi.reference_price));
+            if (bi.market_conditions) setMarketConditions(bi.market_conditions);
+            if (bi.days_on_market) setDaysOnMarket(String(bi.days_on_market));
+            if (bi.investment_type) setInvestmentType(bi.investment_type);
+            if (bi.financing_type) setFinancingType(bi.financing_type);
+            if (bi.down_payment_percent) setDownPayment(bi.down_payment_percent);
+            if (bi.contingencies) setContingencies(bi.contingencies);
+            if (bi.closing_timeline) setClosingTimeline(bi.closing_timeline);
+            if (bi.buyer_preference) setBuyerPreference(bi.buyer_preference);
+            if (bi.agent_notes) setAgentNotes(bi.agent_notes);
+            if (bi.client_notes) setClientNotes(bi.client_notes);
+          }
           // Navigate to review step so user can re-generate or edit
           setStep(STEPS.length - 1);
-          // Don't remove current_session - it may be needed if they go back to report
           return; // Skip template prefill
         }
       } catch {

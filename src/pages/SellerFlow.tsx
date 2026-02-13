@@ -96,20 +96,22 @@ const SellerFlow = () => {
       sessionStorage.removeItem('returning_to_edit');
       try {
         const session: Session = JSON.parse(sessionData);
-        if (session.session_type === 'Seller' && session.seller_inputs) {
+        if (session.session_type === 'Seller') {
           setClientName(session.client_name || '');
           setLocation(session.location || '');
           setPropertyType(session.property_type);
           setCondition(session.condition);
           if (session.market_scenario_id) setSelectedScenarioId(session.market_scenario_id);
           setDraftId(session.id);
-          const si = session.seller_inputs;
-          if (si.seller_selected_list_price) setListPrice(String(si.seller_selected_list_price));
-          if (si.desired_timeframe) setTimeframe(si.desired_timeframe);
-          if (si.strategy_preference) setStrategy(si.strategy_preference);
-          if (si.agent_notes) setAgentNotes(si.agent_notes);
-          if (si.client_notes) setClientNotes(si.client_notes);
           if (session.property_factors) setPropertyFactors(session.property_factors);
+          const si = session.seller_inputs;
+          if (si) {
+            if (si.seller_selected_list_price) setListPrice(String(si.seller_selected_list_price));
+            if (si.desired_timeframe) setTimeframe(si.desired_timeframe);
+            if (si.strategy_preference) setStrategy(si.strategy_preference);
+            if (si.agent_notes) setAgentNotes(si.agent_notes);
+            if (si.client_notes) setClientNotes(si.client_notes);
+          }
           // Navigate to review step so user can re-generate or edit
           setStep(STEPS.length - 1);
           return; // Skip template prefill
