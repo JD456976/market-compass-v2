@@ -99,6 +99,7 @@ const SellerFlow = () => {
         if (session.session_type === 'Seller') {
           setClientName(session.client_name || '');
           setLocation(session.location || '');
+          if (session.address_fields?.address_line) setFullAddress(session.address_fields.address_line);
           setPropertyType(session.property_type);
           setCondition(session.condition);
           if (session.market_scenario_id) setSelectedScenarioId(session.market_scenario_id);
@@ -205,6 +206,11 @@ const SellerFlow = () => {
       demandLevel: demandOverride,
       competitionLevel: competitionOverride,
       pricingSensitivity: pricingOverride,
+    } : undefined,
+    address_fields: fullAddress ? {
+      address_line: fullAddress,
+      city: location.split(',')[0]?.trim(),
+      state: location.split(',')[1]?.trim(),
     } : undefined,
     property_factors: propertyFactors.length > 0 ? propertyFactors : undefined,
     seller_inputs: {

@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, Clock, Users, Target, TrendingUp, AlertCircle, CheckCircle2, AlertTriangle, ShieldAlert, FileDown, Share2, FileText, Pencil } from 'lucide-react';
+import { ArrowLeft, Save, Clock, Users, Target, TrendingUp, AlertCircle, CheckCircle2, AlertTriangle, ShieldAlert, FileDown, Share2, FileText, Pencil, Link2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Session, BuyerReportData, ExtendedLikelihoodBand } from '@/types';
 import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateBuyerReport } from '@/lib/scoring';
@@ -227,7 +228,7 @@ const BuyerReport = () => {
     }
   };
 
-  const handleExportPdf = async () => {
+  const handleExportPdf = async (markShared = false) => {
     if (!reportData) return;
     try {
       await exportReportToPdf('report-export', {
@@ -236,14 +237,17 @@ const BuyerReport = () => {
         snapshotTimestamp: reportData.snapshotTimestamp,
         isClientMode,
       });
-      // Mark as exported but DON'T move to shared reports
-      const updatedSession = { ...reportData.session, pdf_exported: true };
+      const updatedSession = { 
+        ...reportData.session, 
+        pdf_exported: true,
+        ...(markShared ? { share_link_created: true } : {}),
+      };
       upsertSession(updatedSession);
       setReportData({ ...reportData, session: updatedSession });
       
       toast({
         title: "PDF exported",
-        description: "Your report has been downloaded.",
+        description: markShared ? "Report shared and PDF downloaded." : "Your report has been downloaded.",
       });
     } catch {
       toast({
@@ -947,18 +951,26 @@ const BuyerReport = () => {
                 Shared — Read Only
               </Badge>
             )}
-            {/* Share/Export only visible in Client mode */}
-            {isClientMode && (
-              <>
-                <Button onClick={handleExportPdf} size="lg" variant="outline" className="min-h-[44px]">
-                  <FileDown className="mr-2 h-4 w-4" />
-                  Export PDF
-                </Button>
-                <Button onClick={handleShareLink} size="lg" variant="accent" className="min-h-[44px]">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Share
-                </Button>
-              </>
+            {/* Share dropdown - visible in Client mode, only when not yet shared */}
+            {isClientMode && !session.share_link_created && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="lg" variant="accent" className="min-h-[44px]">
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleExportPdf(true)}>
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Download PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleShareLink}>
+                    <Link2 className="mr-2 h-4 w-4" />
+                    Copy Share Link
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
 
