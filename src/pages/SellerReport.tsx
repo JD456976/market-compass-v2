@@ -108,6 +108,7 @@ const SellerReport = () => {
   const [originalSellerInputs, setOriginalSellerInputs] = useState<SellerInputs | null>(null);
   const [scenarioInputs, setScenarioInputs] = useState<SellerInputs | null>(null);
   const [scenarioHasChanges, setScenarioHasChanges] = useState(false);
+  const [originalLikelihood30, setOriginalLikelihood30] = useState<LikelihoodBand | null>(null);
   useEffect(() => {
     const sessionData = sessionStorage.getItem('current_session');
     if (!sessionData) {
@@ -138,6 +139,7 @@ const SellerReport = () => {
         setReportData(data);
         setOriginalSellerInputs(session.seller_inputs!);
         setScenarioInputs(session.seller_inputs!);
+        setOriginalLikelihood30(data.likelihood30);
         
         // Load MLS details from sessionStorage
         try {
@@ -793,11 +795,20 @@ const SellerReport = () => {
             )}
 
             {/* Scenario Comparison Banner */}
-            {originalSellerInputs && scenarioInputs && (
+            {originalSellerInputs && scenarioInputs && originalLikelihood30 && (
               <ScenarioComparisonBanner
-                original={{ acceptance: likelihood30 }}
-                current={{ acceptance: likelihood30 }}
+                original={{
+                  acceptance: originalLikelihood30,
+                  riskOfLosing: originalLikelihood30 === 'High' ? 'Low' : originalLikelihood30 === 'Moderate' ? 'Moderate' : 'High',
+                  riskOfOverpaying: originalSellerInputs.strategy_preference === 'Maximize price' ? 'High' : originalSellerInputs.strategy_preference === 'Prioritize speed' ? 'Low' : 'Moderate',
+                }}
+                current={{
+                  acceptance: likelihood30,
+                  riskOfLosing: likelihood30 === 'High' ? 'Low' : likelihood30 === 'Moderate' ? 'Moderate' : 'High',
+                  riskOfOverpaying: inputs.strategy_preference === 'Maximize price' ? 'High' : inputs.strategy_preference === 'Prioritize speed' ? 'Low' : 'Moderate',
+                }}
                 isModified={scenarioHasChanges}
+                labels={{ riskOfLosing: 'Stale Listing Risk', riskOfOverpaying: 'Pricing Regret' }}
               />
             )}
 
