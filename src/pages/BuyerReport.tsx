@@ -651,6 +651,9 @@ const BuyerReport = () => {
                 </>
               );
             })()}
+            </TemplateSection>
+
+            {/* Core interactive features — available on ALL templates */}
 
             {/* Regret Risk Meter */}
             <RegretRiskMeter
@@ -695,7 +698,6 @@ const BuyerReport = () => {
               riskOfLosing={reportData.riskOfLosingHome}
               snapshot={marketSnapshot?.snapshot}
             />
-            </TemplateSection>
 
             {/* Scenario Comparison Banner */}
             {originalInputs && scenarioInputs && (
@@ -1034,6 +1036,7 @@ const BuyerReport = () => {
           originalInputs={originalInputs}
           currentInputs={scenarioInputs}
           onInputsChange={handleScenarioChange}
+          reportId={session.id}
         />
       )}
     </div>

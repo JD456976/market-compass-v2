@@ -609,10 +609,10 @@ const SellerReport = () => {
                 </>
               );
             })()}
-
-            {/* Improvement Panel */}
-            <ImprovementPanel type="seller" session={session} />
             </TemplateSection>
+
+            {/* Improvement Panel — available on ALL templates */}
+            <ImprovementPanel type="seller" session={session} />
 
             <TemplateSection show={['executive']}>
             {/* Market Snapshot */}
