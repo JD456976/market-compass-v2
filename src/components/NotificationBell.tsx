@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Bell, MessageSquare, FileText, Layers } from 'lucide-react';
+import { Bell, MessageSquare, FileText, Layers, CheckCheck, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 
 interface NotificationItem {
   id: string;
@@ -24,6 +25,7 @@ interface NotificationBellProps {
 export function NotificationBell({ role, viewerId }: NotificationBellProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [open, setOpen] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   const fetchNotifications = useCallback(async () => {
     const items: NotificationItem[] = [];
@@ -127,39 +129,21 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
     setNotifications(items);
   }, [role, viewerId]);
 
-  // Initial fetch
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  // Real-time subscription for instant badge updates
   useEffect(() => {
     const messagesChannel = supabase
       .channel(`notif-bell-messages-${role}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'report_messages' },
-        () => { fetchNotifications(); }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'report_messages' },
-        () => { fetchNotifications(); }
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'report_messages' }, () => { fetchNotifications(); })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'report_messages' }, () => { fetchNotifications(); })
       .subscribe();
 
     const scenariosChannel = supabase
       .channel(`notif-bell-scenarios-${role}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'report_scenarios' },
-        () => { fetchNotifications(); }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'report_scenarios' },
-        () => { fetchNotifications(); }
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'report_scenarios' }, () => { fetchNotifications(); })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'report_scenarios' }, () => { fetchNotifications(); })
       .subscribe();
 
     return () => {
@@ -167,6 +151,41 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
       supabase.removeChannel(scenariosChannel);
     };
   }, [role, fetchNotifications]);
+
+  const handleMarkAllRead = async () => {
+    setClearing(true);
+    const now = new Date().toISOString();
+    const readField = role === 'agent' ? 'read_by_agent_at' : 'read_by_client_at';
+    const senderRole = role === 'agent' ? 'client' : 'agent';
+
+    // Mark all unread messages as read
+    const messageIds = notifications.filter(n => n.type === 'message').map(n => n.id);
+    if (messageIds.length > 0) {
+      await supabase
+        .from('report_messages')
+        .update({ [readField]: now })
+        .eq('sender_role', senderRole)
+        .is(readField, null)
+        .in('id', messageIds);
+    }
+
+    // For agent: mark pending scenarios as reviewed (dismissed)
+    if (role === 'agent') {
+      const scenarioIds = notifications.filter(n => n.type === 'scenario').map(n => n.id);
+      if (scenarioIds.length > 0) {
+        // Don't auto-accept/reject—just clear from notification list by not changing status
+        // We just clear the local state
+      }
+    }
+
+    setNotifications([]);
+    setClearing(false);
+  };
+
+  const handleClearAll = () => {
+    // Clear local state only (notifications will re-appear on next fetch if still unread)
+    setNotifications([]);
+  };
 
   const count = notifications.length;
 
@@ -206,8 +225,30 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0 max-h-[400px] overflow-hidden">
-        <div className="px-4 py-3 border-b border-border">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <p className="text-sm font-serif font-semibold">Notifications</p>
+          {count > 0 && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                onClick={handleMarkAllRead}
+                disabled={clearing}
+              >
+                <CheckCheck className="h-3 w-3 mr-1" />
+                Mark All Read
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive"
+                onClick={handleClearAll}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
         </div>
         {notifications.length === 0 ? (
           <div className="px-4 py-8 text-center">

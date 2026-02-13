@@ -671,6 +671,15 @@ export default function Subscription() {
                           size="sm"
                           variant="outline"
                           className="flex-1 min-h-[36px] text-xs"
+                          onClick={() => setCompareScenario(scenario)}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          Compare
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 min-h-[36px] text-xs"
                           onClick={() => handleScenarioAction(scenario.id, 'needs_changes')}
                         >
                           <AlertCircle className="h-3 w-3 mr-1" />
