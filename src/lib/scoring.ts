@@ -293,6 +293,20 @@ export function calculateBuyerReport(
     modifiers.push('Cap: ratio≥1.30 forces Overpay≥High');
   }
 
+  // 8. Consistency enforcement: acceptance and losing-home are inversely correlated
+  // If acceptance is low (≤2), losing-home must be at least moderate (≥3)
+  // If acceptance is high (≥4), losing-home must be at most low (≤2)
+  const clampedAcceptance = clampTier(Math.round(acceptanceNum));
+  const clampedLosing = clampTier(Math.round(losingNum));
+  const expectedMinLosing = 6 - clampedAcceptance; // inverse: acc=1→losing≥5, acc=5→losing≥1
+  if (clampedLosing < expectedMinLosing - 1) {
+    losingNum = expectedMinLosing - 1;
+    modifiers.push(`Consistency: Losing Home raised to match low Acceptance`);
+  } else if (clampedLosing > expectedMinLosing + 1) {
+    losingNum = expectedMinLosing + 1;
+    modifiers.push(`Consistency: Losing Home lowered to match high Acceptance`);
+  }
+
   const finalAcceptance = numToTier(acceptanceNum);
   const finalOverpay = numToTier(overpayNum);
   const finalLosing = numToTier(losingNum);
