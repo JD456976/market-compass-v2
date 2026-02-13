@@ -155,6 +155,22 @@ const SharedReportContent = () => {
     }
   }, [originalSellerInputs]);
 
+  // Reset buyer what-if to original
+  const handleBuyerReset = useCallback(() => {
+    if (originalBuyerInputs) {
+      setWhatIfInputs({ ...originalBuyerInputs });
+      setIsWhatIfModified(false);
+    }
+  }, [originalBuyerInputs]);
+
+  // Reset seller what-if to original
+  const handleSellerReset = useCallback(() => {
+    if (originalSellerInputs) {
+      setWhatIfSellerInputs({ ...originalSellerInputs });
+      setIsSellerWhatIfModified(false);
+    }
+  }, [originalSellerInputs]);
+
   // Create modified session for what-if calculations
   const getEffectiveSession = useCallback((): Session | null => {
     if (!session) return null;
@@ -557,6 +573,7 @@ const SharedReportContent = () => {
                   }}
                   isModified={isSellerWhatIfModified}
                   labels={{ riskOfLosing: 'Stale Listing Risk', riskOfOverpaying: 'Pricing Regret' }}
+                  onReset={handleSellerReset}
                 />
               )}
             </>

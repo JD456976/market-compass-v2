@@ -5,7 +5,8 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowUpRight, ArrowDownRight, Minus, GitCompareArrows } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowUpRight, ArrowDownRight, Minus, GitCompareArrows, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ExtendedLikelihoodBand, LikelihoodBand } from '@/types';
 
@@ -34,6 +35,7 @@ interface ScenarioComparisonBannerProps {
   };
   isModified: boolean;
   labels?: { riskOfLosing?: string; riskOfOverpaying?: string };
+  onReset?: () => void;
   className?: string;
 }
 
@@ -59,7 +61,7 @@ function DeltaIndicator({ label, delta, invertColor }: { label: string; delta: n
   );
 }
 
-export function ScenarioComparisonBanner({ original, current, isModified, labels, className }: ScenarioComparisonBannerProps) {
+export function ScenarioComparisonBanner({ original, current, isModified, labels, onReset, className }: ScenarioComparisonBannerProps) {
   if (!isModified) return null;
 
   const acceptanceDelta = bandDelta(original.acceptance, current.acceptance);
@@ -76,7 +78,20 @@ export function ScenarioComparisonBanner({ original, current, isModified, labels
         <div className="flex items-center gap-2 mb-3">
           <GitCompareArrows className="h-4 w-4 text-accent" />
           <p className="text-sm font-medium text-foreground">Compared to Original Scenario</p>
-          <Badge variant="accent" className="text-[10px] ml-auto">Modified</Badge>
+          <div className="flex items-center gap-2 ml-auto">
+            {onReset && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onReset}
+                className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground gap-1"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset
+              </Button>
+            )}
+            <Badge variant="accent" className="text-[10px]">Modified</Badge>
+          </div>
         </div>
         <div className="flex flex-wrap gap-4">
           <DeltaIndicator label="Acceptance" delta={acceptanceDelta} />
