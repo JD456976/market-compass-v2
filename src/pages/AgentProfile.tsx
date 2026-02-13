@@ -12,10 +12,15 @@ import { loadAgentProfile, saveAgentProfile, AgentProfile as AgentProfileType } 
 import { useAuth } from '@/contexts/AuthContext';
 import { loadAgentBranding, saveAgentBranding, uploadAgentAsset, AgentBranding } from '@/lib/agentBranding';
 import { ReportTemplateSelector, ReportTemplate } from '@/components/report/ReportTemplateSelector';
+import { getBetaAccessSession, getDeviceId } from '@/lib/betaAccess';
 
 const AgentProfile = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const betaSession = getBetaAccessSession();
+  // Use Supabase auth user ID, or fall back to beta device ID
+  const effectiveUserId = user?.id || (betaSession ? getDeviceId() : null);
+  const isAuthenticated = !!effectiveUserId;
   const [saved, setSaved] = useState(false);
   const [profile, setProfile] = useState<AgentProfileType>({
     agent_name: '',
@@ -32,10 +37,10 @@ const AgentProfile = () => {
     const loaded = loadAgentProfile();
     setProfile(loaded);
 
-    if (user) {
-      loadAgentBranding(user.id).then(setBranding);
+    if (effectiveUserId) {
+      loadAgentBranding(effectiveUserId).then(setBranding);
     }
-  }, [user]);
+  }, [effectiveUserId]);
 
   const handleChange = (field: keyof AgentProfileType, value: string) => {
     setProfile(prev => ({ ...prev, [field]: value }));
@@ -49,7 +54,7 @@ const AgentProfile = () => {
   };
 
   const handleFileUpload = async (type: 'logo' | 'headshot', e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user || !e.target.files?.[0]) return;
+    if (!effectiveUserId || !e.target.files?.[0]) return;
     const file = e.target.files[0];
     if (file.size > 2 * 1024 * 1024) {
       toast({ title: 'File too large', description: 'Max 2MB allowed.', variant: 'destructive' });
@@ -57,7 +62,7 @@ const AgentProfile = () => {
     }
     setUploading(type);
     try {
-      const url = await uploadAgentAsset(user.id, file, type);
+      const url = await uploadAgentAsset(effectiveUserId, file, type);
       handleBrandingChange(type === 'logo' ? 'logo_url' : 'headshot_url', url);
       toast({ title: `${type === 'logo' ? 'Logo' : 'Headshot'} uploaded` });
     } catch {
@@ -75,7 +80,7 @@ const AgentProfile = () => {
 
     saveAgentProfile(profile);
 
-    if (user && branding) {
+    if (effectiveUserId && branding) {
       try {
         await saveAgentBranding(branding);
       } catch {
@@ -133,13 +138,13 @@ const AgentProfile = () => {
                   )}
                   <div className="flex flex-col gap-1">
                     <label className="cursor-pointer">
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload('headshot', e)} disabled={!user} />
-                      <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${user ? 'text-accent hover:underline' : 'text-muted-foreground'}`}>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload('headshot', e)} disabled={!isAuthenticated} />
+                      <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${isAuthenticated ? 'text-accent hover:underline' : 'text-muted-foreground'}`}>
                         <Upload className="h-4 w-4" />
                         {uploading === 'headshot' ? 'Uploading...' : branding?.headshot_url ? 'Change Photo' : 'Upload Photo'}
                       </span>
                     </label>
-                    {!user && <p className="text-xs text-muted-foreground">Sign in to upload a photo</p>}
+                    {!isAuthenticated && <p className="text-xs text-muted-foreground">Sign in to upload a photo</p>}
                     <p className="text-xs text-muted-foreground">Max 2MB, JPG or PNG</p>
                   </div>
                 </div>
@@ -174,7 +179,7 @@ const AgentProfile = () => {
         </motion.div>
 
         {/* Branding Section - only for logged-in users */}
-        {user && branding && (
+        {isAuthenticated && branding && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
             <Card>
               <CardHeader>
