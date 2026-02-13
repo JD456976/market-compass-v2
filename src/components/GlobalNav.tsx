@@ -5,6 +5,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { isAllowedAdmin } from '@/lib/adminConfig';
 import { getBetaAccessSession } from '@/lib/betaAccess';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Home, FolderOpen, Send, Settings, Compass, Sparkles, Menu,
   TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield, Settings as SettingsIcon,
@@ -27,6 +28,7 @@ export function GlobalNav() {
   const isMobile = useIsMobile();
   const [isAdmin, setIsAdmin] = useState(false);
   const { isClient } = useUserRole();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     const session = getBetaAccessSession();
@@ -37,6 +39,17 @@ export function GlobalNav() {
 
   // Don't show nav on shared pages
   if (location.pathname.startsWith('/share/') || location.pathname === '/share') {
+    return null;
+  }
+
+  // Don't show nav on auth pages
+  const authPages = ['/login', '/signup', '/forgot-password', '/reset-password', '/beta', '/invite'];
+  if (authPages.includes(location.pathname)) {
+    return null;
+  }
+
+  // Don't show full nav if not authenticated (unless on client/public pages)
+  if (!loading && !user && !isClient) {
     return null;
   }
 
