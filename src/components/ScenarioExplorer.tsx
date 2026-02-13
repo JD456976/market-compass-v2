@@ -28,6 +28,8 @@ import {
 import { BuyerInputs, FinancingType, DownPaymentPercent, Contingency, ClosingTimeline, BuyerPreference } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
+import { OfferStrategyPresets } from '@/components/report/OfferStrategyPresets';
 import { SCENARIO_EXPLORER_OPEN_EVENT } from '@/lib/scenarioExplorerEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -130,38 +132,50 @@ function ScenarioForm({
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
 
+  // Slider ranges based on original values
+  const priceMin = Math.round(originalInputs.offer_price * 0.80);
+  const priceMax = Math.round(originalInputs.offer_price * 1.30);
+  const priceStep = Math.max(1000, Math.round(originalInputs.offer_price * 0.005 / 1000) * 1000);
+
   return (
     <TooltipProvider>
       <div className="space-y-6 overflow-x-hidden">
-        {/* Offer Details Section */}
+        {/* Strategy Presets */}
+        <OfferStrategyPresets
+          currentInputs={localInputs}
+          onApplyPreset={(newInputs) => setLocalInputs(newInputs)}
+        />
+
+        {/* Offer Price Slider */}
         <div className="space-y-4">
           <h4 className="text-sm font-medium text-muted-foreground">Offer Details</h4>
           
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-            {/* Offer Price */}
-            <div className="space-y-2">
-              <Label htmlFor="scenario-price" className="text-sm flex items-center flex-wrap gap-1">
-                <span>Offer Price</span>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm flex items-center gap-1">
+                Offer Price
                 {changedFields.has('offer_price') && (
                   <span className="text-xs text-accent">Changed</span>
                 )}
               </Label>
-              <Input
-                id="scenario-price"
-                type="number"
-                inputMode="numeric"
-                value={localInputs.offer_price}
-                onChange={(e) => setLocalInputs(prev => ({ 
-                  ...prev, 
-                  offer_price: parseInt(e.target.value) || 0 
-                }))}
-                className="h-11 min-h-[44px] w-full"
-              />
-              <p className="text-xs text-muted-foreground">
-                Original: {formatCurrency(originalInputs.offer_price)}
-              </p>
+              <span className="text-sm font-semibold">{formatCurrency(localInputs.offer_price)}</span>
             </div>
+            <Slider
+              min={priceMin}
+              max={priceMax}
+              step={priceStep}
+              value={[localInputs.offer_price]}
+              onValueChange={([val]) => setLocalInputs(prev => ({ ...prev, offer_price: val }))}
+              className="w-full"
+            />
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>{formatCurrency(priceMin)}</span>
+              <span className="text-accent">{formatCurrency(originalInputs.offer_price)} (original)</span>
+              <span>{formatCurrency(priceMax)}</span>
+            </div>
+          </div>
 
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             {/* Financing Type */}
             <div className="space-y-2">
               <Label className="text-sm flex items-center flex-wrap gap-1">
@@ -187,7 +201,7 @@ function ScenarioForm({
               </Select>
             </div>
 
-            {/* Down Payment - Hidden if Cash */}
+            {/* Down Payment Slider */}
             {!isCash && (
               <div className="space-y-2">
                 <Label className="text-sm flex items-center flex-wrap gap-1">

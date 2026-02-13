@@ -82,6 +82,10 @@ import { ImprovementPanel } from '@/components/report/ImprovementPanel';
 import { ScenarioComparisonBanner } from '@/components/report/ScenarioComparisonBanner';
 import { ReportProvider, TemplateSection, ReportTemplate } from '@/components/report/ReportContext';
 import { ReportTemplateSelector } from '@/components/report/ReportTemplateSelector';
+import { RegretRiskMeter } from '@/components/report/RegretRiskMeter';
+import { calculateRegretRisk } from '@/lib/regretRiskScoring';
+import { WaitSimulatorCard } from '@/components/report/WaitSimulatorCard';
+import { simulateWaiting } from '@/lib/waitSimulator';
 
 function LikelihoodBadge({ band }: { band: ExtendedLikelihoodBand }) {
   if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
@@ -643,6 +647,22 @@ const BuyerReport = () => {
                 </>
               );
             })()}
+
+            {/* Regret Risk Meter */}
+            <RegretRiskMeter
+              result={calculateRegretRisk(inputs, riskOfOverpaying, marketSnapshot?.snapshot)}
+            />
+
+            {/* What If You Wait? Simulator */}
+            <WaitSimulatorCard
+              scenarios={simulateWaiting(
+                inputs.market_conditions || 'Balanced',
+                inputs.days_on_market ?? null,
+                inputs.offer_price,
+                inputs.reference_price || inputs.offer_price,
+                marketSnapshot?.snapshot,
+              )}
+            />
 
             {/* Improvement Panel */}
             <ImprovementPanel type="buyer" session={session} />
