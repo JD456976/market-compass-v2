@@ -6,6 +6,8 @@ import { Mic, MicOff, FileUp, Loader2, Sparkles, X, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { extractTextFromPDF } from '@/lib/pdfExtract';
+import { parseMLSPINText, getExtractionConfidence } from '@/lib/mlspinParser';
 
 export interface MLSExtractedData {
   location?: string;
@@ -31,7 +33,6 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef('');
 
-  // Speech-to-text using Web Speech API
   const startRecording = useCallback(async () => {
     try {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -87,14 +88,119 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-      const base64 = ev.target?.result as string;
-      setCapturedImage(base64);
-      await processImageInput(base64);
-    };
-    reader.readAsDataURL(file);
+    const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+    if (isPDF) {
+      // Use client-side PDF extraction with pdfjs-dist
+      await processPDFFile(file);
+    } else {
+      // Image: send to edge function via base64
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const base64 = ev.target?.result as string;
+        setCapturedImage(base64);
+        await processImageInput(base64);
+      };
+      reader.readAsDataURL(file);
+    }
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const processPDFFile = async (file: File) => {
+    setIsProcessing(true);
+    try {
+      const rawText = await extractTextFromPDF(file);
+      
+      if (!rawText || rawText.trim().length < 50) {
+        toast({ title: 'PDF appears empty', description: 'Could not extract text from this PDF. Try uploading a photo instead.', variant: 'destructive' });
+        setIsProcessing(false);
+        return;
+      }
+
+      const extraction = parseMLSPINText(rawText);
+      const confidence = getExtractionConfidence(extraction);
+
+      // Map extraction to form fields
+      const locationParts: string[] = [];
+      if (extraction.address?.value) locationParts.push(extraction.address.value);
+      if (extraction.city?.value) locationParts.push(extraction.city.value);
+      if (extraction.state?.value) locationParts.push(extraction.state.value);
+      if (extraction.zip?.value) locationParts.push(extraction.zip.value);
+
+      const data: MLSExtractedData = {
+        location: locationParts.join(', ') || undefined,
+        propertyType: extraction.propertyType?.value || undefined,
+        condition: extraction.condition?.value || undefined,
+        listPrice: extraction.listPrice?.value ? parseInt(extraction.listPrice.value) : undefined,
+        daysOnMarket: extraction.daysOnMarket?.value ? parseInt(extraction.daysOnMarket.value) : undefined,
+        notes: buildNotesFromExtraction(extraction),
+      };
+
+      onDataExtracted(data);
+      toast({
+        title: `${confidence.fieldsExtracted} fields extracted`,
+        description: `Confidence: ${confidence.level} · ${confidence.highConfidenceCount} high-confidence fields. Review all imported data for accuracy.`,
+      });
+    } catch (err) {
+      console.error('PDF parsing error:', err);
+      toast({ title: 'PDF parsing failed', description: 'Could not extract text from this PDF. Try a clearer document or photo.', variant: 'destructive' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const buildNotesFromExtraction = (extraction: ReturnType<typeof parseMLSPINText>): string => {
+    const lines: string[] = [];
+    if (extraction.mlsNumber?.value) lines.push(`MLS#: ${extraction.mlsNumber.value}`);
+    if (extraction.style?.value) lines.push(`Style: ${extraction.style.value}`);
+    if (extraction.bedrooms?.value) lines.push(`Bedrooms: ${extraction.bedrooms.value}`);
+    if (extraction.bathsFull?.value) lines.push(`Full Baths: ${extraction.bathsFull.value}`);
+    if (extraction.bathsHalf?.value && extraction.bathsHalf.value !== '0') lines.push(`Half Baths: ${extraction.bathsHalf.value}`);
+    if (extraction.squareFeet?.value) lines.push(`Living Area: ${parseInt(extraction.squareFeet.value).toLocaleString()} sqft`);
+    if (extraction.lotSize?.value) lines.push(`Lot: ${extraction.lotSize.value}`);
+    if (extraction.yearBuilt?.value) lines.push(`Year Built: ${extraction.yearBuilt.value}`);
+    if (extraction.totalRooms?.value) lines.push(`Total Rooms: ${extraction.totalRooms.value}`);
+    if (extraction.heating?.value) lines.push(`Heat: ${extraction.heating.value}`);
+    if (extraction.cooling?.value) lines.push(`Cooling: ${extraction.cooling.value}`);
+    if (extraction.parking?.value) lines.push(`Parking: ${extraction.parking.value}`);
+    if (extraction.garageSpaces?.value) lines.push(`Garage: ${extraction.garageSpaces.value}`);
+    if (extraction.construction?.value) lines.push(`Construction: ${extraction.construction.value}`);
+    if (extraction.foundation?.value) lines.push(`Foundation: ${extraction.foundation.value}`);
+    if (extraction.basement?.value) lines.push(`Basement: ${extraction.basement.value}`);
+    if (extraction.sewer?.value) lines.push(`Sewer: ${extraction.sewer.value}`);
+    if (extraction.water?.value) lines.push(`Water: ${extraction.water.value}`);
+    if (extraction.electric?.value) lines.push(`Electric: ${extraction.electric.value}`);
+    if (extraction.flooring?.value) lines.push(`Flooring: ${extraction.flooring.value}`);
+    if (extraction.roofMaterial?.value) lines.push(`Roof: ${extraction.roofMaterial.value}`);
+    if (extraction.appliances?.value) lines.push(`Appliances: ${extraction.appliances.value}`);
+    if (extraction.exteriorFeatures?.value) lines.push(`Exterior: ${extraction.exteriorFeatures.value}`);
+    if (extraction.taxAmount?.value) lines.push(`Tax: $${parseInt(extraction.taxAmount.value).toLocaleString()}${extraction.taxYear?.value ? ` (${extraction.taxYear.value})` : ''}`);
+    if (extraction.assessedValue?.value) lines.push(`Assessed: $${parseInt(extraction.assessedValue.value).toLocaleString()}`);
+    if (extraction.schools?.value) lines.push(`Schools: ${extraction.schools.value}`);
+    if (extraction.county?.value) lines.push(`County: ${extraction.county.value}`);
+    if (extraction.lotDescription?.value) lines.push(`Lot: ${extraction.lotDescription.value}`);
+    if (extraction.disclosures?.value) lines.push(`Disclosures: ${extraction.disclosures.value}`);
+    if (extraction.listingOffice?.value) lines.push(`Office: ${extraction.listingOffice.value}`);
+    if (extraction.listingAgent?.value) lines.push(`Agent: ${extraction.listingAgent.value}`);
+    if (extraction.listDate?.value) lines.push(`Listed: ${extraction.listDate.value}`);
+    if (extraction.daysOnMarket?.value) lines.push(`DOM: ${extraction.daysOnMarket.value}`);
+    if (extraction.originalPrice?.value && extraction.listPrice?.value && extraction.originalPrice.value !== extraction.listPrice.value) {
+      lines.push(`Original Price: $${parseInt(extraction.originalPrice.value).toLocaleString()}`);
+    }
+    if (extraction.factors.length > 0) {
+      lines.push('');
+      lines.push('--- Property Intelligence Factors ---');
+      extraction.factors.forEach(f => {
+        const sign = f.weight > 0 ? '+' : '';
+        lines.push(`• ${f.label} (${sign}${f.weight}): ${f.explanation}`);
+      });
+    }
+    if (extraction.remarks?.value) {
+      lines.push('');
+      lines.push('--- Remarks ---');
+      lines.push(extraction.remarks.value);
+    }
+    return lines.join('\n');
   };
 
   const processTextInput = async (text: string) => {
@@ -122,10 +228,10 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
       if (error) throw error;
       if (data?.extracted) {
         onDataExtracted(data.extracted);
-        toast({ title: 'Data extracted from MLS PDF', description: `Found ${Object.keys(data.extracted).filter(k => data.extracted[k]).length} fields. Please review for accuracy.` });
+        toast({ title: 'Data extracted from photo', description: `Found ${Object.keys(data.extracted).filter(k => data.extracted[k]).length} fields. Please review for accuracy.` });
       }
     } catch {
-      toast({ title: 'Could not parse document', description: 'Try a clearer image or PDF of the MLS listing.', variant: 'destructive' });
+      toast({ title: 'Could not parse image', description: 'Try a clearer photo of the MLS listing.', variant: 'destructive' });
     } finally { setIsProcessing(false); }
   };
 
@@ -173,7 +279,7 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
                 </TooltipTrigger>
                 <TooltipContent className="max-w-[260px]">
                   <p className="text-xs font-medium mb-1">Import MLS Listing Data</p>
-                  <p className="text-xs text-muted-foreground">Upload a photo or PDF of an MLS listing sheet. AI will extract property details and pre-fill form fields. Always review imported data for accuracy before generating a report.</p>
+                  <p className="text-xs text-muted-foreground">Upload a PDF or photo of an MLS listing sheet. Data is extracted locally and securely — no AI required for PDFs. Always review imported data for accuracy before generating a report.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -227,7 +333,7 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
         {isProcessing && (
           <div className="flex items-center gap-2 p-3 rounded-lg bg-accent/10 border border-accent/20">
             <Loader2 className="h-4 w-4 animate-spin text-accent" />
-            <p className="text-xs text-accent font-medium">Extracting listing data with AI...</p>
+            <p className="text-xs text-accent font-medium">Extracting listing data...</p>
           </div>
         )}
       </CardContent>
