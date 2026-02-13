@@ -1,23 +1,20 @@
 /**
- * "What Would Happen If You Wait?" Simulator Card
- * Interactive slider version — drag to see risk at any day count.
+ * Seller "What If You Wait?" Simulator Card
+ * Interactive slider version for seller reports.
  */
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Clock, TrendingUp, TrendingDown, Minus, Home, BarChart3 } from 'lucide-react';
+import { Clock, TrendingUp, TrendingDown, Minus, BarChart3, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WaitScenario, RiskLevel, simulateWaiting } from '@/lib/waitSimulator';
-import { MarketConditions } from '@/types';
+import { SellerWaitScenario, RiskLevel, simulateSellerWaiting } from '@/lib/sellerWaitSimulator';
 import { MarketSnapshot } from '@/lib/marketSnapshots';
+import { LikelihoodBand } from '@/types';
 
-interface WaitSimulatorCardProps {
-  marketConditions: MarketConditions;
-  daysOnMarket: number | null;
-  offerPrice: number;
-  referencePrice: number;
+interface SellerWaitSimulatorCardProps {
+  likelihood30: LikelihoodBand;
   snapshot?: MarketSnapshot | null;
   className?: string;
 }
@@ -34,33 +31,36 @@ function RiskBadge({ level }: { level: RiskLevel }) {
 }
 
 function TrendIcon({ direction }: { direction: 'up' | 'flat' | 'down' }) {
-  if (direction === 'up') return <TrendingUp className="h-3.5 w-3.5 text-destructive" />;
-  if (direction === 'down') return <TrendingDown className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />;
+  if (direction === 'up') return <TrendingUp className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />;
+  if (direction === 'down') return <TrendingDown className="h-3.5 w-3.5 text-destructive" />;
   return <Minus className="h-3.5 w-3.5 text-muted-foreground" />;
 }
 
-function interpolateScenario(scenarios: WaitScenario[], days: number): WaitScenario {
+function interpolateScenario(scenarios: SellerWaitScenario[], days: number): SellerWaitScenario {
   if (days <= 30) return { ...scenarios[0], days, label: `${days} Days` };
   if (days >= 90) return { ...scenarios[2], days, label: `${days} Days` };
   
+  // Interpolate between scenarios
   const idx = days <= 60 ? 0 : 1;
   const next = idx + 1;
   const t = (days - scenarios[idx].days) / (scenarios[next].days - scenarios[idx].days);
+  
+  // Use the closer scenario's risk levels
   const closer = t < 0.5 ? scenarios[idx] : scenarios[next];
   
   return {
     days,
     label: `${days} Days`,
-    propertyLossRisk: closer.propertyLossRisk,
+    marketShiftRisk: closer.marketShiftRisk,
     priceMovement: closer.priceMovement,
-    marketTrendRisk: closer.marketTrendRisk,
+    competitionRisk: closer.competitionRisk,
     summary: closer.summary,
   };
 }
 
-export function WaitSimulatorCard({ marketConditions, daysOnMarket, offerPrice, referencePrice, snapshot, className }: WaitSimulatorCardProps) {
+export function SellerWaitSimulatorCard({ likelihood30, snapshot, className }: SellerWaitSimulatorCardProps) {
   const [days, setDays] = useState(30);
-  const baseScenarios = simulateWaiting(marketConditions, daysOnMarket, offerPrice, referencePrice, snapshot);
+  const baseScenarios = simulateSellerWaiting(likelihood30, snapshot);
   const active = interpolateScenario(baseScenarios, days);
 
   return (
@@ -71,10 +71,10 @@ export function WaitSimulatorCard({ marketConditions, daysOnMarket, offerPrice, 
           <div className="p-1.5 rounded-lg bg-primary/10">
             <Clock className="h-4 w-4 text-primary" />
           </div>
-          What If You Wait?
+          What If You Wait to List?
         </CardTitle>
         <p className="text-[11px] text-muted-foreground mt-1">
-          Pattern-based estimates if you delay your offer
+          Pattern-based estimates if you delay listing
         </p>
       </CardHeader>
       <CardContent className="space-y-4 pb-5">
@@ -102,10 +102,10 @@ export function WaitSimulatorCard({ marketConditions, daysOnMarket, offerPrice, 
         <div className="grid gap-3">
           <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
             <div className="flex items-center gap-2">
-              <Home className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Losing Property</span>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">Market Shift Risk</span>
             </div>
-            <RiskBadge level={active.propertyLossRisk} />
+            <RiskBadge level={active.marketShiftRisk} />
           </div>
 
           <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
@@ -120,10 +120,10 @@ export function WaitSimulatorCard({ marketConditions, daysOnMarket, offerPrice, 
 
           <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Market Trend Risk</span>
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">Competition Risk</span>
             </div>
-            <RiskBadge level={active.marketTrendRisk} />
+            <RiskBadge level={active.competitionRisk} />
           </div>
         </div>
 

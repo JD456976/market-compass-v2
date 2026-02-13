@@ -85,7 +85,7 @@ import { ReportTemplateSelector } from '@/components/report/ReportTemplateSelect
 import { RegretRiskMeter } from '@/components/report/RegretRiskMeter';
 import { calculateRegretRisk } from '@/lib/regretRiskScoring';
 import { WaitSimulatorCard } from '@/components/report/WaitSimulatorCard';
-import { simulateWaiting } from '@/lib/waitSimulator';
+import { AddressIntelligenceCard } from '@/components/report/AddressIntelligenceCard';
 
 function LikelihoodBadge({ band }: { band: ExtendedLikelihoodBand }) {
   if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
@@ -655,14 +655,22 @@ const BuyerReport = () => {
 
             {/* What If You Wait? Simulator */}
             <WaitSimulatorCard
-              scenarios={simulateWaiting(
-                inputs.market_conditions || 'Balanced',
-                inputs.days_on_market ?? null,
-                inputs.offer_price,
-                inputs.reference_price || inputs.offer_price,
-                marketSnapshot?.snapshot,
-              )}
+              marketConditions={inputs.market_conditions || 'Balanced'}
+              daysOnMarket={inputs.days_on_market ?? null}
+              offerPrice={inputs.offer_price}
+              referencePrice={inputs.reference_price || inputs.offer_price}
+              snapshot={marketSnapshot?.snapshot}
             />
+
+            {/* Address Intelligence */}
+            {marketSnapshot && (
+              <AddressIntelligenceCard
+                session={session}
+                snapshot={marketSnapshot.snapshot}
+                isGenericBaseline={marketSnapshot.isGenericBaseline}
+                reportType="Buyer"
+              />
+            )}
 
             {/* Improvement Panel */}
             <ImprovementPanel type="buyer" session={session} />

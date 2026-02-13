@@ -75,6 +75,10 @@ import { DisclaimerFooter } from '@/components/report/DisclaimerFooter';
 import { ImprovementPanel } from '@/components/report/ImprovementPanel';
 import { ReportProvider, TemplateSection, ReportTemplate } from '@/components/report/ReportContext';
 import { ReportTemplateSelector } from '@/components/report/ReportTemplateSelector';
+import { SellerRegretRiskMeter } from '@/components/report/SellerRegretRiskMeter';
+import { calculateSellerRegretRisk } from '@/lib/sellerRegretRiskScoring';
+import { SellerWaitSimulatorCard } from '@/components/report/SellerWaitSimulatorCard';
+import { AddressIntelligenceCard } from '@/components/report/AddressIntelligenceCard';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
   if (band === 'High') {
@@ -733,6 +737,27 @@ const SellerReport = () => {
               </CardContent>
             </Card>
             </TemplateSection>
+
+            {/* Seller Pricing Regret Risk */}
+            <SellerRegretRiskMeter
+              result={calculateSellerRegretRisk(inputs, likelihood30, marketSnapshot?.snapshot)}
+            />
+
+            {/* What If You Wait to List? */}
+            <SellerWaitSimulatorCard
+              likelihood30={likelihood30}
+              snapshot={marketSnapshot?.snapshot}
+            />
+
+            {/* Address Intelligence */}
+            {marketSnapshot && (
+              <AddressIntelligenceCard
+                session={session}
+                snapshot={marketSnapshot.snapshot}
+                isGenericBaseline={marketSnapshot.isGenericBaseline}
+                reportType="Seller"
+              />
+            )}
 
             <TemplateSection show={['executive']}>
             {/* Competitive Analysis */}
