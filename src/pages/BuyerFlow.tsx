@@ -115,9 +115,11 @@ const BuyerFlow = () => {
   useEffect(() => {
     setMarketScenarios(loadMarketScenarios());
     
-    // Restore from current_session if returning from report
+    // Only restore session if explicitly returning from report (flag set by report page)
+    const returningToEdit = sessionStorage.getItem('returning_to_edit');
     const sessionData = sessionStorage.getItem('current_session');
-    if (sessionData) {
+    if (returningToEdit && sessionData) {
+      sessionStorage.removeItem('returning_to_edit');
       try {
         const session: Session = JSON.parse(sessionData);
         if (session.session_type === 'Buyer' && session.buyer_inputs) {
