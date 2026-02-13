@@ -108,21 +108,30 @@ function extractListPrice(text: string): ExtractedField | null {
 }
 
 function extractAddress(text: string): ExtractedField | null {
-  // Try MLSPIN format first: address on its own line like "74 Alandale Pkwy"
+  // Try labeled format first
   const result = matchFirst(text, [
     /(?:Address|Street|Location)\s*:?\s*([\d]+\s+[\w\s.]+(?:St|Street|Ave|Avenue|Rd|Road|Dr|Drive|Ln|Lane|Way|Ct|Court|Blvd|Boulevard|Cir|Circle|Pl|Place|Ter|Terrace|Pkwy|Parkway|Pike|Hwy|Highway)[.,]?)/i,
     /^(\d+\s+\w[\w\s.]*(?:St|Street|Ave|Avenue|Rd|Road|Dr|Drive|Ln|Lane|Way|Ct|Court|Blvd|Boulevard|Pkwy|Parkway|Pike|Hwy)\.?)\s*$/im,
-    // Fallback: line before "City, ST ZIP"
-    /^(\d+\s+[A-Za-z][\w\s.]+?)[\n\r]+[A-Za-z]+,\s*[A-Z]{2}\s+\d{5}/m,
   ]);
-  return result ? field(result.match, 'high', result.evidence) : null;
+  if (result) return field(result.match, 'high', result.evidence);
+
+  // MLSPIN PDF: address appears before "City, ST ZIP" — may be space-separated not newline
+  const beforeCityMatch = text.match(/(\d+\s+[A-Za-z][\w\s.]*?(?:St|Street|Ave|Avenue|Rd|Road|Dr|Drive|Ln|Lane|Way|Ct|Court|Blvd|Boulevard|Pkwy|Parkway|Pike|Hwy|Highway)\.?)\s+[A-Za-z]+,?\s*[A-Z]{2}\s+\d{5}/i);
+  if (beforeCityMatch?.[1]) return field(beforeCityMatch[1].trim(), 'high', beforeCityMatch[0].substring(0, 200));
+
+  // Broader fallback: "## Street" pattern before city/state  
+  const broadMatch = text.match(/(\d+\s+[A-Za-z][\w\s.]{2,40}?)\s+(?:Norwood|Boston|Cambridge|Brookline|Newton|Quincy|Braintree|Weymouth|Milton|Dedham|Canton|Needham|Wellesley|Framingham|Natick|Waltham|Medford|Somerville|Arlington|Lexington|Concord|Plymouth|Worcester|Springfield|[A-Z][a-z]+),?\s*(?:MA|CT|RI|NH|VT|ME)\s/i);
+  if (broadMatch?.[1]) return field(broadMatch[1].trim(), 'medium', broadMatch[0].substring(0, 200));
+
+  return null;
 }
 
 function extractCity(text: string): ExtractedField | null {
   const result = matchFirst(text, [
     /(?:City|Town)\s*:?\s*([A-Za-z\s]+?)(?:\s*,|\s+MA|\s+State)/i,
     /(?:Municipality)\s*:?\s*([A-Za-z\s]+?)(?:\s*,|\n)/i,
-    // MLSPIN format: "Norwood, MA 02062"
+    // MLSPIN format: "Norwood, MA 02062" — works even without line boundary
+    /(?:Pkwy|Parkway|St|Ave|Rd|Dr|Ln|Way|Ct|Blvd|Pike|Hwy)\.?\s+([A-Z][a-z]+(?:\s[A-Z][a-z]+)?),?\s*[A-Z]{2}\s+\d{5}/,
     /^([A-Za-z\s]+),\s*[A-Z]{2}\s+\d{5}/m,
   ]);
   return result ? field(result.match, 'high', result.evidence) : null;
