@@ -23,9 +23,11 @@ interface ReportMessagesProps {
   reportId: string;
   isAgent?: boolean;
   className?: string;
+  authenticatedUserId?: string;
+  authenticatedUserName?: string;
 }
 
-export function ReportMessages({ reportId, isAgent = false, className = '' }: ReportMessagesProps) {
+export function ReportMessages({ reportId, isAgent = false, className = '', authenticatedUserId, authenticatedUserName }: ReportMessagesProps) {
   const { toast } = useToast();
   const [messages, setMessages] = useState<ReportMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -79,13 +81,14 @@ export function ReportMessages({ reportId, isAgent = false, className = '' }: Re
 
   const handleSend = async () => {
     if (!newMessage.trim()) return;
-    if (!isAgent && !senderName.trim()) {
+    const effectiveName = authenticatedUserName || senderName.trim();
+    if (!isAgent && !effectiveName) {
       toast({ title: 'Please enter your name', variant: 'destructive' });
       return;
     }
 
     setSending(true);
-    const senderId = isAgent ? 'agent' : (senderName.trim() || 'client');
+    const senderId = isAgent ? 'agent' : (authenticatedUserId || effectiveName || 'client');
 
     const { error } = await supabase.from('report_messages').insert({
       report_id: reportId,
@@ -190,7 +193,7 @@ export function ReportMessages({ reportId, isAgent = false, className = '' }: Re
 
         {/* Input area */}
         <div className="space-y-2 pt-2 border-t">
-          {!isAgent && (
+          {!isAgent && !authenticatedUserId && (
             <Input
               placeholder="Your name"
               value={senderName}

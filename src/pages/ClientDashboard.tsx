@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, MessageSquare, Layers, Clock, ExternalLink, ArrowLeft, Shield, GitCompare, Check } from 'lucide-react';
+import { FileText, MessageSquare, Layers, Clock, ExternalLink, ArrowLeft, Shield, GitCompare, LogOut } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SkeletonList } from '@/components/ui/skeleton-card';
 import { EmptyClientReports } from '@/components/EmptyState';
@@ -10,8 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { NotificationBell } from '@/components/NotificationBell';
-import { getBetaAccessSession } from '@/lib/betaAccess';
-import { isAllowedAdmin } from '@/lib/adminConfig';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 interface ClientReport {
@@ -32,45 +32,59 @@ export default function ClientDashboard() {
   const [compareMode, setCompareMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const { user, signOut } = useAuth();
+  const { isClient } = useUserRole();
 
-  // Admin preview mode: ?preview=admin
-  const isAdminPreview = searchParams.get('preview') === 'admin';
-  const betaSession = getBetaAccessSession();
-  const isAdmin = isAdminPreview && betaSession?.email && isAllowedAdmin(betaSession.email);
-
-  const viewerId = localStorage.getItem('mc_viewer_id') || '';
+  const viewerId = user?.id || localStorage.getItem('mc_viewer_id') || '';
 
   const reportIds = useMemo(() => reports.map(r => r.report_id), [reports]);
   usePushNotifications('client', reportIds);
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchAdminPreviewReports();
-    } else if (!viewerId) {
-      setLoading(false);
-      return;
-    } else {
+    if (user && isClient) {
+      fetchAuthenticatedClientReports();
+    } else if (viewerId) {
       fetchClientReports();
+    } else {
+      setLoading(false);
     }
-  }, [viewerId, isAdmin]);
+  }, [user, isClient, viewerId]);
 
-  const fetchAdminPreviewReports = async () => {
+  // Authenticated client: fetch reports from agent_clients relationship
+  const fetchAuthenticatedClientReports = async () => {
+    if (!user) return;
     try {
+      // Get agent IDs linked to this client
+      const { data: agentLinks } = await supabase
+        .from('agent_clients')
+        .select('agent_user_id')
+        .eq('client_user_id', user.id);
+
+      if (!agentLinks || agentLinks.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      const agentIds = agentLinks.map(l => l.agent_user_id);
+
+      // Fetch shared sessions owned by these agents
       const { data: sessions } = await supabase
         .from('sessions')
-        .select('id, client_name, session_type, location, share_token')
+        .select('id, client_name, session_type, location, share_token, updated_at')
+        .in('owner_user_id', agentIds)
         .eq('share_link_created', true)
         .eq('share_token_revoked', false)
-        .order('updated_at', { ascending: false })
-        .limit(20);
+        .order('updated_at', { ascending: false });
 
-      if (!sessions) { setLoading(false); return; }
+      if (!sessions || sessions.length === 0) {
+        setLoading(false);
+        return;
+      }
 
-      const reportIds = sessions.map(s => s.id);
+      const rIds = sessions.map(s => s.id);
       const [{ data: messages }, { data: scenarios }] = await Promise.all([
-        supabase.from('report_messages').select('report_id, read_by_client_at').in('report_id', reportIds).eq('sender_role', 'agent'),
-        supabase.from('report_scenarios').select('report_id, reviewed_status').in('report_id', reportIds).eq('created_by_role', 'client'),
+        supabase.from('report_messages').select('report_id, read_by_client_at').in('report_id', rIds).eq('sender_role', 'agent'),
+        supabase.from('report_scenarios').select('report_id, reviewed_status').in('report_id', rIds).eq('created_by_role', 'client'),
       ]);
 
       setReports(sessions.map(s => ({
@@ -79,13 +93,13 @@ export default function ClientDashboard() {
         client_name: s.client_name,
         session_type: s.session_type,
         location: s.location,
-        last_viewed: '',
+        last_viewed: s.updated_at,
         unread_messages: messages?.filter(m => m.report_id === s.id && !m.read_by_client_at).length || 0,
         scenario_count: scenarios?.filter(sc => sc.report_id === s.id).length || 0,
         pending_reviews: scenarios?.filter(sc => sc.report_id === s.id && sc.reviewed_status === 'pending').length || 0,
       })));
     } catch (err) {
-      console.error('Failed to load admin preview reports:', err);
+      console.error('Failed to load authenticated client reports:', err);
     } finally {
       setLoading(false);
     }
@@ -93,7 +107,6 @@ export default function ClientDashboard() {
 
   const fetchClientReports = async () => {
     try {
-      // Get all reports this viewer has accessed
       const { data: views } = await supabase
         .from('shared_report_views')
         .select('report_id, share_token, viewed_at')
@@ -105,7 +118,6 @@ export default function ClientDashboard() {
         return;
       }
 
-      // Deduplicate by report_id, keep latest view
       const uniqueReports = new Map<string, { report_id: string; share_token: string; last_viewed: string }>();
       for (const v of views) {
         if (!uniqueReports.has(v.report_id)) {
@@ -117,13 +129,12 @@ export default function ClientDashboard() {
         }
       }
 
-      const reportIds = Array.from(uniqueReports.keys());
+      const rIds = Array.from(uniqueReports.keys());
 
-      // Fetch session info
       const { data: sessions } = await supabase
         .from('sessions')
         .select('id, client_name, session_type, location, share_token')
-        .in('id', reportIds)
+        .in('id', rIds)
         .eq('share_link_created', true)
         .eq('share_token_revoked', false);
 
@@ -132,26 +143,13 @@ export default function ClientDashboard() {
         return;
       }
 
-      // Fetch unread messages (agent messages not read by client)
-      const { data: messages } = await supabase
-        .from('report_messages')
-        .select('report_id, read_by_client_at')
-        .in('report_id', reportIds)
-        .eq('sender_role', 'agent');
+      const [{ data: messages }, { data: scenarios }] = await Promise.all([
+        supabase.from('report_messages').select('report_id, read_by_client_at').in('report_id', rIds).eq('sender_role', 'agent'),
+        supabase.from('report_scenarios').select('report_id, reviewed_status').in('report_id', rIds).eq('created_by_role', 'client'),
+      ]);
 
-      // Fetch scenarios
-      const { data: scenarios } = await supabase
-        .from('report_scenarios')
-        .select('report_id, reviewed_status')
-        .in('report_id', reportIds)
-        .eq('created_by_role', 'client');
-
-      const clientReports: ClientReport[] = sessions.map(s => {
+      setReports(sessions.map(s => {
         const viewInfo = uniqueReports.get(s.id);
-        const unread = messages?.filter(m => m.report_id === s.id && !m.read_by_client_at).length || 0;
-        const scenarioList = scenarios?.filter(sc => sc.report_id === s.id) || [];
-        const pending = scenarioList.filter(sc => sc.reviewed_status === 'pending').length;
-
         return {
           report_id: s.id,
           share_token: s.share_token || viewInfo?.share_token || '',
@@ -159,13 +157,11 @@ export default function ClientDashboard() {
           session_type: s.session_type,
           location: s.location,
           last_viewed: viewInfo?.last_viewed || '',
-          unread_messages: unread,
-          scenario_count: scenarioList.length,
-          pending_reviews: pending,
+          unread_messages: messages?.filter(m => m.report_id === s.id && !m.read_by_client_at).length || 0,
+          scenario_count: scenarios?.filter(sc => sc.report_id === s.id).length || 0,
+          pending_reviews: scenarios?.filter(sc => sc.report_id === s.id && sc.reviewed_status === 'pending').length || 0,
         };
-      });
-
-      setReports(clientReports);
+      }));
     } catch (err) {
       console.error('Failed to load client reports:', err);
     } finally {
@@ -173,28 +169,27 @@ export default function ClientDashboard() {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
           <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-serif font-bold">My Reports</h1>
-              {isAdmin && (
-                <Badge variant="outline" className="text-[10px] border-accent/50 text-accent">
-                  <Shield className="h-2.5 w-2.5 mr-1" />
-                  Admin Preview
-                </Badge>
-              )}
-            </div>
+            <h1 className="text-2xl font-serif font-bold">My Reports</h1>
             <p className="text-sm text-muted-foreground">
-              {isAdmin ? 'Viewing client dashboard as admin' : 'Reports shared with you by your agent'}
+              {user ? `Reports shared with you` : 'Reports shared with you by your agent'}
             </p>
           </div>
-          <NotificationBell role="client" viewerId={viewerId || undefined} />
+          <NotificationBell role="client" viewerId={user?.id || viewerId || undefined} />
+          {user && (
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
         {/* Compare Button */}
