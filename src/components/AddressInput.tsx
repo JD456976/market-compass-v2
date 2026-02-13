@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { MapPin, Info, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -217,11 +216,7 @@ export function AddressInput({
         <p className="text-xs text-destructive">Location is required (enter an address or town)</p>
       )}
       
-      {fullAddress && town && (
-        <Badge variant="secondary" className="text-xs">
-          {town.includes(',') ? town : `${town} • Town-based estimate`}
-        </Badge>
-      )}
+      {attempted && !fullAddress.trim() && !town.trim() && null}
     </div>
   );
 }
