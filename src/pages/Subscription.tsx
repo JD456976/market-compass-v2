@@ -63,6 +63,8 @@ interface AnalyticsData {
 interface ClientInvitation {
   id: string;
   client_email: string;
+  client_first_name: string | null;
+  client_last_name: string | null;
   status: string;
   invite_token: string;
   created_at: string;
@@ -91,6 +93,8 @@ export default function Subscription() {
   
   // Client management state
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteFirstName, setInviteFirstName] = useState('');
+  const [inviteLastName, setInviteLastName] = useState('');
   const [sendingInvite, setSendingInvite] = useState(false);
   const [invitations, setInvitations] = useState<ClientInvitation[]>([]);
   const [linkedClients, setLinkedClients] = useState<LinkedClient[]>([]);
@@ -107,7 +111,7 @@ export default function Subscription() {
     if (!user) return;
     const loadClients = async () => {
       const [invRes, clientRes] = await Promise.all([
-        supabase.from('client_invitations').select('id, client_email, status, invite_token, created_at').eq('agent_user_id', user.id).order('created_at', { ascending: false }).limit(10),
+        supabase.from('client_invitations').select('id, client_email, client_first_name, client_last_name, status, invite_token, created_at').eq('agent_user_id', user.id).order('created_at', { ascending: false }).limit(10),
         supabase.from('agent_clients').select('id, client_user_id').eq('agent_user_id', user.id),
       ]);
       if (invRes.data) setInvitations(invRes.data);
@@ -126,17 +130,25 @@ export default function Subscription() {
     const trimmed = inviteEmail.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) { toast({ title: 'Invalid email', variant: 'destructive' }); return; }
     setSendingInvite(true);
-    const { error } = await supabase.from('client_invitations').insert({ agent_user_id: user.id, client_email: trimmed });
+    const insertData: any = { agent_user_id: user.id, client_email: trimmed };
+    if (inviteFirstName.trim()) insertData.client_first_name = inviteFirstName.trim();
+    if (inviteLastName.trim()) insertData.client_last_name = inviteLastName.trim();
+    const { error } = await supabase.from('client_invitations').insert(insertData);
     setSendingInvite(false);
     if (error) { toast({ title: error.code === '23505' ? 'Already invited' : 'Failed to invite', variant: 'destructive' }); return; }
     setInviteEmail('');
+    setInviteFirstName('');
+    setInviteLastName('');
     toast({ title: 'Invitation created' });
-    const { data } = await supabase.from('client_invitations').select('id, client_email, status, invite_token, created_at').eq('agent_user_id', user.id).order('created_at', { ascending: false }).limit(10);
+    const { data } = await supabase.from('client_invitations').select('id, client_email, client_first_name, client_last_name, status, invite_token, created_at').eq('agent_user_id', user.id).order('created_at', { ascending: false }).limit(10);
     if (data) setInvitations(data);
   };
 
-  const copyInviteLink = (token: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/invite?token=${token}`);
+  const copyInviteLink = (token: string, inv: ClientInvitation) => {
+    const params = new URLSearchParams({ token });
+    if (inv.client_first_name) params.set('fn', inv.client_first_name);
+    if (inv.client_last_name) params.set('ln', inv.client_last_name);
+    navigator.clipboard.writeText(`${window.location.origin}/invite?${params.toString()}`);
     toast({ title: 'Invite link copied' });
   };
 
@@ -436,19 +448,37 @@ export default function Subscription() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <form onSubmit={handleInviteClient} className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="client@example.com"
-                  value={inviteEmail}
-                  onChange={e => setInviteEmail(e.target.value)}
-                  className="flex-1 h-10"
-                  required
-                />
-                <Button type="submit" size="sm" disabled={sendingInvite} className="min-h-[40px]">
-                  <Mail className="h-4 w-4 mr-1.5" />
-                  Invite
-                </Button>
+              <form onSubmit={handleInviteClient} className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    type="text"
+                    placeholder="First name"
+                    value={inviteFirstName}
+                    onChange={e => setInviteFirstName(e.target.value)}
+                    className="h-10"
+                  />
+                  <Input
+                    type="text"
+                    placeholder="Last name"
+                    value={inviteLastName}
+                    onChange={e => setInviteLastName(e.target.value)}
+                    className="h-10"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="client@example.com"
+                    value={inviteEmail}
+                    onChange={e => setInviteEmail(e.target.value)}
+                    className="flex-1 h-10"
+                    required
+                  />
+                  <Button type="submit" size="sm" disabled={sendingInvite} className="min-h-[40px]">
+                    <Mail className="h-4 w-4 mr-1.5" />
+                    Invite
+                  </Button>
+                </div>
               </form>
 
               {linkedClients.length > 0 && (
@@ -477,8 +507,8 @@ export default function Subscription() {
                     {invitations.slice(0, 5).map(inv => (
                       <div key={inv.id} className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/20">
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm truncate">{inv.client_email}</p>
-                          <p className="text-[10px] text-muted-foreground">{new Date(inv.created_at).toLocaleDateString()}</p>
+                          <p className="text-sm truncate">{[inv.client_first_name, inv.client_last_name].filter(Boolean).join(' ') || inv.client_email}</p>
+                          <p className="text-[10px] text-muted-foreground">{(inv.client_first_name || inv.client_last_name) ? inv.client_email + ' · ' : ''}{new Date(inv.created_at).toLocaleDateString()}</p>
                         </div>
                         <div className="flex items-center gap-1.5 ml-2">
                           {inv.status === 'pending' && <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300"><Clock className="h-2.5 w-2.5 mr-1" />Pending</Badge>}
@@ -486,7 +516,7 @@ export default function Subscription() {
                           {inv.status === 'revoked' && <Badge variant="outline" className="text-[10px] text-destructive"><XCircle className="h-2.5 w-2.5 mr-1" />Revoked</Badge>}
                           {inv.status === 'pending' && (
                             <>
-                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => copyInviteLink(inv.invite_token)}><Copy className="h-3 w-3" /></Button>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => copyInviteLink(inv.invite_token, inv)}><Copy className="h-3 w-3" /></Button>
                               <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => revokeInvite(inv.id)}><XCircle className="h-3 w-3" /></Button>
                             </>
                           )}

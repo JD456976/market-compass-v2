@@ -33,11 +33,20 @@ export default function ClientDashboard() {
   const [loading, setLoading] = useState(true);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [clientName, setClientName] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { isClient } = useUserRole();
 
   const viewerId = user?.id || localStorage.getItem('mc_viewer_id') || '';
+
+  // Fetch client name from profile
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('profiles').select('full_name').eq('user_id', user.id).single().then(({ data }) => {
+      if (data?.full_name) setClientName(data.full_name);
+    });
+  }, [user]);
 
   const reportIds = useMemo(() => reports.map(r => r.report_id), [reports]);
   usePushNotifications('client', reportIds);
@@ -172,7 +181,9 @@ export default function ClientDashboard() {
               <Compass className="h-6 w-6 text-accent" />
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-serif font-bold">My Reports</h1>
+              <h1 className="text-2xl font-serif font-bold">
+                {clientName ? `Welcome, ${clientName.split(' ')[0]}` : 'My Reports'}
+              </h1>
               <p className="text-sm text-primary-foreground/70">
                 {user ? 'Property analyses shared with you' : 'Reports shared by your agent'}
               </p>
