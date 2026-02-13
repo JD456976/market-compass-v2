@@ -53,6 +53,10 @@ import { WaitSimulatorCard } from '@/components/report/WaitSimulatorCard';
 import { SellerWaitSimulatorCard } from '@/components/report/SellerWaitSimulatorCard';
 import { AddressIntelligenceCard } from '@/components/report/AddressIntelligenceCard';
 import { getMarketSnapshotOrBaseline, MarketSnapshot } from '@/lib/marketSnapshots';
+import { BuyerCompetingOffersCard, SellerCompetingOffersCard } from '@/components/report/CompetingOffersCard';
+import { SellerMotivationCard, BuyerMotivationCard } from '@/components/report/MotivationCard';
+import { BuyerTimingCard, SellerTimingCard } from '@/components/report/TimingCard';
+import { BuyerNegotiationCard, SellerNegotiationCard } from '@/components/report/NegotiationCard';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand | ExtendedLikelihoodBand }) {
   if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
@@ -552,6 +556,18 @@ const SharedReportContent = () => {
               {/* Improvement Panel */}
               <ImprovementPanel type="seller" session={effectiveSession!} />
 
+              {/* Expected Buyer Interest */}
+              <SellerCompetingOffersCard inputs={whatIfSellerInputs || session.seller_inputs!} likelihood30={sellerLikelihood30} snapshot={marketSnapshot?.snapshot} />
+
+              {/* Buyer Motivation Assessment */}
+              <BuyerMotivationCard inputs={whatIfSellerInputs || session.seller_inputs!} likelihood30={sellerLikelihood30} snapshot={marketSnapshot?.snapshot} />
+
+              {/* Listing Timing Advantage */}
+              <SellerTimingCard inputs={whatIfSellerInputs || session.seller_inputs!} likelihood30={sellerLikelihood30} snapshot={marketSnapshot?.snapshot} />
+
+              {/* Counter-Offer Strategy */}
+              <SellerNegotiationCard inputs={whatIfSellerInputs || session.seller_inputs!} likelihood30={sellerLikelihood30} snapshot={marketSnapshot?.snapshot} />
+
               {/* What If You Wait to List? */}
               <SellerWaitSimulatorCard
                 likelihood30={sellerLikelihood30}
@@ -791,6 +807,25 @@ const SharedReportContent = () => {
                   snapshot={marketSnapshot.snapshot}
                   isGenericBaseline={marketSnapshot.isGenericBaseline}
                   reportType="Buyer"
+                />
+              )}
+
+              {/* Competing Offer Simulator */}
+              <BuyerCompetingOffersCard inputs={whatIfInputs || session.buyer_inputs!} snapshot={marketSnapshot?.snapshot} className="pdf-exclude" />
+
+              {/* Seller Motivation Profile */}
+              <SellerMotivationCard inputs={whatIfInputs || session.buyer_inputs!} snapshot={marketSnapshot?.snapshot} />
+
+              {/* Offer Timing Advantage */}
+              <BuyerTimingCard inputs={whatIfInputs || session.buyer_inputs!} snapshot={marketSnapshot?.snapshot} />
+
+              {/* Negotiation Pathway */}
+              {'acceptanceLikelihood' in reportData && 'riskOfLosingHome' in reportData && (
+                <BuyerNegotiationCard
+                  inputs={whatIfInputs || session.buyer_inputs!}
+                  acceptance={reportData.acceptanceLikelihood}
+                  riskOfLosing={reportData.riskOfLosingHome}
+                  snapshot={marketSnapshot?.snapshot}
                 />
               )}
 
