@@ -7,6 +7,7 @@ import { AnimatePresence } from "framer-motion";
 import { ClientModeProvider } from "@/contexts/ClientModeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BetaAccessGate } from "@/components/BetaAccessGate";
+import { RequireAuth } from "@/components/RequireAuth";
 import { GlobalNav, MobileNavSpacer } from "@/components/GlobalNav";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
@@ -50,7 +51,7 @@ import ReviewDocument from "./pages/ReviewDocument";
 
 const queryClient = new QueryClient();
 
-// Routes that bypass beta gate (shared links, admin, beta access, auth pages, legal, public market, client dashboard)
+// Routes that bypass both beta gate AND auth (truly public)
 const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password', '/market-trends', '/my-reports', '/invite'];
 
 function AppRoutes() {
@@ -62,43 +63,47 @@ function AppRoutes() {
     <AnimatePresence mode="wait">
       <PageTransition key={location.pathname}>
         <Routes location={location}>
-          <Route path="/" element={<Index />} />
+          {/* Public routes - no auth required */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/beta" element={<BetaAccess />} />
-          <Route path="/market-profiles" element={<MarketProfiles />} />
-          <Route path="/market-scenarios" element={<MarketScenarios />} />
-          <Route path="/market-data" element={<MarketData />} />
-          <Route path="/methodology" element={<Methodology />} />
-          <Route path="/seller" element={<SellerFlow />} />
-          <Route path="/seller/report" element={<SellerReport />} />
-          <Route path="/buyer" element={<BuyerFlow />} />
-          <Route path="/buyer/report" element={<BuyerReport />} />
-          <Route path="/drafts" element={<DraftAnalyses />} />
-          <Route path="/saved-sessions" element={<DraftAnalyses />} />
-          <Route path="/shared-reports" element={<SharedReports />} />
-          <Route path="/client-deliverables" element={<SharedReports />} />
-          <Route path="/compare" element={<CompareSessions />} />
-          <Route path="/compare/client" element={<ClientComparisonReport />} />
-          <Route path="/agent-profile" element={<AgentProfile />} />
-          <Route path="/templates" element={<Templates />} />
-          <Route path="/subscription" element={<Subscription />} />
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/documents" element={<Documents />} />
-          <Route path="/documents/upload" element={<UploadDocument />} />
-          <Route path="/documents/:documentId/review" element={<ReviewDocument />} />
-          <Route path="/settings" element={<AccountSettings />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/admin" element={<Admin />} />
           <Route path="/share/:sessionId" element={<SharedReport />} />
           <Route path="/share/compare" element={<SharedComparisonReport />} />
           <Route path="/market-trends" element={<PublicMarketTrends />} />
           <Route path="/my-reports" element={<ClientDashboard />} />
           <Route path="/my-reports/compare" element={<ClientPropertyComparison />} />
           <Route path="/invite" element={<ClientInvite />} />
+          <Route path="/admin" element={<Admin />} />
+
+          {/* Protected routes - require auth */}
+          <Route path="/" element={<RequireAuth><Index /></RequireAuth>} />
+          <Route path="/market-profiles" element={<RequireAuth><MarketProfiles /></RequireAuth>} />
+          <Route path="/market-scenarios" element={<RequireAuth><MarketScenarios /></RequireAuth>} />
+          <Route path="/market-data" element={<RequireAuth><MarketData /></RequireAuth>} />
+          <Route path="/methodology" element={<RequireAuth><Methodology /></RequireAuth>} />
+          <Route path="/seller" element={<RequireAuth><SellerFlow /></RequireAuth>} />
+          <Route path="/seller/report" element={<RequireAuth><SellerReport /></RequireAuth>} />
+          <Route path="/buyer" element={<RequireAuth><BuyerFlow /></RequireAuth>} />
+          <Route path="/buyer/report" element={<RequireAuth><BuyerReport /></RequireAuth>} />
+          <Route path="/drafts" element={<RequireAuth><DraftAnalyses /></RequireAuth>} />
+          <Route path="/saved-sessions" element={<RequireAuth><DraftAnalyses /></RequireAuth>} />
+          <Route path="/shared-reports" element={<RequireAuth><SharedReports /></RequireAuth>} />
+          <Route path="/client-deliverables" element={<RequireAuth><SharedReports /></RequireAuth>} />
+          <Route path="/compare" element={<RequireAuth><CompareSessions /></RequireAuth>} />
+          <Route path="/compare/client" element={<RequireAuth><ClientComparisonReport /></RequireAuth>} />
+          <Route path="/agent-profile" element={<RequireAuth><AgentProfile /></RequireAuth>} />
+          <Route path="/templates" element={<RequireAuth><Templates /></RequireAuth>} />
+          <Route path="/subscription" element={<RequireAuth><Subscription /></RequireAuth>} />
+          <Route path="/clients" element={<RequireAuth><Clients /></RequireAuth>} />
+          <Route path="/documents" element={<RequireAuth><Documents /></RequireAuth>} />
+          <Route path="/documents/upload" element={<RequireAuth><UploadDocument /></RequireAuth>} />
+          <Route path="/documents/:documentId/review" element={<RequireAuth><ReviewDocument /></RequireAuth>} />
+          <Route path="/settings" element={<RequireAuth><AccountSettings /></RequireAuth>} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </PageTransition>

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Building2, Users, FileText, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function FloatingActionButton() {
   const [open, setOpen] = useState(false);
@@ -11,9 +12,10 @@ export function FloatingActionButton() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isClient } = useUserRole();
+  const { user } = useAuth();
 
-  // Hide for clients, shared pages, report pages, and form pages
-  if (isClient) return null;
+  // Hide for clients, unauthenticated users, shared pages, report pages, and form pages
+  if (isClient || !user) return null;
   const hiddenPaths = ['/share/', '/seller', '/buyer', '/admin'];
   if (hiddenPaths.some(p => location.pathname.startsWith(p))) {
     return null;
