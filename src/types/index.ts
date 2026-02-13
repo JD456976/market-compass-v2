@@ -55,6 +55,15 @@ export interface BuyerInputs {
   investment_type?: InvestmentType;
 }
 
+export interface PropertyFactor {
+  label: string;
+  weight: number;
+  explanation: string;
+  evidence: string;
+  confidence: 'high' | 'medium' | 'low';
+  source: 'field' | 'remarks';
+}
+
 export interface AddressFields {
   address_line?: string;
   city?: string;
@@ -80,6 +89,8 @@ export interface Session {
   market_snapshot_id?: string;
   // Address fields
   address_fields?: AddressFields;
+  // Property intelligence factors from document extraction
+  property_factors?: PropertyFactor[];
   // Privacy toggle (default true = hide address from client)
   client_privacy?: boolean;
   seller_inputs?: SellerInputs;
@@ -101,6 +112,7 @@ export interface SellerReportData {
   likelihood60: LikelihoodBand;
   likelihood90: LikelihoodBand;
   snapshotTimestamp: string;
+  propertyFactorDescriptions?: string[];
 }
 
 export interface ScoringDebug {

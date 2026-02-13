@@ -64,6 +64,7 @@ import { HistoricalTrends } from '@/components/report/HistoricalTrends';
 import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore';
 import { BuyerCompetitiveAnalysis } from '@/components/report/CompetitiveAnalysis';
 import { SuccessPrediction } from '@/components/report/SuccessPrediction';
+import { PropertyFactorsCard } from '@/components/report/PropertyFactorsCard';
 
 import { ReportWatermark } from '@/components/report/ReportWatermark';
 import { ViewStatsPanel } from '@/components/report/ViewStatsPanel';
@@ -71,6 +72,7 @@ import { ClientActivityTimeline } from '@/components/report/ClientActivityTimeli
 import { EducationalTooltip } from '@/components/report/EducationalTooltip';
 import { CommunicationHub } from '@/components/report/CommunicationHub';
 import { ShareableInsight, generateInsights } from '@/components/report/ShareableInsight';
+import { loadPropertyFactorsForSession } from '@/lib/loadPropertyFactors';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -113,27 +115,43 @@ const BuyerReport = () => {
       return;
     }
     
-    try {
-      const session: Session = JSON.parse(sessionData);
-      const marketProfile = session.selected_market_profile_id 
-        ? getMarketProfileById(session.selected_market_profile_id) 
-        : undefined;
-      
-      const data = calculateBuyerReport(session, marketProfile);
-      setReportData(data);
-      
-      // Initialize Scenario Explorer inputs
-      if (session.buyer_inputs) {
-        setOriginalInputs({ ...session.buyer_inputs });
-        setScenarioInputs({ ...session.buyer_inputs });
+    const initReport = async () => {
+      try {
+        const session: Session = JSON.parse(sessionData);
+        const marketProfile = session.selected_market_profile_id 
+          ? getMarketProfileById(session.selected_market_profile_id) 
+          : undefined;
+        
+        // Load property factors from linked documents if not already attached
+        if (!session.property_factors || session.property_factors.length === 0) {
+          try {
+            const factors = await loadPropertyFactorsForSession(session.id);
+            if (factors.length > 0) {
+              session.property_factors = factors;
+            }
+          } catch {
+            // Non-critical - continue without factors
+          }
+        }
+
+        const data = calculateBuyerReport(session, marketProfile);
+        setReportData(data);
+        
+        // Initialize Scenario Explorer inputs
+        if (session.buyer_inputs) {
+          setOriginalInputs({ ...session.buyer_inputs });
+          setScenarioInputs({ ...session.buyer_inputs });
+        }
+        
+        // Get market snapshot based on location
+        const snapshotData = getMarketSnapshotOrBaseline(session.location);
+        setMarketSnapshot(snapshotData);
+      } catch {
+        navigate('/buyer');
       }
-      
-      // Get market snapshot based on location
-      const snapshotData = getMarketSnapshotOrBaseline(session.location);
-      setMarketSnapshot(snapshotData);
-    } catch {
-      navigate('/buyer');
-    }
+    };
+
+    initReport();
   }, [navigate]);
 
   // Handle scenario input changes - recalculate report with new inputs
@@ -556,6 +574,11 @@ const BuyerReport = () => {
                 isGenericBaseline={marketSnapshot.isGenericBaseline}
                 isClientMode={isClientMode}
               />
+            )}
+
+            {/* Property Intelligence Factors */}
+            {session.property_factors && session.property_factors.length > 0 && (
+              <PropertyFactorsCard factors={session.property_factors} />
             )}
 
             {/* Success Prediction */}

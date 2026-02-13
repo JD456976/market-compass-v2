@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Target, CheckCircle2, AlertTriangle, TrendingUp, Clock, DollarSign, Shield, Home } from 'lucide-react';
+import { Target, CheckCircle2, AlertTriangle, TrendingUp, Clock, DollarSign, Shield, Home, Brain } from 'lucide-react';
 import { ExtendedLikelihoodBand, LikelihoodBand, Session } from '@/types';
 import { MarketSnapshot, getMarketContext } from '@/lib/marketSnapshots';
 
@@ -102,6 +102,18 @@ function getBuyerFactors(session: Session, snapshot?: MarketSnapshot): Contribut
     });
   }
 
+  // Property intelligence factors
+  if (session.property_factors && session.property_factors.length > 0) {
+    const netWeight = session.property_factors.reduce((sum, f) => sum + f.weight, 0);
+    const topFactor = session.property_factors.sort((a, b) => Math.abs(b.weight) - Math.abs(a.weight))[0];
+    factors.push({
+      icon: <Brain className="h-3.5 w-3.5" />,
+      label: 'Property Intelligence',
+      impact: netWeight > 0 ? 'positive' : netWeight < 0 ? 'negative' : 'neutral',
+      detail: `${session.property_factors.length} factor${session.property_factors.length > 1 ? 's' : ''} (${topFactor.label})`,
+    });
+  }
+
   return factors;
 }
 
@@ -142,6 +154,18 @@ function getSellerFactors(session: Session, snapshot?: MarketSnapshot): Contribu
       label: 'Market Conditions',
       impact: context.competitionContext === 'high' ? 'positive' : context.competitionContext === 'low' ? 'negative' : 'neutral',
       detail: `${context.competitionContext} competition`,
+    });
+  }
+
+  // Property intelligence factors
+  if (session.property_factors && session.property_factors.length > 0) {
+    const netWeight = session.property_factors.reduce((sum, f) => sum + f.weight, 0);
+    const topFactor = session.property_factors.sort((a, b) => Math.abs(b.weight) - Math.abs(a.weight))[0];
+    factors.push({
+      icon: <Brain className="h-3.5 w-3.5" />,
+      label: 'Property Intelligence',
+      impact: netWeight > 0 ? 'positive' : netWeight < 0 ? 'negative' : 'neutral',
+      detail: `${session.property_factors.length} factor${session.property_factors.length > 1 ? 's' : ''} (${topFactor.label})`,
     });
   }
 

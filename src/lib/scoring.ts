@@ -9,6 +9,7 @@ import {
   BuyerReportData,
   ScoringDebug,
 } from '@/types';
+import { calculateBuyerFactorModifiers, calculateSellerFactorModifiers } from '@/lib/propertyFactorsScoring';
 
 // =============================================
 // SELLER SCORING (unchanged legacy 3-tier)
@@ -49,13 +50,21 @@ export function calculateSellerReport(
   marketProfile?: MarketProfile
 ): SellerReportData {
   const baseScore = getMarketModifiers(marketProfile) + getConditionModifier(session.condition);
+  
+  // Apply property intelligence factors
+  const factorMods = calculateSellerFactorModifiers(
+    (session.property_factors as any[]) || []
+  );
+  const adjustedScore = baseScore + factorMods.score;
+
   return {
     session,
     marketProfile,
-    likelihood30: scoreToBand(baseScore),
-    likelihood60: scoreToBand(baseScore + 1),
-    likelihood90: scoreToBand(baseScore + 2),
+    likelihood30: scoreToBand(adjustedScore),
+    likelihood60: scoreToBand(adjustedScore + 1),
+    likelihood90: scoreToBand(adjustedScore + 2),
     snapshotTimestamp: new Date().toISOString(),
+    propertyFactorDescriptions: factorMods.descriptions.length > 0 ? factorMods.descriptions : undefined,
   };
 }
 
@@ -259,7 +268,18 @@ export function calculateBuyerReport(
     modifiers.push('Contingency (Home Sale): −1 Acceptance, +1 Losing Home');
   }
 
-  // 6. Enforce extreme price ratio caps
+  // 6. Property Intelligence Factors
+  const factorMods = calculateBuyerFactorModifiers(
+    (session.property_factors as any[]) || []
+  );
+  if (factorMods.acceptance !== 0 || factorMods.overpayRisk !== 0 || factorMods.losingHomeRisk !== 0) {
+    acceptanceNum += factorMods.acceptance;
+    overpayNum += factorMods.overpayRisk;
+    losingNum += factorMods.losingHomeRisk;
+    modifiers.push(...factorMods.descriptions);
+  }
+
+  // 7. Enforce extreme price ratio caps
   if (priceRatio >= 2.0 && acceptanceNum < tierToNum('High')) {
     acceptanceNum = tierToNum('High');
     modifiers.push('Cap: ratio≥2.0 forces Acceptance≥High');
