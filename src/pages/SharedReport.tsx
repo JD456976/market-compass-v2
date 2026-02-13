@@ -38,6 +38,8 @@ import {
   sellerWhatThisMeans,
   buyerRiskDescriptions,
 } from '@/lib/clientLanguage';
+import { calculateOfferPosition, calculateSellerLeverage, getBuyerStrategyInsights, getSellerStrategyInsights } from '@/lib/positionScoring';
+import { OfferPositionMeter, SellerLeverageMeter, StrategyInsightsCard } from '@/components/report/PositionMeters';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand | ExtendedLikelihoodBand }) {
   if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
@@ -411,6 +413,18 @@ const SharedReportContent = () => {
                 </CardContent>
               </Card>
 
+              {/* Seller Leverage Meter */}
+              {(() => {
+                const leverage = calculateSellerLeverage(session);
+                const insights = getSellerStrategyInsights(leverage);
+                return (
+                  <>
+                    <SellerLeverageMeter result={leverage} />
+                    <StrategyInsightsCard insights={insights} />
+                  </>
+                );
+              })()}
+
               {/* What This Means - Seller */}
               <Card className="pdf-section pdf-avoid-break border-accent/20 bg-gradient-to-br from-accent/5 to-transparent">
                 <CardHeader className="pb-3">
@@ -568,6 +582,19 @@ const SharedReportContent = () => {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Offer Position Meter */}
+              {(() => {
+                const effectiveBuyerSession = whatIfInputs ? { ...session, buyer_inputs: whatIfInputs } : session;
+                const offerPosition = calculateOfferPosition(effectiveBuyerSession);
+                const insights = getBuyerStrategyInsights(offerPosition);
+                return (
+                  <>
+                    <OfferPositionMeter result={offerPosition} />
+                    <StrategyInsightsCard insights={insights} />
+                  </>
+                );
+              })()}
 
               {/* What This Means - Buyer */}
               <Card className="pdf-section pdf-avoid-break border-accent/20 bg-gradient-to-br from-accent/5 to-transparent">
