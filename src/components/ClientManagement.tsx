@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Mail, Clock, CheckCircle2, XCircle, Copy, Loader2, Users } from 'lucide-react';
+import { UserPlus, Mail, Clock, CheckCircle2, XCircle, Copy, Users, Trash2 } from 'lucide-react';
 
 interface Invitation {
   id: string;
   client_email: string;
+  client_first_name: string | null;
+  client_last_name: string | null;
   status: string;
   invite_token: string;
   created_at: string;
@@ -37,15 +39,18 @@ export function ClientManagement() {
   const [sending, setSending] = useState(false);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [clients, setClients] = useState<AgentClient[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [showInviteForm, setShowInviteForm] = useState(false);
 
   useEffect(() => {
-    if (user) loadData();
+    loadData();
   }, [user]);
 
   const loadData = async () => {
-    if (!user) return;
-    setLoading(true);
+    if (!user) {
+      setLoaded(true);
+      return;
+    }
 
     const [invRes, clientRes] = await Promise.all([
       supabase
@@ -63,7 +68,6 @@ export function ClientManagement() {
     if (invRes.data) setInvitations(invRes.data as Invitation[]);
 
     if (clientRes.data && clientRes.data.length > 0) {
-      // Fetch profiles for linked clients
       const clientIds = clientRes.data.map(c => c.client_user_id);
       const { data: profiles } = await supabase
         .from('profiles')
@@ -79,7 +83,7 @@ export function ClientManagement() {
       setClients([]);
     }
 
-    setLoading(false);
+    setLoaded(true);
   };
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -101,7 +105,7 @@ export function ClientManagement() {
     if (firstName.trim()) insertData.client_first_name = firstName.trim();
     if (lastName.trim()) insertData.client_last_name = lastName.trim();
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('client_invitations')
       .insert(insertData)
       .select()
@@ -121,14 +125,15 @@ export function ClientManagement() {
     setEmail('');
     setFirstName('');
     setLastName('');
+    setShowInviteForm(false);
     toast({ title: 'Invitation created' });
     loadData();
   };
 
-    const copyInviteLink = (token: string, inv: Invitation) => {
+  const copyInviteLink = (token: string, inv: Invitation) => {
     const params = new URLSearchParams({ token });
-    if ((inv as any).client_first_name) params.set('fn', (inv as any).client_first_name);
-    if ((inv as any).client_last_name) params.set('ln', (inv as any).client_last_name);
+    if (inv.client_first_name) params.set('fn', inv.client_first_name);
+    if (inv.client_last_name) params.set('ln', inv.client_last_name);
     const link = `${window.location.origin}/invite?${params.toString()}`;
     navigator.clipboard.writeText(link);
     toast({ title: 'Invite link copied to clipboard' });
@@ -156,54 +161,62 @@ export function ClientManagement() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  const hasAnyData = clients.length > 0 || invitations.length > 0;
 
   return (
     <div className="space-y-6">
+      {/* Empty State */}
+      {loaded && !hasAnyData && !showInviteForm && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground mb-4">No current clients</p>
+            <Button onClick={() => setShowInviteForm(true)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add Your First Client
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Invite Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            Invite Client
-          </CardTitle>
-          <CardDescription>
-            Send an invitation to a client to collaborate on property analysis.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleInvite} className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="first-name" className="sr-only">First Name</Label>
-                <Input
-                  id="first-name"
-                  type="text"
-                  placeholder="First name"
-                  value={firstName}
-                  onChange={e => setFirstName(e.target.value)}
-                />
+      {(showInviteForm || hasAnyData) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Invite Client
+            </CardTitle>
+            <CardDescription>
+              Enter the client's name and email to generate an invitation link.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleInvite} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="first-name">First Name</Label>
+                  <Input
+                    id="first-name"
+                    type="text"
+                    placeholder="Jane"
+                    value={firstName}
+                    onChange={e => setFirstName(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="last-name">Last Name</Label>
+                  <Input
+                    id="last-name"
+                    type="text"
+                    placeholder="Smith"
+                    value={lastName}
+                    onChange={e => setLastName(e.target.value)}
+                  />
+                </div>
               </div>
               <div>
-                <Label htmlFor="last-name" className="sr-only">Last Name</Label>
-                <Input
-                  id="last-name"
-                  type="text"
-                  placeholder="Last name"
-                  value={lastName}
-                  onChange={e => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <Label htmlFor="client-email" className="sr-only">Client Email</Label>
+                <Label htmlFor="client-email">Email</Label>
                 <Input
                   id="client-email"
                   type="email"
@@ -213,14 +226,21 @@ export function ClientManagement() {
                   required
                 />
               </div>
-              <Button type="submit" disabled={sending}>
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
-                Invite
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              <div className="flex gap-2 pt-1">
+                <Button type="submit" disabled={sending}>
+                  <Mail className="h-4 w-4 mr-2" />
+                  {sending ? 'Sending…' : 'Send Invite'}
+                </Button>
+                {!hasAnyData && (
+                  <Button type="button" variant="ghost" onClick={() => setShowInviteForm(false)}>
+                    Cancel
+                  </Button>
+                )}
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Active Clients */}
       {clients.length > 0 && (
@@ -261,7 +281,12 @@ export function ClientManagement() {
               {invitations.map(inv => (
                 <div key={inv.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{inv.client_email}</p>
+                    <p className="text-sm font-medium truncate">
+                      {[inv.client_first_name, inv.client_last_name].filter(Boolean).join(' ') || inv.client_email}
+                    </p>
+                    {(inv.client_first_name || inv.client_last_name) && (
+                      <p className="text-xs text-muted-foreground truncate">{inv.client_email}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       Sent {new Date(inv.created_at).toLocaleDateString()}
                     </p>
@@ -282,15 +307,6 @@ export function ClientManagement() {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {invitations.length === 0 && clients.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground">No clients yet. Invite your first client above.</p>
           </CardContent>
         </Card>
       )}
