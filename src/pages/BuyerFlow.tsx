@@ -499,6 +499,7 @@ const BuyerFlow = () => {
               <MLSVoiceCameraInput
                 reportType="buyer"
                 onDataExtracted={(data) => {
+                  if (data.clientName) setClientName(data.clientName);
                   if (data.location) setLocation(data.location);
                   if (data.address) setFullAddress(data.address);
                   if (data.propertyType) setPropertyType(data.propertyType as PropertyType);

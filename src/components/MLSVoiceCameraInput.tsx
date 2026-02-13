@@ -10,6 +10,7 @@ import { extractTextFromPDF } from '@/lib/pdfExtract';
 import { parseMLSPINText, getExtractionConfidence } from '@/lib/mlspinParser';
 
 export interface MLSExtractedData {
+  clientName?: string;
   location?: string;
   address?: string;
   propertyType?: string;
@@ -239,6 +240,12 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
     try {
       const extracted: MLSExtractedData = {};
       const lower = text.toLowerCase();
+
+      // Extract client name (e.g. "client's name is Jason Craig", "client name Jason Craig", "for Jason Craig")
+      const nameMatch = text.match(/(?:client(?:'s)?\s*name\s*(?:is)?\s*|(?:for|with)\s+client\s+)([\w]+(?:\s+[\w]+){0,2})/i);
+      if (nameMatch) {
+        extracted.clientName = nameMatch[1].trim();
+      }
 
       // Extract price mentions
       const priceMatch = text.match(/\$?\s*([\d,]+)\s*(?:thousand|k)/i) || text.match(/\$\s*([\d,]+)/);
