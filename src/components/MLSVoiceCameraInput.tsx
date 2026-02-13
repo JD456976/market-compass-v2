@@ -263,11 +263,27 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
       else if (/updated|brand\s*new/i.test(lower)) extracted.condition = 'Updated';
       else if (/dated|needs\s*work|fixer/i.test(lower)) extracted.condition = 'Dated';
 
-      // Extract address-like patterns (number + street name + optional city/state)
-      const addressMatch = text.match(/(\d+\s+[\w\s]+(?:st(?:reet)?|ave(?:nue)?|rd|road|dr(?:ive)?|ln|lane|ct|court|way|pl(?:ace)?|blvd|cir(?:cle)?)\.?(?:\s*,?\s*[\w\s]+,?\s*[A-Z]{2}\s*\d{5})?)/i);
+      // Extract address-like patterns (number + street name + optional city/state/zip)
+      const addressMatch = text.match(/(\d+\s+[\w\s]+(?:st(?:reet)?|ave(?:nue)?|rd|road|dr(?:ive)?|ln|lane|ct|court|way|pl(?:ace)?|blvd|cir(?:cle)?)\.?)(?:\s*(?:in|,)?\s*([\w\s]+),?\s*([A-Z]{2})(?:\s+(\d{5}))?)?/i);
       if (addressMatch) {
-        extracted.address = addressMatch[1].trim();
-        extracted.location = addressMatch[1].trim();
+        const streetPart = addressMatch[1].trim();
+        const city = addressMatch[2]?.trim();
+        const state = addressMatch[3]?.trim();
+        const zip = addressMatch[4]?.trim();
+
+        // Full address = street + city + state + zip
+        const fullParts = [streetPart];
+        if (city) fullParts.push(city);
+        if (state) fullParts.push(state);
+        if (zip) fullParts.push(zip);
+        extracted.address = fullParts.join(', ');
+
+        // Location = city + state (town-level only, NOT the full address)
+        if (city && state) {
+          extracted.location = `${city}, ${state}${zip ? ' ' + zip : ''}`;
+        } else if (city) {
+          extracted.location = city;
+        }
       }
 
       // Extract just city/state if no full address found
