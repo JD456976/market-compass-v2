@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, MessageSquare, FileText, Layers, CheckCheck, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -23,6 +24,7 @@ interface NotificationBellProps {
 }
 
 export function NotificationBell({ role, viewerId }: NotificationBellProps) {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [open, setOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -154,37 +156,45 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
 
   const handleMarkAllRead = async () => {
     setClearing(true);
-    const now = new Date().toISOString();
-    const readField = role === 'agent' ? 'read_by_agent_at' : 'read_by_client_at';
-    const senderRole = role === 'agent' ? 'client' : 'agent';
+    try {
+      const now = new Date().toISOString();
+      const readField = role === 'agent' ? 'read_by_agent_at' : 'read_by_client_at';
+      const senderRole = role === 'agent' ? 'client' : 'agent';
 
-    // Mark all unread messages as read
-    const messageIds = notifications.filter(n => n.type === 'message').map(n => n.id);
-    if (messageIds.length > 0) {
-      await supabase
-        .from('report_messages')
-        .update({ [readField]: now })
-        .eq('sender_role', senderRole)
-        .is(readField, null)
-        .in('id', messageIds);
-    }
-
-    // For agent: mark pending scenarios as reviewed (dismissed)
-    if (role === 'agent') {
-      const scenarioIds = notifications.filter(n => n.type === 'scenario').map(n => n.id);
-      if (scenarioIds.length > 0) {
-        // Don't auto-accept/reject—just clear from notification list by not changing status
-        // We just clear the local state
+      const messageIds = notifications.filter(n => n.type === 'message').map(n => n.id);
+      if (messageIds.length > 0) {
+        await supabase
+          .from('report_messages')
+          .update({ [readField]: now })
+          .eq('sender_role', senderRole)
+          .is(readField, null)
+          .in('id', messageIds);
       }
+      setNotifications([]);
+    } catch (err) {
+      console.error('Error marking read:', err);
     }
-
-    setNotifications([]);
     setClearing(false);
   };
 
   const handleClearAll = () => {
-    // Clear local state only (notifications will re-appear on next fetch if still unread)
     setNotifications([]);
+  };
+
+  const handleNotificationClick = (n: NotificationItem) => {
+    setOpen(false);
+    if (role === 'agent') {
+      // Navigate to the Pro Dashboard and scroll to the relevant section
+      const section = n.type === 'message' ? 'messages-section' : 'scenarios-section';
+      navigate('/subscription');
+      // Use setTimeout to ensure page has rendered before scrolling
+      setTimeout(() => {
+        const el = document.getElementById(section);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
   };
 
   const count = notifications.length;
@@ -258,7 +268,11 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
         ) : (
           <div className="overflow-y-auto max-h-[320px] divide-y divide-border/50">
             {notifications.slice(0, 15).map((n) => (
-              <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors cursor-default">
+              <button
+                key={n.id}
+                className="flex items-start gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors cursor-pointer w-full text-left"
+                onClick={() => handleNotificationClick(n)}
+              >
                 <div className="p-1.5 rounded-full bg-secondary/50 shrink-0 mt-0.5">
                   {iconForType(n.type)}
                 </div>
@@ -269,7 +283,7 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
                 <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5">
                   {formatTime(n.timestamp)}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         )}
