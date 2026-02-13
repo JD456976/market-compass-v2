@@ -2,17 +2,19 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, MessageSquare, Layers, Clock, ExternalLink, ArrowLeft, Shield, GitCompare, LogOut } from 'lucide-react';
+import { FileText, MessageSquare, Layers, Clock, ExternalLink, GitCompare, LogOut, Compass, Info } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SkeletonList } from '@/components/ui/skeleton-card';
 import { EmptyClientReports } from '@/components/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { NotificationBell } from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { ClientOnboarding, ClientOnboardingTrigger } from '@/components/ClientOnboarding';
+import { motion } from 'framer-motion';
 
 interface ClientReport {
   report_id: string;
@@ -50,24 +52,18 @@ export default function ClientDashboard() {
     }
   }, [user, isClient, viewerId]);
 
-  // Authenticated client: fetch reports from agent_clients relationship
   const fetchAuthenticatedClientReports = async () => {
     if (!user) return;
     try {
-      // Get agent IDs linked to this client
       const { data: agentLinks } = await supabase
         .from('agent_clients')
         .select('agent_user_id')
         .eq('client_user_id', user.id);
 
-      if (!agentLinks || agentLinks.length === 0) {
-        setLoading(false);
-        return;
-      }
+      if (!agentLinks || agentLinks.length === 0) { setLoading(false); return; }
 
       const agentIds = agentLinks.map(l => l.agent_user_id);
 
-      // Fetch shared sessions owned by these agents
       const { data: sessions } = await supabase
         .from('sessions')
         .select('id, client_name, session_type, location, share_token, updated_at')
@@ -76,10 +72,7 @@ export default function ClientDashboard() {
         .eq('share_token_revoked', false)
         .order('updated_at', { ascending: false });
 
-      if (!sessions || sessions.length === 0) {
-        setLoading(false);
-        return;
-      }
+      if (!sessions || sessions.length === 0) { setLoading(false); return; }
 
       const rIds = sessions.map(s => s.id);
       const [{ data: messages }, { data: scenarios }] = await Promise.all([
@@ -100,9 +93,7 @@ export default function ClientDashboard() {
       })));
     } catch (err) {
       console.error('Failed to load authenticated client reports:', err);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const fetchClientReports = async () => {
@@ -113,19 +104,12 @@ export default function ClientDashboard() {
         .eq('viewer_id', viewerId)
         .order('viewed_at', { ascending: false });
 
-      if (!views || views.length === 0) {
-        setLoading(false);
-        return;
-      }
+      if (!views || views.length === 0) { setLoading(false); return; }
 
       const uniqueReports = new Map<string, { report_id: string; share_token: string; last_viewed: string }>();
       for (const v of views) {
         if (!uniqueReports.has(v.report_id)) {
-          uniqueReports.set(v.report_id, {
-            report_id: v.report_id,
-            share_token: v.share_token,
-            last_viewed: v.viewed_at,
-          });
+          uniqueReports.set(v.report_id, { report_id: v.report_id, share_token: v.share_token, last_viewed: v.viewed_at });
         }
       }
 
@@ -138,10 +122,7 @@ export default function ClientDashboard() {
         .eq('share_link_created', true)
         .eq('share_token_revoked', false);
 
-      if (!sessions) {
-        setLoading(false);
-        return;
-      }
+      if (!sessions) { setLoading(false); return; }
 
       const [{ data: messages }, { data: scenarios }] = await Promise.all([
         supabase.from('report_messages').select('report_id, read_by_client_at').in('report_id', rIds).eq('sender_role', 'agent'),
@@ -164,9 +145,7 @@ export default function ClientDashboard() {
       }));
     } catch (err) {
       console.error('Failed to load client reports:', err);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleSignOut = async () => {
@@ -174,133 +153,199 @@ export default function ClientDashboard() {
     navigate('/login');
   };
 
+  const totalUnread = reports.reduce((acc, r) => acc + r.unread_messages, 0);
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex-1">
-            <h1 className="text-2xl font-serif font-bold">My Reports</h1>
-            <p className="text-sm text-muted-foreground">
-              {user ? `Reports shared with you` : 'Reports shared with you by your agent'}
-            </p>
-          </div>
-          <NotificationBell role="client" viewerId={user?.id || viewerId || undefined} />
-          {user && (
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+      {/* Client Onboarding */}
+      <ClientOnboarding />
 
-        {/* Compare Button */}
-        {reports.length >= 2 && (
-          <div className="mb-4 flex items-center gap-2">
-            <Button
-              variant={compareMode ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => {
-                setCompareMode(!compareMode);
-                setSelectedIds([]);
-              }}
-            >
-              <GitCompare className="h-4 w-4 mr-2" />
-              {compareMode ? 'Cancel' : 'Compare Properties'}
-            </Button>
-            {compareMode && selectedIds.length >= 2 && (
-              <Button
-                size="sm"
-                onClick={() => navigate(`/my-reports/compare?ids=${selectedIds.join(',')}`)}
-              >
-                Compare {selectedIds.length} Reports
-              </Button>
-            )}
-            {compareMode && (
-              <span className="text-xs text-muted-foreground">{selectedIds.length}/3 selected</span>
-            )}
-          </div>
+      {/* Premium Header */}
+      <div className="hero-gradient text-primary-foreground">
+        <div className="container mx-auto px-4 py-8">
+          <motion.div 
+            className="flex items-center gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="p-3 rounded-xl bg-accent/20 backdrop-blur-sm">
+              <Compass className="h-6 w-6 text-accent" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-2xl font-serif font-bold">My Reports</h1>
+              <p className="text-sm text-primary-foreground/70">
+                {user ? 'Property analyses shared with you' : 'Reports shared by your agent'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="[&_button]:text-primary-foreground/80 [&_button:hover]:text-primary-foreground">
+                <NotificationBell role="client" viewerId={user?.id || viewerId || undefined} />
+              </div>
+              {user && (
+                <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-primary-foreground/70 hover:text-primary-foreground">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+        <div className="relative h-8 -mb-1">
+          <svg className="absolute bottom-0 w-full h-8" preserveAspectRatio="none" viewBox="0 0 1440 32">
+            <path fill="hsl(var(--background))" d="M0,16L120,18.7C240,21,480,27,720,26.7C960,27,1200,21,1320,18.7L1440,16L1440,32L1320,32C1200,32,960,32,720,32C480,32,240,32,120,32L0,32Z" />
+          </svg>
+        </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto px-4 py-6 -mt-2">
+        {/* Quick Stats */}
+        {reports.length > 0 && (
+          <motion.div 
+            className="grid grid-cols-3 gap-3 mb-6"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card>
+              <CardContent className="pt-4 pb-4 text-center">
+                <FileText className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-2xl font-serif font-bold">{reports.length}</p>
+                <p className="text-[10px] text-muted-foreground">Reports</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-4 text-center">
+                <MessageSquare className="h-4 w-4 mx-auto mb-1 text-accent" />
+                <p className="text-2xl font-serif font-bold">{totalUnread}</p>
+                <p className="text-[10px] text-muted-foreground">Unread</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-4 text-center">
+                <Layers className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-2xl font-serif font-bold">{reports.reduce((acc, r) => acc + r.scenario_count, 0)}</p>
+                <p className="text-[10px] text-muted-foreground">Scenarios</p>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
+
+        {/* Actions Bar */}
+        <div className="flex items-center gap-2 mb-4">
+          {reports.length >= 2 && (
+            <>
+              <Button
+                variant={compareMode ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => { setCompareMode(!compareMode); setSelectedIds([]); }}
+              >
+                <GitCompare className="h-4 w-4 mr-2" />
+                {compareMode ? 'Cancel' : 'Compare'}
+              </Button>
+              {compareMode && selectedIds.length >= 2 && (
+                <Button size="sm" onClick={() => navigate(`/my-reports/compare?ids=${selectedIds.join(',')}`)}>
+                  Compare {selectedIds.length}
+                </Button>
+              )}
+              {compareMode && <span className="text-xs text-muted-foreground">{selectedIds.length}/3</span>}
+            </>
+          )}
+          <div className="ml-auto">
+            <ClientOnboardingTrigger />
+          </div>
+        </div>
 
         {loading ? (
           <SkeletonList count={3} showBadge />
         ) : reports.length === 0 ? (
           <EmptyClientReports />
         ) : (
-          <div className="space-y-3">
-            {reports.map(report => (
-              <Card
+          <motion.div 
+            className="space-y-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.15 }}
+          >
+            {reports.map((report, i) => (
+              <motion.div
                 key={report.report_id}
-                className={`cursor-pointer transition-colors ${
-                  compareMode && selectedIds.includes(report.report_id) 
-                    ? 'border-accent ring-1 ring-accent/30' 
-                    : 'hover:border-accent/40'
-                }`}
-                onClick={() => {
-                  if (compareMode) {
-                    setSelectedIds(prev => {
-                      if (prev.includes(report.report_id)) return prev.filter(x => x !== report.report_id);
-                      if (prev.length >= 3) return [...prev.slice(1), report.report_id];
-                      return [...prev, report.report_id];
-                    });
-                  } else {
-                    navigate(`/share/${report.report_id}`);
-                  }
-                }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 * i }}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    {compareMode && (
-                      <Checkbox
-                        checked={selectedIds.includes(report.report_id)}
-                        className="mt-1 shrink-0"
-                        onCheckedChange={() => {
-                          setSelectedIds(prev => {
-                            if (prev.includes(report.report_id)) return prev.filter(x => x !== report.report_id);
-                            if (prev.length >= 3) return [...prev.slice(1), report.report_id];
-                            return [...prev, report.report_id];
-                          });
-                        }}
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-serif font-semibold truncate">{report.client_name}</h3>
-                        <Badge variant="outline" className="text-[10px] shrink-0">
-                          {report.session_type === 'buyer' ? 'Buyer' : 'Seller'}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">{report.location}</p>
-                      <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {report.last_viewed ? format(new Date(report.last_viewed), 'MMM d, yyyy') : '—'}
-                        </span>
-                        {report.scenario_count > 0 && (
+                <Card
+                  className={`cursor-pointer transition-all duration-200 ${
+                    compareMode && selectedIds.includes(report.report_id) 
+                      ? 'border-accent ring-1 ring-accent/30 shadow-md' 
+                      : 'hover:border-accent/40 hover:shadow-sm'
+                  }`}
+                  onClick={() => {
+                    if (compareMode) {
+                      setSelectedIds(prev => {
+                        if (prev.includes(report.report_id)) return prev.filter(x => x !== report.report_id);
+                        if (prev.length >= 3) return [...prev.slice(1), report.report_id];
+                        return [...prev, report.report_id];
+                      });
+                    } else {
+                      navigate(`/share/${report.report_id}`);
+                    }
+                  }}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      {compareMode && (
+                        <Checkbox
+                          checked={selectedIds.includes(report.report_id)}
+                          className="mt-1 shrink-0"
+                          onCheckedChange={() => {
+                            setSelectedIds(prev => {
+                              if (prev.includes(report.report_id)) return prev.filter(x => x !== report.report_id);
+                              if (prev.length >= 3) return [...prev.slice(1), report.report_id];
+                              return [...prev, report.report_id];
+                            });
+                          }}
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-serif font-semibold truncate">{report.client_name}</h3>
+                          <Badge variant="outline" className="text-[10px] shrink-0">
+                            {report.session_type === 'buyer' ? 'Buyer' : 'Seller'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">{report.location}</p>
+                        <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Layers className="h-3 w-3" />
-                            {report.scenario_count} scenario{report.scenario_count > 1 ? 's' : ''}
+                            <Clock className="h-3 w-3" />
+                            {report.last_viewed ? format(new Date(report.last_viewed), 'MMM d, yyyy') : '—'}
                           </span>
+                          {report.scenario_count > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Layers className="h-3 w-3" />
+                              {report.scenario_count} scenario{report.scenario_count > 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {report.unread_messages > 0 && (
+                          <Badge className="bg-accent text-accent-foreground text-[10px]">
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            {report.unread_messages}
+                          </Badge>
                         )}
+                        {report.pending_reviews > 0 && (
+                          <Badge variant="outline" className="text-[10px] border-accent/50 text-accent">
+                            Pending
+                          </Badge>
+                        )}
+                        {!compareMode && <ExternalLink className="h-4 w-4 text-muted-foreground" />}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {report.unread_messages > 0 && (
-                        <Badge className="bg-accent text-accent-foreground text-[10px]">
-                          <MessageSquare className="h-3 w-3 mr-1" />
-                          {report.unread_messages}
-                        </Badge>
-                      )}
-                      {report.pending_reviews > 0 && (
-                        <Badge variant="outline" className="text-[10px] border-accent/50 text-accent">
-                          Pending
-                        </Badge>
-                      )}
-                      {!compareMode && <ExternalLink className="h-4 w-4 text-muted-foreground" />}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

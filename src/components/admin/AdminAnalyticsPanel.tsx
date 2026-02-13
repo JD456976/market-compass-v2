@@ -12,6 +12,9 @@ interface AnalyticsData {
   sellerReports: number;
   buyerReports: number;
   sharedReports: number;
+  totalClients: number;
+  pendingInvites: number;
+  acceptedInvites: number;
 }
 
 export function AdminAnalyticsPanel() {
@@ -26,15 +29,18 @@ export function AdminAnalyticsPanel() {
         const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
         const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-        const [profilesRes, sessionsRes, viewsRes, weekRes, monthRes] = await Promise.all([
+        const [profilesRes, sessionsRes, viewsRes, weekRes, monthRes, clientsRes, invitesRes] = await Promise.all([
           supabase.from('profiles').select('id', { count: 'exact', head: true }),
           supabase.from('sessions').select('session_type, share_link_created'),
           supabase.from('shared_report_views').select('id', { count: 'exact', head: true }),
           supabase.from('sessions').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo),
           supabase.from('sessions').select('id', { count: 'exact', head: true }).gte('created_at', monthAgo),
+          supabase.from('agent_clients').select('id', { count: 'exact', head: true }),
+          supabase.from('client_invitations').select('id, status'),
         ]);
 
         const sessions = sessionsRes.data || [];
+        const invites = invitesRes.data || [];
         
         setData({
           totalUsers: profilesRes.count || 0,
@@ -45,6 +51,9 @@ export function AdminAnalyticsPanel() {
           sellerReports: sessions.filter(s => s.session_type === 'Seller').length,
           buyerReports: sessions.filter(s => s.session_type === 'Buyer').length,
           sharedReports: sessions.filter(s => s.share_link_created).length,
+          totalClients: clientsRes.count || 0,
+          pendingInvites: invites.filter(i => i.status === 'pending').length,
+          acceptedInvites: invites.filter(i => i.status === 'accepted').length,
         });
       } catch (error) {
         console.error('Analytics error:', error);
@@ -116,6 +125,14 @@ export function AdminAnalyticsPanel() {
             <div>
               <p className="text-3xl font-bold text-foreground">{data.reportsThisMonth}</p>
               <p className="text-sm text-muted-foreground">This Month</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-primary">{data.totalClients}</p>
+              <p className="text-sm text-muted-foreground">Active Clients</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-amber-600">{data.pendingInvites}</p>
+              <p className="text-sm text-muted-foreground">Pending Invites</p>
             </div>
           </div>
         </CardContent>

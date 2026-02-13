@@ -9,7 +9,8 @@ import { motion } from 'framer-motion';
 import { 
   ArrowLeft, FileText, BarChart3, Share2, Sparkles, Users, Building2,
   PenTool, User, Palette, TrendingUp, Activity, RefreshCw, ChevronRight,
-  Layers, MessageSquare, Compass, CheckCircle2, AlertCircle, Clock, Eye
+  Layers, MessageSquare, Compass, CheckCircle2, AlertCircle, Clock, Eye,
+  UserPlus, Mail, Copy, XCircle
 } from 'lucide-react';
 import { NotificationBell } from '@/components/NotificationBell';
 import { ScenarioCompareSheet } from '@/components/ScenarioCompareSheet';
@@ -22,6 +23,9 @@ import { formatLocation } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ReportMessages } from '@/components/report/ReportMessages';
+import { useAuth } from '@/contexts/AuthContext';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface ClientMessage {
   id: string;
@@ -56,9 +60,24 @@ interface AnalyticsData {
   viewsByReport: { report_id: string; client_name: string; views: number }[];
 }
 
+interface ClientInvitation {
+  id: string;
+  client_email: string;
+  status: string;
+  invite_token: string;
+  created_at: string;
+}
+
+interface LinkedClient {
+  id: string;
+  client_user_id: string;
+  profile?: { full_name: string | null; email: string | null };
+}
+
 export default function Subscription() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { sessions } = useSessions();
   const [isRestoring, setIsRestoring] = useState(false);
   const [profile, setProfile] = useState<AgentProfile | null>(null);
@@ -70,12 +89,62 @@ export default function Subscription() {
   const [messageSheetReportId, setMessageSheetReportId] = useState<string | null>(null);
   const [messageSheetClientName, setMessageSheetClientName] = useState<string>('');
   
+  // Client management state
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const [invitations, setInvitations] = useState<ClientInvitation[]>([]);
+  const [linkedClients, setLinkedClients] = useState<LinkedClient[]>([]);
+  
   const session = getBetaAccessSession();
   const hasBetaAccess = !!session;
 
   useEffect(() => {
     setProfile(loadAgentProfile());
   }, []);
+
+  // Fetch client management data
+  useEffect(() => {
+    if (!user) return;
+    const loadClients = async () => {
+      const [invRes, clientRes] = await Promise.all([
+        supabase.from('client_invitations').select('id, client_email, status, invite_token, created_at').eq('agent_user_id', user.id).order('created_at', { ascending: false }).limit(10),
+        supabase.from('agent_clients').select('id, client_user_id').eq('agent_user_id', user.id),
+      ]);
+      if (invRes.data) setInvitations(invRes.data);
+      if (clientRes.data && clientRes.data.length > 0) {
+        const cIds = clientRes.data.map(c => c.client_user_id);
+        const { data: profiles } = await supabase.from('profiles').select('user_id, full_name, email').in('user_id', cIds);
+        setLinkedClients(clientRes.data.map(c => ({ ...c, profile: profiles?.find(p => p.user_id === c.client_user_id) || undefined })));
+      }
+    };
+    loadClients();
+  }, [user]);
+
+  const handleInviteClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !inviteEmail.trim()) return;
+    const trimmed = inviteEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) { toast({ title: 'Invalid email', variant: 'destructive' }); return; }
+    setSendingInvite(true);
+    const { error } = await supabase.from('client_invitations').insert({ agent_user_id: user.id, client_email: trimmed });
+    setSendingInvite(false);
+    if (error) { toast({ title: error.code === '23505' ? 'Already invited' : 'Failed to invite', variant: 'destructive' }); return; }
+    setInviteEmail('');
+    toast({ title: 'Invitation created' });
+    const { data } = await supabase.from('client_invitations').select('id, client_email, status, invite_token, created_at').eq('agent_user_id', user.id).order('created_at', { ascending: false }).limit(10);
+    if (data) setInvitations(data);
+  };
+
+  const copyInviteLink = (token: string) => {
+    navigator.clipboard.writeText(`${window.location.origin}/invite?token=${token}`);
+    toast({ title: 'Invite link copied' });
+  };
+
+  const revokeInvite = async (id: string) => {
+    await supabase.from('client_invitations').update({ status: 'revoked', revoked_at: new Date().toISOString() }).eq('id', id);
+    toast({ title: 'Invitation revoked' });
+    setInvitations(prev => prev.map(i => i.id === id ? { ...i, status: 'revoked' } : i));
+  };
 
   // Fetch recent message threads from report_messages
   useEffect(() => {
@@ -357,7 +426,86 @@ export default function Subscription() {
           </Card>
         </motion.div>
 
-        {/* Conversations */}
+        {/* Client Management */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}>
+          <Card className="border-accent/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-accent" />
+                Client Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form onSubmit={handleInviteClient} className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="client@example.com"
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                  className="flex-1 h-10"
+                  required
+                />
+                <Button type="submit" size="sm" disabled={sendingInvite} className="min-h-[40px]">
+                  <Mail className="h-4 w-4 mr-1.5" />
+                  Invite
+                </Button>
+              </form>
+
+              {linkedClients.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Active Clients</p>
+                  <div className="space-y-2">
+                    {linkedClients.map(c => (
+                      <div key={c.id} className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/30">
+                        <div>
+                          <p className="text-sm font-medium">{c.profile?.full_name || 'Unnamed'}</p>
+                          <p className="text-[10px] text-muted-foreground">{c.profile?.email}</p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300">
+                          <CheckCircle2 className="h-2.5 w-2.5 mr-1" />Active
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {invitations.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Recent Invitations</p>
+                  <div className="space-y-2">
+                    {invitations.slice(0, 5).map(inv => (
+                      <div key={inv.id} className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/20">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm truncate">{inv.client_email}</p>
+                          <p className="text-[10px] text-muted-foreground">{new Date(inv.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 ml-2">
+                          {inv.status === 'pending' && <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300"><Clock className="h-2.5 w-2.5 mr-1" />Pending</Badge>}
+                          {inv.status === 'accepted' && <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300"><CheckCircle2 className="h-2.5 w-2.5 mr-1" />Joined</Badge>}
+                          {inv.status === 'revoked' && <Badge variant="outline" className="text-[10px] text-destructive"><XCircle className="h-2.5 w-2.5 mr-1" />Revoked</Badge>}
+                          {inv.status === 'pending' && (
+                            <>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => copyInviteLink(inv.invite_token)}><Copy className="h-3 w-3" /></Button>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => revokeInvite(inv.id)}><XCircle className="h-3 w-3" /></Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Link to="/clients">
+                <Button variant="ghost" size="sm" className="w-full text-xs">
+                  View All Clients <ChevronRight className="h-3 w-3 ml-1" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {clientMessages.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
             <Card className="border-accent/20">
