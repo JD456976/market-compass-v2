@@ -130,7 +130,11 @@ export default function Subscription() {
 
   const handleInviteClient = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !inviteEmail.trim()) return;
+    if (!user) {
+      toast({ title: 'Please sign in to invite clients', variant: 'destructive' });
+      return;
+    }
+    if (!inviteEmail.trim()) return;
     const trimmed = inviteEmail.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) { toast({ title: 'Invalid email', variant: 'destructive' }); return; }
     setSendingInvite(true);
