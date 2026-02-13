@@ -76,8 +76,10 @@ import { ShareableInsight, generateInsights } from '@/components/report/Shareabl
 import { loadPropertyFactorsForSession } from '@/lib/loadPropertyFactors';
 import { calculateOfferPosition, getBuyerStrategyInsights } from '@/lib/positionScoring';
 import { OfferPositionMeter, StrategyInsightsCard } from '@/components/report/PositionMeters';
-
-const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
+import { DisclaimerFooter } from '@/components/report/DisclaimerFooter';
+import { MetricCallout, MetricCalloutGrid } from '@/components/report/MetricCallout';
+import { ImprovementPanel } from '@/components/report/ImprovementPanel';
+import { ScenarioComparisonBanner } from '@/components/report/ScenarioComparisonBanner';
 
 function LikelihoodBadge({ band }: { band: ExtendedLikelihoodBand }) {
   if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
@@ -626,6 +628,26 @@ const BuyerReport = () => {
               );
             })()}
 
+            {/* Improvement Panel */}
+            <ImprovementPanel type="buyer" session={session} />
+
+            {/* Scenario Comparison Banner */}
+            {originalInputs && scenarioInputs && (
+              <ScenarioComparisonBanner
+                original={{
+                  acceptance: reportData.acceptanceLikelihood,
+                  riskOfLosing: reportData.riskOfLosingHome,
+                  riskOfOverpaying: reportData.riskOfOverpaying,
+                }}
+                current={{
+                  acceptance: reportData.acceptanceLikelihood,
+                  riskOfLosing: reportData.riskOfLosingHome,
+                  riskOfOverpaying: reportData.riskOfOverpaying,
+                }}
+                isModified={JSON.stringify(scenarioInputs) !== JSON.stringify(originalInputs)}
+              />
+            )}
+
             {/* Acceptance Likelihood */}
             <Card className="pdf-section pdf-avoid-break overflow-hidden">
               <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
@@ -722,45 +744,27 @@ const BuyerReport = () => {
               />
             )}
 
-            {/* Risk Tradeoff */}
-            <Card className="pdf-section pdf-avoid-break">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <ShieldAlert className="h-5 w-5 text-accent" />
-                  {getTitle('riskTradeoff', isClientMode)}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="text-center p-4 sm:p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-3">
-                      <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-destructive" />
-                    </div>
-                    <p className="font-medium text-sm sm:text-base mb-2">{getTitle('riskOfLosingHome', isClientMode)}</p>
-                    <RiskBadge band={riskOfLosingHome} />
-                    <p className="text-[10px] text-muted-foreground mt-1.5">
-                      {likelihoodHelperText[riskOfLosingHome]}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {losingHomeDesc}
-                    </p>
-                  </div>
-                  <div className="text-center p-4 sm:p-6 rounded-xl border-2 border-border/50 pdf-stat-tile">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-3">
-                      <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
-                    </div>
-                    <p className="font-medium text-sm sm:text-base mb-2">{getTitle('riskOfOverpaying', isClientMode)}</p>
-                    <RiskBadge band={riskOfOverpaying} />
-                    <p className="text-[10px] text-muted-foreground mt-1.5">
-                      {likelihoodHelperText[riskOfOverpaying]}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {overpayingDesc}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Risk Assessment Callout Cards */}
+            <MetricCalloutGrid>
+              <MetricCallout
+                type="acceptance"
+                band={acceptanceLikelihood}
+                label="Acceptance Likelihood"
+                description={whatThisMeansText}
+              />
+              <MetricCallout
+                type="risk-losing"
+                band={riskOfLosingHome}
+                label="Risk of Losing Home"
+                description={losingHomeDesc}
+              />
+              <MetricCallout
+                type="risk-overpay"
+                band={riskOfOverpaying}
+                label="Risk of Overpaying"
+                description={overpayingDesc}
+              />
+            </MetricCalloutGrid>
 
             {/* Competitive Analysis */}
             {marketSnapshot && (
@@ -776,11 +780,8 @@ const BuyerReport = () => {
             {/* How This Analysis Is Formed - Collapsible */}
             <AnalysisMethodology />
 
-            {/* Important Notice */}
-            <div className="pdf-section pdf-avoid-break flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
-              <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-              <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
-            </div>
+            {/* Disclaimer */}
+            <DisclaimerFooter variant="full" />
 
             {/* Report Watermark */}
             <ReportWatermark

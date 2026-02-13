@@ -71,8 +71,8 @@ import { ShareableInsight, generateInsights } from '@/components/report/Shareabl
 import { loadPropertyFactorsForSession } from '@/lib/loadPropertyFactors';
 import { calculateSellerLeverage, getSellerStrategyInsights } from '@/lib/positionScoring';
 import { SellerLeverageMeter, StrategyInsightsCard } from '@/components/report/PositionMeters';
-
-const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
+import { DisclaimerFooter } from '@/components/report/DisclaimerFooter';
+import { ImprovementPanel } from '@/components/report/ImprovementPanel';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
   if (band === 'High') {
@@ -551,6 +551,9 @@ const SellerReport = () => {
               );
             })()}
 
+            {/* Improvement Panel */}
+            <ImprovementPanel type="seller" session={session} />
+
             {/* Market Snapshot */}
             <Card className="pdf-section pdf-avoid-break overflow-hidden">
               <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
@@ -725,11 +728,8 @@ const SellerReport = () => {
             {/* How This Analysis Is Formed - Collapsible */}
             <AnalysisMethodology />
 
-            {/* Important Notice */}
-            <div className="pdf-section pdf-avoid-break flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
-              <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-              <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
-            </div>
+            {/* Disclaimer */}
+            <DisclaimerFooter variant="full" />
 
             {/* Report Watermark */}
             <ReportWatermark
