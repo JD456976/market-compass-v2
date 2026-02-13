@@ -375,7 +375,7 @@ const SellerReport = () => {
           className="space-y-6"
         >
           {/* Report content for PDF export */}
-          <div id="report-export" className={`space-y-6 ${isClientMode ? 'client-mode' : 'agent-mode'}`}>
+          <div id="report-export" className={`${isClientMode ? 'client-mode' : 'agent-mode'}`}>
           <ReportProvider template={reportTemplate}>
             {/* Template Selector */}
             <div className="pdf-hide-agent-notes">
