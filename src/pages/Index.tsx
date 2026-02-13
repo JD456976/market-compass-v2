@@ -3,9 +3,11 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen } from 'lucide-react';
+import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus } from 'lucide-react';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
 import { useDraftSessions, useSharedSessions } from '@/hooks/useSessions';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -24,6 +26,8 @@ const staggerContainer = {
 const Index = () => {
   const { sessions: drafts } = useDraftSessions();
   const { activeSessions: shared } = useSharedSessions();
+  const { user } = useAuth();
+  const { isAgent } = useUserRole();
 
   return (
     <div className="bg-background" role="main" aria-label="Market Compass Home">
@@ -152,6 +156,14 @@ const Index = () => {
                 )}
               </Button>
             </Link>
+            {user && isAgent && (
+              <Link to="/clients" className="block">
+                <Button variant="outline" size="lg" className="w-full justify-start">
+                  <UserPlus className="mr-2 h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Client Management</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </motion.div>
 

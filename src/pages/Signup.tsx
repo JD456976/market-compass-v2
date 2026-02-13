@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,8 +26,13 @@ function getPasswordStrength(pw: string): { label: string; score: number; color:
 }
 
 const Signup = () => {
+  const [searchParams] = useSearchParams();
+  const inviteEmail = searchParams.get('email') || '';
+  const inviteToken = searchParams.get('invite') || '';
+  const isClientInvite = !!inviteToken;
+
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(inviteEmail);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [brokerage, setBrokerage] = useState('');
@@ -37,6 +42,11 @@ const Signup = () => {
   const [success, setSuccess] = useState(false);
   const { signUp } = useAuth();
   const { toast } = useToast();
+
+  // Pre-fill email from invite link
+  useEffect(() => {
+    if (inviteEmail) setEmail(inviteEmail);
+  }, [inviteEmail]);
 
   const strength = getPasswordStrength(password);
 
@@ -120,7 +130,9 @@ const Signup = () => {
           <div className="inline-flex items-center gap-2 mb-2">
             <Compass className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-serif font-bold">Create Your Account</h1>
+          <h1 className="text-2xl font-serif font-bold">
+            {isClientInvite ? 'Create Your Client Account' : 'Create Your Account'}
+          </h1>
         </div>
 
         <Card className="border-border/50 shadow-lg">
@@ -139,7 +151,7 @@ const Signup = () => {
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="pl-9 h-11" autoComplete="email" required />
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="pl-9 h-11" autoComplete="email" required readOnly={isClientInvite} />
                 </div>
               </div>
 
@@ -186,13 +198,15 @@ const Signup = () => {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="brokerage">Brokerage <span className="text-muted-foreground">(Optional)</span></Label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="brokerage" value={brokerage} onChange={(e) => setBrokerage(e.target.value)} placeholder="ABC Realty" className="pl-9 h-11" />
+              {!isClientInvite && (
+                <div className="space-y-2">
+                  <Label htmlFor="brokerage">Brokerage <span className="text-muted-foreground">(Optional)</span></Label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="brokerage" value={brokerage} onChange={(e) => setBrokerage(e.target.value)} placeholder="ABC Realty" className="pl-9 h-11" />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex items-start gap-2">
                 <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(c) => setAgreedToTerms(c === true)} className="mt-0.5" />

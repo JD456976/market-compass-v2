@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +11,9 @@ import { Compass, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [searchParams] = useSearchParams();
+  const prefillEmail = searchParams.get('email') || '';
+  const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -39,7 +42,23 @@ const Login = () => {
         variant: 'destructive',
       });
     } else {
-      navigate('/', { replace: true });
+      // Check user role to redirect appropriately
+      const { data: { user: loggedInUser } } = await supabase.auth.getUser();
+      if (loggedInUser) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', loggedInUser.id)
+          .maybeSingle();
+        
+        if (roleData?.role === 'client') {
+          navigate('/my-reports', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
+      } else {
+        navigate('/', { replace: true });
+      }
     }
   };
 
