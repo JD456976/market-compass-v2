@@ -796,7 +796,9 @@ const BuyerFlow = () => {
                   <div className="space-y-3">
                     <Label>Contingencies <span className="text-destructive">*</span></Label>
                     <div className="grid grid-cols-2 gap-4">
-                      {contingencyOptions.map((opt) => (
+                      {contingencyOptions
+                        .filter(opt => !(financingType === 'Cash' && opt.value === 'Financing'))
+                        .map((opt) => (
                         <div key={opt.value} className={`flex items-center space-x-3 p-3 rounded-lg border hover:border-accent/30 transition-colors ${attempted && contingencies.length === 0 ? 'border-destructive' : 'border-border/50'}`}>
                           <Checkbox
                             id={opt.value}
