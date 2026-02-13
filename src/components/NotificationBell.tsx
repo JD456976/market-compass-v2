@@ -182,19 +182,22 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
   };
 
   const handleNotificationClick = (n: NotificationItem) => {
+    // Close popover first, then scroll after it fully unmounts
     setOpen(false);
-    if (role === 'agent') {
-      // Navigate to the Pro Dashboard and scroll to the relevant section
-      const section = n.type === 'message' ? 'messages-section' : 'scenarios-section';
+    const section = n.type === 'message' ? 'messages-section' : 'scenarios-section';
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/subscription') {
       navigate('/subscription');
-      // Use setTimeout to ensure page has rendered before scrolling
+    }
+    // Wait for popover close animation + DOM settle before scrolling
+    requestAnimationFrame(() => {
       setTimeout(() => {
         const el = document.getElementById(section);
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 100);
-    }
+      }, 300);
+    });
   };
 
   const count = notifications.length;
