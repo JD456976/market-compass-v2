@@ -23,6 +23,7 @@ import { ReportTemplateSelector, ReportTemplate } from '@/components/report/Repo
 import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference } from '@/types';
 import { generateId } from '@/lib/storage';
 import { upsertSessionAsync } from '@/lib/storage';
+import { useAutoSaveDraft } from '@/hooks/useAutoSaveDraft';
 import { formatPriceDisplay, parsePriceValue, stripCurrencyChars } from '@/lib/currencyFormat';
 import { AddressInput, stubGeocode } from '@/components/AddressInput';
 import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
@@ -317,20 +318,13 @@ const SellerFlow = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   });
 
-  // Auto-save draft every 30 seconds when client name exists
-  useEffect(() => {
-    if (!clientName.trim()) return;
-    const timer = setInterval(async () => {
-      try {
-        const session = buildSession();
-        await upsertSessionAsync(session);
-        console.log('Auto-saved draft');
-      } catch {
-        // Silent fail for auto-save
-      }
-    }, 30000);
-    return () => clearInterval(timer);
-  }, [clientName, location, propertyType, condition, selectedScenarioId, listPrice, timeframe, strategy, agentNotes, clientNotes, draftId]);
+  // Auto-save draft on any input change (debounced 1.5s) + on unmount
+  const hasMeaningfulInput = !!(clientName.trim() || location.trim() || listPrice);
+  useAutoSaveDraft(
+    buildSession,
+    hasMeaningfulInput,
+    [clientName, location, propertyType, condition, selectedScenarioId, listPrice, timeframe, strategy, agentNotes, clientNotes, draftId],
+  );
 
   const selectedScenario = selectedScenarioId ? getMarketScenarioById(selectedScenarioId) : undefined;
 
