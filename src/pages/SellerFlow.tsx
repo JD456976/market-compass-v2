@@ -88,6 +88,34 @@ const SellerFlow = () => {
   useEffect(() => {
     setMarketScenarios(loadMarketScenarios());
     
+    // Restore from current_session if returning from report
+    const sessionData = sessionStorage.getItem('current_session');
+    if (sessionData) {
+      try {
+        const session: Session = JSON.parse(sessionData);
+        if (session.session_type === 'Seller' && session.seller_inputs) {
+          setClientName(session.client_name || '');
+          setLocation(session.location || '');
+          setPropertyType(session.property_type);
+          setCondition(session.condition);
+          if (session.market_scenario_id) setSelectedScenarioId(session.market_scenario_id);
+          setDraftId(session.id);
+          const si = session.seller_inputs;
+          if (si.seller_selected_list_price) setListPrice(String(si.seller_selected_list_price));
+          if (si.desired_timeframe) setTimeframe(si.desired_timeframe);
+          if (si.strategy_preference) setStrategy(si.strategy_preference);
+          if (si.agent_notes) setAgentNotes(si.agent_notes);
+          if (si.client_notes) setClientNotes(si.client_notes);
+          if (session.property_factors) setPropertyFactors(session.property_factors);
+          // Navigate to review step so user can re-generate or edit
+          setStep(STEPS.length - 1);
+          return; // Skip template prefill
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    }
+
     const templateData = sessionStorage.getItem('prefill_template');
     if (templateData) {
       try {
@@ -392,6 +420,20 @@ const SellerFlow = () => {
             {/* Step 0: Property & Client */}
             {step === 0 && (
               <>
+              {/* Smart Input - Voice & Camera */}
+              <MLSVoiceCameraInput
+                reportType="seller"
+                onDataExtracted={(data) => {
+                  if (data.location) setLocation(data.location);
+                  if (data.address) setFullAddress(data.address);
+                  if (data.propertyType) setPropertyType(data.propertyType as PropertyType);
+                  if (data.condition) setCondition(data.condition as Condition);
+                  if (data.listPrice) setListPrice(String(data.listPrice));
+                  if (data.notes) setClientNotes(prev => prev ? `${prev}\n${data.notes}` : data.notes || '');
+                  if (data.factors) setPropertyFactors(data.factors);
+                }}
+              />
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -523,19 +565,6 @@ const SellerFlow = () => {
                 </CardContent>
               </Card>
 
-              {/* Smart Input - Voice & Camera */}
-              <MLSVoiceCameraInput
-                reportType="seller"
-                onDataExtracted={(data) => {
-                  if (data.location) setLocation(data.location);
-                  if (data.address) setFullAddress(data.address);
-                  if (data.propertyType) setPropertyType(data.propertyType as PropertyType);
-                  if (data.condition) setCondition(data.condition as Condition);
-                  if (data.listPrice) setListPrice(String(data.listPrice));
-                  if (data.notes) setClientNotes(prev => prev ? `${prev}\n${data.notes}` : data.notes || '');
-                  if (data.factors) setPropertyFactors(data.factors);
-                }}
-              />
               </>
             )}
 
