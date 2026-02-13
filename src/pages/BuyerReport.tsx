@@ -64,7 +64,7 @@ import { HistoricalTrends } from '@/components/report/HistoricalTrends';
 import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore';
 import { BuyerCompetitiveAnalysis } from '@/components/report/CompetitiveAnalysis';
 import { SuccessPrediction } from '@/components/report/SuccessPrediction';
-import { AIInsights } from '@/components/report/AIInsights';
+
 import { ReportWatermark } from '@/components/report/ReportWatermark';
 import { ViewStatsPanel } from '@/components/report/ViewStatsPanel';
 import { ClientActivityTimeline } from '@/components/report/ClientActivityTimeline';
@@ -714,16 +714,6 @@ const BuyerReport = () => {
               />
             )}
 
-            {/* AI-Powered Insights */}
-            {marketSnapshot && (
-              <AIInsights
-                session={session}
-                snapshot={marketSnapshot.snapshot}
-                isGenericBaseline={marketSnapshot.isGenericBaseline}
-                likelihood={acceptanceLikelihood}
-                reportType="buyer"
-              />
-            )}
 
             {/* How This Analysis Is Formed - Collapsible */}
             <AnalysisMethodology />
