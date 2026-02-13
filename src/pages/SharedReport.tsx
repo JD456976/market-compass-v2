@@ -86,6 +86,9 @@ const SharedReportContent = () => {
   const [originalBuyerInputs, setOriginalBuyerInputs] = useState<BuyerInputs | null>(null);
   const [whatIfInputs, setWhatIfInputs] = useState<BuyerInputs | null>(null);
   const [isWhatIfModified, setIsWhatIfModified] = useState(false);
+  const [originalBuyerAcceptance, setOriginalBuyerAcceptance] = useState<ExtendedLikelihoodBand | null>(null);
+  const [originalBuyerRiskOfLosing, setOriginalBuyerRiskOfLosing] = useState<ExtendedLikelihoodBand | null>(null);
+  const [originalBuyerRiskOfOverpaying, setOriginalBuyerRiskOfOverpaying] = useState<ExtendedLikelihoodBand | null>(null);
   // What-If state for seller reports
   const [originalSellerInputs, setOriginalSellerInputs] = useState<SellerInputs | null>(null);
   const [whatIfSellerInputs, setWhatIfSellerInputs] = useState<SellerInputs | null>(null);
@@ -101,6 +104,13 @@ const SharedReportContent = () => {
     if (session?.session_type === 'Buyer' && session.buyer_inputs) {
       setOriginalBuyerInputs({ ...session.buyer_inputs });
       setWhatIfInputs({ ...session.buyer_inputs });
+      // Store original buyer report metrics for comparison banner
+      const originalReport = calculateBuyerReport(session, marketProfile);
+      if ('acceptanceLikelihood' in originalReport) {
+        setOriginalBuyerAcceptance(originalReport.acceptanceLikelihood);
+        setOriginalBuyerRiskOfLosing(originalReport.riskOfLosingHome);
+        setOriginalBuyerRiskOfOverpaying(originalReport.riskOfOverpaying);
+      }
     }
     if (session?.session_type === 'Seller' && session.seller_inputs) {
       setOriginalSellerInputs({ ...session.seller_inputs });
@@ -781,6 +791,24 @@ const SharedReportContent = () => {
                   snapshot={marketSnapshot.snapshot}
                   isGenericBaseline={marketSnapshot.isGenericBaseline}
                   reportType="Buyer"
+                />
+              )}
+
+              {/* Scenario Comparison Banner - Buyer */}
+              {originalBuyerInputs && whatIfInputs && originalBuyerAcceptance && 'acceptanceLikelihood' in reportData && (
+                <ScenarioComparisonBanner
+                  original={{
+                    acceptance: originalBuyerAcceptance,
+                    riskOfLosing: originalBuyerRiskOfLosing || undefined,
+                    riskOfOverpaying: originalBuyerRiskOfOverpaying || undefined,
+                  }}
+                  current={{
+                    acceptance: reportData.acceptanceLikelihood,
+                    riskOfLosing: 'riskOfLosingHome' in reportData ? reportData.riskOfLosingHome : undefined,
+                    riskOfOverpaying: 'riskOfOverpaying' in reportData ? reportData.riskOfOverpaying : undefined,
+                  }}
+                  isModified={isWhatIfModified}
+                  onReset={handleBuyerReset}
                 />
               )}
             </>
