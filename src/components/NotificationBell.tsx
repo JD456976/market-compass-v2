@@ -1,14 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Bell, MessageSquare, FileText, Layers } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
-import { MessageSquare, FileText, Layers } from 'lucide-react';
 
 interface NotificationItem {
   id: string;
@@ -20,9 +17,7 @@ interface NotificationItem {
 }
 
 interface NotificationBellProps {
-  /** 'agent' fetches client→agent notifications; 'client' fetches agent→client */
   role: 'agent' | 'client';
-  /** For client role, the viewer_id from localStorage */
   viewerId?: string;
 }
 
@@ -30,15 +25,10 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    fetchNotifications();
-  }, [role, viewerId]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     const items: NotificationItem[] = [];
 
     if (role === 'agent') {
-      // Unread client messages for agent
       const { data: messages } = await supabase
         .from('report_messages')
         .select('id, body, sender_id, created_at, report_id, read_by_agent_at')
@@ -47,7 +37,6 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      // Pending scenarios
       const { data: scenarios } = await supabase
         .from('report_scenarios')
         .select('id, report_id, title, submitted_at, created_at')
@@ -56,7 +45,6 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
         .order('submitted_at', { ascending: false })
         .limit(10);
 
-      // Get session names
       const reportIds = [
         ...new Set([
           ...(messages?.map(m => m.report_id) || []),
@@ -74,35 +62,23 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
       }
 
       messages?.forEach(m => {
-        items.push({
-          id: m.id,
-          type: 'message',
-          title: 'New client message',
-          subtitle: sessionMap.get(m.report_id) || 'Report',
-          timestamp: m.created_at,
-          reportId: m.report_id,
-        });
+        items.push({ id: m.id, type: 'message', title: 'New client message', subtitle: sessionMap.get(m.report_id) || 'Report', timestamp: m.created_at, reportId: m.report_id });
       });
 
       scenarios?.forEach(s => {
-        items.push({
-          id: s.id,
-          type: 'scenario',
-          title: s.title || 'New scenario submitted',
-          subtitle: sessionMap.get(s.report_id) || 'Report',
-          timestamp: s.submitted_at || s.created_at,
-          reportId: s.report_id,
-        });
+        items.push({ id: s.id, type: 'scenario', title: s.title || 'New scenario submitted', subtitle: sessionMap.get(s.report_id) || 'Report', timestamp: s.submitted_at || s.created_at, reportId: s.report_id });
       });
     } else if (role === 'client' && viewerId) {
-      // Unread agent messages for client
       const { data: views } = await supabase
         .from('shared_report_views')
         .select('report_id')
         .eq('viewer_id', viewerId);
 
       const reportIds = [...new Set(views?.map(v => v.report_id) || [])];
-      if (reportIds.length === 0) return;
+      if (reportIds.length === 0) {
+        setNotifications([]);
+        return;
+      }
 
       const { data: messages } = await supabase
         .from('report_messages')
@@ -113,7 +89,6 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      // Scenario review results
       const { data: scenarios } = await supabase
         .from('report_scenarios')
         .select('id, report_id, title, reviewed_status, reviewed_at, created_at')
@@ -123,7 +98,6 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
         .order('reviewed_at', { ascending: false })
         .limit(10);
 
-      // Get session names
       const allIds = [
         ...new Set([
           ...(messages?.map(m => m.report_id) || []),
@@ -141,34 +115,61 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
       }
 
       messages?.forEach(m => {
-        items.push({
-          id: m.id,
-          type: 'message',
-          title: 'New message from agent',
-          subtitle: sessionMap.get(m.report_id) || 'Report',
-          timestamp: m.created_at,
-          reportId: m.report_id,
-        });
+        items.push({ id: m.id, type: 'message', title: 'New message from agent', subtitle: sessionMap.get(m.report_id) || 'Report', timestamp: m.created_at, reportId: m.report_id });
       });
 
       scenarios?.forEach(s => {
-        items.push({
-          id: s.id,
-          type: 'scenario',
-          title: `Scenario ${s.reviewed_status === 'accepted' ? 'accepted' : 'needs changes'}`,
-          subtitle: sessionMap.get(s.report_id) || 'Report',
-          timestamp: s.reviewed_at || s.created_at,
-          reportId: s.report_id,
-        });
+        items.push({ id: s.id, type: 'scenario', title: `Scenario ${s.reviewed_status === 'accepted' ? 'accepted' : 'needs changes'}`, subtitle: sessionMap.get(s.report_id) || 'Report', timestamp: s.reviewed_at || s.created_at, reportId: s.report_id });
       });
     }
 
-    // Sort by timestamp desc
     items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     setNotifications(items);
-  };
+  }, [role, viewerId]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  // Real-time subscription for instant badge updates
+  useEffect(() => {
+    const messagesChannel = supabase
+      .channel(`notif-bell-messages-${role}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'report_messages' },
+        () => { fetchNotifications(); }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'report_messages' },
+        () => { fetchNotifications(); }
+      )
+      .subscribe();
+
+    const scenariosChannel = supabase
+      .channel(`notif-bell-scenarios-${role}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'report_scenarios' },
+        () => { fetchNotifications(); }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'report_scenarios' },
+        () => { fetchNotifications(); }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(scenariosChannel);
+    };
+  }, [role, fetchNotifications]);
 
   const count = notifications.length;
+
   const iconForType = (type: string) => {
     switch (type) {
       case 'message': return <MessageSquare className="h-3.5 w-3.5 text-accent" />;
@@ -198,16 +199,13 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
         >
           <Bell className="h-5 w-5 text-muted-foreground" />
           {count > 0 && (
-            <span className="absolute top-1.5 right-1.5 h-4 min-w-[16px] flex items-center justify-center rounded-full bg-accent text-accent-foreground text-[10px] font-bold px-1">
+            <span className="absolute top-1.5 right-1.5 h-4 min-w-[16px] flex items-center justify-center rounded-full bg-accent text-accent-foreground text-[10px] font-bold px-1 animate-in fade-in zoom-in duration-200">
               {count > 9 ? '9+' : count}
             </span>
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        className="w-80 p-0 max-h-[400px] overflow-hidden"
-      >
+      <PopoverContent align="end" className="w-80 p-0 max-h-[400px] overflow-hidden">
         <div className="px-4 py-3 border-b border-border">
           <p className="text-sm font-serif font-semibold">Notifications</p>
         </div>
@@ -219,10 +217,7 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
         ) : (
           <div className="overflow-y-auto max-h-[320px] divide-y divide-border/50">
             {notifications.slice(0, 15).map((n) => (
-              <div
-                key={n.id}
-                className="flex items-start gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors cursor-default"
-              >
+              <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors cursor-default">
                 <div className="p-1.5 rounded-full bg-secondary/50 shrink-0 mt-0.5">
                   {iconForType(n.type)}
                 </div>
