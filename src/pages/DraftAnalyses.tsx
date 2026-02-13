@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Eye, Copy, Building2, Users, FileEdit, Calendar, GitCompare, Check, X, Loader2, Search } from 'lucide-react';
+import { ArrowLeft, Eye, Copy, Building2, Users, FileEdit, Calendar, GitCompare, Check, X, Loader2, Search, Pencil } from 'lucide-react';
 import { SkeletonList } from '@/components/ui/skeleton-card';
 import { EmptyDrafts } from '@/components/EmptyState';
 import { Session } from '@/types';
@@ -51,6 +51,17 @@ const DraftAnalyses = () => {
       navigate('/seller/report');
     } else {
       navigate('/buyer/report');
+    }
+  };
+
+  const handleEdit = (session: Session) => {
+    // Set the returning_to_edit flag so the flow restores this session
+    sessionStorage.setItem('returning_to_edit', 'true');
+    sessionStorage.setItem('current_session', JSON.stringify(session));
+    if (session.session_type === 'Seller') {
+      navigate('/seller');
+    } else {
+      navigate('/buyer');
     }
   };
 
@@ -331,6 +342,15 @@ const DraftAnalyses = () => {
                             </div>
                             {!compareMode && (
                               <div className="flex gap-1 shrink-0">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  onClick={(e) => { e.stopPropagation(); handleEdit(session); }} 
+                                  title="Edit"
+                                  className="min-h-[44px] min-w-[44px]"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
                                 <Button 
                                   variant="ghost" 
                                   size="icon" 
