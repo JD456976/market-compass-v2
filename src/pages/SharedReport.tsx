@@ -44,6 +44,14 @@ import { DisclaimerFooter } from '@/components/report/DisclaimerFooter';
 import { MetricCallout, MetricCalloutGrid } from '@/components/report/MetricCallout';
 import { ImprovementPanel } from '@/components/report/ImprovementPanel';
 import { ScenarioComparisonBanner } from '@/components/report/ScenarioComparisonBanner';
+import { RegretRiskMeter } from '@/components/report/RegretRiskMeter';
+import { calculateRegretRisk } from '@/lib/regretRiskScoring';
+import { SellerRegretRiskMeter } from '@/components/report/SellerRegretRiskMeter';
+import { calculateSellerRegretRisk } from '@/lib/sellerRegretRiskScoring';
+import { WaitSimulatorCard } from '@/components/report/WaitSimulatorCard';
+import { SellerWaitSimulatorCard } from '@/components/report/SellerWaitSimulatorCard';
+import { AddressIntelligenceCard } from '@/components/report/AddressIntelligenceCard';
+import { getMarketSnapshotOrBaseline, MarketSnapshot } from '@/lib/marketSnapshots';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand | ExtendedLikelihoodBand }) {
   if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
@@ -72,7 +80,7 @@ const SharedReportContent = () => {
   const [exporting, setExporting] = useState(false);
   const viewLoggedRef = useRef(false);
   const [agentBranding, setAgentBranding] = useState<AgentBranding | null>(null);
-  
+  const [marketSnapshot, setMarketSnapshot] = useState<{ snapshot: MarketSnapshot; isGenericBaseline: boolean } | null>(null);
   // What-If state for buyer reports
   const [originalBuyerInputs, setOriginalBuyerInputs] = useState<BuyerInputs | null>(null);
   const [whatIfInputs, setWhatIfInputs] = useState<BuyerInputs | null>(null);
@@ -102,6 +110,14 @@ const SharedReportContent = () => {
   useEffect(() => {
     if (session && (session as any).owner_user_id) {
       loadBrandingForSession((session as any).owner_user_id).then(setAgentBranding);
+    }
+  }, [session]);
+
+  // Load market snapshot based on session location
+  useEffect(() => {
+    if (session) {
+      const snapshotData = getMarketSnapshotOrBaseline(session.location);
+      setMarketSnapshot(snapshotData);
     }
   }, [session]);
 
@@ -438,6 +454,29 @@ const SharedReportContent = () => {
                   <p className="text-muted-foreground leading-relaxed">{sellerWhatThisMeansText}</p>
                 </CardContent>
               </Card>
+
+              {/* Seller Pricing Regret Risk */}
+              {session.seller_inputs && (
+                <SellerRegretRiskMeter
+                  result={calculateSellerRegretRisk(session.seller_inputs, sellerLikelihood30, marketSnapshot?.snapshot)}
+                />
+              )}
+
+              {/* What If You Wait to List? */}
+              <SellerWaitSimulatorCard
+                likelihood30={sellerLikelihood30}
+                snapshot={marketSnapshot?.snapshot}
+              />
+
+              {/* Address Intelligence */}
+              {marketSnapshot && (
+                <AddressIntelligenceCard
+                  session={session}
+                  snapshot={marketSnapshot.snapshot}
+                  isGenericBaseline={marketSnapshot.isGenericBaseline}
+                  reportType="Seller"
+                />
+              )}
             </>
           )}
 
@@ -609,6 +648,42 @@ const SharedReportContent = () => {
                   <p className="text-muted-foreground leading-relaxed">{buyerWhatThisMeansText}</p>
                 </CardContent>
               </Card>
+
+              {/* Regret Risk Meter */}
+              {(() => {
+                const effectiveInputs = whatIfInputs || session.buyer_inputs!;
+                const effectiveSession = whatIfInputs ? { ...session, buyer_inputs: whatIfInputs } : session;
+                const buyerReport = calculateBuyerReport(effectiveSession, marketProfile);
+                return (
+                  <RegretRiskMeter
+                    result={calculateRegretRisk(effectiveInputs, 'riskOfOverpaying' in buyerReport ? buyerReport.riskOfOverpaying : 'Moderate', marketSnapshot?.snapshot)}
+                  />
+                );
+              })()}
+
+              {/* What If You Wait? Simulator */}
+              {(() => {
+                const effectiveInputs = whatIfInputs || session.buyer_inputs!;
+                return (
+                  <WaitSimulatorCard
+                    marketConditions={effectiveInputs.market_conditions || 'Balanced'}
+                    daysOnMarket={effectiveInputs.days_on_market ?? null}
+                    offerPrice={effectiveInputs.offer_price}
+                    referencePrice={effectiveInputs.reference_price || effectiveInputs.offer_price}
+                    snapshot={marketSnapshot?.snapshot}
+                  />
+                );
+              })()}
+
+              {/* Address Intelligence */}
+              {marketSnapshot && (
+                <AddressIntelligenceCard
+                  session={session}
+                  snapshot={marketSnapshot.snapshot}
+                  isGenericBaseline={marketSnapshot.isGenericBaseline}
+                  reportType="Buyer"
+                />
+              )}
             </>
           )}
 
