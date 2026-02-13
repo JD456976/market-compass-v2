@@ -20,8 +20,32 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Authenticate the caller
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Verify the caller's token
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const {
@@ -50,10 +74,8 @@ Deno.serve(async (req) => {
     let emailPayload: EmailPayload | null = null;
 
     if (type === "agent_reply") {
-      // Agent replied → notify client
-      // We don't have client email stored, so queue with metadata for future delivery
       emailPayload = {
-        to_email: "client@pending", // Placeholder — would need client email
+        to_email: "client@pending",
         subject: `New reply on your ${session.client_name} report`,
         body_html: `
           <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -67,8 +89,6 @@ Deno.serve(async (req) => {
         metadata: { type, report_id, sender_name },
       };
     } else if (type === "client_message") {
-      // Client sent message → notify agent
-      // Get agent email from profiles
       let agentEmail = "agent@pending";
       if (session.owner_user_id) {
         const { data: profile } = await supabase
@@ -93,7 +113,6 @@ Deno.serve(async (req) => {
         metadata: { type, report_id, sender_name },
       };
     } else if (type === "scenario_submitted") {
-      // Client submitted scenario → notify agent
       let agentEmail = "agent@pending";
       if (session.owner_user_id) {
         const { data: profile } = await supabase
@@ -118,7 +137,6 @@ Deno.serve(async (req) => {
         metadata: { type, report_id, scenario_title },
       };
     } else if (type === "scenario_reviewed") {
-      // Agent reviewed scenario → notify client
       emailPayload = {
         to_email: "client@pending",
         subject: `Your scenario has been reviewed: ${session.client_name}`,
@@ -135,7 +153,6 @@ Deno.serve(async (req) => {
     }
 
     if (emailPayload) {
-      // Queue the email
       const { error: queueError } = await supabase
         .from("email_queue")
         .insert(emailPayload);
@@ -148,10 +165,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Trigger immediate send attempt (fire-and-forget)
       try {
-        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-        const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
         fetch(`${supabaseUrl}/functions/v1/send-emails`, {
           method: "POST",
           headers: {
@@ -161,7 +175,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({}),
         }).catch((e) => console.log("Fire-and-forget send-emails:", e));
       } catch (_) {
-        // Non-critical: emails will be picked up later
+        // Non-critical
       }
 
       return new Response(
