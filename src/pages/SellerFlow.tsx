@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ArrowLeft, ArrowRight, Building2, Home, Sparkles, DollarSign, RotateCcw, Check, FileText, ClipboardList, Pencil, Save, Loader2 } from 'lucide-react';
 import { MLSVoiceCameraInput } from '@/components/MLSVoiceCameraInput';
+import { ReportTemplateSelector, ReportTemplate } from '@/components/report/ReportTemplateSelector';
 import { Session, PropertyType, Condition, DesiredTimeframe, StrategyPreference } from '@/types';
 import { generateId } from '@/lib/storage';
 import { upsertSessionAsync } from '@/lib/storage';
@@ -73,6 +74,8 @@ const SellerFlow = () => {
   const [strategy, setStrategy] = useState<StrategyPreference>(DEFAULT_VALUES.strategy);
   const [agentNotes, setAgentNotes] = useState(DEFAULT_VALUES.agentNotes);
   const [clientNotes, setClientNotes] = useState(DEFAULT_VALUES.clientNotes);
+  const [propertyFactors, setPropertyFactors] = useState<import('@/types').PropertyFactor[]>([]);
+  const [reportTemplate, setReportTemplate] = useState<ReportTemplate>('modern');
   
   // Scenario overrides
   const [showOverrides, setShowOverrides] = useState(false);
@@ -170,6 +173,7 @@ const SellerFlow = () => {
       competitionLevel: competitionOverride,
       pricingSensitivity: pricingOverride,
     } : undefined,
+    property_factors: propertyFactors.length > 0 ? propertyFactors : undefined,
     seller_inputs: {
       seller_selected_list_price: parsePriceValue(listPrice),
       desired_timeframe: timeframe,
@@ -524,10 +528,12 @@ const SellerFlow = () => {
                 reportType="seller"
                 onDataExtracted={(data) => {
                   if (data.location) setLocation(data.location);
+                  if (data.address) setFullAddress(data.address);
                   if (data.propertyType) setPropertyType(data.propertyType as PropertyType);
                   if (data.condition) setCondition(data.condition as Condition);
                   if (data.listPrice) setListPrice(String(data.listPrice));
                   if (data.notes) setClientNotes(prev => prev ? `${prev}\n${data.notes}` : data.notes || '');
+                  if (data.factors) setPropertyFactors(data.factors);
                 }}
               />
               </>
@@ -655,6 +661,12 @@ const SellerFlow = () => {
                     <ReviewRow label="Client Notes" value={clientNotes || '—'} />
                     <ReviewRow label="Agent Notes" value={agentNotes || '—'} />
                   </ReviewSection>
+
+                  {/* Report Type */}
+                  <div className="pt-4 border-t border-border/50">
+                    <p className="text-sm font-medium mb-3">Report Style</p>
+                    <ReportTemplateSelector selected={reportTemplate} onSelect={setReportTemplate} />
+                  </div>
                 </CardContent>
               </Card>
             )}

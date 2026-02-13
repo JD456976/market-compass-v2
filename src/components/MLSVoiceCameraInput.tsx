@@ -11,11 +11,13 @@ import { parseMLSPINText, getExtractionConfidence } from '@/lib/mlspinParser';
 
 export interface MLSExtractedData {
   location?: string;
+  address?: string;
   propertyType?: string;
   condition?: string;
   listPrice?: number;
   daysOnMarket?: number;
   notes?: string;
+  factors?: import('@/types').PropertyFactor[];
 }
 
 interface MLSVoiceCameraInputProps {
@@ -106,6 +108,42 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const mapPropertyType = (raw?: string): string | undefined => {
+    if (!raw) return undefined;
+    const lower = raw.toLowerCase();
+    if (/single\s*family/i.test(lower)) return 'SFH';
+    if (/condo/i.test(lower)) return 'Condo';
+    if (/multi|duplex|triple|two[\s-]*family|three[\s-]*family/i.test(lower)) return 'MFH';
+    return undefined;
+  };
+
+  const mapCondition = (extraction: ReturnType<typeof parseMLSPINText>): string | undefined => {
+    if (extraction.condition?.value) return extraction.condition.value;
+    const remarks = extraction.remarks?.value?.toLowerCase() || '';
+    if (/renovated|remodeled|gut\s*rehab|completely\s*redone/i.test(remarks)) return 'Renovated';
+    if (/updated|brand\s*new/i.test(remarks)) return 'Updated';
+    return undefined;
+  };
+
+  const buildCompactNotes = (extraction: ReturnType<typeof parseMLSPINText>): string => {
+    const lines: string[] = [];
+    if (extraction.mlsNumber?.value) lines.push(`MLS#: ${extraction.mlsNumber.value}`);
+    if (extraction.style?.value) lines.push(`Style: ${extraction.style.value}`);
+    if (extraction.bedrooms?.value) lines.push(`${extraction.bedrooms.value}BR`);
+    if (extraction.bathsFull?.value) lines.push(`${extraction.bathsFull.value}BA`);
+    if (extraction.squareFeet?.value) lines.push(`${parseInt(extraction.squareFeet.value).toLocaleString()} sqft`);
+    if (extraction.lotSize?.value) lines.push(`Lot: ${extraction.lotSize.value}`);
+    if (extraction.yearBuilt?.value) lines.push(`Built: ${extraction.yearBuilt.value}`);
+    if (extraction.heating?.value) lines.push(`Heat: ${extraction.heating.value}`);
+    if (extraction.cooling?.value) lines.push(`Cool: ${extraction.cooling.value}`);
+    if (extraction.parking?.value) lines.push(`Parking: ${extraction.parking.value}`);
+    if (extraction.foundation?.value) lines.push(`Foundation: ${extraction.foundation.value}`);
+    if (extraction.basement?.value) lines.push(`Basement: ${extraction.basement.value}`);
+    if (extraction.taxAmount?.value) lines.push(`Tax: $${parseInt(extraction.taxAmount.value).toLocaleString()}`);
+    // Keep it compact - no factors here (they go into session.property_factors)
+    return lines.join(' · ');
+  };
+
   const processPDFFile = async (file: File) => {
     setIsProcessing(true);
     try {
@@ -120,20 +158,41 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
       const extraction = parseMLSPINText(rawText);
       const confidence = getExtractionConfidence(extraction);
 
-      // Map extraction to form fields
+      // Build location from city/state/zip
       const locationParts: string[] = [];
-      if (extraction.address?.value) locationParts.push(extraction.address.value);
       if (extraction.city?.value) locationParts.push(extraction.city.value);
       if (extraction.state?.value) locationParts.push(extraction.state.value);
       if (extraction.zip?.value) locationParts.push(extraction.zip.value);
 
+      // Build full address string
+      const addressParts: string[] = [];
+      if (extraction.address?.value) addressParts.push(extraction.address.value);
+      if (extraction.city?.value) addressParts.push(extraction.city.value);
+      if (extraction.state?.value) addressParts.push(extraction.state.value);
+      if (extraction.zip?.value) addressParts.push(extraction.zip.value);
+
+      const mappedPropertyType = mapPropertyType(extraction.propertyType?.value);
+      const mappedCondition = mapCondition(extraction);
+
+      // Convert factors for session attachment
+      const propertyFactors: import('@/types').PropertyFactor[] = extraction.factors.map(f => ({
+        label: f.label,
+        weight: f.weight,
+        explanation: f.explanation,
+        evidence: f.evidence,
+        confidence: f.confidence,
+        source: f.source,
+      }));
+
       const data: MLSExtractedData = {
         location: locationParts.join(', ') || undefined,
-        propertyType: extraction.propertyType?.value || undefined,
-        condition: extraction.condition?.value || undefined,
-        listPrice: extraction.listPrice?.value ? parseInt(extraction.listPrice.value) : undefined,
+        address: addressParts.join(', ') || undefined,
+        propertyType: mappedPropertyType,
+        condition: mappedCondition,
+        listPrice: extraction.listPrice?.value ? parseInt(extraction.listPrice.value.replace(/,/g, '')) : undefined,
         daysOnMarket: extraction.daysOnMarket?.value ? parseInt(extraction.daysOnMarket.value) : undefined,
-        notes: buildNotesFromExtraction(extraction),
+        notes: buildCompactNotes(extraction),
+        factors: propertyFactors.length > 0 ? propertyFactors : undefined,
       };
 
       onDataExtracted(data);
@@ -147,60 +206,6 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const buildNotesFromExtraction = (extraction: ReturnType<typeof parseMLSPINText>): string => {
-    const lines: string[] = [];
-    if (extraction.mlsNumber?.value) lines.push(`MLS#: ${extraction.mlsNumber.value}`);
-    if (extraction.style?.value) lines.push(`Style: ${extraction.style.value}`);
-    if (extraction.bedrooms?.value) lines.push(`Bedrooms: ${extraction.bedrooms.value}`);
-    if (extraction.bathsFull?.value) lines.push(`Full Baths: ${extraction.bathsFull.value}`);
-    if (extraction.bathsHalf?.value && extraction.bathsHalf.value !== '0') lines.push(`Half Baths: ${extraction.bathsHalf.value}`);
-    if (extraction.squareFeet?.value) lines.push(`Living Area: ${parseInt(extraction.squareFeet.value).toLocaleString()} sqft`);
-    if (extraction.lotSize?.value) lines.push(`Lot: ${extraction.lotSize.value}`);
-    if (extraction.yearBuilt?.value) lines.push(`Year Built: ${extraction.yearBuilt.value}`);
-    if (extraction.totalRooms?.value) lines.push(`Total Rooms: ${extraction.totalRooms.value}`);
-    if (extraction.heating?.value) lines.push(`Heat: ${extraction.heating.value}`);
-    if (extraction.cooling?.value) lines.push(`Cooling: ${extraction.cooling.value}`);
-    if (extraction.parking?.value) lines.push(`Parking: ${extraction.parking.value}`);
-    if (extraction.garageSpaces?.value) lines.push(`Garage: ${extraction.garageSpaces.value}`);
-    if (extraction.construction?.value) lines.push(`Construction: ${extraction.construction.value}`);
-    if (extraction.foundation?.value) lines.push(`Foundation: ${extraction.foundation.value}`);
-    if (extraction.basement?.value) lines.push(`Basement: ${extraction.basement.value}`);
-    if (extraction.sewer?.value) lines.push(`Sewer: ${extraction.sewer.value}`);
-    if (extraction.water?.value) lines.push(`Water: ${extraction.water.value}`);
-    if (extraction.electric?.value) lines.push(`Electric: ${extraction.electric.value}`);
-    if (extraction.flooring?.value) lines.push(`Flooring: ${extraction.flooring.value}`);
-    if (extraction.roofMaterial?.value) lines.push(`Roof: ${extraction.roofMaterial.value}`);
-    if (extraction.appliances?.value) lines.push(`Appliances: ${extraction.appliances.value}`);
-    if (extraction.exteriorFeatures?.value) lines.push(`Exterior: ${extraction.exteriorFeatures.value}`);
-    if (extraction.taxAmount?.value) lines.push(`Tax: $${parseInt(extraction.taxAmount.value).toLocaleString()}${extraction.taxYear?.value ? ` (${extraction.taxYear.value})` : ''}`);
-    if (extraction.assessedValue?.value) lines.push(`Assessed: $${parseInt(extraction.assessedValue.value).toLocaleString()}`);
-    if (extraction.schools?.value) lines.push(`Schools: ${extraction.schools.value}`);
-    if (extraction.county?.value) lines.push(`County: ${extraction.county.value}`);
-    if (extraction.lotDescription?.value) lines.push(`Lot: ${extraction.lotDescription.value}`);
-    if (extraction.disclosures?.value) lines.push(`Disclosures: ${extraction.disclosures.value}`);
-    if (extraction.listingOffice?.value) lines.push(`Office: ${extraction.listingOffice.value}`);
-    if (extraction.listingAgent?.value) lines.push(`Agent: ${extraction.listingAgent.value}`);
-    if (extraction.listDate?.value) lines.push(`Listed: ${extraction.listDate.value}`);
-    if (extraction.daysOnMarket?.value) lines.push(`DOM: ${extraction.daysOnMarket.value}`);
-    if (extraction.originalPrice?.value && extraction.listPrice?.value && extraction.originalPrice.value !== extraction.listPrice.value) {
-      lines.push(`Original Price: $${parseInt(extraction.originalPrice.value).toLocaleString()}`);
-    }
-    if (extraction.factors.length > 0) {
-      lines.push('');
-      lines.push('--- Property Intelligence Factors ---');
-      extraction.factors.forEach(f => {
-        const sign = f.weight > 0 ? '+' : '';
-        lines.push(`• ${f.label} (${sign}${f.weight}): ${f.explanation}`);
-      });
-    }
-    if (extraction.remarks?.value) {
-      lines.push('');
-      lines.push('--- Remarks ---');
-      lines.push(extraction.remarks.value);
-    }
-    return lines.join('\n');
   };
 
   const processTextInput = async (text: string) => {
