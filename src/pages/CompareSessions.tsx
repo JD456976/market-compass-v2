@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,11 +49,14 @@ function CompareCell({ label, valueA, valueB, highlight = false }: {
 
 const CompareSessions = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [sessionA, setSessionA] = useState<Session | null>(null);
   const [sessionB, setSessionB] = useState<Session | null>(null);
   const [reportA, setReportA] = useState<SellerReportData | BuyerReportData | null>(null);
   const [reportB, setReportB] = useState<SellerReportData | BuyerReportData | null>(null);
+
+  const backPath = searchParams.get('from') || '/drafts';
 
   const sessionIdA = searchParams.get('a');
   const sessionIdB = searchParams.get('b');
@@ -126,7 +129,7 @@ const CompareSessions = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
-              <Link to="/drafts">
+              <Link to={backPath}>
                 <Button variant="ghost" size="icon" className="rounded-full min-h-[44px] min-w-[44px]">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
