@@ -184,6 +184,32 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
         source: f.source,
       }));
 
+      // Build MLS details for visual display on report
+      const mlsDetails: Record<string, string> = {};
+      if (extraction.mlsNumber?.value) mlsDetails.mlsNumber = extraction.mlsNumber.value;
+      if (extraction.style?.value) mlsDetails.style = extraction.style.value;
+      if (extraction.bedrooms?.value) mlsDetails.bedrooms = extraction.bedrooms.value;
+      if (extraction.bathsFull?.value) mlsDetails.bathsFull = extraction.bathsFull.value;
+      if (extraction.bathsHalf?.value) mlsDetails.bathsHalf = extraction.bathsHalf.value;
+      if (extraction.squareFeet?.value) mlsDetails.squareFeet = extraction.squareFeet.value;
+      if (extraction.lotSize?.value) mlsDetails.lotSize = extraction.lotSize.value;
+      if (extraction.yearBuilt?.value) mlsDetails.yearBuilt = extraction.yearBuilt.value;
+      if (extraction.totalRooms?.value) mlsDetails.totalRooms = extraction.totalRooms.value;
+      if (extraction.heating?.value) mlsDetails.heating = extraction.heating.value;
+      if (extraction.cooling?.value) mlsDetails.cooling = extraction.cooling.value;
+      if (extraction.parking?.value) mlsDetails.parking = extraction.parking.value;
+      if (extraction.foundation?.value) mlsDetails.foundation = extraction.foundation.value;
+      if (extraction.basement?.value) mlsDetails.basement = extraction.basement.value;
+      if (extraction.construction?.value) mlsDetails.construction = extraction.construction.value;
+      if (extraction.taxAmount?.value) mlsDetails.taxAmount = extraction.taxAmount.value;
+      if (extraction.schools?.value) mlsDetails.schools = extraction.schools.value;
+      if (extraction.listingOffice?.value) mlsDetails.listingOffice = extraction.listingOffice.value;
+
+      // Store MLS details in sessionStorage for report display
+      if (Object.keys(mlsDetails).length > 0) {
+        sessionStorage.setItem('current_mls_details', JSON.stringify(mlsDetails));
+      }
+
       const data: MLSExtractedData = {
         location: locationParts.join(', ') || undefined,
         address: addressParts.join(', ') || undefined,
@@ -191,7 +217,7 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
         condition: mappedCondition,
         listPrice: extraction.listPrice?.value ? parseInt(extraction.listPrice.value.replace(/,/g, '')) : undefined,
         daysOnMarket: extraction.daysOnMarket?.value ? parseInt(extraction.daysOnMarket.value) : undefined,
-        notes: buildCompactNotes(extraction),
+        notes: undefined, // No longer stuffing MLS details into notes
         factors: propertyFactors.length > 0 ? propertyFactors : undefined,
       };
 

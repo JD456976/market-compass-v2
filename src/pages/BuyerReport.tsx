@@ -65,6 +65,7 @@ import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore
 import { BuyerCompetitiveAnalysis } from '@/components/report/CompetitiveAnalysis';
 import { SuccessPrediction } from '@/components/report/SuccessPrediction';
 import { PropertyFactorsCard } from '@/components/report/PropertyFactorsCard';
+import { PropertyDetailsCard } from '@/components/report/PropertyDetailsCard';
 
 import { ReportWatermark } from '@/components/report/ReportWatermark';
 import { ViewStatsPanel } from '@/components/report/ViewStatsPanel';
@@ -103,6 +104,7 @@ const BuyerReport = () => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [labOpen, setLabOpen] = useState(false);
   const [marketSnapshot, setMarketSnapshot] = useState<{ snapshot: MarketSnapshot; isGenericBaseline: boolean } | null>(null);
+  const [mlsDetails, setMlsDetails] = useState<Record<string, string> | null>(null);
   
   // Scenario Explorer state
   const [originalInputs, setOriginalInputs] = useState<BuyerInputs | null>(null);
@@ -143,6 +145,12 @@ const BuyerReport = () => {
           setScenarioInputs({ ...session.buyer_inputs });
         }
         
+        // Load MLS details from sessionStorage
+        try {
+          const mlsData = sessionStorage.getItem('current_mls_details');
+          if (mlsData) setMlsDetails(JSON.parse(mlsData));
+        } catch { /* ignore */ }
+
         // Get market snapshot based on location
         const snapshotData = getMarketSnapshotOrBaseline(session.location);
         setMarketSnapshot(snapshotData);
@@ -575,6 +583,9 @@ const BuyerReport = () => {
                 isClientMode={isClientMode}
               />
             )}
+
+            {/* Property Details from MLS */}
+            {mlsDetails && <PropertyDetailsCard details={mlsDetails} />}
 
             {/* Property Intelligence Factors */}
             {session.property_factors && session.property_factors.length > 0 && (

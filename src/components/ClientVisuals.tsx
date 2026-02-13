@@ -94,6 +94,11 @@ export function TradeoffMatrix({
   return (
     <div className="w-full max-w-[200px] mx-auto">
       <div className="relative aspect-square border border-border/60 rounded-lg bg-muted/30">
+      {/* Quadrant labels */}
+        <span className="absolute top-2 left-2 text-[8px] text-muted-foreground/60 leading-tight">Fast &<br/>Certain</span>
+        <span className="absolute top-2 right-2 text-[8px] text-muted-foreground/60 leading-tight text-right">Best Price &<br/>Certain</span>
+        <span className="absolute bottom-2 left-2 text-[8px] text-muted-foreground/60 leading-tight">Fast &<br/>Flexible</span>
+        <span className="absolute bottom-2 right-2 text-[8px] text-muted-foreground/60 leading-tight text-right">Best Price &<br/>Flexible</span>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-full h-px bg-border/40" />
         </div>
