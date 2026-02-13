@@ -4,9 +4,11 @@ import { NavLink } from '@/components/NavLink';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { isAllowedAdmin } from '@/lib/adminConfig';
 import { getBetaAccessSession } from '@/lib/betaAccess';
+import { useUserRole } from '@/hooks/useUserRole';
 import { 
   Home, FolderOpen, Send, Settings, Compass, Sparkles, Menu,
-  TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield, Settings as SettingsIcon
+  TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield, Settings as SettingsIcon,
+  LayoutDashboard, MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
@@ -24,6 +26,7 @@ export function GlobalNav() {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [isAdmin, setIsAdmin] = useState(false);
+  const { isClient } = useUserRole();
 
   useEffect(() => {
     const session = getBetaAccessSession();
@@ -35,6 +38,12 @@ export function GlobalNav() {
   // Don't show nav on shared pages
   if (location.pathname.startsWith('/share/') || location.pathname === '/share') {
     return null;
+  }
+
+  // Client-specific navigation
+  if (isClient) {
+    if (isMobile) return <ClientMobileNav />;
+    return <ClientDesktopNav />;
   }
 
   if (isMobile) {
@@ -51,6 +60,74 @@ export function GlobalNav() {
 
   const visibleItems = desktopItems.filter(item => !item.adminOnly || isAdmin);
   return <DesktopNav items={visibleItems} />;
+}
+
+// ─── Client Desktop Nav ──────────────────────────────────────────────────────
+
+function ClientDesktopNav() {
+  return (
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-14">
+          <NavLink to="/my-reports" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
+            <Compass className="h-5 w-5 text-primary" />
+            <span className="font-serif font-semibold text-lg">Market Compass</span>
+          </NavLink>
+          <nav className="flex items-center gap-1">
+            <NavLink
+              to="/my-reports"
+              end
+              className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              activeClassName="text-primary bg-primary/5"
+            >
+              <LayoutDashboard className="h-5 w-5" />
+              <span>My Reports</span>
+            </NavLink>
+            <NavLink
+              to="/settings"
+              className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              activeClassName="text-primary bg-primary/5"
+            >
+              <SettingsIcon className="h-5 w-5" />
+              <span>Settings</span>
+            </NavLink>
+          </nav>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ─── Client Mobile Nav ───────────────────────────────────────────────────────
+
+function ClientMobileNav() {
+  return (
+    <nav 
+      className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      aria-label="Client navigation"
+    >
+      <div className="flex items-center justify-around h-16">
+        <NavLink
+          to="/my-reports"
+          end
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] text-muted-foreground transition-colors"
+          activeClassName="text-primary"
+        >
+          <LayoutDashboard className="h-5 w-5" />
+          <span className="text-[10px] font-medium leading-none">Reports</span>
+        </NavLink>
+        <NavLink
+          to="/settings"
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] text-muted-foreground transition-colors"
+          activeClassName="text-primary"
+        >
+          <SettingsIcon className="h-5 w-5" />
+          <span className="text-[10px] font-medium leading-none">Settings</span>
+        </NavLink>
+      </div>
+    </nav>
+  );
 }
 
 // ─── Mobile Bottom Nav ───────────────────────────────────────────────────────

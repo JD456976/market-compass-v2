@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +60,8 @@ const IMPORTANT_NOTICE = `Important Notice: This report is an informational deci
 const SharedReportContent = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { isClient } = useUserRole();
   const { session, marketProfile, shareToken, loading, error } = useSharedSession(sessionId);
   const [exporting, setExporting] = useState(false);
   const viewLoggedRef = useRef(false);
@@ -578,7 +582,12 @@ const SharedReportContent = () => {
           )}
 
           {/* Messages Thread - Client View */}
-          <ReportMessages reportId={session.id} isAgent={false} />
+          <ReportMessages
+            reportId={session.id}
+            isAgent={false}
+            authenticatedUserId={isClient && user ? user.id : undefined}
+            authenticatedUserName={isClient && user ? (user.user_metadata?.full_name || user.email || 'Client') : undefined}
+          />
 
           {/* Client Feedback */}
           {shareToken && (

@@ -3,14 +3,17 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Building2, Users, FileText, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useUserRole } from '@/hooks/useUserRole';
 
 export function FloatingActionButton() {
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isClient } = useUserRole();
 
-  // Hide on shared pages, report pages, and form pages
+  // Hide for clients, shared pages, report pages, and form pages
+  if (isClient) return null;
   const hiddenPaths = ['/share/', '/seller', '/buyer', '/admin'];
   if (hiddenPaths.some(p => location.pathname.startsWith(p))) {
     return null;
