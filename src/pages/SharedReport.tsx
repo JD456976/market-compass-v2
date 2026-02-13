@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   Clock, Building2, Users, Target, TrendingUp, AlertCircle, 
-  AlertTriangle, ShieldAlert, FileDown, Compass, Loader2, LayoutDashboard
+  AlertTriangle, ShieldAlert, FileDown, Compass, Loader2, LayoutDashboard, CheckCircle2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Session, LikelihoodBand, ExtendedLikelihoodBand, BuyerInputs, SellerInputs } from '@/types';
@@ -17,6 +17,7 @@ import { getReportErrorMessage } from '@/lib/supabaseStorage';
 import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { ReportHeader } from '@/components/ReportHeader';
 import { BrandedReportHeader } from '@/components/report/BrandedReportHeader';
+import { SuccessPrediction } from '@/components/report/SuccessPrediction';
 import { MethodologyFooter } from '@/components/MethodologyFooter';
 import { formatLocation } from '@/lib/utils';
 import { LikelihoodBar } from '@/components/ClientVisuals';
@@ -377,11 +378,12 @@ const SharedReportContent = () => {
         >
           {/* Prepared For/By Header Block */}
           <div className="pdf-section pdf-header-section">
-            <BrandedReportHeader
+            <ReportHeader
               reportType={isSeller ? 'Seller' : 'Buyer'}
               clientName={session.client_name}
               snapshotTimestamp={reportData.snapshotTimestamp}
               branding={agentBranding}
+              showTimestamp
             />
           </div>
 
@@ -521,6 +523,16 @@ const SharedReportContent = () => {
                 </CardContent>
               </Card>
 
+              {/* Success Prediction */}
+              {marketSnapshot && (
+                <SuccessPrediction
+                  type="seller"
+                  likelihood={'likelihood30' in reportData ? reportData.likelihood30 : 'Moderate'}
+                  session={session}
+                  snapshot={marketSnapshot.snapshot}
+                />
+              )}
+
               {/* Seller Leverage Meter */}
               {(() => {
                 const leverage = calculateSellerLeverage(session);
@@ -602,6 +614,59 @@ const SharedReportContent = () => {
                   onReset={handleSellerReset}
                 />
               )}
+              {/* Metric Callout Cards */}
+              <MetricCalloutGrid>
+                <MetricCallout
+                  type="acceptance"
+                  band={sellerLikelihood30}
+                  label="Sale Likelihood (30 Days)"
+                  description={sellerLikelihood30 === 'High' ? 'Strong probability of sale at current list price' : sellerLikelihood30 === 'Moderate' ? 'Reasonable chance of sale with current strategy' : 'May require adjustments to attract buyers'}
+                />
+                <MetricCallout
+                  type="risk-losing"
+                  band={sellerLikelihood30 === 'High' ? 'Low' : sellerLikelihood30 === 'Moderate' ? 'Moderate' : 'High'}
+                  label="Stale Listing Risk"
+                  description={sellerLikelihood30 === 'High' ? 'Low risk of listing going stale' : 'Consider strategy adjustments to maintain momentum'}
+                />
+                <MetricCallout
+                  type="risk-overpay"
+                  band={(whatIfSellerInputs?.strategy_preference || session.seller_inputs!.strategy_preference) === 'Maximize price' ? 'High' : (whatIfSellerInputs?.strategy_preference || session.seller_inputs!.strategy_preference) === 'Prioritize speed' ? 'Low' : 'Moderate'}
+                  label="Pricing Regret Risk"
+                  description={(whatIfSellerInputs?.strategy_preference || session.seller_inputs!.strategy_preference) === 'Maximize price' ? 'Aggressive pricing may lead to extended market time' : 'Current strategy balances price and timing'}
+                />
+              </MetricCalloutGrid>
+
+              {/* Tradeoff Summary */}
+              <Card className="pdf-section pdf-avoid-break">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">{getTitle('tradeoffSummary', isClientMode)}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-3 p-4 rounded-xl bg-secondary/50">
+                    <TrendingUp className="h-5 w-5 text-accent mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-medium mb-1">Price vs. Time</p>
+                      <p className="text-sm text-muted-foreground">
+                        {(whatIfSellerInputs?.strategy_preference || session.seller_inputs!.strategy_preference) === 'Maximize price' 
+                          ? 'Prioritizing maximum price tends to extend time on market.'
+                          : (whatIfSellerInputs?.strategy_preference || session.seller_inputs!.strategy_preference) === 'Prioritize speed'
+                          ? 'Prioritizing speed often requires more competitive pricing.'
+                          : 'Balanced approach aims to optimize both price and timing.'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-4 rounded-xl bg-secondary/50">
+                    <CheckCircle2 className="h-5 w-5 text-accent mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-medium mb-1">Certainty</p>
+                      <p className="text-sm text-muted-foreground">
+                        At the current list price of {formatCurrency(whatIfSellerInputs?.seller_selected_list_price || session.seller_inputs!.seller_selected_list_price)}, 
+                        the likelihood of sale tends to increase over time as market exposure grows.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </>
           )}
 

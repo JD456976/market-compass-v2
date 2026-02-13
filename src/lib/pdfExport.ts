@@ -71,9 +71,6 @@ export async function exportReportToPdf(
 
   const agentProfile = loadAgentProfile();
   const clientDisplay = options.clientName?.trim() || 'Client';
-  const timestamp = options.snapshotTimestamp 
-    ? new Date(options.snapshotTimestamp).toLocaleString()
-    : new Date().toLocaleString();
 
   // Add is-exporting class to body for CSS overrides
   document.body.classList.add('is-exporting');
@@ -129,10 +126,10 @@ export async function exportReportToPdf(
     const margin = 12.7; // ~0.5 inch margin
     const contentWidth = pageWidth - margin * 2;
     
-    // Calculate header height for page 1
-    const headerHeight = 55;
+    // Header/footer sizing — the ReportHeader component is captured
+    // as the first .pdf-section via html2canvas, so we only add accent bars.
     const footerHeight = 18;
-    const availableHeightPage1 = pageHeight - margin - headerHeight - footerHeight;
+    const availableHeightPage1 = pageHeight - margin - footerHeight - 10;
     const availableHeightOther = pageHeight - margin - footerHeight - 5;
 
     // Track pages for numbering
@@ -156,84 +153,12 @@ export async function exportReportToPdf(
     pdf.setFillColor(pr, pg, pb);
     pdf.rect(0, 0, pageWidth, 4, 'F');
     
-    // Accent accent line below
+    // Accent line below
     pdf.setFillColor(ar, ag, ab);
     pdf.rect(0, 4, pageWidth, 1.5, 'F');
 
     currentY = margin + 6;
 
-    // Add logo if available
-    if (options.branding?.logo_url) {
-      try {
-        const logoImg = new Image();
-        logoImg.crossOrigin = 'anonymous';
-        await new Promise<void>((resolve) => {
-          logoImg.onload = () => resolve();
-          logoImg.onerror = () => resolve();
-          logoImg.src = options.branding!.logo_url!;
-        });
-        if (logoImg.naturalWidth > 0) {
-          const logoCanvas = document.createElement('canvas');
-          logoCanvas.width = logoImg.naturalWidth;
-          logoCanvas.height = logoImg.naturalHeight;
-          const ctx = logoCanvas.getContext('2d');
-          ctx?.drawImage(logoImg, 0, 0);
-          const logoData = logoCanvas.toDataURL('image/png');
-          const logoMaxH = 12;
-          const logoW = (logoImg.naturalWidth / logoImg.naturalHeight) * logoMaxH;
-          pdf.addImage(logoData, 'PNG', margin, currentY, logoW, logoMaxH);
-          currentY += logoMaxH + 4;
-        }
-      } catch {
-        // Logo loading failed, continue without it
-      }
-    }
-
-    pdf.setFontSize(16);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(pr, pg, pb);
-    pdf.text(`${options.reportType} Report`, margin, currentY + 5);
-    
-    pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(100, 100, 100);
-    pdf.text(`Market snapshot as of: ${timestamp}`, pageWidth - margin, currentY + 5, { align: 'right' });
-    
-    currentY += 12;
-
-    // Prepared for/by lines
-    pdf.setFontSize(10);
-    pdf.setTextColor(60, 60, 60);
-    
-    pdf.setFont('helvetica', 'normal');
-    pdf.text('Prepared for: ', margin, currentY);
-    const preparedForWidth = pdf.getTextWidth('Prepared for: ');
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(clientDisplay, margin + preparedForWidth, currentY);
-    currentY += 5;
-    
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(`Prepared by: ${agentProfile.agent_name}, ${agentProfile.brokerage_name}`, margin, currentY);
-    currentY += 5;
-    
-    let contactLine = `Contact: ${agentProfile.phone} • ${agentProfile.email}`;
-    if (agentProfile.website) {
-      contactLine += ` • ${agentProfile.website}`;
-    }
-    pdf.text(contactLine, margin, currentY);
-    currentY += 5;
-    
-    if (agentProfile.license) {
-      pdf.text(`License: ${agentProfile.license}`, margin, currentY);
-      currentY += 5;
-    }
-    
-    // Add separator line using accent color
-    currentY += 3;
-    pdf.setDrawColor(ar, ag, ab);
-    pdf.line(margin, currentY, pageWidth - margin, currentY);
-    currentY += 4;
-    
     // Add custom notice if provided (e.g., for what-if exports)
     if (options.customNotice) {
       pdf.setFontSize(8);
@@ -242,8 +167,6 @@ export async function exportReportToPdf(
       const noticeLines = pdf.splitTextToSize(options.customNotice, contentWidth);
       pdf.text(noticeLines, margin, currentY);
       currentY += noticeLines.length * 3.5 + 4;
-    } else {
-      currentY += 4;
     }
 
     // (totalPages already declared above)
@@ -257,11 +180,11 @@ export async function exportReportToPdf(
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
       const availableHeight = currentPage === 1 
-        ? availableHeightPage1 - (currentY - margin - headerHeight) 
+        ? availableHeightPage1 - (currentY - margin) 
         : availableHeightOther - (currentY - margin);
       
       // Check if section fits on current page
-      if (imgHeight > availableHeight && currentY > margin + (currentPage === 1 ? headerHeight : 5)) {
+      if (imgHeight > availableHeight && currentY > margin + 10) {
         // Add new page
         currentPage++;
         totalPages++;
