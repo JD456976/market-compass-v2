@@ -69,6 +69,8 @@ import { EducationalTooltip } from '@/components/report/EducationalTooltip';
 import { CommunicationHub } from '@/components/report/CommunicationHub';
 import { ShareableInsight, generateInsights } from '@/components/report/ShareableInsight';
 import { loadPropertyFactorsForSession } from '@/lib/loadPropertyFactors';
+import { calculateSellerLeverage, getSellerStrategyInsights } from '@/lib/positionScoring';
+import { SellerLeverageMeter, StrategyInsightsCard } from '@/components/report/PositionMeters';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -536,6 +538,18 @@ const SellerReport = () => {
                 snapshot={marketSnapshot.snapshot}
               />
             )}
+
+            {/* Seller Leverage Meter */}
+            {(() => {
+              const leverage = calculateSellerLeverage(session, marketSnapshot?.snapshot);
+              const leverageInsights = getSellerStrategyInsights(leverage);
+              return (
+                <>
+                  <SellerLeverageMeter result={leverage} />
+                  <StrategyInsightsCard insights={leverageInsights} />
+                </>
+              );
+            })()}
 
             {/* Market Snapshot */}
             <Card className="pdf-section pdf-avoid-break overflow-hidden">

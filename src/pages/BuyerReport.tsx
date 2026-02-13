@@ -74,6 +74,8 @@ import { EducationalTooltip } from '@/components/report/EducationalTooltip';
 import { CommunicationHub } from '@/components/report/CommunicationHub';
 import { ShareableInsight, generateInsights } from '@/components/report/ShareableInsight';
 import { loadPropertyFactorsForSession } from '@/lib/loadPropertyFactors';
+import { calculateOfferPosition, getBuyerStrategyInsights } from '@/lib/positionScoring';
+import { OfferPositionMeter, StrategyInsightsCard } from '@/components/report/PositionMeters';
 
 const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
 
@@ -611,6 +613,18 @@ const BuyerReport = () => {
                 snapshot={marketSnapshot.snapshot}
               />
             )}
+
+            {/* Offer Position Meter */}
+            {(() => {
+              const offerPosition = calculateOfferPosition(session, marketSnapshot?.snapshot);
+              const positionInsights = getBuyerStrategyInsights(offerPosition);
+              return (
+                <>
+                  <OfferPositionMeter result={offerPosition} />
+                  <StrategyInsightsCard insights={positionInsights} />
+                </>
+              );
+            })()}
 
             {/* Acceptance Likelihood */}
             <Card className="pdf-section pdf-avoid-break overflow-hidden">
