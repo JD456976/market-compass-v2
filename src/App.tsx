@@ -44,6 +44,9 @@ import ClientDashboard from "./pages/ClientDashboard";
 import ClientPropertyComparison from "./pages/ClientPropertyComparison";
 import ClientInvite from "./pages/ClientInvite";
 import Clients from "./pages/Clients";
+import Documents from "./pages/Documents";
+import UploadDocument from "./pages/UploadDocument";
+import ReviewDocument from "./pages/ReviewDocument";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +86,9 @@ function AppRoutes() {
           <Route path="/templates" element={<Templates />} />
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/clients" element={<Clients />} />
+          <Route path="/documents" element={<Documents />} />
+          <Route path="/documents/upload" element={<UploadDocument />} />
+          <Route path="/documents/:documentId/review" element={<ReviewDocument />} />
           <Route path="/settings" element={<AccountSettings />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />

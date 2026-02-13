@@ -485,6 +485,68 @@ export type Database = {
         }
         Relationships: []
       }
+      property_documents: {
+        Row: {
+          agent_user_id: string
+          created_at: string
+          extracted_fields: Json | null
+          field_confidence: Json | null
+          field_evidence: Json | null
+          file_size_bytes: number | null
+          filename: string
+          id: string
+          mls_compliance_confirmed: boolean
+          notes: string | null
+          raw_text: string | null
+          session_id: string | null
+          status: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          agent_user_id: string
+          created_at?: string
+          extracted_fields?: Json | null
+          field_confidence?: Json | null
+          field_evidence?: Json | null
+          file_size_bytes?: number | null
+          filename: string
+          id?: string
+          mls_compliance_confirmed?: boolean
+          notes?: string | null
+          raw_text?: string | null
+          session_id?: string | null
+          status?: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          agent_user_id?: string
+          created_at?: string
+          extracted_fields?: Json | null
+          field_confidence?: Json | null
+          field_evidence?: Json | null
+          file_size_bytes?: number | null
+          filename?: string
+          id?: string
+          mls_compliance_confirmed?: boolean
+          notes?: string | null
+          raw_text?: string | null
+          session_id?: string | null
+          status?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_documents_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_feedback: {
         Row: {
           comment: string | null
