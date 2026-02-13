@@ -2,18 +2,18 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Briefcase, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-export type ReportTemplate = 'modern' | 'executive' | 'snapshot';
+import type { ReportTemplate } from '@/components/report/ReportContext';
+export type { ReportTemplate };
 
 interface ReportTemplateSelectorProps {
   selected: ReportTemplate;
   onSelect: (template: ReportTemplate) => void;
 }
 
-const templates: { id: ReportTemplate; label: string; description: string; icon: typeof FileText }[] = [
-  { id: 'modern', label: 'Modern', description: 'Clean, minimal design with visual emphasis', icon: FileText },
-  { id: 'executive', label: 'Executive', description: 'Detailed, formal with full data tables', icon: Briefcase },
-  { id: 'snapshot', label: 'Quick Snapshot', description: 'One-page summary overview', icon: Zap },
+const templates: { id: ReportTemplate; label: string; description: string; sections: string; icon: typeof FileText }[] = [
+  { id: 'modern', label: 'Modern', description: 'Clean layout with key metrics', sections: 'Overview • Meters • Callouts • Improvements', icon: FileText },
+  { id: 'executive', label: 'Executive', description: 'Full data, insights & comparisons', sections: 'All sections • Deep analysis • Competitive data', icon: Briefcase },
+  { id: 'snapshot', label: 'Quick Snapshot', description: 'One-page summary overview', sections: 'Overview • Key metrics only', icon: Zap },
 ];
 
 export function ReportTemplateSelector({ selected, onSelect }: ReportTemplateSelectorProps) {
@@ -39,6 +39,7 @@ export function ReportTemplateSelector({ selected, onSelect }: ReportTemplateSel
                 {t.label}
               </p>
               <p className="text-xs text-muted-foreground mt-1">{t.description}</p>
+              <p className="text-[10px] text-muted-foreground/70 mt-1.5 leading-tight">{t.sections}</p>
               {isActive && (
                 <Badge variant="secondary" className="mt-2 text-xs">Active</Badge>
               )}
