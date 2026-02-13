@@ -271,11 +271,11 @@ const BuyerReport = () => {
     ? buyerWhatThisMeans[mode].moderate
     : buyerWhatThisMeans[mode].low;
 
-  const losingHomeDesc = riskOfLosingHome === 'High' || riskOfLosingHome === 'Moderate'
+  const losingHomeDesc = riskOfLosingHome === 'Very High' || riskOfLosingHome === 'High' || riskOfLosingHome === 'Moderate'
     ? buyerRiskDescriptions[mode].losingHomeHigh
     : buyerRiskDescriptions[mode].losingHomeLow;
 
-  const overpayingDesc = riskOfOverpaying === 'High' || riskOfOverpaying === 'Moderate'
+  const overpayingDesc = riskOfOverpaying === 'Very High' || riskOfOverpaying === 'High' || riskOfOverpaying === 'Moderate'
     ? buyerRiskDescriptions[mode].overpayingHigh
     : buyerRiskDescriptions[mode].overpayingLow;
 

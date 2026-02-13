@@ -541,7 +541,7 @@ const SharedReportContent = () => {
                           <RiskBadge band={reportData.riskOfLosingHome} />
                         </div>
                         <p className="text-xs sm:text-sm text-muted-foreground">
-                          {reportData.riskOfLosingHome === 'High' 
+                          {reportData.riskOfLosingHome === 'Very High' || reportData.riskOfLosingHome === 'High' 
                             ? buyerRiskDescriptions.client.losingHomeHigh 
                             : buyerRiskDescriptions.client.losingHomeLow}
                         </p>
@@ -555,7 +555,7 @@ const SharedReportContent = () => {
                           <RiskBadge band={reportData.riskOfOverpaying} />
                         </div>
                         <p className="text-xs sm:text-sm text-muted-foreground">
-                          {reportData.riskOfOverpaying === 'High' 
+                          {reportData.riskOfOverpaying === 'Very High' || reportData.riskOfOverpaying === 'High' 
                             ? buyerRiskDescriptions.client.overpayingHigh 
                             : buyerRiskDescriptions.client.overpayingLow}
                         </p>
