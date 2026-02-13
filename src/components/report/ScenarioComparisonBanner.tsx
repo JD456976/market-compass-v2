@@ -33,6 +33,7 @@ interface ScenarioComparisonBannerProps {
     riskOfOverpaying?: ExtendedLikelihoodBand;
   };
   isModified: boolean;
+  labels?: { riskOfLosing?: string; riskOfOverpaying?: string };
   className?: string;
 }
 
@@ -58,7 +59,7 @@ function DeltaIndicator({ label, delta, invertColor }: { label: string; delta: n
   );
 }
 
-export function ScenarioComparisonBanner({ original, current, isModified, className }: ScenarioComparisonBannerProps) {
+export function ScenarioComparisonBanner({ original, current, isModified, labels, className }: ScenarioComparisonBannerProps) {
   if (!isModified) return null;
 
   const acceptanceDelta = bandDelta(original.acceptance, current.acceptance);
@@ -80,10 +81,10 @@ export function ScenarioComparisonBanner({ original, current, isModified, classN
         <div className="flex flex-wrap gap-4">
           <DeltaIndicator label="Acceptance" delta={acceptanceDelta} />
           {losingDelta !== null && (
-            <DeltaIndicator label="Risk of Losing" delta={losingDelta} invertColor />
+            <DeltaIndicator label={labels?.riskOfLosing || "Risk of Losing"} delta={losingDelta} invertColor />
           )}
           {overpayDelta !== null && (
-            <DeltaIndicator label="Overpay Risk" delta={overpayDelta} invertColor />
+            <DeltaIndicator label={labels?.riskOfOverpaying || "Overpay Risk"} delta={overpayDelta} invertColor />
           )}
         </div>
       </CardContent>
