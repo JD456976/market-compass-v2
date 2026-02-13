@@ -38,10 +38,34 @@ export function ReportMessages({ reportId, isAgent = false, className = '', auth
 
   useEffect(() => {
     fetchMessages();
+
+    // Subscribe to realtime inserts for this report
+    const channel = supabase
+      .channel(`report-messages-${reportId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'report_messages',
+          filter: `report_id=eq.${reportId}`,
+        },
+        (payload) => {
+          const newMsg = payload.new as ReportMessage;
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [reportId]);
 
   useEffect(() => {
-    // Mark messages as read when thread is opened
     if (messages.length > 0) {
       markAsRead();
     }
@@ -115,7 +139,6 @@ export function ReportMessages({ reportId, isAgent = false, className = '', auth
         // Non-blocking
       }
       setNewMessage('');
-      fetchMessages();
     }
     setSending(false);
   };
