@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Mail, Clock, CheckCircle2, XCircle, Copy, Users, Trash2 } from 'lucide-react';
+import { UserPlus, Mail, Clock, CheckCircle2, XCircle, Copy, Users, Trash2, Share2 } from 'lucide-react';
+import { InviteShareDialog } from './InviteShareDialog';
 
 interface Invitation {
   id: string;
@@ -41,6 +42,9 @@ export function ClientManagement() {
   const [clients, setClients] = useState<AgentClient[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareLink, setShareLink] = useState('');
+  const [shareClientName, setShareClientName] = useState('');
 
   useEffect(() => {
     loadData();
@@ -120,6 +124,28 @@ export function ClientManagement() {
         toast({ title: 'Failed to create invitation', description: error.message, variant: 'destructive' });
       }
       return;
+    }
+
+    // Build invite link from the newly created invitation
+    const { data: newInv } = await supabase
+      .from('client_invitations')
+      .select('invite_token, client_first_name, client_last_name')
+      .eq('agent_user_id', user.id)
+      .eq('client_email', trimmedEmail)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    const clientDisplayName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ');
+    
+    if (newInv) {
+      const params = new URLSearchParams({ token: newInv.invite_token });
+      if (newInv.client_first_name) params.set('fn', newInv.client_first_name);
+      if (newInv.client_last_name) params.set('ln', newInv.client_last_name);
+      const link = `${window.location.origin}/invite?${params.toString()}`;
+      setShareLink(link);
+      setShareClientName(clientDisplayName || trimmedEmail);
+      setShareDialogOpen(true);
     }
 
     setEmail('');
@@ -295,8 +321,16 @@ export function ClientManagement() {
                     {statusBadge(inv.status)}
                     {inv.status === 'pending' && (
                       <>
-                        <Button size="sm" variant="ghost" onClick={() => copyInviteLink(inv.invite_token, inv)}>
-                          <Copy className="h-3.5 w-3.5" />
+                        <Button size="sm" variant="ghost" onClick={() => {
+                          const params = new URLSearchParams({ token: inv.invite_token });
+                          if (inv.client_first_name) params.set('fn', inv.client_first_name);
+                          if (inv.client_last_name) params.set('ln', inv.client_last_name);
+                          const link = `${window.location.origin}/invite?${params.toString()}`;
+                          setShareLink(link);
+                          setShareClientName([inv.client_first_name, inv.client_last_name].filter(Boolean).join(' ') || inv.client_email);
+                          setShareDialogOpen(true);
+                        }}>
+                          <Share2 className="h-3.5 w-3.5" />
                         </Button>
                         <Button size="sm" variant="ghost" className="text-destructive" onClick={() => revokeInvite(inv.id)}>
                           <XCircle className="h-3.5 w-3.5" />
@@ -310,6 +344,12 @@ export function ClientManagement() {
           </CardContent>
         </Card>
       )}
+      <InviteShareDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        inviteLink={shareLink}
+        clientName={shareClientName}
+      />
     </div>
   );
 }

@@ -26,6 +26,7 @@ import { ReportMessages } from '@/components/report/ReportMessages';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { InviteShareDialog } from '@/components/InviteShareDialog';
 
 interface ClientMessage {
   id: string;
@@ -98,6 +99,9 @@ export default function Subscription() {
   const [sendingInvite, setSendingInvite] = useState(false);
   const [invitations, setInvitations] = useState<ClientInvitation[]>([]);
   const [linkedClients, setLinkedClients] = useState<LinkedClient[]>([]);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareLink, setShareLink] = useState('');
+  const [shareClientName, setShareClientName] = useState('');
   
   const session = getBetaAccessSession();
   const hasBetaAccess = !!session;
@@ -136,6 +140,29 @@ export default function Subscription() {
     const { error } = await supabase.from('client_invitations').insert(insertData);
     setSendingInvite(false);
     if (error) { toast({ title: error.code === '23505' ? 'Already invited' : 'Failed to invite', variant: 'destructive' }); return; }
+    
+    // Get the newly created invite to show share dialog
+    const { data: newInv } = await supabase
+      .from('client_invitations')
+      .select('invite_token, client_first_name, client_last_name')
+      .eq('agent_user_id', user.id)
+      .eq('client_email', trimmed)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    const clientDisplayName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(' ');
+    
+    if (newInv) {
+      const params = new URLSearchParams({ token: newInv.invite_token });
+      if (newInv.client_first_name) params.set('fn', newInv.client_first_name);
+      if (newInv.client_last_name) params.set('ln', newInv.client_last_name);
+      const link = `${window.location.origin}/invite?${params.toString()}`;
+      setShareLink(link);
+      setShareClientName(clientDisplayName || trimmed);
+      setShareDialogOpen(true);
+    }
+    
     setInviteEmail('');
     setInviteFirstName('');
     setInviteLastName('');
@@ -516,7 +543,15 @@ export default function Subscription() {
                           {inv.status === 'revoked' && <Badge variant="outline" className="text-[10px] text-destructive"><XCircle className="h-2.5 w-2.5 mr-1" />Revoked</Badge>}
                           {inv.status === 'pending' && (
                             <>
-                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => copyInviteLink(inv.invite_token, inv)}><Copy className="h-3 w-3" /></Button>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => {
+                                const params = new URLSearchParams({ token: inv.invite_token });
+                                if (inv.client_first_name) params.set('fn', inv.client_first_name);
+                                if (inv.client_last_name) params.set('ln', inv.client_last_name);
+                                const link = `${window.location.origin}/invite?${params.toString()}`;
+                                setShareLink(link);
+                                setShareClientName([inv.client_first_name, inv.client_last_name].filter(Boolean).join(' ') || inv.client_email);
+                                setShareDialogOpen(true);
+                              }}><Share2 className="h-3 w-3" /></Button>
                               <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => revokeInvite(inv.id)}><XCircle className="h-3 w-3" /></Button>
                             </>
                           )}
@@ -835,6 +870,13 @@ export default function Subscription() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <InviteShareDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        inviteLink={shareLink}
+        clientName={shareClientName}
+      />
     </div>
   );
 }
