@@ -92,7 +92,11 @@ export function ClientManagement() {
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !email.trim()) return;
+    if (!user) {
+      toast({ title: 'Please sign in to invite clients', variant: 'destructive' });
+      return;
+    }
+    if (!email.trim()) return;
 
     const trimmedEmail = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
