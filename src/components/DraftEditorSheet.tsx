@@ -289,7 +289,15 @@ export function DraftEditorSheet({ session, open, onOpenChange, onSave }: DraftE
                     <Label>Financing Type</Label>
                     <Select 
                       value={editedSession.buyer_inputs.financing_type} 
-                      onValueChange={(v) => updateBuyerInputs('financing_type', v as FinancingType)}
+                      onValueChange={(v) => {
+                        const ft = v as FinancingType;
+                        updateBuyerInputs('financing_type', ft);
+                        if (ft === 'Cash') {
+                          updateBuyerInputs('contingencies', 
+                            editedSession.buyer_inputs!.contingencies.filter(c => c !== 'Financing')
+                          );
+                        }
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -322,7 +330,9 @@ export function DraftEditorSheet({ session, open, onOpenChange, onSave }: DraftE
                   <div className="space-y-2">
                     <Label>Contingencies</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      {CONTINGENCIES.map(c => (
+                      {CONTINGENCIES
+                        .filter(c => !(isCash && c === 'Financing'))
+                        .map(c => (
                         <label key={c} className="flex items-center gap-2 text-sm">
                           <Checkbox
                             checked={editedSession.buyer_inputs!.contingencies.includes(c)}

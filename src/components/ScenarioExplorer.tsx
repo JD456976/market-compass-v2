@@ -381,7 +381,9 @@ function ScenarioForm({
           </h4>
           
           <div className="space-y-2">
-            {CONTINGENCY_OPTIONS.map((opt) => {
+            {CONTINGENCY_OPTIONS
+              .filter(opt => !(isCash && opt.value === 'Financing'))
+              .map((opt) => {
               const isChecked = localInputs.contingencies.includes(opt.value);
               const wasOriginallyChecked = originalInputs.contingencies.includes(opt.value);
               const isChanged = isChecked !== wasOriginallyChecked;
