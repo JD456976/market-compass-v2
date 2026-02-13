@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Info, Compass, X, HelpCircle, ChevronRight, Save, SendHorizonal } from 'lucide-react';
+import { RotateCcw, Info, Compass, X, HelpCircle, ChevronRight, Save, SendHorizonal, HeartCrack, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,9 @@ import { OfferStrategyPresets } from '@/components/report/OfferStrategyPresets';
 import { SCENARIO_EXPLORER_OPEN_EVENT } from '@/lib/scenarioExplorerEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { calculateRegretRisk, RegretRiskResult, REGRET_RISK_LEVELS } from '@/lib/regretRiskScoring';
+import { simulateWaiting, WaitScenario, RiskLevel } from '@/lib/waitSimulator';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -96,7 +99,139 @@ const PREFERENCE_OPTIONS: { value: BuyerPreference; label: string }[] = [
   { value: 'Price-protective', label: 'Price-Protective' },
 ];
 
-// Shared form content component
+// Compact inline Regret Risk badge for live preview
+function RegretRiskBadge({ level, score }: { level: string; score: number }) {
+  const idx = REGRET_RISK_LEVELS.indexOf(level as any);
+  const color = idx >= 3 ? 'text-destructive' : idx >= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400';
+  return (
+    <div className="flex items-center gap-2">
+      <span className={cn('text-lg font-serif font-bold', color)}>{Math.round(score)}</span>
+      <span className="text-xs text-muted-foreground">/100</span>
+      <span className={cn('text-xs font-medium', color)}>{level}</span>
+    </div>
+  );
+}
+
+function WaitRiskBadge({ level }: { level: RiskLevel }) {
+  const colors: Record<RiskLevel, string> = {
+    'Very Low': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    'Low': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    'Moderate': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    'High': 'bg-destructive/10 text-destructive',
+    'Very High': 'bg-destructive/10 text-destructive',
+  };
+  return <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium', colors[level])}>{level}</span>;
+}
+
+function interpolateWaitScenario(scenarios: WaitScenario[], days: number): WaitScenario {
+  if (days <= 30) return { ...scenarios[0], days, label: `${days}d` };
+  if (days >= 90) return { ...scenarios[2], days, label: `${days}d` };
+  const idx = days <= 60 ? 0 : 1;
+  const next = idx + 1;
+  const t = (days - scenarios[idx].days) / (scenarios[next].days - scenarios[idx].days);
+  const closer = t < 0.5 ? scenarios[idx] : scenarios[next];
+  return { ...closer, days, label: `${days}d` };
+}
+
+// Live risk preview that updates as scenario inputs change
+function LiveRiskPreview({ inputs }: { inputs: BuyerInputs }) {
+  const [waitDays, setWaitDays] = useState(30);
+
+  const regretRisk = useMemo(() => {
+    return calculateRegretRisk(inputs, 'Moderate', undefined);
+  }, [inputs]);
+
+  const waitScenarios = useMemo(() => {
+    return simulateWaiting(
+      inputs.market_conditions || 'Balanced',
+      inputs.days_on_market ?? null,
+      inputs.offer_price,
+      inputs.reference_price || inputs.offer_price,
+      undefined
+    );
+  }, [inputs]);
+
+  const activeWait = useMemo(() => interpolateWaitScenario(waitScenarios, waitDays), [waitScenarios, waitDays]);
+
+  return (
+    <div className="space-y-4 pt-2 border-t border-border/40">
+      <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+        <span>Live Risk Preview</span>
+        <span className="text-[10px] text-accent font-normal">(updates as you adjust)</span>
+      </h4>
+
+      {/* Regret Risk */}
+      <div className="p-3 rounded-lg bg-secondary/30 space-y-2">
+        <div className="flex items-center gap-1.5">
+          <HeartCrack className="h-3.5 w-3.5 text-destructive" />
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Regret Risk</span>
+        </div>
+        <RegretRiskBadge level={regretRisk.level} score={regretRisk.score} />
+        {/* Mini meter */}
+        <div className="flex gap-[2px] h-1.5 rounded-full overflow-hidden">
+          {REGRET_RISK_LEVELS.map((level, i) => {
+            const activeIdx = REGRET_RISK_LEVELS.indexOf(regretRisk.level);
+            const isActive = i <= activeIdx;
+            const hue = isActive
+              ? i <= 1 ? 'hsl(var(--accent))' : i <= 2 ? 'hsl(40 90% 55%)' : 'hsl(var(--destructive))'
+              : undefined;
+            return (
+              <div
+                key={level}
+                className={cn('flex-1 rounded-sm', !isActive && 'bg-secondary')}
+                style={isActive ? { background: hue, opacity: 0.5 + (i / 5) * 0.5 } : undefined}
+              />
+            );
+          })}
+        </div>
+        {regretRisk.factors.length > 0 && (
+          <p className="text-[10px] text-muted-foreground">{regretRisk.factors[0]}</p>
+        )}
+      </div>
+
+      {/* Wait Simulator */}
+      <div className="p-3 rounded-lg bg-secondary/30 space-y-2">
+        <div className="flex items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">What If You Wait?</span>
+        </div>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-muted-foreground">Delay</span>
+            <span className="text-xs font-semibold">{waitDays} days</span>
+          </div>
+          <Slider
+            value={[waitDays]}
+            onValueChange={([v]) => setWaitDays(v)}
+            min={7}
+            max={120}
+            step={1}
+            className="w-full"
+          />
+          <div className="flex justify-between text-[9px] text-muted-foreground">
+            <span>1 wk</span>
+            <span>4 mo</span>
+          </div>
+        </div>
+        <div className="grid gap-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-muted-foreground">Property Loss</span>
+            <WaitRiskBadge level={activeWait.propertyLossRisk} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-muted-foreground">Price Movement</span>
+            <span className="text-[10px] text-muted-foreground">{activeWait.priceMovement.magnitude}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-muted-foreground">Market Trend</span>
+            <WaitRiskBadge level={activeWait.marketTrendRisk} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ScenarioForm({
   localInputs,
   setLocalInputs,
@@ -339,6 +474,9 @@ function ScenarioForm({
             </div>
           </div>
         </div>
+
+        {/* Live Risk Preview */}
+        <LiveRiskPreview inputs={localInputs} />
       </div>
     </TooltipProvider>
   );
