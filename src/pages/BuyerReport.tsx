@@ -80,6 +80,10 @@ import { DisclaimerFooter } from '@/components/report/DisclaimerFooter';
 import { MetricCallout, MetricCalloutGrid } from '@/components/report/MetricCallout';
 import { ImprovementPanel } from '@/components/report/ImprovementPanel';
 import { ScenarioComparisonBanner } from '@/components/report/ScenarioComparisonBanner';
+import { BuyerCompetingOffersCard } from '@/components/report/CompetingOffersCard';
+import { SellerMotivationCard } from '@/components/report/MotivationCard';
+import { BuyerTimingCard } from '@/components/report/TimingCard';
+import { BuyerNegotiationCard } from '@/components/report/NegotiationCard';
 import { ReportProvider, TemplateSection, ReportTemplate } from '@/components/report/ReportContext';
 import { ReportTemplateSelector } from '@/components/report/ReportTemplateSelector';
 import { RegretRiskMeter } from '@/components/report/RegretRiskMeter';
@@ -674,6 +678,23 @@ const BuyerReport = () => {
 
             {/* Improvement Panel */}
             <ImprovementPanel type="buyer" session={session} />
+
+            {/* Competing Offer Simulator */}
+            <BuyerCompetingOffersCard inputs={inputs} snapshot={marketSnapshot?.snapshot} className="pdf-exclude" />
+
+            {/* Seller Motivation Profile */}
+            <SellerMotivationCard inputs={inputs} snapshot={marketSnapshot?.snapshot} />
+
+            {/* Offer Timing Advantage */}
+            <BuyerTimingCard inputs={inputs} snapshot={marketSnapshot?.snapshot} />
+
+            {/* Negotiation Pathway */}
+            <BuyerNegotiationCard
+              inputs={inputs}
+              acceptance={reportData.acceptanceLikelihood}
+              riskOfLosing={reportData.riskOfLosingHome}
+              snapshot={marketSnapshot?.snapshot}
+            />
             </TemplateSection>
 
             {/* Scenario Comparison Banner */}

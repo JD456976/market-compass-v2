@@ -82,6 +82,10 @@ import { AddressIntelligenceCard } from '@/components/report/AddressIntelligence
 import { SellerScenarioExplorer, SellerScenarioExplorerCard, openSellerScenarioExplorer } from '@/components/SellerScenarioExplorer';
 import { ScenarioComparisonBanner } from '@/components/report/ScenarioComparisonBanner';
 import { MetricCallout, MetricCalloutGrid } from '@/components/report/MetricCallout';
+import { SellerCompetingOffersCard } from '@/components/report/CompetingOffersCard';
+import { BuyerMotivationCard } from '@/components/report/MotivationCard';
+import { SellerTimingCard } from '@/components/report/TimingCard';
+import { SellerNegotiationCard } from '@/components/report/NegotiationCard';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
   if (band === 'High') {
@@ -793,6 +797,18 @@ const SellerReport = () => {
                 reportType="Seller"
               />
             )}
+
+            {/* Expected Buyer Interest */}
+            <SellerCompetingOffersCard inputs={inputs} likelihood30={likelihood30} snapshot={marketSnapshot?.snapshot} />
+
+            {/* Buyer Motivation Assessment */}
+            <BuyerMotivationCard inputs={inputs} likelihood30={likelihood30} snapshot={marketSnapshot?.snapshot} />
+
+            {/* Listing Timing Advantage */}
+            <SellerTimingCard inputs={inputs} likelihood30={likelihood30} snapshot={marketSnapshot?.snapshot} />
+
+            {/* Counter-Offer Strategy */}
+            <SellerNegotiationCard inputs={inputs} likelihood30={likelihood30} snapshot={marketSnapshot?.snapshot} />
 
             {/* Scenario Comparison Banner */}
             {originalSellerInputs && scenarioInputs && originalLikelihood30 && (
