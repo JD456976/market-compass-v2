@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2, Eye, Archive, ArchiveRestore, Search, Trash2 } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2, Eye, Archive, ArchiveRestore, Search, Trash2, GitCompare } from 'lucide-react';
 import { SkeletonList } from '@/components/ui/skeleton-card';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Session } from '@/types';
@@ -21,14 +21,18 @@ import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
 import { getMarketProfileByIdFromSupabase } from '@/lib/supabaseStorage';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SwipeableCard } from '@/components/SwipeableCard';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const SharedReports = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { sessions, loading, activeSessions, archivedSessions, archiveSession, unarchiveSession, deleteSession } = useSharedSessions();
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('active');
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'Seller' | 'Buyer'>('all');
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Filtered sessions
   const filteredActive = useMemo(() => {
@@ -94,6 +98,20 @@ const SharedReports = () => {
       description: `"${session.client_name}" moved back to Active.`,
     });
   };
+
+  const toggleCompareSelect = (id: string) => {
+    setSelectedIds(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= 3) return [...prev.slice(1), id];
+      return [...prev, id];
+    });
+  };
+
+  const handleCompare = () => {
+    if (selectedIds.length < 2) return;
+    navigate(`/compare?a=${selectedIds[0]}&b=${selectedIds[1]}`);
+  };
+
 
   const handleExportPdf = async (session: Session) => {
     setExportingId(session.id);
@@ -219,9 +237,17 @@ const SharedReports = () => {
         onDelete={() => isArchived ? handleDeleteArchived(session) : handleArchive(session)}
         deleteLabel={isArchived ? 'Delete' : 'Archive'}
       >
-        <Card>
+        <Card className={compareMode && selectedIds.includes(session.id) ? 'border-accent ring-1 ring-accent/30' : ''}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
+              {compareMode && (
+                <Checkbox
+                  checked={selectedIds.includes(session.id)}
+                  onCheckedChange={() => toggleCompareSelect(session.id)}
+                  className="shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
               <div className={`p-2.5 rounded-xl shrink-0 ${session.session_type === 'Seller' ? 'bg-primary/10' : 'bg-accent/10'}`}>
                 {session.session_type === 'Seller' ? (
                   <Building2 className="h-5 w-5 text-primary" />
@@ -410,7 +436,7 @@ const SharedReports = () => {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-1">
               <div className="p-2 rounded-lg bg-accent/10">
                 <Send className="h-5 w-5 text-accent" />
               </div>
@@ -421,6 +447,23 @@ const SharedReports = () => {
                 </p>
               </div>
             </div>
+            {activeSessions.length >= 2 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={compareMode ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => { setCompareMode(!compareMode); setSelectedIds([]); }}
+                >
+                  <GitCompare className="h-4 w-4 mr-1.5" />
+                  {compareMode ? 'Cancel' : 'Compare'}
+                </Button>
+                {compareMode && selectedIds.length >= 2 && (
+                  <Button size="sm" onClick={handleCompare}>
+                    Compare {selectedIds.length}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -451,10 +494,19 @@ const SharedReports = () => {
           </div>
         )}
 
+        {/* Compare mode hint */}
+        {compareMode && (
+          <p className="text-xs text-muted-foreground mb-4">
+            Select 2–3 reports to compare side by side · {selectedIds.length}/3 selected
+          </p>
+        )}
+
         {/* Swipe hint for mobile */}
-        <p className="text-xs text-muted-foreground mb-4 sm:hidden">
-          ← Swipe left to {activeTab === 'active' ? 'archive' : 'restore'}
-        </p>
+        {!compareMode && (
+          <p className="text-xs text-muted-foreground mb-4 sm:hidden">
+            ← Swipe left to {activeTab === 'active' ? 'archive' : 'restore'}
+          </p>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="w-full">
