@@ -73,6 +73,8 @@ import { calculateSellerLeverage, getSellerStrategyInsights } from '@/lib/positi
 import { SellerLeverageMeter, StrategyInsightsCard } from '@/components/report/PositionMeters';
 import { DisclaimerFooter } from '@/components/report/DisclaimerFooter';
 import { ImprovementPanel } from '@/components/report/ImprovementPanel';
+import { ReportProvider, TemplateSection, ReportTemplate } from '@/components/report/ReportContext';
+import { ReportTemplateSelector } from '@/components/report/ReportTemplateSelector';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
   if (band === 'High') {
@@ -95,6 +97,7 @@ const SellerReport = () => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [marketSnapshot, setMarketSnapshot] = useState<{ snapshot: MarketSnapshot; isGenericBaseline: boolean } | null>(null);
   const [mlsDetails, setMlsDetails] = useState<Record<string, string> | null>(null);
+  const [reportTemplate, setReportTemplate] = useState<ReportTemplate>('modern');
 
   useEffect(() => {
     const sessionData = sessionStorage.getItem('current_session');
@@ -373,6 +376,12 @@ const SellerReport = () => {
         >
           {/* Report content for PDF export */}
           <div id="report-export" className={`space-y-6 ${isClientMode ? 'client-mode' : 'agent-mode'}`}>
+          <ReportProvider template={reportTemplate}>
+            {/* Template Selector */}
+            <div className="pdf-hide-agent-notes">
+              <ReportTemplateSelector selected={reportTemplate} onSelect={setReportTemplate} />
+            </div>
+
             {/* Draft Status - Agent Mode Only */}
             {!isClientMode && (
               <DraftStatusIndicator session={session} className="pdf-hide-agent-notes" />
@@ -466,6 +475,7 @@ const SellerReport = () => {
               </CardContent>
             </Card>
 
+            <TemplateSection show={['executive']}>
             {/* Agent-only: Market Grounding & Reality Anchors */}
             {!isClientMode && marketSnapshot && (
               <div className="space-y-3 pdf-hide-agent-notes">
@@ -483,6 +493,7 @@ const SellerReport = () => {
                 )}
               </div>
             )}
+            </TemplateSection>
 
             {/* Client-mode: Market context reference */}
             {isClientMode && (
@@ -491,6 +502,7 @@ const SellerReport = () => {
               </p>
             )}
 
+            <TemplateSection show={['executive']}>
             {/* Market Confidence Score */}
             {marketSnapshot && (
               <div className="flex justify-center">
@@ -510,7 +522,9 @@ const SellerReport = () => {
                 isClientMode={isClientMode}
               />
             )}
+            </TemplateSection>
 
+            <TemplateSection hide={['snapshot']}>
             {/* Property Details from MLS */}
             {mlsDetails && <PropertyDetailsCard details={mlsDetails} />}
 
@@ -528,7 +542,9 @@ const SellerReport = () => {
                 }}
               />
             )}
+            </TemplateSection>
 
+            <TemplateSection hide={['snapshot']}>
             {/* Success Prediction */}
             {marketSnapshot && (
               <SuccessPrediction
@@ -553,7 +569,9 @@ const SellerReport = () => {
 
             {/* Improvement Panel */}
             <ImprovementPanel type="seller" session={session} />
+            </TemplateSection>
 
+            <TemplateSection show={['executive']}>
             {/* Market Snapshot */}
             <Card className="pdf-section pdf-avoid-break overflow-hidden">
               <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
@@ -625,7 +643,6 @@ const SellerReport = () => {
                     )}
                   </div>
                 </div>
-                {/* Agent-only explanations */}
                 {!isClientMode && (
                   <div className="mt-6 pdf-hide-agent-notes">
                     <WhyThisResult 
@@ -635,7 +652,6 @@ const SellerReport = () => {
                     <WhatWouldChange suggestions={getSellerImprovementSuggestions(session, likelihood30)} />
                   </div>
                 )}
-                {/* Likelihood explainer footer */}
                 <p className="text-xs text-center text-muted-foreground mt-4">
                   Likelihood reflects pricing strategy, property condition, and market conditions.
                 </p>
@@ -682,7 +698,9 @@ const SellerReport = () => {
                 likelihood30={likelihood30}
               />
             )}
+            </TemplateSection>
 
+            <TemplateSection show={['executive', 'modern']}>
             {/* Tradeoff Summary */}
             <Card className="pdf-section pdf-avoid-break">
               <CardHeader className="pb-4">
@@ -714,7 +732,9 @@ const SellerReport = () => {
                 </div>
               </CardContent>
             </Card>
+            </TemplateSection>
 
+            <TemplateSection show={['executive']}>
             {/* Competitive Analysis */}
             {marketSnapshot && (
               <SellerCompetitiveAnalysis
@@ -724,9 +744,9 @@ const SellerReport = () => {
               />
             )}
 
-
             {/* How This Analysis Is Formed - Collapsible */}
             <AnalysisMethodology />
+            </TemplateSection>
 
             {/* Disclaimer */}
             <DisclaimerFooter variant="full" />
@@ -739,6 +759,7 @@ const SellerReport = () => {
               isPdfExported={session.pdf_exported ?? false}
               isShareLinkCreated={session.share_link_created ?? false}
             />
+          </ReportProvider>
           </div>
 
           {/* Shareable Insights - Agent Only */}

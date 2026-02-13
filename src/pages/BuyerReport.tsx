@@ -80,6 +80,8 @@ import { DisclaimerFooter } from '@/components/report/DisclaimerFooter';
 import { MetricCallout, MetricCalloutGrid } from '@/components/report/MetricCallout';
 import { ImprovementPanel } from '@/components/report/ImprovementPanel';
 import { ScenarioComparisonBanner } from '@/components/report/ScenarioComparisonBanner';
+import { ReportProvider, TemplateSection, ReportTemplate } from '@/components/report/ReportContext';
+import { ReportTemplateSelector } from '@/components/report/ReportTemplateSelector';
 
 function LikelihoodBadge({ band }: { band: ExtendedLikelihoodBand }) {
   if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
@@ -109,6 +111,7 @@ const BuyerReport = () => {
   const [labOpen, setLabOpen] = useState(false);
   const [marketSnapshot, setMarketSnapshot] = useState<{ snapshot: MarketSnapshot; isGenericBaseline: boolean } | null>(null);
   const [mlsDetails, setMlsDetails] = useState<Record<string, string> | null>(null);
+  const [reportTemplate, setReportTemplate] = useState<ReportTemplate>('modern');
   
   // Scenario Explorer state
   const [originalInputs, setOriginalInputs] = useState<BuyerInputs | null>(null);
@@ -425,6 +428,12 @@ const BuyerReport = () => {
         >
           {/* Report content for PDF export */}
           <div id="report-export" className={`space-y-6 ${isClientMode ? 'client-mode' : 'agent-mode'}`}>
+          <ReportProvider template={reportTemplate}>
+            {/* Template Selector */}
+            <div className="pdf-hide-agent-notes">
+              <ReportTemplateSelector selected={reportTemplate} onSelect={setReportTemplate} />
+            </div>
+
             {/* Draft Status - Agent Mode Only */}
             {!isClientMode && (
               <DraftStatusIndicator session={session} className="pdf-hide-agent-notes" />
@@ -543,6 +552,7 @@ const BuyerReport = () => {
               </CardContent>
             </Card>
 
+            <TemplateSection show={['executive']}>
             {/* Agent-only: Market Grounding & Reality Anchors */}
             {!isClientMode && marketSnapshot && (
               <div className="space-y-3 pdf-hide-agent-notes">
@@ -560,6 +570,7 @@ const BuyerReport = () => {
                 )}
               </div>
             )}
+            </TemplateSection>
 
             {/* Client-mode: Market context reference */}
             {isClientMode && (
@@ -568,6 +579,7 @@ const BuyerReport = () => {
               </p>
             )}
 
+            <TemplateSection show={['executive']}>
             {/* Market Confidence Score */}
             {marketSnapshot && (
               <div className="flex justify-center">
@@ -587,7 +599,9 @@ const BuyerReport = () => {
                 isClientMode={isClientMode}
               />
             )}
+            </TemplateSection>
 
+            <TemplateSection hide={['snapshot']}>
             {/* Property Details from MLS */}
             {mlsDetails && <PropertyDetailsCard details={mlsDetails} />}
 
@@ -605,7 +619,9 @@ const BuyerReport = () => {
                 }}
               />
             )}
+            </TemplateSection>
 
+            <TemplateSection hide={['snapshot']}>
             {/* Success Prediction */}
             {marketSnapshot && (
               <SuccessPrediction
@@ -630,6 +646,7 @@ const BuyerReport = () => {
 
             {/* Improvement Panel */}
             <ImprovementPanel type="buyer" session={session} />
+            </TemplateSection>
 
             {/* Scenario Comparison Banner */}
             {originalInputs && scenarioInputs && (
@@ -648,6 +665,7 @@ const BuyerReport = () => {
               />
             )}
 
+            <TemplateSection show={['executive']}>
             {/* Acceptance Likelihood */}
             <Card className="pdf-section pdf-avoid-break overflow-hidden">
               <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
@@ -676,13 +694,11 @@ const BuyerReport = () => {
                     <p className="text-[10px] text-muted-foreground mt-2">
                       {likelihoodHelperText[acceptanceLikelihood]}
                     </p>
-                    {/* Client-mode visual: Likelihood Bar */}
                     {isClientMode && (
                       <div className="mt-4 px-2">
                         <LikelihoodBar band={acceptanceLikelihood} />
                       </div>
                     )}
-                    {/* Agent-only explanations */}
                     {!isClientMode && (
                       <div className="mt-4 text-left pdf-hide-agent-notes">
                         <WhyThisResult 
@@ -694,7 +710,6 @@ const BuyerReport = () => {
                     )}
                   </div>
                 </div>
-                {/* Likelihood explainer footer */}
                 <p className="text-xs text-center text-muted-foreground mt-4">
                   Likelihood reflects price, financing strength, contingencies, and market conditions.
                 </p>
@@ -743,6 +758,7 @@ const BuyerReport = () => {
                 riskOfOverpaying={riskOfOverpaying}
               />
             )}
+            </TemplateSection>
 
             {/* Risk Assessment Callout Cards */}
             <MetricCalloutGrid>
@@ -766,6 +782,7 @@ const BuyerReport = () => {
               />
             </MetricCalloutGrid>
 
+            <TemplateSection show={['executive']}>
             {/* Competitive Analysis */}
             {marketSnapshot && (
               <BuyerCompetitiveAnalysis
@@ -776,9 +793,9 @@ const BuyerReport = () => {
               />
             )}
 
-
             {/* How This Analysis Is Formed - Collapsible */}
             <AnalysisMethodology />
+            </TemplateSection>
 
             {/* Disclaimer */}
             <DisclaimerFooter variant="full" />
@@ -791,6 +808,7 @@ const BuyerReport = () => {
               isPdfExported={session.pdf_exported ?? false}
               isShareLinkCreated={session.share_link_created ?? false}
             />
+          </ReportProvider>
           </div>
 
           {/* Shareable Insights - Agent Only */}
