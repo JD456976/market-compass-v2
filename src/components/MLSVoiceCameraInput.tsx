@@ -237,13 +237,55 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
   const processTextInput = async (text: string) => {
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('parse-mls-input', {
-        body: { type: 'text', content: text, reportType },
-      });
-      if (error) throw error;
-      if (data?.extracted) {
-        onDataExtracted(data.extracted);
-        toast({ title: 'Data extracted', description: `Found ${Object.keys(data.extracted).filter(k => data.extracted[k]).length} fields from your input.` });
+      const extracted: MLSExtractedData = {};
+      const lower = text.toLowerCase();
+
+      // Extract price mentions
+      const priceMatch = text.match(/\$?\s*([\d,]+)\s*(?:thousand|k)/i) || text.match(/\$\s*([\d,]+)/);
+      if (priceMatch) {
+        let price = parseInt(priceMatch[1].replace(/,/g, ''));
+        if (/thousand|k/i.test(text) && price < 10000) price *= 1000;
+        extracted.listPrice = price;
+      }
+
+      // Extract days on market
+      const domMatch = text.match(/(\d+)\s*(?:days?\s*on\s*market|dom|days?\s*listed)/i);
+      if (domMatch) extracted.daysOnMarket = parseInt(domMatch[1]);
+
+      // Extract property type
+      if (/single\s*family|single-family/i.test(lower)) extracted.propertyType = 'SFH';
+      else if (/condo/i.test(lower)) extracted.propertyType = 'Condo';
+      else if (/townhouse|town\s*home/i.test(lower)) extracted.propertyType = 'Townhouse';
+      else if (/multi|duplex|two[\s-]*family|three[\s-]*family/i.test(lower)) extracted.propertyType = 'Multi-Family';
+
+      // Extract condition
+      if (/renovated|remodeled|gut\s*rehab/i.test(lower)) extracted.condition = 'Renovated';
+      else if (/updated|brand\s*new/i.test(lower)) extracted.condition = 'Updated';
+      else if (/dated|needs\s*work|fixer/i.test(lower)) extracted.condition = 'Dated';
+
+      // Extract address-like patterns (number + street name + optional city/state)
+      const addressMatch = text.match(/(\d+\s+[\w\s]+(?:st(?:reet)?|ave(?:nue)?|rd|road|dr(?:ive)?|ln|lane|ct|court|way|pl(?:ace)?|blvd|cir(?:cle)?)\.?(?:\s*,?\s*[\w\s]+,?\s*[A-Z]{2}\s*\d{5})?)/i);
+      if (addressMatch) {
+        extracted.address = addressMatch[1].trim();
+        extracted.location = addressMatch[1].trim();
+      }
+
+      // Extract just city/state if no full address found
+      if (!extracted.location) {
+        const cityStateMatch = text.match(/([\w\s]+),\s*([A-Z]{2})(?:\s+(\d{5}))?/);
+        if (cityStateMatch) {
+          extracted.location = cityStateMatch[0].trim();
+        }
+      }
+
+      const fieldCount = Object.keys(extracted).filter(k => (extracted as any)[k] !== undefined).length;
+      if (fieldCount > 0) {
+        onDataExtracted(extracted);
+        toast({ title: 'Data extracted', description: `Found ${fieldCount} field${fieldCount > 1 ? 's' : ''} from your voice input. Review for accuracy.` });
+      } else {
+        // Treat entire transcript as notes
+        onDataExtracted({ notes: text });
+        toast({ title: 'Saved as notes', description: 'Could not detect structured fields — transcript saved to notes.' });
       }
     } catch {
       toast({ title: 'Could not parse input', description: 'Try speaking more clearly or use the manual fields.', variant: 'destructive' });
