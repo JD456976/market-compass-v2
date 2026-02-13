@@ -109,7 +109,7 @@ const SharedReports = () => {
 
   const handleCompare = () => {
     if (selectedIds.length < 2) return;
-    navigate(`/compare?a=${selectedIds[0]}&b=${selectedIds[1]}`);
+    navigate(`/compare?a=${selectedIds[0]}&b=${selectedIds[1]}&from=/shared-reports`);
   };
 
 
