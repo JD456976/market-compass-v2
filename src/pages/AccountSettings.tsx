@@ -14,15 +14,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Settings, User, Shield, Trash2, Download, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, Settings, User, Shield, Trash2, Download, ExternalLink, Loader2, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getBetaAccessSession, clearBetaAccessSession } from '@/lib/betaAccess';
 import { useSessions } from '@/hooks/useSessions';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const AccountSettings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { sessions, deleteSession } = useSessions();
+  const { user, signOut } = useAuth();
   const session = getBetaAccessSession();
   
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -80,12 +83,26 @@ const AccountSettings = () => {
     
     setIsDeleting(true);
     try {
-      // Delete all sessions
-      for (const s of sessions) {
-        await deleteSession(s.id);
+      if (user) {
+        // Call server-side deletion that removes all data + auth user
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        
+        const res = await supabase.functions.invoke('delete-account', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        
+        if (res.error || res.data?.error) {
+          throw new Error(res.data?.error || 'Deletion failed');
+        }
+      } else {
+        // Fallback: delete local sessions for non-auth users
+        for (const s of sessions) {
+          await deleteSession(s.id);
+        }
       }
       
-      // Clear local data
+      // Clear all local data
       clearBetaAccessSession();
       localStorage.clear();
       
@@ -94,17 +111,23 @@ const AccountSettings = () => {
         description: 'Your account and all data have been permanently removed.',
       });
       
-      navigate('/', { replace: true });
-    } catch {
+      navigate('/login', { replace: true });
+    } catch (err: any) {
       toast({
         title: 'Deletion failed',
-        description: 'Could not delete all data. Please try again.',
+        description: err?.message || 'Could not delete all data. Please try again.',
         variant: 'destructive',
       });
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    clearBetaAccessSession();
+    navigate('/login', { replace: true });
   };
 
   const draftCount = sessions.filter(s => !s.share_link_created && !s.pdf_exported).length;
@@ -142,7 +165,7 @@ const AccountSettings = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input value={session?.email || ''} disabled className="h-11 bg-muted" />
+              <Input value={user?.email || session?.email || ''} disabled className="h-11 bg-muted" />
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="p-3 rounded-lg bg-muted/50">
@@ -189,6 +212,22 @@ const AccountSettings = () => {
             </Link>
           </CardContent>
         </Card>
+
+        {/* Sign Out */}
+        {user && (
+          <Card>
+            <CardContent className="pt-6">
+              <Button
+                variant="outline"
+                className="w-full justify-start min-h-[44px]"
+                onClick={handleSignOut}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Danger Zone */}
         <Card className="border-destructive/30">
