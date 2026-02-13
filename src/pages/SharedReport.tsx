@@ -90,6 +90,7 @@ const SharedReportContent = () => {
   const [originalSellerInputs, setOriginalSellerInputs] = useState<SellerInputs | null>(null);
   const [whatIfSellerInputs, setWhatIfSellerInputs] = useState<SellerInputs | null>(null);
   const [isSellerWhatIfModified, setIsSellerWhatIfModified] = useState(false);
+  const [originalSellerLikelihood30, setOriginalSellerLikelihood30] = useState<LikelihoodBand | null>(null);
 
   // Always use client mode language for shared reports - NO TOGGLE
   const isClientMode = true;
@@ -104,6 +105,9 @@ const SharedReportContent = () => {
     if (session?.session_type === 'Seller' && session.seller_inputs) {
       setOriginalSellerInputs({ ...session.seller_inputs });
       setWhatIfSellerInputs({ ...session.seller_inputs });
+      // Store original likelihood for comparison banner
+      const originalReport = calculateSellerReport(session, marketProfile);
+      setOriginalSellerLikelihood30(originalReport.likelihood30);
     }
   }, [session]);
 
@@ -535,6 +539,24 @@ const SharedReportContent = () => {
                   snapshot={marketSnapshot.snapshot}
                   isGenericBaseline={marketSnapshot.isGenericBaseline}
                   reportType="Seller"
+                />
+              )}
+
+              {/* Scenario Comparison Banner - Seller */}
+              {originalSellerInputs && whatIfSellerInputs && originalSellerLikelihood30 && (
+                <ScenarioComparisonBanner
+                  original={{
+                    acceptance: originalSellerLikelihood30,
+                    riskOfLosing: originalSellerLikelihood30 === 'High' ? 'Low' : originalSellerLikelihood30 === 'Moderate' ? 'Moderate' : 'High',
+                    riskOfOverpaying: originalSellerInputs.strategy_preference === 'Maximize price' ? 'High' : originalSellerInputs.strategy_preference === 'Prioritize speed' ? 'Low' : 'Moderate',
+                  }}
+                  current={{
+                    acceptance: sellerLikelihood30,
+                    riskOfLosing: sellerLikelihood30 === 'High' ? 'Low' : sellerLikelihood30 === 'Moderate' ? 'Moderate' : 'High',
+                    riskOfOverpaying: (whatIfSellerInputs.strategy_preference === 'Maximize price' ? 'High' : whatIfSellerInputs.strategy_preference === 'Prioritize speed' ? 'Low' : 'Moderate') as any,
+                  }}
+                  isModified={isSellerWhatIfModified}
+                  labels={{ riskOfLosing: 'Stale Listing Risk', riskOfOverpaying: 'Pricing Regret' }}
                 />
               )}
             </>
