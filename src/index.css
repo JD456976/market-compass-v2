@@ -181,6 +181,68 @@
   }
 }
 
+/* ============================================
+   Report Design System Tokens
+   ============================================ */
+
+/* Report section spacing */
+.report-section-gap {
+  margin-top: 1.5rem;
+}
+
+/* Report heading hierarchy */
+.report-h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.report-h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.report-h3 {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.report-body {
+  font-size: 0.8125rem;
+  line-height: 1.65;
+}
+
+.report-caption {
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
+/* Report disclaimer styling */
+.report-disclaimer {
+  margin-top: 1.5rem;
+}
+
+/* Template-specific density overrides */
+.template-executive .pdf-section {
+  margin-bottom: 1.25rem;
+}
+
+.template-snapshot .pdf-section {
+  margin-bottom: 0.75rem;
+}
+
+.template-snapshot .pdf-stat-tile {
+  padding: 0.75rem !important;
+}
+
 /* PDF Export Styles */
 .pdf-export {
   background: #ffffff !important;

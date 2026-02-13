@@ -40,6 +40,10 @@ import {
 } from '@/lib/clientLanguage';
 import { calculateOfferPosition, calculateSellerLeverage, getBuyerStrategyInsights, getSellerStrategyInsights } from '@/lib/positionScoring';
 import { OfferPositionMeter, SellerLeverageMeter, StrategyInsightsCard } from '@/components/report/PositionMeters';
+import { DisclaimerFooter } from '@/components/report/DisclaimerFooter';
+import { MetricCallout, MetricCalloutGrid } from '@/components/report/MetricCallout';
+import { ImprovementPanel } from '@/components/report/ImprovementPanel';
+import { ScenarioComparisonBanner } from '@/components/report/ScenarioComparisonBanner';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand | ExtendedLikelihoodBand }) {
   if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
@@ -57,7 +61,7 @@ function RiskBadge({ band }: { band: LikelihoodBand | ExtendedLikelihoodBand }) 
   return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very Low</Badge>;
 }
 
-const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
+const IMPORTANT_NOTICE_SHORT = `This report is a decision-support tool and not a guarantee of outcome.`;
 
 const SharedReportContent = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -626,12 +630,8 @@ const SharedReportContent = () => {
             <AnalysisMethodology />
           </div>
 
-          {/* Important Notice */}
-          <Card className="pdf-section pdf-avoid-break bg-muted/30">
-            <CardContent className="py-4">
-              <p className="text-xs text-muted-foreground leading-relaxed">{IMPORTANT_NOTICE}</p>
-            </CardContent>
-          </Card>
+          {/* Disclaimer */}
+          <DisclaimerFooter variant="full" />
 
           {/* Report Watermark */}
           <ReportWatermark
