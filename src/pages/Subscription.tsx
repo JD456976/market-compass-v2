@@ -848,7 +848,7 @@ export default function Subscription() {
                   { icon: Palette, label: 'Custom Branding', desc: 'Present polished reports with your identity and contact details.', highlight: false },
                   { icon: PenTool, label: 'Branded Exports', desc: 'Deliver client-ready reports that are easy to share and understand.', highlight: false },
                   { icon: BarChart3, label: 'Advanced Market Insights', desc: 'Understand offer strength, risk tradeoffs, and positioning.', highlight: false },
-                  { icon: Share2, label: 'Client Hub', desc: 'Track, manage, and revisit all client reports in one place.', highlight: false },
+                  { icon: BarChart3, label: 'Offer & Seller Meters', desc: 'Visualize offer positioning and seller leverage at a glance.', highlight: false },
                 ].map((f, i) => (
                   <div
                     key={i}
