@@ -100,8 +100,9 @@ async function wipeDatabase(adminClient: ReturnType<typeof createClient>, adminU
     const { data: allUsers } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
     const usersToDelete = (allUsers?.users || []).filter(u => u.id !== adminUserId);
 
-    // Delete data from all tables (order matters for FK constraints)
-    const tables = [
+    // Delete ALL data from dependent tables first (order matters for FK constraints)
+    // Use a dummy filter that matches everything: gt("id", "00000000-...")
+    const tablesToWipe = [
       "report_messages",
       "report_notes",
       "report_scenarios",
@@ -111,33 +112,36 @@ async function wipeDatabase(adminClient: ReturnType<typeof createClient>, adminU
       "email_queue",
     ];
 
-    for (const table of tables) {
-      const { error } = await adminClient.from(table).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    for (const table of tablesToWipe) {
+      const { error } = await adminClient.from(table).delete().gt("created_at", "1970-01-01");
       if (error) log.push(`Warning: ${table}: ${error.message}`);
       else log.push(`Cleared ${table}`);
     }
 
-    // Delete sessions not owned by admin
-    const { error: sessErr } = await adminClient.from("sessions").delete().neq("owner_user_id", adminUserId);
+    // Delete ALL sessions (including admin's)
+    const { error: sessErr } = await adminClient.from("sessions").delete().gt("created_at", "1970-01-01");
     if (sessErr) log.push(`Warning: sessions: ${sessErr.message}`);
-    else log.push("Cleared sessions (except admin's)");
+    else log.push("Cleared ALL sessions");
 
-    // Also delete sessions with null owner (legacy)
-    await adminClient.from("sessions").delete().is("owner_user_id", null);
-
-    // Delete client relationships
-    await adminClient.from("agent_clients").delete().neq("agent_user_id", adminUserId);
-    await adminClient.from("agent_clients").delete().neq("client_user_id", adminUserId);
+    // Delete ALL client relationships
+    await adminClient.from("agent_clients").delete().gt("created_at", "1970-01-01");
     log.push("Cleared agent_clients");
 
-    await adminClient.from("client_invitations").delete().neq("agent_user_id", adminUserId);
+    await adminClient.from("client_invitations").delete().gt("created_at", "1970-01-01");
     log.push("Cleared client_invitations");
 
-    // Delete branding, profiles, roles for non-admin users
+    // Delete branding/market data for ALL users (including admin)
+    await adminClient.from("agent_branding").delete().gt("created_at", "1970-01-01");
+    log.push("Cleared agent_branding");
+
+    await adminClient.from("market_profiles").delete().gt("created_at", "1970-01-01");
+    log.push("Cleared market_profiles");
+
+    await adminClient.from("market_scenarios").delete().eq("is_built_in", false);
+    log.push("Cleared custom market_scenarios");
+
+    // Delete profiles & roles for non-admin users only (keep admin account)
     for (const u of usersToDelete) {
-      await adminClient.from("agent_branding").delete().eq("user_id", u.id);
-      await adminClient.from("market_profiles").delete().eq("owner_user_id", u.id);
-      await adminClient.from("market_scenarios").delete().eq("owner_user_id", u.id);
       await adminClient.from("user_roles").delete().eq("user_id", u.id);
       await adminClient.from("profiles").delete().eq("user_id", u.id);
     }
