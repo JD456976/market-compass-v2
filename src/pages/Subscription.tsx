@@ -579,15 +579,22 @@ export default function Subscription() {
           <motion.div id="messages-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
             <Card className="border-accent/20">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-accent" />
-                  Conversations
-                  {unreadCount > 0 && (
-                    <Badge variant="secondary" className="bg-accent/10 text-accent-foreground text-[10px] ml-1">
-                      {unreadCount} unread
-                    </Badge>
-                  )}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-accent" />
+                    Conversations
+                    {unreadCount > 0 && (
+                      <Badge variant="secondary" className="bg-accent/10 text-accent-foreground text-[10px] ml-1">
+                        {unreadCount} unread
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  <Link to="/shared-reports">
+                    <Button variant="ghost" size="sm" className="text-xs">
+                      View All <ChevronRight className="h-3 w-3 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -711,7 +718,7 @@ export default function Subscription() {
                   <Activity className="h-4 w-4 text-accent" />
                   Recent Activity
                 </CardTitle>
-                <Link to="/drafts">
+                <Link to="/shared-reports">
                   <Button variant="ghost" size="sm" className="text-xs">
                     View All <ChevronRight className="h-3 w-3 ml-1" />
                   </Button>
@@ -792,12 +799,23 @@ export default function Subscription() {
                   <div>
                     <p className="text-xs font-medium text-muted-foreground mb-2">Most Viewed Reports</p>
                     <div className="space-y-1.5">
-                      {analytics.viewsByReport.map((r, i) => (
+                      {analytics.viewsByReport.map((r, i) => {
+                        const session = sessions.find(sess => sess.id === r.report_id);
+                        const reportRoute = session?.session_type === 'Seller' ? `/seller-report/${r.report_id}` : `/buyer-report/${r.report_id}`;
+                        return (
                         <div key={r.report_id} className="flex items-center justify-between text-xs p-2 rounded-lg bg-secondary/20">
                           <span className="truncate flex-1">{r.client_name}</span>
-                          <span className="text-muted-foreground shrink-0 ml-2">{r.views} view{r.views > 1 ? 's' : ''}</span>
+                          <div className="flex items-center gap-2 shrink-0 ml-2">
+                            <span className="text-muted-foreground">{r.views} view{r.views > 1 ? 's' : ''}</span>
+                            <Link to={reportRoute}>
+                              <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                              </Button>
+                            </Link>
+                          </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
