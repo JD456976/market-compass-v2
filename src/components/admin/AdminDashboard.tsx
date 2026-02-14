@@ -29,6 +29,7 @@ import { MobileNavSpacer } from '@/components/GlobalNav';
 import { AdminUsersPanel } from './AdminUsersPanel';
 import { AdminReportsPanel } from './AdminReportsPanel';
 import { AdminAnalyticsPanel } from './AdminAnalyticsPanel';
+import { AdminToolsPanel } from './AdminToolsPanel';
 import {
   Dialog,
   DialogContent,
@@ -372,6 +373,9 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
               <TabsTrigger value="analytics" className="text-xs px-3 py-2 whitespace-nowrap">
                 Analytics
               </TabsTrigger>
+              <TabsTrigger value="tools" className="text-xs px-3 py-2 whitespace-nowrap">
+                🛠 Tools
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -397,6 +401,10 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
 
           <TabsContent value="analytics">
             <AdminAnalyticsPanel />
+          </TabsContent>
+
+          <TabsContent value="tools">
+            <AdminToolsPanel />
           </TabsContent>
         </Tabs>
         
