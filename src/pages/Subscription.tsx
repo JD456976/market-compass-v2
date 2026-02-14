@@ -10,7 +10,7 @@ import {
   ArrowLeft, FileText, BarChart3, Share2, Sparkles, Users, Building2,
   PenTool, User, Palette, TrendingUp, Activity, RefreshCw, ChevronRight,
   Layers, MessageSquare, Compass, CheckCircle2, AlertCircle, Clock, Eye,
-  UserPlus, Mail, Copy, XCircle
+  UserPlus, Mail, Copy, XCircle, Settings
 } from 'lucide-react';
 import { NotificationBell } from '@/components/NotificationBell';
 import { ScenarioCompareSheet } from '@/components/ScenarioCompareSheet';
@@ -379,6 +379,11 @@ export default function Subscription() {
               </div>
             </div>
             <div className="flex items-center gap-1">
+              <Link to="/settings">
+                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 min-h-[44px] min-w-[44px]" title="Account Settings">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </Link>
               <Link to="/my-reports?preview=admin">
                 <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 min-h-[44px] min-w-[44px]" title="Preview Client Dashboard">
                   <Eye className="h-5 w-5" />
