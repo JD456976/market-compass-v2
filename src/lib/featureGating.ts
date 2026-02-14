@@ -1,21 +1,22 @@
-// Feature gating configuration for Market Compass
-// During beta, all features are accessible. This scaffolds future paid features.
+// Feature gating configuration for Market Compass Professional
 
-export interface FeatureFlags {
-  unlimitedReports: boolean;
-  unlimitedComparisons: boolean;
-  advancedScenarioExplorer: boolean;
-  marketSnapshotSelection: boolean;
-  brandedPdfExports: boolean;
-}
+export type ProfessionalFeature =
+  | 'unlimitedReports'
+  | 'scenarioExplorer'
+  | 'offerPositionMeter'
+  | 'sellerLeverageMeter'
+  | 'brandedExports'
+  | 'advancedMarketInsights'
+  | 'customBranding';
 
-// Define which features are paid (will be enforced post-beta)
-export const PAID_FEATURES: (keyof FeatureFlags)[] = [
-  'unlimitedReports',
-  'unlimitedComparisons', 
-  'advancedScenarioExplorer',
-  'marketSnapshotSelection',
-  'brandedPdfExports',
+export const PROFESSIONAL_FEATURES: { key: ProfessionalFeature; label: string; description: string }[] = [
+  { key: 'unlimitedReports', label: 'Unlimited Reports', description: 'Create professional reports for every client and property.' },
+  { key: 'scenarioExplorer', label: 'Scenario Explorer', description: 'Model winning strategies before submitting offers.' },
+  { key: 'offerPositionMeter', label: 'Offer Position Meter', description: 'Visualize exactly where your offer stands competitively.' },
+  { key: 'sellerLeverageMeter', label: 'Seller Leverage Meter', description: 'Understand seller negotiation strength at a glance.' },
+  { key: 'brandedExports', label: 'Branded Exports', description: 'Deliver client-ready reports that are easy to share and understand.' },
+  { key: 'advancedMarketInsights', label: 'Advanced Market Insights', description: 'Understand offer strength, risk tradeoffs, and positioning.' },
+  { key: 'customBranding', label: 'Custom Branding', description: 'Present polished reports with your identity and contact details.' },
 ];
 
 // Free tier limits (future enforcement)
@@ -31,66 +32,34 @@ export const SUBSCRIPTION_PRODUCTS = {
   yearlyPro: 'com.marketcompass.pro.yearly',
 } as const;
 
-export type SubscriptionStatus = 'none' | 'active' | 'expired' | 'canceled';
+export type SubscriptionStatus = 'none' | 'trial' | 'active' | 'expired' | 'canceled';
 
 export interface UserEntitlement {
-  hasBetaAccess: boolean;
+  isProfessionalUser: boolean;
+  isReviewer: boolean;
   subscriptionStatus: SubscriptionStatus;
   subscriptionExpiresAt?: string;
+  trialEndsAt?: string;
 }
 
+// Reviewer emails that get automatic Professional access
+export const REVIEWER_EMAILS: string[] = [
+  // Add App Store reviewer emails here
+];
+
 /**
- * Check if a user can access a specific feature
- * During beta, beta access grants all features
+ * Check if a user can access a specific professional feature
  */
 export function canAccessFeature(
   entitlement: UserEntitlement,
-  _feature: keyof FeatureFlags
+  _feature: ProfessionalFeature
 ): boolean {
-  // Beta access bypasses all restrictions
-  if (entitlement.hasBetaAccess) {
-    return true;
-  }
-
-  // Active subscription grants all features
-  if (entitlement.subscriptionStatus === 'active') {
-    return true;
-  }
-
-  // Future: implement free tier logic here
-  // For now, beta-only means no free tier exists
-  return false;
+  return entitlement.isProfessionalUser;
 }
 
 /**
- * Check if user has any valid access (beta or subscription)
+ * Check if user has Professional access (any source)
  */
 export function hasValidAccess(entitlement: UserEntitlement): boolean {
-  return entitlement.hasBetaAccess || entitlement.subscriptionStatus === 'active';
-}
-
-/**
- * Get current entitlement from beta session
- * This is a client-side helper - real validation happens server-side
- */
-export function getEntitlementFromSession(): UserEntitlement {
-  // Import dynamically to avoid circular dependency
-  const session = localStorage.getItem('market_compass_access');
-  
-  if (session) {
-    try {
-      const parsed = JSON.parse(session);
-      return {
-        hasBetaAccess: true,
-        subscriptionStatus: 'none', // Subscriptions not active during beta
-      };
-    } catch {
-      // Invalid session
-    }
-  }
-
-  return {
-    hasBetaAccess: false,
-    subscriptionStatus: 'none',
-  };
+  return entitlement.isProfessionalUser;
 }

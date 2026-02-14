@@ -3,11 +3,12 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Upload } from 'lucide-react';
+import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Upload, Sparkles } from 'lucide-react';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
 import { useDraftSessions, useSharedSessions } from '@/hooks/useSessions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useProfessionalAccess } from '@/hooks/useProfessionalAccess';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -28,6 +29,7 @@ const Index = () => {
   const { activeSessions: shared } = useSharedSessions();
   const { user } = useAuth();
   const { isAgent } = useUserRole();
+  const { isProfessionalUser } = useProfessionalAccess();
 
   return (
     <div className="bg-background" role="main" aria-label="Market Compass Home">
@@ -122,6 +124,36 @@ const Index = () => {
             </Link>
           </motion.div>
         </motion.div>
+
+        {/* Professional Plan Entry Point */}
+        {!isProfessionalUser && (
+          <motion.div
+            className="max-w-4xl mx-auto mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <Link to="/subscription" className="block">
+              <Card className="border-accent/30 bg-gradient-to-r from-accent/5 to-transparent hover:from-accent/10 transition-colors cursor-pointer">
+                <CardContent className="flex items-center gap-4 py-5">
+                  <div className="p-2.5 rounded-full bg-accent/10">
+                    <Sparkles className="h-5 w-5 text-accent" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">Unlock your competitive advantage</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Unlimited reports • Scenario modeling • Branded exports
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" className="shrink-0 border-accent/30 text-accent hover:bg-accent/10">
+                    View Professional Plan
+                    <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+          </motion.div>
+        )}
 
         {/* Secondary Links - Session Management */}
         <motion.div 
