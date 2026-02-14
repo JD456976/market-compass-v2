@@ -31,11 +31,14 @@ export function GlobalNav() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
+    // Check admin from beta session OR authenticated user email
     const session = getBetaAccessSession();
     if (session?.email && isAllowedAdmin(session.email)) {
       setIsAdmin(true);
+    } else if (user?.email && isAllowedAdmin(user.email)) {
+      setIsAdmin(true);
     }
-  }, []);
+  }, [user?.email]);
 
   // Don't show nav on shared pages
   if (location.pathname.startsWith('/share/') || location.pathname === '/share') {
