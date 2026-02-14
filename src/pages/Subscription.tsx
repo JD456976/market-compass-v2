@@ -832,26 +832,34 @@ export default function Subscription() {
         {/* Pro Features Summary */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Pro Features</CardTitle>
-              <CardDescription>
-                {hasBetaAccess ? 'All features unlocked with your beta access.' : 'Upgrade to unlock everything.'}
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-serif">Pro Features</CardTitle>
+              <p className="text-sm text-accent font-medium mt-1">Designed to help you win more offers and close faster.</p>
+              <CardDescription className="mt-1">
+                Unlock your full competitive advantage
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { icon: FileText, label: 'Unlimited Reports' },
-                  { icon: PenTool, label: 'Branded Exports' },
-                  { icon: Layers, label: 'Scenario Explorer' },
-                  { icon: BarChart3, label: 'AI Insights' },
-                  { icon: Palette, label: 'Custom Branding' },
-                  { icon: Share2, label: 'Client Hub' },
+                  { icon: FileText, label: 'Unlimited Reports', desc: 'Create reports for every client and property' },
+                  { icon: PenTool, label: 'Branded Exports', desc: 'Deliver polished, client-ready reports' },
+                  { icon: Layers, label: 'Scenario Explorer', desc: 'Model winning strategies before submitting offers' },
+                  { icon: BarChart3, label: 'Advanced Market Insights', desc: 'Understand offer strength and risks' },
+                  { icon: Palette, label: 'Custom Branding', desc: 'Present professionally with your identity' },
+                  { icon: Share2, label: 'Client Hub', desc: 'Manage and track all client reports' },
                 ].map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
-                    <f.icon className="h-3.5 w-3.5 text-accent" />
-                    <span className="text-xs">{f.label}</span>
-                    {hasBetaAccess && <span className="text-[10px] text-accent ml-auto">✓</span>}
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
+                    <div className="p-1.5 rounded-md bg-accent/10 mt-0.5">
+                      <f.icon className="h-4 w-4 text-accent" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{f.label}</span>
+                        {hasBetaAccess && <CheckCircle2 className="h-3.5 w-3.5 text-accent flex-shrink-0" />}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{f.desc}</p>
+                    </div>
                   </div>
                 ))}
               </div>
