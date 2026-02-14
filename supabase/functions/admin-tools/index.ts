@@ -190,19 +190,17 @@ async function createReviewer(
 
   const userId = newUser.user.id;
 
-  // Create profile
-  await adminClient.from("profiles").insert({
-    user_id: userId,
-    email,
+  // The handle_new_user trigger auto-creates profile + user_roles.
+  // Update them to match reviewer params instead of inserting duplicates.
+  await adminClient.from("profiles").update({
     full_name,
     email_verified: true,
-  });
+  }).eq("user_id", userId);
 
-  // Assign role
-  await adminClient.from("user_roles").insert({
-    user_id: userId,
+  // Update the role (trigger defaults to 'agent')
+  await adminClient.from("user_roles").update({
     role: role as string,
-  });
+  }).eq("user_id", userId);
 
   // If client role, link to specified agent (or admin)
   if (role === "client" && agent_user_id) {
