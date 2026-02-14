@@ -829,40 +829,53 @@ export default function Subscription() {
           </motion.div>
         )}
 
-        {/* Pro Features Summary */}
+        {/* Pro Features */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-3">
               <CardTitle className="text-lg font-serif">Pro Features</CardTitle>
               <p className="text-sm text-accent font-medium mt-1">Designed to help you win more offers and close faster.</p>
               <CardDescription className="mt-1">
-                Unlock your full competitive advantage
+                Unlock your full competitive advantage in competitive markets.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Left column */}
                 {[
-                  { icon: FileText, label: 'Unlimited Reports', desc: 'Create reports for every client and property' },
-                  { icon: PenTool, label: 'Branded Exports', desc: 'Deliver polished, client-ready reports' },
-                  { icon: Layers, label: 'Scenario Explorer', desc: 'Model winning strategies before submitting offers' },
-                  { icon: BarChart3, label: 'Advanced Market Insights', desc: 'Understand offer strength and risks' },
-                  { icon: Palette, label: 'Custom Branding', desc: 'Present professionally with your identity' },
-                  { icon: Share2, label: 'Client Hub', desc: 'Manage and track all client reports' },
+                  { icon: FileText, label: 'Unlimited Reports', desc: 'Create professional reports for every client and property.', highlight: false },
+                  { icon: Compass, label: 'Scenario Explorer', desc: 'Model winning strategies before submitting offers.', highlight: true },
+                  { icon: Palette, label: 'Custom Branding', desc: 'Present polished reports with your identity and contact details.', highlight: false },
+                  { icon: PenTool, label: 'Branded Exports', desc: 'Deliver client-ready reports that are easy to share and understand.', highlight: false },
+                  { icon: BarChart3, label: 'Advanced Market Insights', desc: 'Understand offer strength, risk tradeoffs, and positioning.', highlight: false },
+                  { icon: Share2, label: 'Client Hub', desc: 'Track, manage, and revisit all client reports in one place.', highlight: false },
                 ].map((f, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
-                    <div className="p-1.5 rounded-md bg-accent/10 mt-0.5">
-                      <f.icon className="h-4 w-4 text-accent" />
+                  <div
+                    key={i}
+                    className={`flex items-start gap-3 p-3 rounded-lg transition-colors hover:bg-secondary/50 ${
+                      f.highlight ? 'bg-accent/5 ring-1 ring-accent/20' : 'bg-secondary/30'
+                    }`}
+                  >
+                    <div className={`p-1.5 rounded-md mt-0.5 ${f.highlight ? 'bg-accent/20' : 'bg-accent/10'}`}>
+                      <f.icon className={`h-4 w-4 ${f.highlight ? 'text-accent' : 'text-accent'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
                         <span className="text-sm font-medium">{f.label}</span>
-                        {hasBetaAccess && <CheckCircle2 className="h-3.5 w-3.5 text-accent flex-shrink-0" />}
+                        {f.highlight && (
+                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-accent/10 text-accent border-0">
+                            Key Feature
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{f.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
+              <p className="text-[11px] text-muted-foreground text-center pt-1">
+                Trusted by agents to present stronger offers with confidence.
+              </p>
             </CardContent>
           </Card>
         </motion.div>
