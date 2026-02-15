@@ -55,7 +55,25 @@ export function calculateSellerReport(
   const factorMods = calculateSellerFactorModifiers(
     (session.property_factors as any[]) || []
   );
-  const adjustedScore = baseScore + factorMods.score;
+  let adjustedScore = baseScore + factorMods.score;
+
+  // Signal-Based Intelligence modifiers for seller
+  const sellerInputs = session.seller_inputs;
+  if (sellerInputs) {
+    if (sellerInputs.showing_traffic === 'Heavy') {
+      adjustedScore += 1;
+    } else if (sellerInputs.showing_traffic === 'Minimal') {
+      adjustedScore -= 1;
+    }
+    if (sellerInputs.offer_deadline) {
+      adjustedScore += 0.5;
+    }
+    if (sellerInputs.price_change_direction === 'Reduced') {
+      adjustedScore -= 1;
+    } else if (sellerInputs.price_change_direction === 'Increased') {
+      adjustedScore += 0.5;
+    }
+  }
 
   return {
     session,
@@ -279,7 +297,39 @@ export function calculateBuyerReport(
     modifiers.push(...factorMods.descriptions);
   }
 
-  // 7. Enforce extreme price ratio caps
+  // 7. Signal-Based Intelligence modifiers
+  // Showing Traffic
+  if (inputs.showing_traffic === 'Heavy') {
+    acceptanceNum -= 0.5;
+    losingNum += 0.5;
+    overpayNum += 0.5;
+    modifiers.push('Signal (Heavy Showing Traffic): −0.5 Acceptance, +0.5 Losing Home, +0.5 Overpay');
+  } else if (inputs.showing_traffic === 'Minimal') {
+    acceptanceNum += 0.5;
+    losingNum -= 0.5;
+    overpayNum -= 0.5;
+    modifiers.push('Signal (Minimal Showing Traffic): +0.5 Acceptance, −0.5 Losing Home, −0.5 Overpay');
+  }
+
+  // Offer Deadline (presence = competitive pressure)
+  if (inputs.offer_deadline) {
+    acceptanceNum -= 0.5;
+    losingNum += 0.5;
+    modifiers.push('Signal (Offer Deadline Set): −0.5 Acceptance, +0.5 Losing Home');
+  }
+
+  // Price Change History
+  if (inputs.price_change_direction === 'Reduced') {
+    acceptanceNum += 0.5;
+    losingNum -= 0.5;
+    modifiers.push('Signal (Price Reduced): +0.5 Acceptance, −0.5 Losing Home');
+  } else if (inputs.price_change_direction === 'Increased') {
+    acceptanceNum -= 0.5;
+    losingNum += 0.5;
+    modifiers.push('Signal (Price Increased): −0.5 Acceptance, +0.5 Losing Home');
+  }
+
+  // 8. Enforce extreme price ratio caps
   if (priceRatio >= 2.0 && acceptanceNum < tierToNum('High')) {
     acceptanceNum = tierToNum('High');
     modifiers.push('Cap: ratio≥2.0 forces Acceptance≥High');
@@ -293,7 +343,7 @@ export function calculateBuyerReport(
     modifiers.push('Cap: ratio≥1.30 forces Overpay≥High');
   }
 
-  // 8. Consistency enforcement: acceptance and losing-home are inversely correlated
+  // 9. Consistency enforcement: acceptance and losing-home are inversely correlated
   // If acceptance is low (≤2), losing-home must be at least moderate (≥3)
   // If acceptance is high (≥4), losing-home must be at most low (≤2)
   const clampedAcceptance = clampTier(Math.round(acceptanceNum));

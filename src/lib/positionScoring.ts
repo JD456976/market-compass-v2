@@ -106,6 +106,28 @@ export function calculateOfferPosition(
     factors.push('Cool market conditions may favor buyers');
   }
 
+  // 6. Signal-Based Intelligence
+  if (inputs.showing_traffic === 'Heavy') {
+    score -= 6;
+    factors.push('Heavy showing traffic suggests strong competition');
+  } else if (inputs.showing_traffic === 'Minimal') {
+    score += 6;
+    factors.push('Minimal showing traffic may reduce competition');
+  }
+
+  if (inputs.offer_deadline) {
+    score -= 5;
+    factors.push('Active offer deadline increases competitive pressure');
+  }
+
+  if (inputs.price_change_direction === 'Reduced') {
+    score += 5;
+    factors.push('Price reduction may indicate seller flexibility');
+  } else if (inputs.price_change_direction === 'Increased') {
+    score -= 5;
+    factors.push('Price increase suggests seller confidence');
+  }
+
   // Clamp 0-100
   score = Math.max(0, Math.min(100, score));
 
@@ -209,6 +231,28 @@ export function calculateSellerLeverage(
   } else if (inputs.strategy_preference === 'Maximize price') {
     score += 3;
     factors.push('Price-maximizing strategy reflects perceived strength');
+  }
+
+  // 4. Signal-Based Intelligence
+  if (inputs.showing_traffic === 'Heavy') {
+    score += 8;
+    factors.push('Heavy showing traffic suggests strong buyer interest');
+  } else if (inputs.showing_traffic === 'Minimal') {
+    score -= 8;
+    factors.push('Minimal showing traffic may indicate limited demand');
+  }
+
+  if (inputs.offer_deadline) {
+    score += 5;
+    factors.push('Active offer deadline signals competitive interest');
+  }
+
+  if (inputs.price_change_direction === 'Reduced') {
+    score -= 6;
+    factors.push('Price reduction may signal reduced leverage');
+  } else if (inputs.price_change_direction === 'Increased') {
+    score += 4;
+    factors.push('Price increase reflects market confidence');
   }
 
   // Clamp 0-100
