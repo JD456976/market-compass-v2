@@ -233,7 +233,7 @@ const DraftAnalyses = () => {
         )}
 
         {/* Swipe hint for mobile - dismiss after first use */}
-        {sessions.length > 0 && !localStorage.getItem('swipe_hint_dismissed') && (
+        {filteredSessions.length > 0 && !localStorage.getItem('swipe_hint_dismissed') && (
           <p 
             className="text-xs text-muted-foreground mb-4 sm:hidden cursor-pointer"
             onClick={() => {
