@@ -37,9 +37,9 @@ const steps: OnboardingStep[] = [
   },
   {
     icon: <Database className="h-8 w-8" />,
-    title: 'Market Data',
-    description: 'Town-level market snapshots anchor your assumptions.',
-    detail: 'When you enter an address, Market Compass looks for a matching snapshot (median DOM, sale-to-list ratio). If none exists, it uses a generic baseline and flags this in Agent Mode.',
+    title: 'Market Data & Signals',
+    description: 'Market snapshots, live rates, and agent signals anchor your analysis.',
+    detail: 'Market Compass uses town-level snapshots (median DOM, sale-to-list ratio), live 30-year mortgage rates from FRED, and your agent-reported signals (showing traffic, offer deadlines, price changes) to build a complete picture.',
   },
   {
     icon: <Play className="h-8 w-8" />,
