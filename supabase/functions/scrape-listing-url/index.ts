@@ -157,6 +157,12 @@ serve(async (req) => {
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "AI credits exhausted. Please add credits to your workspace, or use the Paste tab instead." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       const errText = await aiResponse.text();
       console.error("AI gateway error:", aiResponse.status, errText);
       throw new Error(`AI extraction failed: ${aiResponse.status}`);
