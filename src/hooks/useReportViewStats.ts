@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getBatchReportViewStats, ReportViewStats, getReportViewStats } from '@/lib/viewTracking';
 import { useToast } from '@/hooks/use-toast';
@@ -87,11 +87,14 @@ export function useReportViewStats(reportId: string | undefined): {
 export function useReportViewNotifications(reportIds: string[]) {
   const { toast } = useToast();
   const [recentViewCount, setRecentViewCount] = useState(0);
+  const lastToastRef = useRef<number>(0);
+
+  // Cooldown: suppress repeat view toasts within 60 seconds
+  const VIEW_TOAST_COOLDOWN_MS = 60_000;
 
   useEffect(() => {
     if (reportIds.length === 0) return;
 
-    // Subscribe to realtime changes
     const channel = supabase
       .channel('report-views')
       .on(
@@ -107,12 +110,16 @@ export function useReportViewNotifications(reportIds: string[]) {
           
           if (viewedReportId && reportIds.includes(viewedReportId)) {
             setRecentViewCount(prev => prev + 1);
-            
-            toast({
-              title: "Report viewed",
-              description: `A shared report was opened on a ${deviceType}.`,
-              duration: 5000,
-            });
+
+            const now = Date.now();
+            if (now - lastToastRef.current > VIEW_TOAST_COOLDOWN_MS) {
+              lastToastRef.current = now;
+              toast({
+                title: "Report viewed",
+                description: `A shared report was opened on a ${deviceType}.`,
+                duration: 5000,
+              });
+            }
           }
         }
       )

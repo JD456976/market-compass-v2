@@ -99,7 +99,47 @@ export function ClientActivityTimeline({ reportId, className }: ClientActivityTi
 
       // Sort by timestamp descending
       allEvents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      setEvents(allEvents.slice(0, 25));
+
+      // Group consecutive "Viewed report" events on the same day to reduce noise
+      const grouped: TimelineEvent[] = [];
+      let pendingViewGroup: { count: number; latest: TimelineEvent } | null = null;
+
+      for (const event of allEvents) {
+        if (event.type === 'view') {
+          if (pendingViewGroup) {
+            const latestDate = new Date(pendingViewGroup.latest.timestamp).toDateString();
+            const currentDate = new Date(event.timestamp).toDateString();
+            if (latestDate === currentDate) {
+              pendingViewGroup.count++;
+              continue;
+            } else {
+              // Flush previous group
+              if (pendingViewGroup.count > 1) {
+                pendingViewGroup.latest.description = `Viewed report ${pendingViewGroup.count} times`;
+              }
+              grouped.push(pendingViewGroup.latest);
+            }
+          }
+          pendingViewGroup = { count: 1, latest: event };
+        } else {
+          if (pendingViewGroup) {
+            if (pendingViewGroup.count > 1) {
+              pendingViewGroup.latest.description = `Viewed report ${pendingViewGroup.count} times`;
+            }
+            grouped.push(pendingViewGroup.latest);
+            pendingViewGroup = null;
+          }
+          grouped.push(event);
+        }
+      }
+      if (pendingViewGroup) {
+        if (pendingViewGroup.count > 1) {
+          pendingViewGroup.latest.description = `Viewed report ${pendingViewGroup.count} times`;
+        }
+        grouped.push(pendingViewGroup.latest);
+      }
+
+      setEvents(grouped.slice(0, 25));
       setLoading(false);
     };
 
