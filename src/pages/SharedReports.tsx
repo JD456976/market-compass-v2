@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2, Eye, Archive, ArchiveRestore, Search, Trash2, GitCompare } from 'lucide-react';
 import { SkeletonList } from '@/components/ui/skeleton-card';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { NotificationPrePrompt } from '@/components/NotificationPrePrompt';
 import { Session } from '@/types';
 import { useSharedSessions } from '@/hooks/useSessions';
 import { useBatchViewStats, useReportViewNotifications } from '@/hooks/useReportViewStats';
@@ -63,7 +64,7 @@ const SharedReports = () => {
   useReportViewNotifications(reportIds);
 
   // Enable push notifications for agent
-  usePushNotifications('agent', reportIds);
+  const { showPrePrompt, confirmPermission, dismissPrePrompt } = usePushNotifications('agent', reportIds);
 
   const handleCopyLink = (session: Session) => {
     const token = (session as any).share_token || session.id;
@@ -546,6 +547,7 @@ const SharedReports = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <NotificationPrePrompt open={showPrePrompt} onConfirm={confirmPermission} onDismiss={dismissPrePrompt} role="agent" />
     </div>
   );
 };

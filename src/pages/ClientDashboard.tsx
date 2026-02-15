@@ -13,6 +13,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { NotificationPrePrompt } from '@/components/NotificationPrePrompt';
 import { ClientOnboarding, ClientOnboardingTrigger } from '@/components/ClientOnboarding';
 import { motion } from 'framer-motion';
 
@@ -49,7 +50,7 @@ export default function ClientDashboard() {
   }, [user]);
 
   const reportIds = useMemo(() => reports.map(r => r.report_id), [reports]);
-  usePushNotifications('client', reportIds);
+  const { showPrePrompt, confirmPermission, dismissPrePrompt } = usePushNotifications('client', reportIds);
 
   useEffect(() => {
     if (user && isClient) {
@@ -359,6 +360,7 @@ export default function ClientDashboard() {
           </motion.div>
         )}
       </div>
+      <NotificationPrePrompt open={showPrePrompt} onConfirm={confirmPermission} onDismiss={dismissPrePrompt} role="client" />
     </div>
   );
 }

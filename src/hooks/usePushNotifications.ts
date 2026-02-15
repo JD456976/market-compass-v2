@@ -1,15 +1,19 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+
+const NOTIFICATION_PREPROMPT_KEY = 'mc_notification_preprompt_shown';
 
 /**
  * Hook to enable browser push notifications for new messages and scenarios.
- * Listens to Supabase realtime changes on report_messages and report_scenarios.
+ * Includes a pre-prompt flow to explain why notifications are needed
+ * before triggering the system permission dialog (App Store compliance).
  */
 export function usePushNotifications(
   role: 'agent' | 'client',
   reportIds: string[]
 ) {
   const permissionRef = useRef<NotificationPermission>('default');
+  const [showPrePrompt, setShowPrePrompt] = useState(false);
 
   const requestPermission = useCallback(async () => {
     if (!('Notification' in window)) return;
@@ -17,15 +21,33 @@ export function usePushNotifications(
       permissionRef.current = 'granted';
       return;
     }
-    if (Notification.permission !== 'denied') {
+    if (Notification.permission === 'denied') return;
+
+    // Check if we've already shown the pre-prompt and user dismissed it
+    const alreadyShown = localStorage.getItem(NOTIFICATION_PREPROMPT_KEY);
+    if (alreadyShown === 'dismissed') return;
+
+    // Show pre-prompt instead of immediately requesting
+    setShowPrePrompt(true);
+  }, []);
+
+  const confirmPermission = useCallback(async () => {
+    setShowPrePrompt(false);
+    localStorage.setItem(NOTIFICATION_PREPROMPT_KEY, 'accepted');
+    if ('Notification' in window && Notification.permission !== 'denied') {
       const result = await Notification.requestPermission();
       permissionRef.current = result;
     }
   }, []);
 
+  const dismissPrePrompt = useCallback(() => {
+    setShowPrePrompt(false);
+    localStorage.setItem(NOTIFICATION_PREPROMPT_KEY, 'dismissed');
+  }, []);
+
   const showNotification = useCallback((title: string, body: string) => {
     if (permissionRef.current !== 'granted') return;
-    if (document.visibilityState === 'visible') return; // Don't notify if app is focused
+    if (document.visibilityState === 'visible') return;
 
     try {
       new Notification(title, {
@@ -40,13 +62,20 @@ export function usePushNotifications(
   }, []);
 
   useEffect(() => {
-    requestPermission();
+    // Only auto-prompt after a short delay so the page loads first
+    const timer = setTimeout(() => {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        permissionRef.current = 'granted';
+      } else {
+        requestPermission();
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
   }, [requestPermission]);
 
   useEffect(() => {
     if (reportIds.length === 0) return;
 
-    // Listen for new messages
     const messagesChannel = supabase
       .channel(`push-messages-${role}`)
       .on(
@@ -60,7 +89,6 @@ export function usePushNotifications(
           const msg = payload.new as any;
           if (!reportIds.includes(msg.report_id)) return;
 
-          // Only notify if the message is from the OTHER role
           if (role === 'agent' && msg.sender_role === 'client') {
             showNotification('New Client Message', msg.body?.substring(0, 100) || 'You have a new message');
           } else if (role === 'client' && msg.sender_role === 'agent') {
@@ -70,7 +98,6 @@ export function usePushNotifications(
       )
       .subscribe();
 
-    // Listen for scenario submissions
     const scenariosChannel = supabase
       .channel(`push-scenarios-${role}`)
       .on(
@@ -97,5 +124,5 @@ export function usePushNotifications(
     };
   }, [reportIds, role, showNotification]);
 
-  return { requestPermission };
+  return { requestPermission, showPrePrompt, confirmPermission, dismissPrePrompt };
 }
