@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.admin-tools]
 verify_jwt = false
+
+[functions.fred-mortgage-rate]
+verify_jwt = false

@@ -23,7 +23,8 @@ import { MLSVoiceCameraInput } from '@/components/MLSVoiceCameraInput';
 import { ReportTemplateSelector, ReportTemplate } from '@/components/report/ReportTemplateSelector';
 import { 
   Session, PropertyType, Condition, FinancingType, 
-  DownPaymentPercent, Contingency, ClosingTimeline, BuyerPreference 
+  DownPaymentPercent, Contingency, ClosingTimeline, BuyerPreference,
+  ShowingTrafficLevel, PriceChangeDirection
 } from '@/types';
 import { generateId } from '@/lib/storage';
 import { upsertSessionAsync } from '@/lib/storage';
@@ -72,6 +73,10 @@ const DEFAULT_VALUES = {
   buyerPreference: 'Balanced' as BuyerPreference,
   agentNotes: '',
   clientNotes: '',
+  showingTraffic: 'Unknown' as ShowingTrafficLevel,
+  offerDeadline: '',
+  priceChangeDirection: 'None' as PriceChangeDirection,
+  priceChangeAmount: '',
 };
 
 const BuyerFlow = () => {
@@ -103,6 +108,10 @@ const BuyerFlow = () => {
   const [buyerPreference, setBuyerPreference] = useState<BuyerPreference>(DEFAULT_VALUES.buyerPreference);
   const [agentNotes, setAgentNotes] = useState(DEFAULT_VALUES.agentNotes);
   const [clientNotes, setClientNotes] = useState(DEFAULT_VALUES.clientNotes);
+  const [showingTraffic, setShowingTraffic] = useState<ShowingTrafficLevel>(DEFAULT_VALUES.showingTraffic);
+  const [offerDeadline, setOfferDeadline] = useState(DEFAULT_VALUES.offerDeadline);
+  const [priceChangeDirection, setPriceChangeDirection] = useState<PriceChangeDirection>(DEFAULT_VALUES.priceChangeDirection);
+  const [priceChangeAmount, setPriceChangeAmount] = useState(DEFAULT_VALUES.priceChangeAmount);
   const [propertyFactors, setPropertyFactors] = useState<import('@/types').PropertyFactor[]>([]);
   const [reportTemplate, setReportTemplate] = useState<ReportTemplate>('modern');
   
@@ -287,6 +296,10 @@ const BuyerFlow = () => {
       buyer_preference: buyerPreference,
       agent_notes: agentNotes || undefined,
       client_notes: clientNotes || undefined,
+      showing_traffic: showingTraffic !== 'Unknown' ? showingTraffic : undefined,
+      offer_deadline: offerDeadline || undefined,
+      price_change_direction: priceChangeDirection !== 'None' ? priceChangeDirection : undefined,
+      price_change_amount: priceChangeAmount ? parsePriceValue(priceChangeAmount) : undefined,
     },
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -717,6 +730,66 @@ const BuyerFlow = () => {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">List price or expected market value for scoring accuracy</p>
+                    </div>
+                  </div>
+
+                  {/* Signal-Based Intelligence */}
+                  <div className="space-y-3 pt-2 border-t border-border/50">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-accent">📡 Signal-Based Intelligence</span>
+                      <span className="text-[10px] text-muted-foreground">(Agent-reported)</span>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs">Showing Traffic</Label>
+                        <Select value={showingTraffic} onValueChange={(v: ShowingTrafficLevel) => setShowingTraffic(v)}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Unknown">Unknown</SelectItem>
+                            <SelectItem value="Minimal">Minimal</SelectItem>
+                            <SelectItem value="Steady">Steady</SelectItem>
+                            <SelectItem value="Heavy">Heavy</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Offer Deadline</Label>
+                        <Input
+                          type="date"
+                          value={offerDeadline}
+                          onChange={(e) => setOfferDeadline(e.target.value)}
+                          className="h-9 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs">Price Changes</Label>
+                        <Select value={priceChangeDirection} onValueChange={(v: PriceChangeDirection) => setPriceChangeDirection(v)}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="None">No changes</SelectItem>
+                            <SelectItem value="Reduced">Price reduced</SelectItem>
+                            <SelectItem value="Increased">Price increased</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {priceChangeDirection !== 'None' && (
+                        <div className="space-y-2">
+                          <Label className="text-xs">Change Amount</Label>
+                          <div className="relative">
+                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              value={formatPriceDisplay(priceChangeAmount)}
+                              onChange={(e) => setPriceChangeAmount(stripCurrencyChars(e.target.value))}
+                              placeholder="e.g., 25,000"
+                              className="h-9 text-sm pl-8"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
