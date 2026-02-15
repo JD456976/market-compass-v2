@@ -53,8 +53,16 @@ export function GlobalNav() {
   }
 
   // Don't show full nav if not authenticated (unless on client/public pages)
-  if (!loading && !user && !isClient) {
+  const clientPublicRoutes = ['/my-reports'];
+  const isClientPublicRoute = clientPublicRoutes.some(r => location.pathname.startsWith(r));
+  if (!loading && !user && !isClient && !isClientPublicRoute) {
     return null;
+  }
+
+  // Show client nav for unauthenticated users on client public routes
+  if (!loading && !user && !isClient && isClientPublicRoute) {
+    if (isMobile) return <ClientMobileNav />;
+    return <ClientDesktopNav />;
   }
 
   // Client-specific navigation
@@ -167,6 +175,19 @@ const drawerLinks: DrawerLink[] = [
   { to: '/privacy', label: 'Privacy Policy', icon: <Shield className="h-5 w-5" /> },
   { to: '/admin', label: 'Admin', icon: <Settings className="h-5 w-5" />, adminOnly: true },
 ];
+
+function MobileSignOutButton() {
+  const { signOut } = useAuth();
+  return (
+    <button
+      onClick={() => signOut()}
+      className="flex items-center gap-3 px-4 py-3 mx-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors min-h-[44px] w-[calc(100%-1rem)]"
+    >
+      <LogOut className="h-5 w-5" />
+      <span className="flex-1 text-left">Sign Out</span>
+    </button>
+  );
+}
 
 function MobileNav({ isAdmin }: { isAdmin: boolean }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -283,6 +304,11 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </Link>
                 ))}
+
+                {/* Sign Out */}
+                <div className="border-t border-border mt-2 pt-2">
+                  <MobileSignOutButton />
+                </div>
               </div>
             </motion.div>
           </>
