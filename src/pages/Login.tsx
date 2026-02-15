@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { Compass, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
+// Note: "Remember me" checkbox removed — Supabase session persistence is automatic
 import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
@@ -16,7 +17,7 @@ const Login = () => {
   const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -120,17 +121,7 @@ const Login = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="remember"
-                    checked={rememberMe}
-                    onCheckedChange={(c) => setRememberMe(c === true)}
-                  />
-                  <Label htmlFor="remember" className="text-sm font-normal text-muted-foreground">
-                    Remember me
-                  </Label>
-                </div>
+              <div className="flex items-center justify-end">
                 <Link to="/forgot-password" className="text-sm text-primary hover:underline">
                   Forgot password?
                 </Link>

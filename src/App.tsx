@@ -12,6 +12,7 @@ import { GlobalNav, MobileNavSpacer } from "@/components/GlobalNav";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { PageTransition } from "@/components/PageTransition";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import MarketProfiles from "./pages/MarketProfiles";
 import MarketScenarios from "./pages/MarketScenarios";
@@ -132,21 +133,23 @@ function AppLayout() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <ClientModeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div className="min-h-screen flex flex-col">
-              <AppLayout />
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ClientModeProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ClientModeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <div className="min-h-screen flex flex-col">
+                <AppLayout />
+              </div>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ClientModeProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

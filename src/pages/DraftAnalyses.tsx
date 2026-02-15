@@ -232,10 +232,21 @@ const DraftAnalyses = () => {
           </div>
         )}
 
-        {/* Swipe hint for mobile */}
-        <p className="text-xs text-muted-foreground mb-4 sm:hidden">
-          ← Swipe left to delete
-        </p>
+        {/* Swipe hint for mobile - dismiss after first use */}
+        {sessions.length > 0 && !localStorage.getItem('swipe_hint_dismissed') && (
+          <p 
+            className="text-xs text-muted-foreground mb-4 sm:hidden cursor-pointer"
+            onClick={() => {
+              localStorage.setItem('swipe_hint_dismissed', 'true');
+              // Force re-render by using a state update in the parent scope isn't needed—
+              // the element hides on next render cycle
+              (document.querySelector('[data-swipe-hint]') as HTMLElement)?.remove();
+            }}
+            data-swipe-hint
+          >
+            ← Swipe left to delete · <span className="underline">Dismiss</span>
+          </p>
+        )}
 
         <AnimatePresence mode="wait">
           {filteredSessions.length === 0 && sessions.length === 0 ? (

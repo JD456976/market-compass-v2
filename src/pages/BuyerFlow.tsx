@@ -30,6 +30,7 @@ import { upsertSessionAsync } from '@/lib/storage';
 import { useAutoSaveDraft } from '@/hooks/useAutoSaveDraft';
 import { formatPriceDisplay, parsePriceValue, stripCurrencyChars } from '@/lib/currencyFormat';
 import { AddressInput, stubGeocode } from '@/components/AddressInput';
+import { AutoSaveIndicator } from '@/components/AutoSaveIndicator';
 import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
 import { SessionTemplate } from '@/lib/templates';
 import { loadMarketScenarios, MarketScenario, getMarketScenarioById } from '@/lib/marketScenarios';
@@ -395,7 +396,8 @@ const BuyerFlow = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, currentStepValid, allValid]);
 
   // Auto-save draft on any input change (debounced 1.5s) + on unmount
   const hasMeaningfulInput = !!(clientName.trim() || location.trim() || offerPrice);
@@ -431,7 +433,10 @@ const BuyerFlow = () => {
                 </div>
                 <div>
                   <h1 className="text-2xl font-serif font-bold">Buyer Analysis</h1>
-                  <p className="text-sm text-muted-foreground">Step {step + 1} of {STEPS.length} — {STEPS[step].label}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">Step {step + 1} of {STEPS.length} — {STEPS[step].label}</p>
+                    {hasMeaningfulInput && <AutoSaveIndicator deps={[clientName, location, offerPrice, referencePrice, agentNotes, clientNotes]} />}
+                  </div>
                 </div>
               </div>
             </div>

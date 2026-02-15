@@ -9,8 +9,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
   Home, FolderOpen, Send, Settings, Compass, Sparkles, Menu,
   TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield, Settings as SettingsIcon,
-  LayoutDashboard, MessageSquare
+  LayoutDashboard, MessageSquare, LogOut
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -294,6 +295,8 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 // ─── Desktop Nav (unchanged) ─────────────────────────────────────────────────
 
 function DesktopNav({ items }: { items: NavItem[] }) {
+  const { signOut } = useAuth();
+
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4">
@@ -317,6 +320,15 @@ function DesktopNav({ items }: { items: NavItem[] }) {
                 <span>{item.label}</span>
               </NavLink>
             ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => signOut()}
+              className="ml-2 text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4 mr-1.5" />
+              Sign Out
+            </Button>
           </nav>
         </div>
       </div>
