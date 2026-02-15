@@ -27,13 +27,16 @@ const staggerContainer = {
 
 const Index = () => {
   const { sessions: drafts } = useDraftSessions();
-  const { activeSessions: shared } = useSharedSessions();
+  const { activeSessions: shared, sessions: allShared } = useSharedSessions();
   const { user } = useAuth();
   const { isAgent } = useUserRole();
   const { isProfessionalUser } = useProfessionalAccess();
   const [proBannerDismissed, setProBannerDismissed] = useState(
     () => sessionStorage.getItem('pro_banner_dismissed') === 'true'
   );
+
+  // Progressive disclosure: has the user created at least one report?
+  const hasCreatedReport = drafts.length > 0 || allShared.length > 0;
 
   return (
     <div className="bg-background" role="main" aria-label="Market Compass Home">
@@ -129,6 +132,27 @@ const Index = () => {
           </motion.div>
         </motion.div>
 
+        {/* Post-onboarding CTA for first-time users */}
+        {!hasCreatedReport && (
+          <motion.div
+            className="max-w-4xl mx-auto mb-12 text-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Card className="border-dashed border-2 border-primary/20 bg-primary/5">
+              <CardContent className="py-6">
+                <p className="text-sm font-medium text-foreground mb-1">
+                  👋 Ready to get started?
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Choose a Seller or Buyer report above to create your first analysis. It only takes a few minutes.
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Professional Plan Entry Point */}
         {!isProfessionalUser && !proBannerDismissed && (
           <motion.div
@@ -171,87 +195,113 @@ const Index = () => {
           </motion.div>
         )}
 
-        {/* Secondary Links - Session Management */}
+        {/* Your Reports */}
         <motion.div 
           className="max-w-4xl mx-auto mb-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <h3 className="text-sm font-sans font-medium text-muted-foreground mb-3 px-1">Session Management</h3>
+          <h3 className="text-sm font-sans font-medium text-muted-foreground mb-3 px-1">Your Reports</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Link to="/drafts" className="block">
-              <Button variant="outline" size="lg" className="w-full justify-start">
-                <FolderOpen className="mr-2 h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Draft Analyses</span>
-                {drafts.length > 0 && (
-                  <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">{drafts.length}</Badge>
-                )}
+              <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
+                <span className="flex items-center w-full">
+                  <FolderOpen className="mr-2 h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Draft Analyses</span>
+                  {drafts.length > 0 && (
+                    <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">{drafts.length}</Badge>
+                  )}
+                </span>
+                <span className="text-[10px] text-muted-foreground font-normal pl-6">In-progress reports not yet shared</span>
               </Button>
             </Link>
             <Link to="/templates" className="block">
-              <Button variant="outline" size="lg" className="w-full justify-start">
-                <FileText className="mr-2 h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Templates</span>
+              <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
+                <span className="flex items-center w-full">
+                  <FileText className="mr-2 h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Templates</span>
+                </span>
+                <span className="text-[10px] text-muted-foreground font-normal pl-6">Reusable presets for common scenarios</span>
               </Button>
             </Link>
             <Link to="/shared-reports" className="block">
-              <Button variant="outline" size="lg" className="w-full justify-start">
-                <Send className="mr-2 h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Shared Reports</span>
-                {shared.length > 0 && (
-                  <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">{shared.length}</Badge>
-                )}
+              <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
+                <span className="flex items-center w-full">
+                  <Send className="mr-2 h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Shared Reports</span>
+                  {shared.length > 0 && (
+                    <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">{shared.length}</Badge>
+                  )}
+                </span>
+                <span className="text-[10px] text-muted-foreground font-normal pl-6">Reports sent to clients</span>
               </Button>
             </Link>
             {user && isAgent && (
               <Link to="/clients" className="block">
-                <Button variant="outline" size="lg" className="w-full justify-start">
-                  <UserPlus className="mr-2 h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">Client Management</span>
+                <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
+                  <span className="flex items-center w-full">
+                    <UserPlus className="mr-2 h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">Client Management</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-normal pl-6">Manage and invite your clients</span>
                 </Button>
               </Link>
             )}
             {user && isAgent && (
               <Link to="/documents" className="block">
-                <Button variant="outline" size="lg" className="w-full justify-start">
-                  <Upload className="mr-2 h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">Property Documents</span>
+                <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
+                  <span className="flex items-center w-full">
+                    <Upload className="mr-2 h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">Property Documents</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-normal pl-6">Upload and review MLS sheets</span>
                 </Button>
               </Link>
             )}
           </div>
         </motion.div>
 
-        {/* Market & Settings */}
-        <motion.div 
-          className="max-w-4xl mx-auto mb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <h3 className="text-sm font-sans font-medium text-muted-foreground mb-3 px-1">Market & Settings</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Link to="/market-scenarios" className="block">
-              <Button variant="outline" size="lg" className="w-full justify-start">
-                <TrendingUp className="mr-2 h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Market Scenarios</span>
-              </Button>
-            </Link>
-            <Link to="/market-data" className="block">
-              <Button variant="outline" size="lg" className="w-full justify-start">
-                <Database className="mr-2 h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Market Data</span>
-              </Button>
-            </Link>
-            <Link to="/agent-profile" className="block">
-              <Button variant="outline" size="lg" className="w-full justify-start">
-                <User className="mr-2 h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Agent Profile</span>
-              </Button>
-            </Link>
-          </div>
-        </motion.div>
+        {/* Market & Settings — hidden until first report for progressive disclosure */}
+        {hasCreatedReport && (
+          <motion.div 
+            className="max-w-4xl mx-auto mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            <h3 className="text-sm font-sans font-medium text-muted-foreground mb-3 px-1">Market & Settings</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Link to="/market-scenarios" className="block">
+                <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
+                  <span className="flex items-center w-full">
+                    <TrendingUp className="mr-2 h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">Market Scenarios</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-normal pl-6">Define local market conditions</span>
+                </Button>
+              </Link>
+              <Link to="/market-data" className="block">
+                <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
+                  <span className="flex items-center w-full">
+                    <Database className="mr-2 h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">Market Data</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-normal pl-6">Area-level pricing and trend profiles</span>
+                </Button>
+              </Link>
+              <Link to="/agent-profile" className="block">
+                <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
+                  <span className="flex items-center w-full">
+                    <User className="mr-2 h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">Agent Profile</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-normal pl-6">Your branding and contact info</span>
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        )}
 
         {/* Help & Info */}
         <motion.div 
@@ -263,9 +313,12 @@ const Index = () => {
           <h3 className="text-sm font-sans font-medium text-muted-foreground mb-3 px-1">Help & Info</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Link to="/methodology" className="block">
-              <Button variant="outline" size="lg" className="w-full justify-start">
-                <BookOpen className="mr-2 h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Data & Methodology</span>
+              <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
+                <span className="flex items-center w-full">
+                  <BookOpen className="mr-2 h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Data & Methodology</span>
+                </span>
+                <span className="text-[10px] text-muted-foreground font-normal pl-6">How scores and likelihoods are calculated</span>
               </Button>
             </Link>
             <OnboardingTrigger />
