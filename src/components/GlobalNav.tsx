@@ -158,7 +158,7 @@ interface DrawerLink {
 
 const drawerLinks: DrawerLink[] = [
   { to: '/templates', label: 'Templates', icon: <FileText className="h-5 w-5" /> },
-  { to: '/market-scenarios', label: 'Market Scenarios', icon: <TrendingUp className="h-5 w-5" /> },
+  { to: '/market-intelligence', label: 'Market Intelligence', icon: <TrendingUp className="h-5 w-5" /> },
   { to: '/market-data', label: 'Market Data', icon: <Database className="h-5 w-5" /> },
   { to: '/agent-profile', label: 'Agent Profile', icon: <User className="h-5 w-5" /> },
   { to: '/methodology', label: 'Data & Methodology', icon: <BookOpen className="h-5 w-5" /> },

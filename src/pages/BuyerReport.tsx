@@ -63,7 +63,7 @@ import { openScenarioExplorer } from '@/lib/scenarioExplorerEvents';
 import { BuyerInputs } from '@/types';
 import { HistoricalTrends } from '@/components/report/HistoricalTrends';
 import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore';
-import { BuyerCompetitiveAnalysis } from '@/components/report/CompetitiveAnalysis';
+// CompetitiveAnalysis merged into CompetingOffersCard
 import { SuccessPrediction } from '@/components/report/SuccessPrediction';
 import { PropertyFactorsCard } from '@/components/report/PropertyFactorsCard';
 import { PropertyDetailsCard } from '@/components/report/PropertyDetailsCard';
@@ -686,8 +686,8 @@ const BuyerReport = () => {
             {/* Improvement Panel */}
             <ImprovementPanel type="buyer" session={session} />
 
-            {/* Competing Offer Simulator */}
-            <BuyerCompetingOffersCard inputs={inputs} snapshot={marketSnapshot?.snapshot} className="pdf-exclude" />
+            {/* Competitive Intelligence */}
+            <BuyerCompetingOffersCard inputs={inputs} snapshot={marketSnapshot?.snapshot} isGenericBaseline={marketSnapshot?.isGenericBaseline} className="pdf-exclude" />
 
             {/* Seller Motivation Profile */}
             <SellerMotivationCard inputs={inputs} snapshot={marketSnapshot?.snapshot} />
@@ -838,16 +838,6 @@ const BuyerReport = () => {
             </MetricCalloutGrid>
 
             <TemplateSection show={['executive']}>
-            {/* Competitive Analysis */}
-            {marketSnapshot && (
-              <BuyerCompetitiveAnalysis
-                session={session}
-                snapshot={marketSnapshot.snapshot}
-                isGenericBaseline={marketSnapshot.isGenericBaseline}
-                acceptanceLikelihood={acceptanceLikelihood}
-              />
-            )}
-
             {/* How This Analysis Is Formed - Collapsible */}
             <AnalysisMethodology />
             </TemplateSection>

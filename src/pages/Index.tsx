@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Upload, Sparkles } from 'lucide-react';
+import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Upload, Sparkles, Zap } from 'lucide-react';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
 import { useDraftSessions, useSharedSessions } from '@/hooks/useSessions';
 import { useAuth } from '@/contexts/AuthContext';
@@ -89,6 +89,24 @@ const Index = () => {
           initial="initial"
           animate="animate"
         >
+          {/* Quick Report CTA */}
+          <motion.div variants={fadeInUp} className="md:col-span-2">
+            <Link to="/quick-report" className="block">
+              <Card className="cursor-pointer group border-2 border-dashed border-accent/30 hover:border-accent/50 bg-accent/5">
+                <CardContent className="flex items-center gap-4 py-4">
+                  <div className="p-2.5 rounded-full bg-accent/10">
+                    <Zap className="h-5 w-5 text-accent" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">Quick Report</p>
+                    <p className="text-xs text-muted-foreground">Address + price → instant analysis in 30 seconds</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                </CardContent>
+              </Card>
+            </Link>
+          </motion.div>
+
           <motion.div variants={fadeInUp}>
             <Link to="/seller" className="block h-full">
               <Card className="h-full cursor-pointer group border-2 border-transparent hover:border-accent/30">
@@ -295,13 +313,13 @@ const Index = () => {
           >
             <h3 className="text-sm font-sans font-medium text-muted-foreground mb-3 px-1">Market & Settings</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Link to="/market-scenarios" className="block">
+              <Link to="/market-intelligence" className="block">
                 <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
                   <span className="flex items-center w-full">
                     <TrendingUp className="mr-2 h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">Market Scenarios</span>
+                    <span className="truncate">Market Intelligence</span>
                   </span>
-                  <span className="text-[10px] text-muted-foreground font-normal pl-6">Define local market conditions</span>
+                  <span className="text-[10px] text-muted-foreground font-normal pl-6">Scenarios & location profiles</span>
                 </Button>
               </Link>
               <Link to="/market-data" className="block">
