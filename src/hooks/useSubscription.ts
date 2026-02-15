@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { friendlyErrorMessage } from '@/lib/requestHelpers';
 
 export type SubscriptionStatus = 'none' | 'trial' | 'active' | 'expired' | 'canceled';
 
@@ -41,7 +42,7 @@ export function useSubscription() {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching subscription:', error);
+      // Silent fallback — keep status as 'none' rather than showing raw DB errors
       setState(prev => ({ ...prev, loading: false }));
       return;
     }
@@ -107,7 +108,6 @@ export function useSubscription() {
       }, { onConflict: 'user_id' });
 
     if (error) {
-      console.error('Error starting trial:', error);
       return false;
     }
 

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Mic, MicOff, FileUp, Loader2, Sparkles, X, Info, Camera } from 'lucide-react';
+import { LoadingEscapeHatch } from '@/components/LoadingEscapeHatch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog,
@@ -244,8 +245,8 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
         address: addressParts.join(', ') || undefined,
         propertyType: mappedPropertyType,
         condition: mappedCondition,
-        listPrice: extraction.listPrice?.value ? parseInt(extraction.listPrice.value.replace(/,/g, '')) : undefined,
-        daysOnMarket: extraction.daysOnMarket?.value ? parseInt(extraction.daysOnMarket.value) : undefined,
+        listPrice: extraction.listPrice?.value ? (isNaN(parseInt(extraction.listPrice.value.replace(/,/g, ''))) ? undefined : parseInt(extraction.listPrice.value.replace(/,/g, ''))) : undefined,
+        daysOnMarket: extraction.daysOnMarket?.value ? (isNaN(parseInt(extraction.daysOnMarket.value)) ? undefined : parseInt(extraction.daysOnMarket.value)) : undefined,
         notes: undefined, // No longer stuffing MLS details into notes
         factors: propertyFactors.length > 0 ? propertyFactors : undefined,
       };
@@ -279,13 +280,15 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
       const priceMatch = text.match(/\$?\s*([\d,]+)\s*(?:thousand|k)/i) || text.match(/\$\s*([\d,]+)/);
       if (priceMatch) {
         let price = parseInt(priceMatch[1].replace(/,/g, ''));
-        if (/thousand|k/i.test(text) && price < 10000) price *= 1000;
-        extracted.listPrice = price;
+        if (!isNaN(price)) {
+          if (/thousand|k/i.test(text) && price < 10000) price *= 1000;
+          extracted.listPrice = price;
+        }
       }
 
       // Extract days on market
       const domMatch = text.match(/(\d+)\s*(?:days?\s*on\s*market|dom|days?\s*listed)/i);
-      if (domMatch) extracted.daysOnMarket = parseInt(domMatch[1]);
+      if (domMatch) { const d = parseInt(domMatch[1]); if (!isNaN(d)) extracted.daysOnMarket = d; }
 
       // Extract property type
       if (/single\s*family|single-family/i.test(lower)) extracted.propertyType = 'SFH';
@@ -455,9 +458,17 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
         )}
 
         {isProcessing && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-accent/10 border border-accent/20">
-            <Loader2 className="h-4 w-4 animate-spin text-accent" />
-            <p className="text-xs text-accent font-medium">Extracting listing data...</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-accent/10 border border-accent/20">
+              <Loader2 className="h-4 w-4 animate-spin text-accent" />
+              <p className="text-xs text-accent font-medium">Extracting listing data...</p>
+            </div>
+            <LoadingEscapeHatch
+              isLoading={isProcessing}
+              delaySeconds={10}
+              onCancel={() => setIsProcessing(false)}
+              message="Extraction is taking longer than expected."
+            />
           </div>
         )}
       </CardContent>

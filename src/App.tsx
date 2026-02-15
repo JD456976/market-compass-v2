@@ -13,6 +13,7 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { PageTransition } from "@/components/PageTransition";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import Index from "./pages/Index";
 import MarketProfiles from "./pages/MarketProfiles";
 import MarketScenarios from "./pages/MarketScenarios";
@@ -140,6 +141,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <div className="min-h-screen flex flex-col">
+                <OfflineBanner />
                 <AppLayout />
               </div>
             </BrowserRouter>
