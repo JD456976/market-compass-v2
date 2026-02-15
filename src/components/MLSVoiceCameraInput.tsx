@@ -2,8 +2,18 @@ import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Mic, MicOff, FileUp, Loader2, Sparkles, X, Info } from 'lucide-react';
+import { Mic, MicOff, FileUp, Loader2, Sparkles, X, Info, Camera } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { extractTextFromPDF } from '@/lib/pdfExtract';
@@ -35,8 +45,26 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef('');
+  const [showMicDisclosure, setShowMicDisclosure] = useState(false);
 
-  const startRecording = useCallback(async () => {
+  const MIC_DISCLOSURE_KEY = 'mc_mic_disclosure_accepted';
+
+  const handleVoiceClick = useCallback(() => {
+    const accepted = localStorage.getItem(MIC_DISCLOSURE_KEY);
+    if (accepted === 'true') {
+      startRecordingInternal();
+    } else {
+      setShowMicDisclosure(true);
+    }
+  }, []);
+
+  const confirmMicAccess = useCallback(() => {
+    setShowMicDisclosure(false);
+    localStorage.setItem(MIC_DISCLOSURE_KEY, 'true');
+    startRecordingInternal();
+  }, []);
+
+  const startRecordingInternal = useCallback(async () => {
     try {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (!SpeechRecognition) {
@@ -349,7 +377,7 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
             variant={isRecording ? 'destructive' : 'outline'}
             size="sm"
             className="flex-1 min-h-[44px]"
-            onClick={isRecording ? stopRecording : startRecording}
+            onClick={isRecording ? stopRecording : handleVoiceClick}
             disabled={isProcessing}
           >
             {isRecording ? (
@@ -433,6 +461,31 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
           </div>
         )}
       </CardContent>
+
+      {/* Microphone/Camera purpose disclosure — App Store compliance */}
+      <AlertDialog open={showMicDisclosure} onOpenChange={(o) => { if (!o) setShowMicDisclosure(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Mic className="h-5 w-5 text-primary" />
+              </div>
+              Microphone Access
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-relaxed">
+              Market Compass uses your microphone to transcribe property details via voice dictation. Speech is processed locally on your device — no audio is sent to any server.
+              <br /><br />
+              <span className="text-xs text-muted-foreground">
+                You can revoke microphone access anytime in your device settings. Voice input is entirely optional — you can always type manually.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmMicAccess}>Allow Microphone</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
