@@ -195,7 +195,7 @@ export function AdminToolsPanel() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Email</Label>
-              <Input value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="reviewer@example.com" className="h-9" />
+              <Input value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="name@company.com" className="h-9" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Password</Label>

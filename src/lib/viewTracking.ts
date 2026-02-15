@@ -65,7 +65,6 @@ export async function logSharedReportView(
 ): Promise<boolean> {
   // Check cooldown first
   if (isWithinCooldown(reportId)) {
-    console.log('[ViewTracking] Within cooldown, skipping view log');
     return false;
   }
 
@@ -91,9 +90,8 @@ export async function logSharedReportView(
       return false;
     }
 
-    // Record cooldown after successful insert
     recordCooldown(reportId);
-    console.log('[ViewTracking] View logged successfully');
+    return true;
     return true;
   } catch (err) {
     console.error('[ViewTracking] Error logging view:', err);

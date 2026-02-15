@@ -29,7 +29,7 @@ export function useAutoSaveDraft(
     try {
       const session = buildSessionRef.current();
       upsertSessionAsync(session)
-        .then(() => console.log('Auto-saved draft:', session.id))
+        .then(() => {})
         .catch(() => {})
         .finally(() => { savingRef.current = false; });
     } catch {

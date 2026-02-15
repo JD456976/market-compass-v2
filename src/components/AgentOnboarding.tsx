@@ -205,10 +205,13 @@ export const OnboardingTrigger = forwardRef<HTMLButtonElement, { className?: str
           variant="outline" 
           size="lg"
           onClick={() => setShowOnboarding(true)}
-          className={`min-w-[160px] ${className || ''}`}
+          className={`w-full justify-start flex-col items-start h-auto py-3 gap-0.5 ${className || ''}`}
         >
-          <Compass className="mr-2 h-4 w-4" />
-          How It Works
+          <span className="flex items-center w-full">
+            <Compass className="mr-2 h-4 w-4 flex-shrink-0" />
+            <span className="truncate">How It Works</span>
+          </span>
+          <span className="text-[10px] text-muted-foreground font-normal pl-6">Tour the key features and workflow</span>
         </Button>
         {showOnboarding && (
           <AgentOnboarding 

@@ -28,9 +28,9 @@ interface AddressInputProps {
 }
 
 /**
- * Stub geocoder: extracts town/zip from address string.
+ * Parse address components: extracts town/zip from address string.
  */
-export function stubGeocode(address: string): AddressData {
+export function parseAddressComponents(address: string): AddressData {
   const parts = address.split(',').map(p => p.trim());
   
   let town = '';
@@ -127,7 +127,7 @@ export function AddressInput({
     onFullAddressChange(value);
     
     if (value.trim()) {
-      const geocoded = stubGeocode(value);
+      const geocoded = parseAddressComponents(value);
       if (geocoded.town && geocoded.town !== value) {
         onTownChange(geocoded.town);
       }

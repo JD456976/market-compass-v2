@@ -115,7 +115,7 @@ const ClientComparisonReport = () => {
 
   useEffect(() => {
     if (!sessionIdA || !sessionIdB) {
-      navigate('/saved-sessions');
+      navigate('/drafts');
       return;
     }
 
@@ -123,7 +123,7 @@ const ClientComparisonReport = () => {
     const loadedB = getSessionById(sessionIdB);
 
     if (!loadedA || !loadedB) {
-      navigate('/saved-sessions');
+      navigate('/drafts');
       return;
     }
 
