@@ -7,6 +7,154 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/** Extract a number from text, returning undefined if not found */
+function extractNumber(text: string, patterns: RegExp[]): number | undefined {
+  for (const p of patterns) {
+    const m = text.match(p);
+    if (m) {
+      const val = parseFloat(m[1].replace(/,/g, ""));
+      if (!isNaN(val)) return val;
+    }
+  }
+  return undefined;
+}
+
+/** Extract first match string */
+function extractString(text: string, patterns: RegExp[]): string | undefined {
+  for (const p of patterns) {
+    const m = text.match(p);
+    if (m && m[1]?.trim()) return m[1].trim();
+  }
+  return undefined;
+}
+
+/** Deterministic property data extraction from HTML text */
+function extractListingData(html: string, hostname: string) {
+  // Strip scripts/styles, get text
+  const text = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Also try JSON-LD structured data
+  const jsonLdMatches = html.match(/<script[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
+  let jsonLd: any = {};
+  for (const block of jsonLdMatches) {
+    try {
+      const content = block.replace(/<script[^>]*>/i, "").replace(/<\/script>/i, "").trim();
+      const parsed = JSON.parse(content);
+      const items = Array.isArray(parsed) ? parsed : [parsed];
+      for (const item of items) {
+        if (item["@type"] === "SingleFamilyResidence" || item["@type"] === "Product" || item["@type"] === "RealEstateListing" || item["@type"] === "Residence" || item["@type"] === "Place") {
+          jsonLd = { ...jsonLd, ...item };
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  // Address
+  let address = jsonLd?.address?.streetAddress || jsonLd?.name;
+  if (!address) {
+    address = extractString(text, [
+      /(\d+\s+[A-Z][a-zA-Z]+(?:\s+[A-Za-z]+){1,4}(?:,\s*(?:Unit|Apt|#)\s*\S+)?)\s*,\s*[A-Z][a-z]/,
+    ]);
+  }
+
+  // Location (City, State ZIP)
+  let location = undefined;
+  if (jsonLd?.address) {
+    const a = jsonLd.address;
+    location = [a.addressLocality, a.addressRegion, a.postalCode].filter(Boolean).join(", ");
+  }
+  if (!location) {
+    location = extractString(text, [
+      /([A-Z][a-z]+(?:\s[A-Z][a-z]+)*,\s*[A-Z]{2}\s+\d{5})/,
+    ]);
+  }
+
+  // Price
+  let listPrice = jsonLd?.offers?.price ? parseFloat(jsonLd.offers.price) : undefined;
+  if (!listPrice) {
+    listPrice = extractNumber(text, [
+      /\$\s*([\d,]+(?:\.\d+)?)\s*/,
+      /(?:list|asking|price|sale)\s*(?:price)?\s*:?\s*\$?\s*([\d,]+)/i,
+    ]);
+  }
+
+  // Bedrooms
+  let bedrooms = jsonLd?.numberOfRooms ? parseInt(jsonLd.numberOfRooms) : undefined;
+  if (!bedrooms) {
+    bedrooms = extractNumber(text, [
+      /(\d+)\s*(?:bed|br|bedroom)/i,
+      /(?:bed|br|bedroom)s?\s*:?\s*(\d+)/i,
+    ]);
+  }
+
+  // Bathrooms
+  let bathrooms = extractNumber(text, [
+    /(\d+(?:\.\d+)?)\s*(?:bath|ba|bathroom)/i,
+    /(?:bath|ba|bathroom)s?\s*:?\s*(\d+(?:\.\d+)?)/i,
+  ]);
+
+  // Square feet
+  let squareFeet = jsonLd?.floorSize?.value ? parseFloat(jsonLd.floorSize.value) : undefined;
+  if (!squareFeet) {
+    squareFeet = extractNumber(text, [
+      /([\d,]+)\s*(?:sq\.?\s*ft|sqft|square\s*feet)/i,
+      /(?:living\s*area|floor\s*area|size)\s*:?\s*([\d,]+)/i,
+    ]);
+  }
+
+  // Year built
+  const yearBuilt = extractNumber(text, [
+    /(?:year\s*built|built\s*in|built)\s*:?\s*(\d{4})/i,
+  ]);
+
+  // Days on market
+  const daysOnMarket = extractNumber(text, [
+    /(\d+)\s*(?:days?\s*on\s*(?:market|zillow|redfin|realtor|trulia))/i,
+    /(?:DOM|days\s*on\s*market)\s*:?\s*(\d+)/i,
+  ]);
+
+  // Lot size
+  const lotSize = extractString(text, [
+    /(?:lot\s*size|lot)\s*:?\s*([\d,.]+\s*(?:acres?|sq\.?\s*ft|sqft))/i,
+  ]);
+
+  // Property type detection
+  let propertyType: string | undefined;
+  const textLower = text.toLowerCase();
+  if (/\bcondo(?:minium)?\b/i.test(textLower)) propertyType = "Condo";
+  else if (/\btownho(?:use|me)\b/i.test(textLower)) propertyType = "Townhouse";
+  else if (/\bmulti.?family\b/i.test(textLower)) propertyType = "Multi-Family";
+  else if (/\bsingle.?family\b/i.test(textLower)) propertyType = "SFH";
+
+  // Condition hints
+  let condition: string | undefined;
+  if (/\b(?:renovated|newly\s*renovated|gut\s*rehab)\b/i.test(textLower)) condition = "Renovated";
+  else if (/\b(?:updated|recently\s*updated|modern)\b/i.test(textLower)) condition = "Updated";
+  else if (/\b(?:dated|needs\s*work|fixer|as.is)\b/i.test(textLower)) condition = "Dated";
+  else if (/\b(?:well.maintained|maintained|good\s*condition|move.in\s*ready)\b/i.test(textLower)) condition = "Maintained";
+
+  // Build cleaned result
+  const result: Record<string, any> = {};
+  if (address) result.address = address;
+  if (location) result.location = location;
+  if (propertyType) result.propertyType = propertyType;
+  if (condition) result.condition = condition;
+  if (listPrice && listPrice > 1000) result.listPrice = listPrice;
+  if (daysOnMarket !== undefined) result.daysOnMarket = daysOnMarket;
+  if (bedrooms) result.bedrooms = bedrooms;
+  if (bathrooms) result.bathrooms = bathrooms;
+  if (squareFeet && squareFeet > 100) result.squareFeet = squareFeet;
+  if (yearBuilt && yearBuilt > 1600 && yearBuilt <= new Date().getFullYear()) result.yearBuilt = yearBuilt;
+  if (lotSize) result.lotSize = lotSize;
+
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -61,7 +209,6 @@ serve(async (req) => {
 
     console.log("Fetching listing URL:", url);
 
-    // Fetch the public page
     const pageResponse = await fetch(url.trim(), {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; MarketCompass/1.0)",
@@ -78,116 +225,28 @@ serve(async (req) => {
 
     const html = await pageResponse.text();
 
-    // Extract just the text content, strip scripts/styles, limit size
-    const textContent = html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .substring(0, 8000); // Limit to ~8k chars for AI processing
-
-    if (textContent.length < 100) {
+    if (html.length < 500) {
       return new Response(
         JSON.stringify({ error: "Could not extract meaningful content from this page. The site may require JavaScript or be blocking access." }),
         { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Use AI to extract structured data from the page text
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    // Deterministic regex + JSON-LD extraction (no AI)
+    const extracted = extractListingData(html, parsedUrl.hostname);
 
-    const aiResponse = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash-lite",
-          messages: [
-            {
-              role: "system",
-              content: `You extract property listing data from public real estate website text. Extract only publicly visible information. Be conservative — only extract fields you are confident about.`,
-            },
-            {
-              role: "user",
-              content: `Extract property listing data from this ${parsedUrl.hostname} page text:\n\n${textContent}`,
-            },
-          ],
-          tools: [
-            {
-              type: "function",
-              function: {
-                name: "extract_listing_data",
-                description: "Extract structured property listing data.",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    address: { type: "string", description: "Full property address" },
-                    location: { type: "string", description: "City, State ZIP" },
-                    propertyType: { type: "string", enum: ["SFH", "Condo", "Townhouse", "Multi-Family"] },
-                    condition: { type: "string", enum: ["Renovated", "Updated", "Maintained", "Dated"] },
-                    listPrice: { type: "number", description: "List/asking price" },
-                    daysOnMarket: { type: "number", description: "Days on market" },
-                    bedrooms: { type: "number" },
-                    bathrooms: { type: "number" },
-                    squareFeet: { type: "number" },
-                    yearBuilt: { type: "number" },
-                    lotSize: { type: "string" },
-                    notes: { type: "string", description: "Key property features or details (brief)" },
-                  },
-                  additionalProperties: false,
-                },
-              },
-            },
-          ],
-          tool_choice: { type: "function", function: { name: "extract_listing_data" } },
-        }),
-      }
-    );
-
-    if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add credits to your workspace, or use the Paste tab instead." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const errText = await aiResponse.text();
-      console.error("AI gateway error:", aiResponse.status, errText);
-      throw new Error(`AI extraction failed: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-
-    if (toolCall?.function?.arguments) {
-      const extracted = JSON.parse(toolCall.function.arguments);
-      const cleaned: Record<string, any> = {};
-      for (const [key, value] of Object.entries(extracted)) {
-        if (value !== null && value !== undefined && value !== "") {
-          cleaned[key] = value;
-        }
-      }
-
-      console.log("Extracted fields:", Object.keys(cleaned).length);
+    if (Object.keys(extracted).length === 0) {
       return new Response(
-        JSON.stringify({ extracted: cleaned, source: parsedUrl.hostname }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Could not extract listing details. The site may require JavaScript rendering. Try the Paste tab instead." }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    throw new Error("Could not parse AI response");
+    console.log("Extracted fields:", Object.keys(extracted).length);
+    return new Response(
+      JSON.stringify({ extracted, source: parsedUrl.hostname }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (e) {
     console.error("scrape-listing-url error:", e);
     const msg = e instanceof Error ? e.message : "Unknown error";

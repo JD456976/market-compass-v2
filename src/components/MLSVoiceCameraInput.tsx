@@ -486,13 +486,9 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
       }
     } catch (err: any) {
       console.error('URL scrape error:', err);
-      const errMsg = err?.message || err?.context?.message || 'The site may be blocking access. Try pasting the listing details instead.';
-      const isCredits = typeof errMsg === 'string' && (errMsg.includes('credits') || errMsg.includes('402'));
       toast({
-        title: isCredits ? 'AI credits exhausted' : 'Could not fetch listing',
-        description: isCredits
-          ? 'URL extraction requires AI credits. Use the Paste tab for free, instant extraction.'
-          : errMsg,
+        title: 'Could not fetch listing',
+        description: err?.message || 'The site may be blocking access. Try pasting the listing details instead.',
         variant: 'destructive',
       });
     } finally {
