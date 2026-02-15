@@ -420,18 +420,18 @@ export default function Subscription() {
                     <h3 className="font-semibold">
                       {subStatus === 'active' ? 'Professional Plan' :
                        subStatus === 'trial' ? 'Professional Trial' :
-                       hasBetaAccess ? 'Beta Access' : 'Free Plan'}
+                       hasBetaAccess ? 'Early Access' : 'Free Plan'}
                     </h3>
                     <Badge variant="secondary" className={`text-xs ${hasFullAccess ? 'bg-accent/10 text-accent-foreground' : ''}`}>
                       {subStatus === 'active' ? 'Active' :
                        subStatus === 'trial' ? `${trialDaysRemaining} days left` :
-                       hasBetaAccess ? 'Beta' : 'Limited'}
+                       hasBetaAccess ? 'Active' : 'Limited'}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
                     {subStatus === 'active' ? 'All professional features are unlocked.' :
                      subStatus === 'trial' ? `Your free trial ends ${trialEndsAt ? new Date(trialEndsAt).toLocaleDateString() : 'soon'}. All features unlocked.` :
-                     hasBetaAccess ? 'All professional features are unlocked during beta.' :
+                     hasFullAccess ? 'All professional features are unlocked.' :
                      `${FREE_TIER_LIMITS.reportsPerMonth} reports/month on the free plan.`}
                   </p>
                 </div>

@@ -29,7 +29,7 @@ import { generateId } from '@/lib/storage';
 import { upsertSessionAsync } from '@/lib/storage';
 import { useAutoSaveDraft } from '@/hooks/useAutoSaveDraft';
 import { formatPriceDisplay, parsePriceValue, stripCurrencyChars } from '@/lib/currencyFormat';
-import { AddressInput, stubGeocode } from '@/components/AddressInput';
+import { AddressInput, parseAddressComponents } from '@/components/AddressInput';
 import { AutoSaveIndicator } from '@/components/AutoSaveIndicator';
 import { MarketScenarioTooltip } from '@/components/MarketScenarioTooltip';
 import { SessionTemplate } from '@/lib/templates';

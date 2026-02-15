@@ -69,6 +69,7 @@ export function FloatingActionButton() {
         style={{
           right: '16px',
           bottom: isMobile ? 'calc(80px + env(safe-area-inset-bottom))' : '24px',
+          pointerEvents: 'auto',
         }}
       >
         {/* First-use Tooltip */}
@@ -78,7 +79,7 @@ export function FloatingActionButton() {
               initial={{ opacity: 0, y: 8, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.95 }}
-              className="absolute bottom-[4.5rem] right-0 mb-2 whitespace-nowrap bg-foreground text-background text-xs font-medium px-3 py-2 rounded-lg shadow-lg pointer-events-none"
+              className="absolute bottom-[4.5rem] right-0 mb-2 whitespace-nowrap bg-foreground text-background text-xs font-medium px-3 py-2 rounded-lg shadow-lg pointer-events-none select-none"
             >
               Quick-create a new report
               <div className="absolute -bottom-1 right-5 w-2 h-2 bg-foreground rotate-45" />

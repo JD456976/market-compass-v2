@@ -250,13 +250,13 @@ const Index = () => {
             )}
             {user && isAgent && (
               <Link to="/documents" className="block">
-                <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
-                  <span className="flex items-center w-full">
-                    <Upload className="mr-2 h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">Property Documents</span>
-                  </span>
-                  <span className="text-[10px] text-muted-foreground font-normal pl-6">Upload and review MLS sheets</span>
-                </Button>
+              <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
+                <span className="flex items-center w-full">
+                  <Upload className="mr-2 h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Property Documents</span>
+                </span>
+                <span className="text-[10px] text-muted-foreground font-normal pl-6">Upload and review property data sheets</span>
+              </Button>
               </Link>
             )}
           </div>

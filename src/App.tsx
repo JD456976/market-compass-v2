@@ -91,9 +91,7 @@ function AppRoutes() {
           <Route path="/buyer" element={<RequireAuth><BuyerFlow /></RequireAuth>} />
           <Route path="/buyer/report" element={<RequireAuth><BuyerReport /></RequireAuth>} />
           <Route path="/drafts" element={<RequireAuth><DraftAnalyses /></RequireAuth>} />
-          <Route path="/saved-sessions" element={<RequireAuth><DraftAnalyses /></RequireAuth>} />
           <Route path="/shared-reports" element={<RequireAuth><SharedReports /></RequireAuth>} />
-          <Route path="/client-deliverables" element={<RequireAuth><SharedReports /></RequireAuth>} />
           <Route path="/compare" element={<RequireAuth><CompareSessions /></RequireAuth>} />
           <Route path="/compare/client" element={<RequireAuth><ClientComparisonReport /></RequireAuth>} />
           <Route path="/agent-profile" element={<RequireAuth><AgentProfile /></RequireAuth>} />

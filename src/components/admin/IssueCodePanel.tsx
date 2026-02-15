@@ -201,7 +201,7 @@ export function IssueCodePanel({ adminEmail, onClose, onCreated }: IssueCodePane
               <Input
                 id="email"
                 type="email"
-                placeholder="user@example.com"
+                placeholder="name@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
