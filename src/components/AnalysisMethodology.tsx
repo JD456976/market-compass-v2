@@ -31,9 +31,12 @@ export function AnalysisMethodology({ className = '' }: AnalysisMethodologyProps
               <li>Your selected strategy and timeframe</li>
               <li>Typical buyer and seller behavior in similar market conditions</li>
               <li>Local market pace patterns for the selected area</li>
+              <li>Current mortgage rates from federal economic data (FRED)</li>
+              <li>Agent-reported field signals (showing traffic, offer deadlines, price changes)</li>
             </ul>
             <p className="text-xs text-muted-foreground pt-2 border-t border-border/50 leading-relaxed">
               This report does not use MLS data, predict outcomes, or replace professional judgment. 
+              Mortgage rate data is sourced from the Federal Reserve (FRED). 
               It is designed to support decision conversations by illustrating tradeoffs.
             </p>
           </div>

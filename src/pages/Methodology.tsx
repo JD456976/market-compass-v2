@@ -81,11 +81,27 @@ const Methodology = () => {
                     that provide baseline assumptions for demand, competition, and leverage.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-secondary/50">
+              <div className="p-4 rounded-xl bg-secondary/50">
                   <p className="font-medium mb-1">Transaction Inputs</p>
                   <p className="text-sm text-muted-foreground">
                     User-provided details about pricing, financing, contingencies, and timeline 
                     that are evaluated against market context.
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl bg-secondary/50">
+                  <p className="font-medium mb-1">FRED Economic Data</p>
+                  <p className="text-sm text-muted-foreground">
+                    The 30-year fixed mortgage rate is sourced from the Federal Reserve Economic 
+                    Data (FRED) API, published weekly by Freddie Mac. This provides real-time 
+                    rate context for buyer affordability analysis.
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl bg-secondary/50">
+                  <p className="font-medium mb-1">Agent-Reported Signals</p>
+                  <p className="text-sm text-muted-foreground">
+                    Agents can input real-time field intelligence — showing traffic levels, 
+                    offer deadlines, and price change history — that enriches the analysis 
+                    beyond static market data.
                   </p>
                 </div>
               </div>
@@ -111,8 +127,8 @@ const Methodology = () => {
                   <span><strong>Property Valuations</strong> — We do not provide appraisals, CMAs, or price recommendations</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-destructive font-bold">×</span>
-                  <span><strong>Live APIs</strong> — We do not fetch real-time data from external services</span>
+                  <span className="text-accent font-bold">✓</span>
+                  <span><strong>FRED API</strong> — We use publicly available Federal Reserve economic data for mortgage rate context</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-destructive font-bold">×</span>
@@ -136,6 +152,8 @@ const Methodology = () => {
                 <li><strong>Market Scenario</strong> baseline assumptions (demand, competition, leverage)</li>
                 <li><strong>Session Inputs</strong> such as financing type, contingencies, and timeline</li>
                 <li><strong>Market Snapshot</strong> data when available (median DOM, sale-to-list ratio)</li>
+                <li><strong>Agent-Reported Signals</strong> such as showing traffic, offer deadlines, and price changes</li>
+                <li><strong>Economic Indicators</strong> including current mortgage rates from FRED</li>
                 <li><strong>Optional Overrides</strong> that agents can apply for specific situations</li>
               </ol>
               <p className="text-muted-foreground leading-relaxed">
