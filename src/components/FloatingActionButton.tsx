@@ -134,6 +134,7 @@ export function FloatingActionButton() {
         <motion.button
           onClick={handleFabClick}
           whileTap={{ scale: 0.92 }}
+          aria-label={open ? 'Close quick actions' : 'Create new report'}
           className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
           style={{ boxShadow: '0 4px 14px hsl(var(--primary) / 0.35)' }}
         >
