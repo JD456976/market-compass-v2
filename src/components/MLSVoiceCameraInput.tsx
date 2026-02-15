@@ -2,9 +2,12 @@ import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Mic, MicOff, FileUp, Loader2, Sparkles, X, Info, Camera } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Mic, MicOff, FileUp, Loader2, Sparkles, X, Info, Camera, ClipboardPaste, Link2, ExternalLink } from 'lucide-react';
 import { LoadingEscapeHatch } from '@/components/LoadingEscapeHatch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,10 +46,13 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
   const [isProcessing, setIsProcessing] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [pastedText, setPastedText] = useState('');
+  const [listingUrl, setListingUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef('');
   const [showMicDisclosure, setShowMicDisclosure] = useState(false);
+  const [activeTab, setActiveTab] = useState('paste');
 
   const MIC_DISCLOSURE_KEY = 'mc_mic_disclosure_accepted';
 
@@ -362,65 +368,268 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
     } finally { setIsProcessing(false); }
   };
 
+  // =============================================
+  // PASTE-FROM-MLS: Use existing regex parser on clipboard text
+  // =============================================
+  const processPastedText = useCallback(() => {
+    if (!pastedText.trim()) return;
+    setIsProcessing(true);
+    try {
+      const extraction = parseMLSPINText(pastedText);
+      const confidence = getExtractionConfidence(extraction);
+
+      if (confidence.fieldsExtracted >= 3) {
+        const locationParts: string[] = [];
+        if (extraction.city?.value) locationParts.push(extraction.city.value);
+        if (extraction.state?.value) locationParts.push(extraction.state.value);
+        if (extraction.zip?.value) locationParts.push(extraction.zip.value);
+
+        const addressParts: string[] = [];
+        if (extraction.address?.value) addressParts.push(extraction.address.value);
+        if (extraction.city?.value) addressParts.push(extraction.city.value);
+        if (extraction.state?.value) addressParts.push(extraction.state.value);
+        if (extraction.zip?.value) addressParts.push(extraction.zip.value);
+
+        const propertyFactors: import('@/types').PropertyFactor[] = extraction.factors.map(f => ({
+          label: f.label, weight: f.weight, explanation: f.explanation,
+          evidence: f.evidence, confidence: f.confidence, source: f.source,
+        }));
+
+        const mlsDetails: Record<string, string> = {};
+        if (extraction.mlsNumber?.value) mlsDetails.mlsNumber = extraction.mlsNumber.value;
+        if (extraction.style?.value) mlsDetails.style = extraction.style.value;
+        if (extraction.bedrooms?.value) mlsDetails.bedrooms = extraction.bedrooms.value;
+        if (extraction.bathsFull?.value) mlsDetails.bathsFull = extraction.bathsFull.value;
+        if (extraction.squareFeet?.value) mlsDetails.squareFeet = extraction.squareFeet.value;
+        if (extraction.yearBuilt?.value) mlsDetails.yearBuilt = extraction.yearBuilt.value;
+        if (extraction.lotSize?.value) mlsDetails.lotSize = extraction.lotSize.value;
+        if (Object.keys(mlsDetails).length > 0) {
+          sessionStorage.setItem('current_mls_details', JSON.stringify(mlsDetails));
+        }
+
+        const data: MLSExtractedData = {
+          location: locationParts.join(', ') || undefined,
+          address: addressParts.join(', ') || undefined,
+          propertyType: mapPropertyType(extraction.propertyType?.value),
+          condition: mapCondition(extraction),
+          listPrice: extraction.listPrice?.value ? parseInt(extraction.listPrice.value.replace(/,/g, '')) || undefined : undefined,
+          daysOnMarket: extraction.daysOnMarket?.value ? parseInt(extraction.daysOnMarket.value) || undefined : undefined,
+          factors: propertyFactors.length > 0 ? propertyFactors : undefined,
+        };
+
+        onDataExtracted(data);
+        setPastedText('');
+        toast({
+          title: `${confidence.fieldsExtracted} fields extracted from pasted text`,
+          description: `Confidence: ${confidence.level} · ${confidence.highConfidenceCount} high-confidence fields. Review all data.`,
+        });
+      } else {
+        processTextInput(pastedText);
+        setPastedText('');
+      }
+    } catch {
+      toast({ title: 'Could not parse pasted text', description: 'Try pasting raw MLS listing data or use another import method.', variant: 'destructive' });
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [pastedText, onDataExtracted, toast]);
+
+  // =============================================
+  // URL INTAKE: Scrape public listing page
+  // =============================================
+  const processListingUrl = useCallback(async () => {
+    if (!listingUrl.trim()) return;
+
+    let cleanUrl = listingUrl.trim();
+    if (!cleanUrl.startsWith('http')) cleanUrl = 'https://' + cleanUrl;
+
+    try {
+      new URL(cleanUrl);
+    } catch {
+      toast({ title: 'Invalid URL', description: 'Please enter a valid listing URL.', variant: 'destructive' });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('scrape-listing-url', {
+        body: { url: cleanUrl },
+      });
+
+      if (error) throw error;
+      if (data?.error) {
+        toast({ title: 'Could not fetch listing', description: data.error, variant: 'destructive' });
+        return;
+      }
+
+      if (data?.extracted) {
+        const extracted = data.extracted;
+        const fieldCount = Object.keys(extracted).filter(k => extracted[k] !== undefined && extracted[k] !== null).length;
+
+        onDataExtracted({
+          location: extracted.location,
+          address: extracted.address,
+          propertyType: extracted.propertyType,
+          condition: extracted.condition,
+          listPrice: extracted.listPrice,
+          daysOnMarket: extracted.daysOnMarket,
+          notes: extracted.notes,
+        });
+
+        setListingUrl('');
+        toast({
+          title: `${fieldCount} fields extracted from ${data.source || 'listing'}`,
+          description: 'Review all imported data for accuracy before generating a report.',
+        });
+      } else {
+        toast({ title: 'No data found', description: 'Could not extract listing details from this URL.', variant: 'destructive' });
+      }
+    } catch (err) {
+      console.error('URL scrape error:', err);
+      toast({ title: 'Could not fetch listing', description: 'The site may be blocking access. Try pasting the listing details instead.', variant: 'destructive' });
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [listingUrl, onDataExtracted, toast]);
+
   return (
     <Card className="border-accent/20 mt-4">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Sparkles className="h-4 w-4 text-accent" />
           Smart MLS Import
-          <Badge variant="secondary" className="text-[10px]">AI</Badge>
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          Speak listing details or upload an MLS listing sheet to auto-fill fields.
+          Paste listing text, enter a URL, upload a PDF, or speak details to auto-fill.
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex gap-2">
-          <Button
-            variant={isRecording ? 'destructive' : 'outline'}
-            size="sm"
-            className="flex-1 min-h-[44px]"
-            onClick={isRecording ? stopRecording : handleVoiceClick}
-            disabled={isProcessing}
-          >
-            {isRecording ? (
-              <><MicOff className="h-4 w-4 mr-1.5" /> Stop Recording</>
-            ) : (
-              <><Mic className="h-4 w-4 mr-1.5" /> Voice Input</>
-            )}
-          </Button>
-          <div className="flex-1 relative">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-4 h-9">
+            <TabsTrigger value="paste" className="text-xs gap-1">
+              <ClipboardPaste className="h-3 w-3" /> Paste
+            </TabsTrigger>
+            <TabsTrigger value="url" className="text-xs gap-1">
+              <Link2 className="h-3 w-3" /> URL
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="text-xs gap-1">
+              <FileUp className="h-3 w-3" /> Upload
+            </TabsTrigger>
+            <TabsTrigger value="voice" className="text-xs gap-1">
+              <Mic className="h-3 w-3" /> Voice
+            </TabsTrigger>
+          </TabsList>
+
+          {/* PASTE TAB */}
+          <TabsContent value="paste" className="space-y-2 mt-3">
+            <Textarea
+              placeholder="Paste MLS listing details here...&#10;&#10;e.g. MLS# 73312456&#10;123 Main St, Norwood, MA 02062&#10;List Price: $549,000&#10;3BR 2BA · 1,850 sqft · Built 1965"
+              value={pastedText}
+              onChange={(e) => setPastedText(e.target.value)}
+              className="min-h-[100px] text-xs resize-none"
+              disabled={isProcessing}
+            />
             <Button
-              variant="outline"
+              size="sm"
+              onClick={processPastedText}
+              disabled={!pastedText.trim() || isProcessing}
+              className="w-full min-h-[44px]"
+            >
+              <ClipboardPaste className="h-4 w-4 mr-1.5" />
+              Extract Fields
+            </Button>
+            <p className="text-[10px] text-muted-foreground text-center">
+              Parsed locally — no data sent to any server. Works with any MLS format.
+            </p>
+          </TabsContent>
+
+          {/* URL TAB */}
+          <TabsContent value="url" className="space-y-2 mt-3">
+            <div className="flex gap-2">
+              <Input
+                type="url"
+                placeholder="https://zillow.com/homedetails/..."
+                value={listingUrl}
+                onChange={(e) => setListingUrl(e.target.value)}
+                className="text-xs"
+                disabled={isProcessing}
+              />
+              <Button
+                size="sm"
+                onClick={processListingUrl}
+                disabled={!listingUrl.trim() || isProcessing}
+                className="min-h-[44px] shrink-0"
+              >
+                <ExternalLink className="h-4 w-4 mr-1.5" />
+                Fetch
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {['Zillow', 'Redfin', 'Realtor.com', 'Trulia'].map(site => (
+                <Badge key={site} variant="secondary" className="text-[10px]">{site}</Badge>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground text-center">
+              Extracts publicly visible data only. Always review for accuracy.
+            </p>
+          </TabsContent>
+
+          {/* UPLOAD TAB */}
+          <TabsContent value="upload" className="space-y-2 mt-3">
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full min-h-[44px]"
+                onClick={handleFileClick}
+                disabled={isProcessing || isRecording}
+              >
+                <FileUp className="h-4 w-4 mr-1.5" /> Upload MLS PDF or Photo
+              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="absolute -top-1.5 -right-1.5 h-4 w-4 text-muted-foreground bg-background rounded-full cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[260px]">
+                    <p className="text-xs font-medium mb-1">Import MLS Listing Data</p>
+                    <p className="text-xs text-muted-foreground">Upload a PDF or photo of an MLS listing sheet. PDFs are parsed locally — no AI required. Photos use AI extraction. Always review imported data.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              capture="environment"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </TabsContent>
+
+          {/* VOICE TAB */}
+          <TabsContent value="voice" className="space-y-2 mt-3">
+            <Button
+              variant={isRecording ? 'destructive' : 'outline'}
               size="sm"
               className="w-full min-h-[44px]"
-              onClick={handleFileClick}
-              disabled={isProcessing || isRecording}
+              onClick={isRecording ? stopRecording : handleVoiceClick}
+              disabled={isProcessing}
             >
-              <FileUp className="h-4 w-4 mr-1.5" /> MLS PDF / Photo
+              {isRecording ? (
+                <><MicOff className="h-4 w-4 mr-1.5" /> Stop Recording</>
+              ) : (
+                <><Mic className="h-4 w-4 mr-1.5" /> Start Voice Input</>
+              )}
             </Button>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="absolute -top-1.5 -right-1.5 h-4 w-4 text-muted-foreground bg-background rounded-full cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-[260px]">
-                  <p className="text-xs font-medium mb-1">Import MLS Listing Data</p>
-                  <p className="text-xs text-muted-foreground">Upload a PDF or photo of an MLS listing sheet. Data is extracted locally and securely — no AI required for PDFs. Always review imported data for accuracy before generating a report.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,application/pdf"
-            capture="environment"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-        </div>
+            <p className="text-[10px] text-muted-foreground text-center">
+              Speak listing details naturally. Processed locally on your device.
+            </p>
+          </TabsContent>
+        </Tabs>
 
+        {/* Shared status indicators */}
         {isRecording && (
           <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
             <span className="relative flex h-3 w-3">
@@ -473,7 +682,7 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
         )}
       </CardContent>
 
-      {/* Microphone/Camera purpose disclosure — App Store compliance */}
+      {/* Microphone disclosure — App Store compliance */}
       <AlertDialog open={showMicDisclosure} onOpenChange={(o) => { if (!o) setShowMicDisclosure(false); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
