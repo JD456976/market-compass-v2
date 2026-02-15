@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,9 @@ const Index = () => {
   const { user } = useAuth();
   const { isAgent } = useUserRole();
   const { isProfessionalUser } = useProfessionalAccess();
+  const [proBannerDismissed, setProBannerDismissed] = useState(
+    () => sessionStorage.getItem('pro_banner_dismissed') === 'true'
+  );
 
   return (
     <div className="bg-background" role="main" aria-label="Market Compass Home">
@@ -126,9 +130,9 @@ const Index = () => {
         </motion.div>
 
         {/* Professional Plan Entry Point */}
-        {!isProfessionalUser && (
+        {!isProfessionalUser && !proBannerDismissed && (
           <motion.div
-            className="max-w-4xl mx-auto mb-8"
+            className="max-w-4xl mx-auto mb-8 relative"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
@@ -152,6 +156,18 @@ const Index = () => {
                 </CardContent>
               </Card>
             </Link>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setProBannerDismissed(true);
+                sessionStorage.setItem('pro_banner_dismissed', 'true');
+              }}
+              className="absolute top-2 right-2 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              aria-label="Dismiss"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
           </motion.div>
         )}
 
