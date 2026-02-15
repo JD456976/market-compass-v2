@@ -315,8 +315,9 @@ export default function Subscription() {
 
   const handleRestorePurchases = async () => {
     setIsRestoring(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    toast({ title: 'No purchases found', description: 'Subscriptions will be available after the beta period.' });
+    // TODO: Integrate with App Store / payment provider when subscriptions launch
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    toast({ title: 'All features active', description: 'You currently have full access during the beta program. No purchase to restore.' });
     setIsRestoring(false);
   };
 
@@ -408,14 +409,14 @@ export default function Subscription() {
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{hasBetaAccess ? 'Beta Pro Access' : 'Free Plan'}</h3>
+                    <h3 className="font-semibold">{hasBetaAccess ? 'Professional Plan' : 'Free Plan'}</h3>
                     <Badge variant="secondary" className={`text-xs ${hasBetaAccess ? 'bg-accent/10 text-accent-foreground' : ''}`}>
-                      {hasBetaAccess ? 'Full Access' : 'Limited'}
+                      {hasBetaAccess ? 'Active' : 'Limited'}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
                     {hasBetaAccess 
-                      ? 'All professional features unlocked during beta.'
+                      ? 'All professional features are unlocked.'
                       : `${FREE_TIER_LIMITS.reportsPerMonth} reports/month on the free plan.`}
                   </p>
                 </div>
