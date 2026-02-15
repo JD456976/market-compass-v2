@@ -32,7 +32,7 @@ const Index = () => {
   const { isAgent } = useUserRole();
   const { isProfessionalUser } = useProfessionalAccess();
   const [proBannerDismissed, setProBannerDismissed] = useState(
-    () => sessionStorage.getItem('pro_banner_dismissed') === 'true'
+    () => localStorage.getItem('pro_banner_dismissed') === 'true'
   );
 
   // Progressive disclosure: has the user created at least one report?
@@ -185,7 +185,7 @@ const Index = () => {
                 e.preventDefault();
                 e.stopPropagation();
                 setProBannerDismissed(true);
-                sessionStorage.setItem('pro_banner_dismissed', 'true');
+                localStorage.setItem('pro_banner_dismissed', 'true');
               }}
               className="absolute top-2 right-2 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
               aria-label="Dismiss"

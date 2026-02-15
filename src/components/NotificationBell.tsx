@@ -128,7 +128,12 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
     }
 
     items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    setNotifications(items);
+
+    // Prune stale notifications older than 14 days to prevent bell fatigue
+    const STALE_THRESHOLD_MS = 14 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const fresh = items.filter(i => now - new Date(i.timestamp).getTime() < STALE_THRESHOLD_MS);
+    setNotifications(fresh);
   }, [role, viewerId]);
 
   useEffect(() => {
