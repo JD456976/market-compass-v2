@@ -15,8 +15,8 @@ import { PageTransition } from "@/components/PageTransition";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import Index from "./pages/Index";
-import MarketProfiles from "./pages/MarketProfiles";
-import MarketScenarios from "./pages/MarketScenarios";
+import MarketIntelligence from "./pages/MarketIntelligence";
+import QuickReport from "./pages/QuickReport";
 import MarketData from "./pages/MarketData";
 import Methodology from "./pages/Methodology";
 import SellerFlow from "./pages/SellerFlow";
@@ -83,8 +83,10 @@ function AppRoutes() {
 
           {/* Protected routes - require auth */}
           <Route path="/" element={<RequireAuth><Index /></RequireAuth>} />
-          <Route path="/market-profiles" element={<RequireAuth><MarketProfiles /></RequireAuth>} />
-          <Route path="/market-scenarios" element={<RequireAuth><MarketScenarios /></RequireAuth>} />
+          <Route path="/market-profiles" element={<RequireAuth><MarketIntelligence /></RequireAuth>} />
+          <Route path="/market-scenarios" element={<RequireAuth><MarketIntelligence /></RequireAuth>} />
+          <Route path="/market-intelligence" element={<RequireAuth><MarketIntelligence /></RequireAuth>} />
+          <Route path="/quick-report" element={<RequireAuth><QuickReport /></RequireAuth>} />
           <Route path="/market-data" element={<RequireAuth><MarketData /></RequireAuth>} />
           <Route path="/methodology" element={<RequireAuth><Methodology /></RequireAuth>} />
           <Route path="/seller" element={<RequireAuth><SellerFlow /></RequireAuth>} />
