@@ -823,6 +823,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          auto_renew_enabled: boolean | null
+          created_at: string
+          id: string
+          latest_receipt: string | null
+          original_transaction_id: string | null
+          status: string
+          subscription_expires_at: string | null
+          subscription_product_id: string | null
+          subscription_started_at: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_renew_enabled?: boolean | null
+          created_at?: string
+          id?: string
+          latest_receipt?: string | null
+          original_transaction_id?: string | null
+          status?: string
+          subscription_expires_at?: string | null
+          subscription_product_id?: string | null
+          subscription_started_at?: string | null
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_renew_enabled?: boolean | null
+          created_at?: string
+          id?: string
+          latest_receipt?: string | null
+          original_transaction_id?: string | null
+          status?: string
+          subscription_expires_at?: string | null
+          subscription_product_id?: string | null
+          subscription_started_at?: string | null
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

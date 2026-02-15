@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import {
   FileText, Compass, Gauge, BarChart3, PenTool, Palette, CheckCircle2,
 } from 'lucide-react';
+import { PRICING } from '@/lib/featureGating';
 
 interface UpgradeModalProps {
   open: boolean;
@@ -38,7 +39,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
             Win more offers. Close faster.
           </DialogTitle>
           <DialogDescription className="text-sm mt-2">
-            Market Compass Professional gives you the tools top agents use to position winning offers.
+            Start your {PRICING.trialDays}-day free trial with full access to all Professional features. No commitment required.
           </DialogDescription>
         </DialogHeader>
 
@@ -51,6 +52,13 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
           ))}
         </div>
 
+        <div className="text-center space-y-1 pb-2">
+          <p className="text-sm font-medium">Then {PRICING.monthly.label} or {PRICING.yearly.label}</p>
+          <p className="text-xs text-muted-foreground">
+            Save {PRICING.yearly.savings} with annual billing. Cancel anytime.
+          </p>
+        </div>
+
         <DialogFooter className="flex-col sm:flex-col gap-2">
           <Button
             className="w-full"
@@ -60,7 +68,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
               navigate('/subscription');
             }}
           >
-            Start Free Trial
+            Start {PRICING.trialDays}-Day Free Trial
           </Button>
           <Button
             variant="ghost"
@@ -70,6 +78,10 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
           >
             Not now
           </Button>
+          <p className="text-[10px] text-muted-foreground text-center leading-snug">
+            Payment is charged through the App Store. 
+            Subscription auto-renews unless canceled at least 24 hours before the end of the current period.
+          </p>
         </DialogFooter>
       </DialogContent>
     </Dialog>

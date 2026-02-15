@@ -19,17 +19,23 @@ export const PROFESSIONAL_FEATURES: { key: ProfessionalFeature; label: string; d
   { key: 'customBranding', label: 'Custom Branding', description: 'Present polished reports with your identity and contact details.' },
 ];
 
-// Free tier limits (future enforcement)
+// Free tier limits (enforced after trial expires)
 export const FREE_TIER_LIMITS = {
-  reportsPerMonth: 3,
+  reportsPerMonth: 2,
   comparisonsPerMonth: 1,
-  scenarioExplorerUsesPerMonth: 5,
+  scenarioExplorerUsesPerMonth: 0,
 } as const;
 
-// Subscription product IDs (Apple App Store ready)
+// App Store product IDs
 export const SUBSCRIPTION_PRODUCTS = {
   monthlyPro: 'com.marketcompass.pro.monthly',
   yearlyPro: 'com.marketcompass.pro.yearly',
+} as const;
+
+export const PRICING = {
+  monthly: { price: 29, label: '$29/month' },
+  yearly: { price: 249, monthlyEquivalent: 20.75, label: '$249/year', savings: '28%' },
+  trialDays: 14,
 } as const;
 
 export type SubscriptionStatus = 'none' | 'trial' | 'active' | 'expired' | 'canceled';

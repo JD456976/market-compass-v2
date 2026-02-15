@@ -16,6 +16,8 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { ScenarioCompareSheet } from '@/components/ScenarioCompareSheet';
 import { BuyerInputs, SellerInputs } from '@/types';
 import { getBetaAccessSession } from '@/lib/betaAccess';
+import { useSubscription } from '@/hooks/useSubscription';
+import { PRICING } from '@/lib/featureGating';
 import { useSessions } from '@/hooks/useSessions';
 import { loadAgentProfile, AgentProfile } from '@/lib/agentProfile';
 import { FREE_TIER_LIMITS } from '@/lib/featureGating';
@@ -105,6 +107,8 @@ export default function Subscription() {
   
   const session = getBetaAccessSession();
   const hasBetaAccess = !!session;
+  const { status: subStatus, isPro, trialDaysRemaining, trialEndsAt, startTrial, refreshSubscription } = useSubscription();
+  const hasFullAccess = hasBetaAccess || isPro;
 
   useEffect(() => {
     setProfile(loadAgentProfile());
@@ -315,9 +319,13 @@ export default function Subscription() {
 
   const handleRestorePurchases = async () => {
     setIsRestoring(true);
-    // TODO: Integrate with App Store / payment provider when subscriptions launch
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    toast({ title: 'All features active', description: 'You currently have full access during the beta program. No purchase to restore.' });
+    try {
+      // In a native app, this would trigger StoreKit restore. For now, refresh from server.
+      await refreshSubscription();
+      toast({ title: 'Purchases restored', description: isPro ? 'Your Professional subscription is active.' : 'No active subscription found. Start a free trial to unlock all features.' });
+    } catch {
+      toast({ title: 'Restore failed', description: 'Please try again later.', variant: 'destructive' });
+    }
     setIsRestoring(false);
   };
 
@@ -401,33 +409,54 @@ export default function Subscription() {
       <div className="container mx-auto px-4 py-8 max-w-3xl -mt-4 space-y-6">
         {/* Plan Status */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className={hasBetaAccess ? 'border-accent/30' : ''}>
+          <Card className={hasFullAccess ? 'border-accent/30' : ''}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-full ${hasBetaAccess ? 'bg-accent/10' : 'bg-secondary'}`}>
-                  <Sparkles className={`h-6 w-6 ${hasBetaAccess ? 'text-accent' : 'text-muted-foreground'}`} />
+                <div className={`p-3 rounded-full ${hasFullAccess ? 'bg-accent/10' : 'bg-secondary'}`}>
+                  <Sparkles className={`h-6 w-6 ${hasFullAccess ? 'text-accent' : 'text-muted-foreground'}`} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{hasBetaAccess ? 'Professional Plan' : 'Free Plan'}</h3>
-                    <Badge variant="secondary" className={`text-xs ${hasBetaAccess ? 'bg-accent/10 text-accent-foreground' : ''}`}>
-                      {hasBetaAccess ? 'Active' : 'Limited'}
+                    <h3 className="font-semibold">
+                      {subStatus === 'active' ? 'Professional Plan' :
+                       subStatus === 'trial' ? 'Professional Trial' :
+                       hasBetaAccess ? 'Beta Access' : 'Free Plan'}
+                    </h3>
+                    <Badge variant="secondary" className={`text-xs ${hasFullAccess ? 'bg-accent/10 text-accent-foreground' : ''}`}>
+                      {subStatus === 'active' ? 'Active' :
+                       subStatus === 'trial' ? `${trialDaysRemaining} days left` :
+                       hasBetaAccess ? 'Beta' : 'Limited'}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {hasBetaAccess 
-                      ? 'All professional features are unlocked.'
-                      : `${FREE_TIER_LIMITS.reportsPerMonth} reports/month on the free plan.`}
+                    {subStatus === 'active' ? 'All professional features are unlocked.' :
+                     subStatus === 'trial' ? `Your free trial ends ${trialEndsAt ? new Date(trialEndsAt).toLocaleDateString() : 'soon'}. All features unlocked.` :
+                     hasBetaAccess ? 'All professional features are unlocked during beta.' :
+                     `${FREE_TIER_LIMITS.reportsPerMonth} reports/month on the free plan.`}
                   </p>
                 </div>
               </div>
-              {!hasBetaAccess && (
-                <div className="mt-4 space-y-2">
+              {!hasFullAccess && (
+                <div className="mt-4 space-y-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Reports this month</span>
                     <span className="font-medium">{monthReports} / {FREE_TIER_LIMITS.reportsPerMonth}</span>
                   </div>
                   <Progress value={(monthReports / FREE_TIER_LIMITS.reportsPerMonth) * 100} className="h-2" />
+                  <Button className="w-full" size="lg" onClick={() => startTrial()}>
+                    Start {PRICING.trialDays}-Day Free Trial
+                  </Button>
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    Full access to all features. Then {PRICING.monthly.label} or {PRICING.yearly.label}. Cancel anytime.
+                  </p>
+                </div>
+              )}
+              {subStatus === 'trial' && (
+                <div className="mt-4 space-y-2">
+                  <Progress value={((PRICING.trialDays - trialDaysRemaining) / PRICING.trialDays) * 100} className="h-2" />
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    Subscribe before your trial ends to keep full access. {PRICING.monthly.label} or {PRICING.yearly.label}.
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -877,6 +906,20 @@ export default function Subscription() {
               <p className="text-[11px] text-muted-foreground text-center pt-1">
                 Trusted by agents to present stronger offers with confidence.
               </p>
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <Card className="border-accent/20 bg-accent/5">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-lg font-serif font-bold">{PRICING.monthly.label}</p>
+                    <p className="text-[10px] text-muted-foreground">Billed monthly</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-accent/30 bg-accent/10 ring-1 ring-accent/20">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-lg font-serif font-bold">{PRICING.yearly.label}</p>
+                    <p className="text-[10px] text-muted-foreground">≈ ${PRICING.yearly.monthlyEquivalent}/mo · Save {PRICING.yearly.savings}</p>
+                  </CardContent>
+                </Card>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -890,10 +933,18 @@ export default function Subscription() {
               <><RefreshCw className="h-3 w-3 mr-1" /> Restore Purchases</>
             )}
           </Button>
-          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-            <Link to="/terms" className="hover:underline">Terms of Service</Link>
-            <span>•</span>
-            <Link to="/privacy" className="hover:underline">Privacy Policy</Link>
+          <div className="space-y-2">
+            <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+              <Link to="/terms" className="hover:underline">Terms of Service</Link>
+              <span>•</span>
+              <Link to="/privacy" className="hover:underline">Privacy Policy</Link>
+            </div>
+            <p className="text-[10px] text-muted-foreground max-w-sm mx-auto leading-snug">
+              Payment is charged to your Apple ID account at confirmation of purchase. 
+              Subscription automatically renews unless canceled at least 24 hours before 
+              the end of the current period. You can manage and cancel subscriptions in 
+              your App Store account settings.
+            </p>
           </div>
         </div>
       </div>
