@@ -71,7 +71,7 @@ export function GlobalNav() {
     { to: '/', label: 'Home', icon: <Home className="h-5 w-5" /> },
     { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-5 w-5" /> },
     { to: '/shared-reports', label: 'Shared', icon: <Send className="h-5 w-5" /> },
-    { to: '/subscription', label: 'Dashboard', icon: <Sparkles className="h-5 w-5" /> },
+    { to: '/subscription', label: 'Pro Plan', icon: <Sparkles className="h-5 w-5" /> },
     { to: '/admin', label: 'Admin', icon: <Settings className="h-5 w-5" />, adminOnly: true },
   ];
 
@@ -163,7 +163,7 @@ const drawerLinks: DrawerLink[] = [
   { to: '/agent-profile', label: 'Agent Profile', icon: <User className="h-5 w-5" /> },
   { to: '/methodology', label: 'Data & Methodology', icon: <BookOpen className="h-5 w-5" /> },
   { to: '/settings', label: 'Account Settings', icon: <SettingsIcon className="h-5 w-5" /> },
-  { to: '/subscription', label: 'Pro Dashboard', icon: <Sparkles className="h-5 w-5" /> },
+  { to: '/subscription', label: 'Pro Plan', icon: <Sparkles className="h-5 w-5" /> },
   { to: '/privacy', label: 'Privacy Policy', icon: <Shield className="h-5 w-5" /> },
   { to: '/admin', label: 'Admin', icon: <Settings className="h-5 w-5" />, adminOnly: true },
 ];

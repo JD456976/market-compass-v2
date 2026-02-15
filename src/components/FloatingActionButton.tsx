@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Building2, Users, FileText, X } from 'lucide-react';
@@ -8,11 +8,27 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export function FloatingActionButton() {
   const [open, setOpen] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
   const { isClient } = useUserRole();
   const { user } = useAuth();
+
+  // Show first-use tooltip
+  useEffect(() => {
+    if (!user || isClient) return;
+    const seen = localStorage.getItem('fab_tooltip_seen');
+    if (!seen) {
+      const timer = setTimeout(() => setShowTooltip(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [user, isClient]);
+
+  const dismissTooltip = () => {
+    setShowTooltip(false);
+    localStorage.setItem('fab_tooltip_seen', 'true');
+  };
 
   // Hide for clients, unauthenticated users, shared pages, report pages, and form pages
   if (isClient || !user) return null;
@@ -23,7 +39,13 @@ export function FloatingActionButton() {
 
   const handleOption = (path: string) => {
     setOpen(false);
+    dismissTooltip();
     navigate(path);
+  };
+
+  const handleFabClick = () => {
+    dismissTooltip();
+    setOpen(prev => !prev);
   };
 
   return (
@@ -49,6 +71,21 @@ export function FloatingActionButton() {
           bottom: isMobile ? 'calc(80px + env(safe-area-inset-bottom))' : '24px',
         }}
       >
+        {/* First-use Tooltip */}
+        <AnimatePresence>
+          {showTooltip && !open && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }}
+              className="absolute bottom-16 right-0 mb-2 whitespace-nowrap bg-foreground text-background text-xs font-medium px-3 py-2 rounded-lg shadow-lg"
+            >
+              Quick-create a new report
+              <div className="absolute -bottom-1 right-5 w-2 h-2 bg-foreground rotate-45" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Options */}
         <AnimatePresence>
           {open && (
@@ -94,7 +131,7 @@ export function FloatingActionButton() {
 
         {/* FAB Button */}
         <motion.button
-          onClick={() => setOpen(prev => !prev)}
+          onClick={handleFabClick}
           whileTap={{ scale: 0.92 }}
           className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
           style={{ boxShadow: '0 4px 14px hsl(var(--primary) / 0.35)' }}
