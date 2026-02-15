@@ -359,7 +359,7 @@ const Templates = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <Button variant="accent" size="sm" onClick={() => handleUseTemplate(template)}>
                             <Play className="mr-2 h-4 w-4" />
                             Use Template

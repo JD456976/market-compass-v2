@@ -387,7 +387,7 @@ const SharedReports = () => {
           </p>
           {!isArchived && (
             <p className="text-sm text-muted-foreground mt-2">
-              Switch to <span className="font-medium">Client mode</span> in a report to share or export.
+              Tap <span className="font-medium">Share</span> on any report to send it to your client.
             </p>
           )}
         </CardContent>
