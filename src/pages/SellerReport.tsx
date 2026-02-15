@@ -87,6 +87,7 @@ import { SellerCompetingOffersCard } from '@/components/report/CompetingOffersCa
 import { BuyerMotivationCard } from '@/components/report/MotivationCard';
 import { SellerTimingCard } from '@/components/report/TimingCard';
 import { SellerNegotiationCard } from '@/components/report/NegotiationCard';
+import { MortgageRateCard } from '@/components/report/MortgageRateCard';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
   if (band === 'High') {
@@ -570,6 +571,9 @@ const SellerReport = () => {
               />
             )}
             </TemplateSection>
+
+            {/* Mortgage Rate - FRED Data */}
+            <MortgageRateCard />
 
             <TemplateSection hide={['snapshot']}>
             {/* Property Details from MLS */}

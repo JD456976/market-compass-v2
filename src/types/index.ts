@@ -36,7 +36,15 @@ export interface SellerInputs {
   notes?: string; // Legacy field - maps to client_notes
   agent_notes?: string;
   client_notes?: string;
+  // Signal-Based Intelligence fields
+  showing_traffic?: ShowingTrafficLevel;
+  offer_deadline?: string; // ISO date or empty
+  price_change_direction?: PriceChangeDirection;
+  price_change_amount?: number;
 }
+
+export type ShowingTrafficLevel = 'Minimal' | 'Steady' | 'Heavy' | 'Unknown';
+export type PriceChangeDirection = 'Reduced' | 'Increased' | 'None';
 
 export interface BuyerInputs {
   offer_price: number;
@@ -53,6 +61,11 @@ export interface BuyerInputs {
   market_conditions?: MarketConditions;
   days_on_market?: number;
   investment_type?: InvestmentType;
+  // Signal-Based Intelligence fields
+  showing_traffic?: ShowingTrafficLevel;
+  offer_deadline?: string; // ISO date or empty
+  price_change_direction?: PriceChangeDirection;
+  price_change_amount?: number;
 }
 
 export interface PropertyFactor {
