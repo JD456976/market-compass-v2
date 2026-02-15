@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Mic, MicOff, FileUp, Loader2, Sparkles, X, Info, Camera, ClipboardPaste, Link2, ExternalLink } from 'lucide-react';
+import { Mic, MicOff, FileUp, Loader2, Sparkles, X, Info, Camera, ClipboardPaste, Link2, ExternalLink, CheckCircle2, AlertCircle, CircleDashed, Timer } from 'lucide-react';
 import { LoadingEscapeHatch } from '@/components/LoadingEscapeHatch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -53,8 +53,29 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
   const finalTranscriptRef = useRef('');
   const [showMicDisclosure, setShowMicDisclosure] = useState(false);
   const [activeTab, setActiveTab] = useState('paste');
+  const [detectedFields, setDetectedFields] = useState<{name: string; value: string; confidence: 'high' | 'medium' | 'low'}[] | null>(null);
 
   const MIC_DISCLOSURE_KEY = 'mc_mic_disclosure_accepted';
+
+  /** Build detected fields preview from extracted data */
+  const buildDetectedFields = (data: MLSExtractedData) => {
+    const fields: {name: string; value: string; confidence: 'high' | 'medium' | 'low'}[] = [];
+    if (data.address) fields.push({ name: 'Address', value: data.address, confidence: 'high' });
+    if (data.location) fields.push({ name: 'Location', value: data.location, confidence: 'high' });
+    if (data.listPrice) fields.push({ name: 'Price', value: `$${data.listPrice.toLocaleString()}`, confidence: 'high' });
+    if (data.propertyType) fields.push({ name: 'Type', value: data.propertyType, confidence: 'high' });
+    if (data.condition) fields.push({ name: 'Condition', value: data.condition, confidence: 'medium' });
+    if (data.daysOnMarket !== undefined) fields.push({ name: 'DOM', value: `${data.daysOnMarket} days`, confidence: 'high' });
+    if (data.notes) fields.push({ name: 'Notes', value: data.notes.substring(0, 60) + (data.notes.length > 60 ? '…' : ''), confidence: 'medium' });
+    if (data.factors && data.factors.length > 0) fields.push({ name: 'Property Factors', value: `${data.factors.length} detected`, confidence: 'medium' });
+    return fields;
+  };
+
+  const handleDataExtracted = (data: MLSExtractedData) => {
+    const fields = buildDetectedFields(data);
+    setDetectedFields(fields.length > 0 ? fields : null);
+    onDataExtracted(data);
+  };
 
   const handleVoiceClick = useCallback(() => {
     const accepted = localStorage.getItem(MIC_DISCLOSURE_KEY);
@@ -257,7 +278,7 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
         factors: propertyFactors.length > 0 ? propertyFactors : undefined,
       };
 
-      onDataExtracted(data);
+      handleDataExtracted(data);
       toast({
         title: `${confidence.fieldsExtracted} fields extracted`,
         description: `Confidence: ${confidence.level} · ${confidence.highConfidenceCount} high-confidence fields. Review all imported data for accuracy.`,
@@ -340,11 +361,11 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
 
       const fieldCount = Object.keys(extracted).filter(k => (extracted as any)[k] !== undefined).length;
       if (fieldCount > 0) {
-        onDataExtracted(extracted);
+        handleDataExtracted(extracted);
         toast({ title: 'Data extracted', description: `Found ${fieldCount} field${fieldCount > 1 ? 's' : ''} from your voice input. Review for accuracy.` });
       } else {
         // Treat entire transcript as notes
-        onDataExtracted({ notes: text });
+        handleDataExtracted({ notes: text });
         toast({ title: 'Saved as notes', description: 'Could not detect structured fields — transcript saved to notes.' });
       }
     } catch {
@@ -360,7 +381,7 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
       });
       if (error) throw error;
       if (data?.extracted) {
-        onDataExtracted(data.extracted);
+        handleDataExtracted(data.extracted);
         toast({ title: 'Data extracted from photo', description: `Found ${Object.keys(data.extracted).filter(k => data.extracted[k]).length} fields. Please review for accuracy.` });
       }
     } catch {
@@ -417,7 +438,7 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
           factors: propertyFactors.length > 0 ? propertyFactors : undefined,
         };
 
-        onDataExtracted(data);
+        handleDataExtracted(data);
         setPastedText('');
         toast({
           title: `${confidence.fieldsExtracted} fields extracted from pasted text`,
@@ -466,7 +487,7 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
         const extracted = data.extracted;
         const fieldCount = Object.keys(extracted).filter(k => extracted[k] !== undefined && extracted[k] !== null).length;
 
-        onDataExtracted({
+        handleDataExtracted({
           location: extracted.location,
           address: extracted.address,
           propertyType: extracted.propertyType,
@@ -504,8 +525,12 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
           Smart MLS Import
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          Paste listing text, enter a URL, upload a PDF, or speak details to auto-fill.
+          ✨ Paste from MLS, Zillow, Redfin, or any listing sheet.
         </p>
+        <div className="flex items-center gap-1.5 mt-1">
+          <Timer className="h-3 w-3 text-muted-foreground" />
+          <p className="text-[10px] text-muted-foreground font-medium">Auto-fills in ~5 seconds</p>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -540,7 +565,7 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
               className="w-full min-h-[44px]"
             >
               <ClipboardPaste className="h-4 w-4 mr-1.5" />
-              Extract Fields
+              Auto-Fill Listing Details
             </Button>
             <p className="text-[10px] text-muted-foreground text-center">
               Parsed locally — no data sent to any server. Works with any MLS format.
@@ -682,6 +707,33 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
               onCancel={() => setIsProcessing(false)}
               message="Extraction is taking longer than expected."
             />
+          </div>
+        )}
+
+        {/* Detected Fields Preview */}
+        {detectedFields && detectedFields.length > 0 && !isProcessing && (
+          <div className="p-3 rounded-lg bg-secondary/50 border border-border/30 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-foreground">Detected Fields</p>
+              <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => setDetectedFields(null)}>
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {detectedFields.map((field, i) => (
+                <div key={i} className="flex items-center gap-1.5 text-[11px]">
+                  {field.confidence === 'high' ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
+                  ) : field.confidence === 'medium' ? (
+                    <AlertCircle className="h-3.5 w-3.5 text-accent shrink-0" />
+                  ) : (
+                    <CircleDashed className="h-3.5 w-3.5 text-destructive shrink-0" />
+                  )}
+                  <span className="text-muted-foreground">{field.name}</span>
+                  <span className="font-medium truncate">{field.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>
