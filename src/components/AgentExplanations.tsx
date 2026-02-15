@@ -111,7 +111,22 @@ export function getAcceptanceFactors(session: Session, band: ExtendedLikelihoodB
     factors.push('Extended days on market suggests seller may be more flexible');
   }
 
-  return factors.slice(0, 4);
+  // Signal-Based Intelligence factors
+  if (inputs.showing_traffic === 'Heavy') {
+    factors.push('Heavy showing traffic signals strong competition (−0.5 Acceptance)');
+  } else if (inputs.showing_traffic === 'Minimal') {
+    factors.push('Minimal showing traffic suggests less competition (+0.5 Acceptance)');
+  }
+  if (inputs.offer_deadline) {
+    factors.push('Active offer deadline creates urgency (−0.5 Acceptance)');
+  }
+  if (inputs.price_change_direction === 'Reduced') {
+    factors.push('Price reduction suggests seller flexibility (+0.5 Acceptance)');
+  } else if (inputs.price_change_direction === 'Increased') {
+    factors.push('Price increase signals seller confidence (−0.5 Acceptance)');
+  }
+
+  return factors.slice(0, 6);
 }
 
 export function getImprovementSuggestions(session: Session, band: ExtendedLikelihoodBand | LikelihoodBand): string[] {
@@ -156,7 +171,22 @@ export function getSellerFactors(session: Session, band: LikelihoodBand): string
     factors.push('Property condition may limit buyer pool');
   }
 
-  return factors.slice(0, 3);
+  // Signal-Based Intelligence factors
+  if (inputs.showing_traffic === 'Heavy') {
+    factors.push('Heavy showing traffic indicates strong buyer interest (+1 score)');
+  } else if (inputs.showing_traffic === 'Minimal') {
+    factors.push('Minimal showing traffic suggests limited demand (−1 score)');
+  }
+  if (inputs.offer_deadline) {
+    factors.push('Active offer deadline signals competitive interest (+0.5 score)');
+  }
+  if (inputs.price_change_direction === 'Reduced') {
+    factors.push('Price reduction may indicate weakened position (−1 score)');
+  } else if (inputs.price_change_direction === 'Increased') {
+    factors.push('Price increase reflects market confidence (+0.5 score)');
+  }
+
+  return factors.slice(0, 5);
 }
 
 export function getSellerImprovementSuggestions(session: Session, band: LikelihoodBand): string[] {
