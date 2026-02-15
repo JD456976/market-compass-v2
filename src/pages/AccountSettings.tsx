@@ -229,6 +229,16 @@ const AccountSettings = () => {
           </Card>
         )}
 
+        {/* App Info */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">App Version</span>
+              <span className="font-mono text-foreground">1.0.0 (build 1)</span>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Danger Zone */}
         <Card className="border-destructive/30">
           <CardHeader>
