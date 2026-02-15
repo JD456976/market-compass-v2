@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Compass, Eye, EyeOff, Loader2, Mail, Lock, User, Building2, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { friendlyErrorMessage } from '@/lib/requestHelpers';
 
 function getPasswordStrength(pw: string): { label: string; score: number; color: string } {
   let score = 0;
@@ -90,7 +91,7 @@ const Signup = () => {
     setIsLoading(false);
 
     if (error) {
-      toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
+      toast({ title: 'Sign up failed', description: friendlyErrorMessage(error.message), variant: 'destructive' });
     } else {
       setSuccess(true);
     }

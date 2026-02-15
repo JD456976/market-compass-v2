@@ -34,9 +34,10 @@ export function useSessions(): UseSessionsResult {
     try {
       const loaded = await loadSessionsAsync();
       setSessions(loaded);
+      setError(null);
     } catch (err) {
       console.error('Error loading sessions:', err);
-      setError('Failed to load sessions');
+      setError('Could not load your reports. Please check your connection and try again.');
       // Keep localStorage data as fallback
     } finally {
       setLoading(false);

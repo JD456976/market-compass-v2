@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -26,17 +27,18 @@ const staggerContainer = {
 };
 
 const Index = () => {
-  const { sessions: drafts } = useDraftSessions();
-  const { activeSessions: shared, sessions: allShared } = useSharedSessions();
+  const { sessions: drafts, error: draftsError } = useDraftSessions();
+  const { activeSessions: shared, sessions: allShared, error: sharedError } = useSharedSessions();
   const { user } = useAuth();
   const { isAgent } = useUserRole();
   const { isProfessionalUser } = useProfessionalAccess();
   const [proBannerDismissed, setProBannerDismissed] = useState(
     () => localStorage.getItem('pro_banner_dismissed') === 'true'
   );
+  const loadError = draftsError || sharedError;
 
   // Progressive disclosure: has the user created at least one report?
-  const hasCreatedReport = drafts.length > 0 || allShared.length > 0;
+  const hasCreatedReport = !loadError && (drafts.length > 0 || allShared.length > 0);
 
   return (
     <div className="bg-background" role="main" aria-label="Market Compass Home">
@@ -132,8 +134,29 @@ const Index = () => {
           </motion.div>
         </motion.div>
 
+        {/* Load error banner */}
+        {loadError && (
+          <motion.div
+            className="max-w-4xl mx-auto mb-8"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card className="border-destructive/30 bg-destructive/5">
+              <CardContent className="flex items-center gap-3 py-4">
+                <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Could not load your reports</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Please check your connection and try refreshing the page.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Post-onboarding CTA for first-time users */}
-        {!hasCreatedReport && (
+        {!loadError && !hasCreatedReport && (
           <motion.div
             className="max-w-4xl mx-auto mb-12 text-center"
             initial={{ opacity: 0, y: 10 }}

@@ -1,4 +1,5 @@
 import { MarketProfile, Session } from '@/types';
+import { withTimeout } from '@/lib/requestHelpers';
 import { 
   loadSessionsFromSupabase, 
   getSessionByIdFromSupabase, 
@@ -36,7 +37,7 @@ export function loadSessions(): Session[] {
 // Async load from Supabase (preferred for cross-device)
 export async function loadSessionsAsync(): Promise<Session[]> {
   try {
-    const supabaseSessions = await loadSessionsFromSupabase();
+    const supabaseSessions = await withTimeout(loadSessionsFromSupabase(), 15_000);
     // Cache in localStorage for offline access
     if (supabaseSessions.length > 0) {
       localStorage.setItem(SESSIONS_KEY, JSON.stringify(supabaseSessions));
