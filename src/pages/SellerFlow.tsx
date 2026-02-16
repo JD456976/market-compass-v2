@@ -32,6 +32,8 @@ import { SessionTemplate } from '@/lib/templates';
 import { loadMarketScenarios, MarketScenario, getMarketScenarioById } from '@/lib/marketScenarios';
 import { useToast } from '@/hooks/use-toast';
 import { ReviewSection, ReviewRow } from '@/components/ReviewStep';
+import { useAddressRecall } from '@/hooks/useAddressRecall';
+import { AddressRecallPrompt } from '@/components/AddressRecallPrompt';
 
 const STEPS = [
   { label: 'Property', icon: Home },
@@ -94,6 +96,24 @@ const SellerFlow = () => {
   const [pricingOverride, setPricingOverride] = useState<'low' | 'medium' | 'high' | undefined>(undefined);
 
   const [attempted, setAttempted] = useState(false);
+
+  // Address recall - find previous sessions matching the entered address
+  const { matches: recallMatches, dismiss: dismissRecall } = useAddressRecall(fullAddress, location, draftId);
+
+  const handleRecallLoad = useCallback((session: Session) => {
+    setPropertyType(session.property_type);
+    setCondition(session.condition);
+    if (session.market_scenario_id) setSelectedScenarioId(session.market_scenario_id);
+    if (session.property_factors) setPropertyFactors(session.property_factors);
+    const si = session.seller_inputs;
+    if (si) {
+      if (si.seller_selected_list_price) setListPrice(String(si.seller_selected_list_price));
+      if (si.desired_timeframe) setTimeframe(si.desired_timeframe);
+      if (si.strategy_preference) setStrategy(si.strategy_preference);
+    }
+    dismissRecall();
+    toast({ title: "Previous details loaded", description: `Loaded property details from "${session.client_name || 'previous session'}".` });
+  }, [dismissRecall, toast]);
 
   useEffect(() => {
     setMarketScenarios(loadMarketScenarios());
@@ -485,6 +505,11 @@ const SellerFlow = () => {
                     onFullAddressChange={setFullAddress}
                     hasError={attempted && !location.trim()}
                     attempted={attempted}
+                  />
+                  <AddressRecallPrompt
+                    matches={recallMatches}
+                    onLoad={handleRecallLoad}
+                    onDismiss={dismissRecall}
                   />
 
                   <div className="grid md:grid-cols-2 gap-4">
