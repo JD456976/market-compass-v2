@@ -1,3 +1,6 @@
+/**
+ * Updated UpgradeModal — now uses Stripe checkout instead of App Store.
+ */
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -53,9 +56,9 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
         </div>
 
         <div className="text-center space-y-1 pb-2">
-          <p className="text-sm font-medium">Then {PRICING.monthly.label} or {PRICING.yearly.label}</p>
+          <p className="text-sm font-medium">Then {PRICING.monthly.label}</p>
           <p className="text-xs text-muted-foreground">
-            Save {PRICING.yearly.savings} with annual billing. Cancel anytime.
+            Cancel anytime. You'll be redirected to Stripe.
           </p>
         </div>
 
@@ -65,7 +68,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
             size="lg"
             onClick={() => {
               onOpenChange(false);
-              navigate('/subscription');
+              navigate('/pricing');
             }}
           >
             Start {PRICING.trialDays}-Day Free Trial
@@ -79,8 +82,8 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
             Not now
           </Button>
           <p className="text-[10px] text-muted-foreground text-center leading-snug">
-            Payment is charged through the App Store. 
-            Subscription auto-renews unless canceled at least 24 hours before the end of the current period.
+            Subscription automatically renews at {PRICING.monthly.label} unless canceled.
+            Cancel anytime from your account settings.
           </p>
         </DialogFooter>
       </DialogContent>
