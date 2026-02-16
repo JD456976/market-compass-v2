@@ -2,7 +2,6 @@
  * Stripe service — handles checkout, subscription checking, and customer portal.
  */
 import { supabase } from '@/integrations/supabase/client';
-import { STRIPE_PRICE_ID } from './stripeConfig';
 
 /**
  * Create a Stripe Checkout session and redirect user to it.
@@ -10,7 +9,6 @@ import { STRIPE_PRICE_ID } from './stripeConfig';
 export async function redirectToCheckout(): Promise<void> {
   const { data, error } = await supabase.functions.invoke('create-checkout', {
     body: {
-      priceId: STRIPE_PRICE_ID,
       successUrl: `${window.location.origin}/`,
       cancelUrl: `${window.location.origin}/pricing`,
     },

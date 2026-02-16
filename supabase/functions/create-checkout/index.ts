@@ -25,12 +25,17 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
 
-    const { priceId, successUrl, cancelUrl } = await req.json();
-    if (!priceId) throw new Error("priceId is required");
+    const { successUrl, cancelUrl } = await req.json();
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
+
+    // Look up default price from product
+    const productId = "prod_TzWuOsh4QTdFET";
+    const prices = await stripe.prices.list({ product: productId, active: true, limit: 1 });
+    if (prices.data.length === 0) throw new Error("No active price found for product");
+    const priceId = prices.data[0].id;
 
     // Check for existing customer
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
