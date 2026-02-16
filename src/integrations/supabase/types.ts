@@ -696,6 +696,7 @@ export type Database = {
       }
       sessions: {
         Row: {
+          address_fields: Json | null
           archived: boolean
           archived_at: string | null
           buyer_inputs: Json | null
@@ -720,6 +721,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address_fields?: Json | null
           archived?: boolean
           archived_at?: string | null
           buyer_inputs?: Json | null
@@ -744,6 +746,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address_fields?: Json | null
           archived?: boolean
           archived_at?: string | null
           buyer_inputs?: Json | null

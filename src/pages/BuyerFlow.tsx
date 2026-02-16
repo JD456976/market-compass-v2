@@ -37,6 +37,8 @@ import { SessionTemplate } from '@/lib/templates';
 import { loadMarketScenarios, MarketScenario, getMarketScenarioById } from '@/lib/marketScenarios';
 import { useToast } from '@/hooks/use-toast';
 import { ReviewSection, ReviewRow } from '@/components/ReviewStep';
+import { useAddressRecall } from '@/hooks/useAddressRecall';
+import { AddressRecallPrompt } from '@/components/AddressRecallPrompt';
 
 const contingencyOptions: { value: Contingency; label: string }[] = [
   { value: 'Inspection', label: 'Inspection' },
@@ -122,6 +124,30 @@ const BuyerFlow = () => {
   const [pricingOverride, setPricingOverride] = useState<'low' | 'medium' | 'high' | undefined>(undefined);
 
   const [attempted, setAttempted] = useState(false);
+
+  // Address recall - find previous sessions matching the entered address
+  const { matches: recallMatches, dismiss: dismissRecall } = useAddressRecall(fullAddress, location, draftId);
+
+  const handleRecallLoad = useCallback((session: Session) => {
+    setPropertyType(session.property_type);
+    setCondition(session.condition);
+    if (session.market_scenario_id) setSelectedScenarioId(session.market_scenario_id);
+    if (session.property_factors) setPropertyFactors(session.property_factors);
+    const bi = session.buyer_inputs;
+    if (bi) {
+      if (bi.reference_price) setReferencePrice(String(bi.reference_price));
+      if (bi.market_conditions) setMarketConditions(bi.market_conditions);
+      if (bi.days_on_market) setDaysOnMarket(String(bi.days_on_market));
+      if (bi.investment_type) setInvestmentType(bi.investment_type);
+      if (bi.financing_type) setFinancingType(bi.financing_type);
+      if (bi.down_payment_percent) setDownPayment(bi.down_payment_percent);
+      if (bi.contingencies) setContingencies(bi.contingencies);
+      if (bi.closing_timeline) setClosingTimeline(bi.closing_timeline);
+      if (bi.buyer_preference) setBuyerPreference(bi.buyer_preference);
+    }
+    dismissRecall();
+    toast({ title: "Previous details loaded", description: `Loaded property details from "${session.client_name || 'previous session'}".` });
+  }, [dismissRecall, toast]);
 
   useEffect(() => {
     setMarketScenarios(loadMarketScenarios());
@@ -560,6 +586,11 @@ const BuyerFlow = () => {
                       onFullAddressChange={setFullAddress}
                       hasError={attempted && !location.trim()}
                       attempted={attempted}
+                    />
+                    <AddressRecallPrompt
+                      matches={recallMatches}
+                      onLoad={handleRecallLoad}
+                      onDismiss={dismissRecall}
                     />
                     </div>
                   </div>
