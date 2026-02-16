@@ -26,15 +26,11 @@ export const FREE_TIER_LIMITS = {
   scenarioExplorerUsesPerMonth: 0,
 } as const;
 
-// App Store product IDs
-export const SUBSCRIPTION_PRODUCTS = {
-  monthlyPro: 'com.marketcompass.pro.monthly',
-  yearlyPro: 'com.marketcompass.pro.yearly',
-} as const;
+// Re-export pricing from Stripe config
+export { PRICE_DISPLAY as PRICING_DISPLAY, TRIAL_DURATION_DAYS } from '@/lib/stripe/stripeConfig';
 
 export const PRICING = {
-  monthly: { price: 29, label: '$29/month' },
-  yearly: { price: 249, monthlyEquivalent: 20.75, label: '$249/year', savings: '28%' },
+  monthly: { price: 39, label: '$39/month' },
   trialDays: 14,
 } as const;
 
@@ -49,9 +45,7 @@ export interface UserEntitlement {
 }
 
 // Reviewer emails that get automatic Professional access
-export const REVIEWER_EMAILS: string[] = [
-  // Add App Store reviewer emails here
-];
+export const REVIEWER_EMAILS: string[] = [];
 
 /**
  * Check if a user can access a specific professional feature

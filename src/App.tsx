@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { ClientModeProvider } from "@/contexts/ClientModeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { EntitlementProvider } from "@/contexts/EntitlementContext";
 import { BetaAccessGate } from "@/components/BetaAccessGate";
 import { RequireAuth } from "@/components/RequireAuth";
 import { GlobalNav, MobileNavSpacer } from "@/components/GlobalNav";
@@ -14,6 +15,7 @@ import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { PageTransition } from "@/components/PageTransition";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { TrialBanner } from "@/components/TrialBanner";
 import Index from "./pages/Index";
 import MarketIntelligence from "./pages/MarketIntelligence";
 import QuickReport from "./pages/QuickReport";
@@ -34,6 +36,7 @@ import Templates from "./pages/Templates";
 import Admin from "./pages/Admin";
 import BetaAccess from "./pages/BetaAccess";
 import Subscription from "./pages/Subscription";
+import Pricing from "./pages/Pricing";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import AccountSettings from "./pages/AccountSettings";
@@ -54,7 +57,7 @@ import ReviewDocument from "./pages/ReviewDocument";
 const queryClient = new QueryClient();
 
 // Routes that bypass both beta gate AND auth (truly public)
-const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password', '/market-trends', '/my-reports', '/invite'];
+const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password', '/market-trends', '/my-reports', '/invite', '/pricing'];
 
 function AppRoutes() {
   const location = useLocation();
@@ -80,6 +83,7 @@ function AppRoutes() {
           <Route path="/my-reports/compare" element={<ClientPropertyComparison />} />
           <Route path="/invite" element={<ClientInvite />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/pricing" element={<RequireAuth><Pricing /></RequireAuth>} />
 
           {/* Protected routes - require auth */}
           <Route path="/" element={<RequireAuth><Index /></RequireAuth>} />
@@ -124,6 +128,7 @@ function AppLayout() {
     <>
       <ScrollToTop />
       <GlobalNav />
+      <TrialBanner />
       <main className="flex-1">
         <AppRoutes />
       </main>
@@ -137,18 +142,20 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ClientModeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <div className="min-h-screen flex flex-col">
-                <OfflineBanner />
-                <AppLayout />
-              </div>
-            </BrowserRouter>
-          </TooltipProvider>
-        </ClientModeProvider>
+        <EntitlementProvider>
+          <ClientModeProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <div className="min-h-screen flex flex-col">
+                  <OfflineBanner />
+                  <AppLayout />
+                </div>
+              </BrowserRouter>
+            </TooltipProvider>
+          </ClientModeProvider>
+        </EntitlementProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ErrorBoundary>

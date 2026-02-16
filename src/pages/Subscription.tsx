@@ -16,7 +16,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { ScenarioCompareSheet } from '@/components/ScenarioCompareSheet';
 import { BuyerInputs, SellerInputs } from '@/types';
 import { getBetaAccessSession } from '@/lib/betaAccess';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useEntitlement } from '@/contexts/EntitlementContext';
 import { PRICING } from '@/lib/featureGating';
 import { useSessions } from '@/hooks/useSessions';
 import { loadAgentProfile, AgentProfile } from '@/lib/agentProfile';
@@ -107,8 +107,14 @@ export default function Subscription() {
   
   const session = getBetaAccessSession();
   const hasBetaAccess = !!session;
-  const { status: subStatus, isPro, trialDaysRemaining, trialEndsAt, startTrial, refreshSubscription } = useSubscription();
-  const hasFullAccess = hasBetaAccess || isPro;
+  const { entitlementState, canWrite, startCheckout, manageSubscription, refresh, loading: entLoading } = useEntitlement();
+  const isPro = entitlementState.isPro;
+  const subStatus = entitlementState.isTrial ? 'trial' : entitlementState.isPro ? 'active' : 'none';
+  const trialDaysRemaining = entitlementState.trialEndsAt 
+    ? Math.max(0, Math.ceil((new Date(entitlementState.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0;
+  const trialEndsAt = entitlementState.trialEndsAt;
+  const hasFullAccess = hasBetaAccess || canWrite;
 
   useEffect(() => {
     setProfile(loadAgentProfile());
@@ -320,11 +326,10 @@ export default function Subscription() {
   const handleRestorePurchases = async () => {
     setIsRestoring(true);
     try {
-      // In a native app, this would trigger StoreKit restore. For now, refresh from server.
-      await refreshSubscription();
-      toast({ title: 'Purchases restored', description: isPro ? 'Your Professional subscription is active.' : 'No active subscription found. Start a free trial to unlock all features.' });
+      await refresh();
+      toast({ title: 'Subscription checked', description: isPro ? 'Your Professional subscription is active.' : 'No active subscription found.' });
     } catch {
-      toast({ title: 'Restore failed', description: 'Please try again later.', variant: 'destructive' });
+      toast({ title: 'Check failed', description: 'Please try again later.', variant: 'destructive' });
     }
     setIsRestoring(false);
   };
@@ -443,11 +448,11 @@ export default function Subscription() {
                     <span className="font-medium">{monthReports} / {FREE_TIER_LIMITS.reportsPerMonth}</span>
                   </div>
                   <Progress value={(monthReports / FREE_TIER_LIMITS.reportsPerMonth) * 100} className="h-2" />
-                  <Button className="w-full" size="lg" onClick={() => startTrial()}>
+                  <Button className="w-full" size="lg" onClick={() => startCheckout()}>
                     Start {PRICING.trialDays}-Day Free Trial
                   </Button>
                   <p className="text-[10px] text-muted-foreground text-center">
-                    Full access to all features. Then {PRICING.monthly.label} or {PRICING.yearly.label}. Cancel anytime.
+                    Full access to all features. Then {PRICING.monthly.label}. Cancel anytime.
                   </p>
                 </div>
               )}
@@ -455,7 +460,7 @@ export default function Subscription() {
                 <div className="mt-4 space-y-2">
                   <Progress value={((PRICING.trialDays - trialDaysRemaining) / PRICING.trialDays) * 100} className="h-2" />
                   <p className="text-[10px] text-muted-foreground text-center">
-                    Subscribe before your trial ends to keep full access. {PRICING.monthly.label} or {PRICING.yearly.label}.
+                    Subscribe before your trial ends to keep full access. {PRICING.monthly.label}.
                   </p>
                 </div>
               )}
@@ -915,8 +920,8 @@ export default function Subscription() {
                 </Card>
                 <Card className="border-accent/30 bg-accent/10 ring-1 ring-accent/20">
                   <CardContent className="p-3 text-center">
-                    <p className="text-lg font-serif font-bold">{PRICING.yearly.label}</p>
-                    <p className="text-[10px] text-muted-foreground">≈ ${PRICING.yearly.monthlyEquivalent}/mo · Save {PRICING.yearly.savings}</p>
+                    <p className="text-lg font-serif font-bold">{PRICING.trialDays}-day free trial</p>
+                    <p className="text-[10px] text-muted-foreground">Then {PRICING.monthly.label}</p>
                   </CardContent>
                 </Card>
               </div>
@@ -930,7 +935,7 @@ export default function Subscription() {
             {isRestoring ? (
               <><RefreshCw className="h-3 w-3 mr-1 animate-spin" /> Checking...</>
             ) : (
-              <><RefreshCw className="h-3 w-3 mr-1" /> Restore Purchases</>
+              <><RefreshCw className="h-3 w-3 mr-1" /> Check Subscription</>
             )}
           </Button>
           <div className="space-y-2">
@@ -940,10 +945,8 @@ export default function Subscription() {
               <Link to="/privacy" className="hover:underline">Privacy Policy</Link>
             </div>
             <p className="text-[10px] text-muted-foreground max-w-sm mx-auto leading-snug">
-              Payment is charged to your Apple ID account at confirmation of purchase. 
-              Subscription automatically renews unless canceled at least 24 hours before 
-              the end of the current period. You can manage and cancel subscriptions in 
-              your App Store account settings.
+              Subscription is managed through Stripe. It automatically renews unless 
+              canceled from your account settings. Cancel anytime.
             </p>
           </div>
         </div>
