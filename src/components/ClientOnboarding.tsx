@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
-  Compass, FileText, MessageSquare, Layers, 
+  FileText, MessageSquare, Layers, 
   ChevronRight, ChevronLeft, X, Play, Shield
 } from 'lucide-react';
+import { AppLogo } from '@/components/AppLogo';
 
 const CLIENT_ONBOARDING_KEY = 'mc_client_onboarding_complete';
 
@@ -18,7 +19,7 @@ interface OnboardingStep {
 
 const steps: OnboardingStep[] = [
   {
-    icon: <Compass className="h-8 w-8" />,
+    icon: <AppLogo size="md" />,
     title: 'Welcome to Market Compass',
     description: 'Your agent has shared property analysis reports designed to help you make confident decisions.',
     detail: 'Market Compass provides clear, data-backed insights into your real estate scenarios — whether you\'re buying or selling.',
@@ -191,7 +192,7 @@ export function ClientOnboardingTrigger({ className }: { className?: string }) {
         onClick={() => setShowOnboarding(true)}
         className={className}
       >
-        <Compass className="mr-2 h-4 w-4" />
+        <AppLogo size="sm" className="mr-2" />
         How It Works
       </Button>
       {showOnboarding && (

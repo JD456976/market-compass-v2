@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
-  Compass, Users, Building2, FolderOpen, FileText, Send, 
+  Users, Building2, FolderOpen, FileText, Send, 
   Database, ChevronRight, ChevronLeft, X, Play
 } from 'lucide-react';
+import { AppLogo } from '@/components/AppLogo';
 
 const ONBOARDING_COMPLETE_KEY = 'reality_engine_onboarding_complete';
 
@@ -18,7 +19,7 @@ interface OnboardingStep {
 
 const steps: OnboardingStep[] = [
   {
-    icon: <Compass className="h-8 w-8" />,
+    icon: <AppLogo size="md" />,
     title: 'Welcome to Market Compass',
     description: 'A decision-support tool that helps you navigate buyer and seller scenarios with clarity.',
     detail: 'Market Compass uses public market trend data and transaction logic to help understand tradeoffs — not to predict outcomes.',
@@ -208,7 +209,7 @@ export const OnboardingTrigger = forwardRef<HTMLButtonElement, { className?: str
           className={`w-full justify-start flex-col items-start h-auto py-3 gap-0.5 ${className || ''}`}
         >
           <span className="flex items-center w-full">
-            <Compass className="mr-2 h-4 w-4 flex-shrink-0" />
+            <AppLogo size="sm" className="mr-2 flex-shrink-0" />
             <span className="truncate">How It Works</span>
           </span>
           <span className="text-[10px] text-muted-foreground font-normal pl-6">Tour the key features and workflow</span>

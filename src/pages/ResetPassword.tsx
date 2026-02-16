@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Compass, Eye, EyeOff, Loader2, Lock, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Lock, CheckCircle2 } from 'lucide-react';
+import { AppLogo } from '@/components/AppLogo';
 import { useToast } from '@/hooks/use-toast';
 
 const ResetPassword = () => {
@@ -64,7 +65,7 @@ const ResetPassword = () => {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <Compass className="h-8 w-8 text-primary mx-auto mb-4" />
+          <AppLogo size="md" className="mx-auto mb-4" />
           <h1 className="text-2xl font-serif font-bold">Create New Password</h1>
         </div>
 

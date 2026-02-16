@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Compass, Shield } from 'lucide-react';
+import { Loader2, KeyRound, Shield } from 'lucide-react';
+import { AppLogo } from '@/components/AppLogo';
 import { isAllowedAdmin, ADMIN_EMAILS } from '@/lib/adminConfig';
 import { 
   getDeviceId, 
@@ -290,8 +291,8 @@ export default function BetaAccess() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
-            <Compass className="h-8 w-8 text-primary" />
+          <div className="mx-auto mb-4">
+            <AppLogo size="lg" />
           </div>
           <CardTitle className="text-2xl font-serif">Market Compass</CardTitle>
           <CardDescription className="text-base">
