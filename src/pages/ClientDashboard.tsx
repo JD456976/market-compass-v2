@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, MessageSquare, Layers, Clock, ExternalLink, GitCompare, LogOut, Compass, Info } from 'lucide-react';
+import { FileText, MessageSquare, Layers, Clock, ExternalLink, GitCompare, LogOut, Info } from 'lucide-react';
+import { AppLogo } from '@/components/AppLogo';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SkeletonList } from '@/components/ui/skeleton-card';
 import { EmptyClientReports } from '@/components/EmptyState';
@@ -179,7 +180,7 @@ export default function ClientDashboard() {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="p-3 rounded-xl bg-accent/20 backdrop-blur-sm">
-              <Compass className="h-6 w-6 text-accent" />
+              <AppLogo size="sm" />
             </div>
             <div className="flex-1">
               <h1 className="text-2xl font-serif font-bold">

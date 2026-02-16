@@ -7,10 +7,11 @@ import { getBetaAccessSession } from '@/lib/betaAccess';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Home, FolderOpen, Send, Settings, Compass, Sparkles, Menu,
+  Home, FolderOpen, Send, Settings, Sparkles, Menu,
   TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield, Settings as SettingsIcon,
   LayoutDashboard, MessageSquare, LogOut
 } from 'lucide-react';
+import { AppLogo } from '@/components/AppLogo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
@@ -95,7 +96,7 @@ function ClientDesktopNav() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           <NavLink to="/my-reports" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
-            <Compass className="h-5 w-5 text-primary" />
+            <AppLogo size="sm" />
             <span className="font-serif font-semibold text-lg">Market Compass</span>
           </NavLink>
           <nav className="flex items-center gap-1">
@@ -274,7 +275,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
               {/* Drawer Header */}
               <div className="flex items-center justify-between p-4 border-b border-border">
                 <div className="flex items-center gap-2">
-                  <Compass className="h-5 w-5 text-primary" />
+                  <AppLogo size="sm" />
                   <span className="font-serif font-semibold">Menu</span>
                 </div>
                 <button
@@ -328,7 +329,7 @@ function DesktopNav({ items }: { items: NavItem[] }) {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           <NavLink to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
-            <Compass className="h-5 w-5 text-primary" />
+            <AppLogo size="sm" />
             <span className="font-serif font-semibold text-lg">Market Compass</span>
           </NavLink>
           <nav className="flex items-center gap-1">

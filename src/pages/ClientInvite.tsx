@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Compass, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { AppLogo } from '@/components/AppLogo';
 
 const ClientInvite = () => {
   const [searchParams] = useSearchParams();
@@ -122,7 +123,7 @@ const ClientInvite = () => {
       <Card className="w-full max-w-md border-border/50 shadow-lg">
         <CardContent className="py-10 text-center space-y-6">
           <div className="flex items-center justify-center gap-2">
-            <Compass className="h-8 w-8 text-primary" />
+            <AppLogo size="md" />
             <span className="text-2xl font-serif font-bold">Market Compass</span>
           </div>
 

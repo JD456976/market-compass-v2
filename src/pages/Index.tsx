@@ -5,7 +5,8 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Compass, Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Upload, Sparkles, Zap } from 'lucide-react';
+import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Upload, Sparkles, Zap } from 'lucide-react';
+import { AppLogo } from '@/components/AppLogo';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
 import { useDraftSessions, useSharedSessions } from '@/hooks/useSessions';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,9 +56,7 @@ const Index = () => {
             transition={{ duration: 0.6 }}
           >
             <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="p-3 rounded-xl bg-accent/20 backdrop-blur-sm">
-                <Compass className="h-8 w-8 text-accent" />
-              </div>
+              <AppLogo size="lg" />
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-tight">
               Market Compass
@@ -372,7 +371,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <Compass className="h-4 w-4" />
+              <AppLogo size="sm" />
               <span>Market Compass</span>
             </div>
             <p className="text-xs text-center max-w-md">

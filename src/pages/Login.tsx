@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
-import { Compass, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
+import { AppLogo } from '@/components/AppLogo';
 // Note: "Remember me" checkbox removed — Supabase session persistence is automatic
 import { useToast } from '@/hooks/use-toast';
 
@@ -68,7 +69,7 @@ const Login = () => {
         {/* Logo */}
         <div className="text-center">
           <div className="inline-flex items-center gap-2 mb-2">
-            <Compass className="h-8 w-8 text-primary" />
+            <AppLogo size="md" />
             <span className="text-2xl font-serif font-bold text-foreground">Market Compass</span>
           </div>
           <p className="text-muted-foreground text-sm">Sign in to your account</p>

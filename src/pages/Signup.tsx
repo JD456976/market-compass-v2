@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Compass, Eye, EyeOff, Loader2, Mail, Lock, User, Building2, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Mail, Lock, User, Building2, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { AppLogo } from '@/components/AppLogo';
 import { useToast } from '@/hooks/use-toast';
 import { friendlyErrorMessage } from '@/lib/requestHelpers';
 
@@ -132,7 +133,7 @@ const Signup = () => {
             Back
           </Link>
           <div className="inline-flex items-center gap-2 mb-2">
-            <Compass className="h-8 w-8 text-primary" />
+            <AppLogo size="md" />
           </div>
           <h1 className="text-2xl font-serif font-bold">
             {isClientInvite ? 'Create Your Client Account' : 'Create Your Account'}
