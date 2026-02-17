@@ -18,6 +18,13 @@ export function ReportHeader({ reportType, clientName, snapshotTimestamp, showTi
   const { user } = useAuth();
   const [branding, setBranding] = useState<AgentBranding | null>(externalBranding ?? null);
 
+  // Sync state when external branding prop changes (e.g. async load in SharedReport)
+  useEffect(() => {
+    if (externalBranding !== undefined && externalBranding !== null) {
+      setBranding(externalBranding);
+    }
+  }, [externalBranding]);
+
   useEffect(() => {
     if (externalBranding !== undefined) return;
     if (!user?.id) return;
