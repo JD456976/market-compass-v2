@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { friendlyErrorMessage } from '@/lib/requestHelpers';
@@ -15,7 +15,10 @@ import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const prefillEmail = searchParams.get('email') || '';
+  const claimSessionId = searchParams.get('claim') || '';
+  const fromPath = (location.state as any)?.from || '';
   const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -46,6 +49,19 @@ const Login = () => {
       // Check user role to redirect appropriately
       const { data: { user: loggedInUser } } = await supabase.auth.getUser();
       if (loggedInUser) {
+        // Claim shared reports if claim param exists
+        if (claimSessionId) {
+          try {
+            await supabase.rpc('claim_shared_reports', {
+              p_user_id: loggedInUser.id,
+              p_email: loggedInUser.email || '',
+              p_session_id: claimSessionId,
+            });
+          } catch (err) {
+            console.error('Failed to claim report:', err);
+          }
+        }
+
         const { data: roleData } = await supabase
           .from('user_roles')
           .select('role')
@@ -54,6 +70,8 @@ const Login = () => {
         
         if (roleData?.role === 'client') {
           navigate('/my-reports', { replace: true });
+        } else if (fromPath && fromPath !== '/login') {
+          navigate(fromPath, { replace: true });
         } else {
           navigate('/', { replace: true });
         }
@@ -62,7 +80,6 @@ const Login = () => {
       }
     }
   };
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md space-y-8">
@@ -122,7 +139,7 @@ const Login = () => {
               </div>
 
               <div className="flex items-center justify-end">
-                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                <Link to={`/forgot-password${claimSessionId ? `?claim=${claimSessionId}` : ''}`} className="text-sm text-primary hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -136,7 +153,7 @@ const Login = () => {
             <div className="text-center text-sm text-muted-foreground mt-6 space-y-2">
               <p>
                 Are you an agent?{' '}
-                <Link to="/signup" className="text-primary font-medium hover:underline">Create an account</Link>
+                <Link to={`/signup${claimSessionId ? `?claim=${claimSessionId}` : ''}`} className="text-primary font-medium hover:underline">Create an account</Link>
               </p>
               <p>
                 Are you a client?{' '}

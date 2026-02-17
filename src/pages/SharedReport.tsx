@@ -296,7 +296,7 @@ const SharedReportContent = () => {
         <div className="container mx-auto px-4 py-2.5">
           <div className="flex items-center justify-between gap-3">
             <Link
-              to="/my-reports"
+              to={`/my-reports?claim=${sessionId}`}
               className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[44px]"
             >
               <LayoutDashboard className="h-4 w-4" />

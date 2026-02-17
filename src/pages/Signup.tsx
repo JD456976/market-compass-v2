@@ -31,6 +31,7 @@ const Signup = () => {
   const [searchParams] = useSearchParams();
   const inviteEmail = searchParams.get('email') || '';
   const inviteToken = searchParams.get('invite') || '';
+  const claimSessionId = searchParams.get('claim') || '';
   const inviteFirstName = searchParams.get('fn') || '';
   const inviteLastName = searchParams.get('ln') || '';
   const isClientInvite = !!inviteToken;
@@ -228,7 +229,7 @@ const Signup = () => {
 
             <p className="text-center text-sm text-muted-foreground mt-6">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary font-medium hover:underline">Sign in</Link>
+              <Link to={`/login${claimSessionId ? `?claim=${claimSessionId}` : ''}`} className="text-primary font-medium hover:underline">Sign in</Link>
             </p>
           </CardContent>
         </Card>

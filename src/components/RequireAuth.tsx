@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -10,6 +10,8 @@ interface RequireAuthProps {
 export function RequireAuth({ children }: RequireAuthProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const claim = searchParams.get('claim');
 
   if (loading) {
     return (
@@ -23,7 +25,8 @@ export function RequireAuth({ children }: RequireAuthProps) {
   }
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    const loginPath = claim ? `/login?claim=${claim}` : '/login';
+    return <Navigate to={loginPath} state={{ from: location.pathname }} replace />;
   }
 
   return <>{children}</>;

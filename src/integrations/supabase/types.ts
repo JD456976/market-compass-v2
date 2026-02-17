@@ -700,6 +700,7 @@ export type Database = {
           archived: boolean
           archived_at: string | null
           buyer_inputs: Json | null
+          claimed_by_user_id: string | null
           client_name: string
           condition: string
           created_at: string
@@ -712,6 +713,7 @@ export type Database = {
           owner_user_id: string | null
           pdf_exported: boolean | null
           property_type: string
+          recipient_email: string | null
           selected_market_profile_id: string | null
           seller_inputs: Json | null
           session_type: string
@@ -725,6 +727,7 @@ export type Database = {
           archived?: boolean
           archived_at?: string | null
           buyer_inputs?: Json | null
+          claimed_by_user_id?: string | null
           client_name: string
           condition: string
           created_at?: string
@@ -737,6 +740,7 @@ export type Database = {
           owner_user_id?: string | null
           pdf_exported?: boolean | null
           property_type: string
+          recipient_email?: string | null
           selected_market_profile_id?: string | null
           seller_inputs?: Json | null
           session_type: string
@@ -750,6 +754,7 @@ export type Database = {
           archived?: boolean
           archived_at?: string | null
           buyer_inputs?: Json | null
+          claimed_by_user_id?: string | null
           client_name?: string
           condition?: string
           created_at?: string
@@ -762,6 +767,7 @@ export type Database = {
           owner_user_id?: string | null
           pdf_exported?: boolean | null
           property_type?: string
+          recipient_email?: string | null
           selected_market_profile_id?: string | null
           seller_inputs?: Json | null
           session_type?: string
@@ -936,6 +942,10 @@ export type Database = {
         Returns: Json
       }
       check_owner_device: { Args: { p_device_id: string }; Returns: Json }
+      claim_shared_reports: {
+        Args: { p_email: string; p_session_id?: string; p_user_id: string }
+        Returns: Json
+      }
       create_beta_code: {
         Args: {
           p_admin_email: string
