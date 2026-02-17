@@ -798,11 +798,6 @@ const SellerFlow = () => {
                     <ReviewRow label="Agent Notes" value={agentNotes || '—'} />
                   </ReviewSection>
 
-                  {/* Report Type */}
-                  <div className="pt-4 border-t border-border/50">
-                    <p className="text-sm font-medium mb-3">Report Style</p>
-                    <ReportTemplateSelector selected={reportTemplate} onSelect={setReportTemplate} />
-                  </div>
                 </CardContent>
               </Card>
             )}

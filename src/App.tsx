@@ -57,7 +57,7 @@ import ReviewDocument from "./pages/ReviewDocument";
 const queryClient = new QueryClient();
 
 // Routes that bypass both beta gate AND auth (truly public)
-const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password', '/market-trends', '/invite', '/pricing'];
+const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password', '/market-trends', '/invite', '/pricing', '/my-reports'];
 
 function AppRoutes() {
   const location = useLocation();
