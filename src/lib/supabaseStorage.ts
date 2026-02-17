@@ -224,7 +224,7 @@ export async function deleteMarketProfileFromSupabase(id: string): Promise<boole
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapDbSessionToSession(db: any): Session {
-  return {
+  const session: Session & { owner_user_id?: string } = {
     id: db.id,
     session_type: db.session_type as Session['session_type'],
     client_name: db.client_name,
@@ -245,6 +245,11 @@ function mapDbSessionToSession(db: any): Session {
     created_at: db.created_at,
     updated_at: db.updated_at,
   };
+  // Preserve owner_user_id for branding lookups on shared reports
+  if (db.owner_user_id) {
+    session.owner_user_id = db.owner_user_id;
+  }
+  return session;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
