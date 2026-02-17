@@ -7,8 +7,7 @@
 const PUBLISHED_ORIGIN = 'https://market-compass-v2.lovable.app';
 
 export function getShareUrl(shareTokenOrId: string): string {
-  // In production (published app), always use the published origin
-  // In dev/preview, fall back to current origin
-  const origin = import.meta.env.PROD ? PUBLISHED_ORIGIN : window.location.origin;
-  return `${origin}/share/${shareTokenOrId}`;
+  // Always use the published origin so share links work for recipients
+  // without requiring a Lovable account login
+  return `${PUBLISHED_ORIGIN}/share/${shareTokenOrId}`;
 }
