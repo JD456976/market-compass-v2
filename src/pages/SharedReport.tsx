@@ -340,9 +340,17 @@ const SharedReportContent = () => {
               <div className="min-w-0">
                 <h1 className="text-xl sm:text-2xl font-serif font-bold">{isSeller ? 'Seller' : 'Buyer'} Report</h1>
                 <p className="text-sm text-primary-foreground/70 truncate">
-                  {session.client_name} • {session.address_fields?.address_line 
-                    ? `${session.address_fields.address_line}, ${formatLocation(session.location)}`
-                    : formatLocation(session.location)}
+                  {session.client_name} • {(() => {
+                    const addressLine = (session.address_fields as any)?.address_line;
+                    const city = (session.address_fields as any)?.city;
+                    const state = (session.address_fields as any)?.state;
+                    const zip = (session.address_fields as any)?.zip;
+                    if (addressLine) {
+                      const parts = [addressLine, city, state].filter(Boolean);
+                      return parts.join(', ') + (zip ? `, ${zip}` : '');
+                    }
+                    return formatLocation(session.location);
+                  })()}
                 </p>
               </div>
             </div>
