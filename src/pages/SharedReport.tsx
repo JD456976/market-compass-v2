@@ -341,13 +341,16 @@ const SharedReportContent = () => {
                 <h1 className="text-xl sm:text-2xl font-serif font-bold">{isSeller ? 'Seller' : 'Buyer'} Report</h1>
                 <p className="text-sm text-primary-foreground/70 truncate">
                   {session.client_name} • {(() => {
-                    const addressLine = (session.address_fields as any)?.address_line;
-                    const city = (session.address_fields as any)?.city;
-                    const state = (session.address_fields as any)?.state;
-                    const zip = (session.address_fields as any)?.zip;
+                    const fields = session.address_fields;
+                    const addressLine = fields?.address_line;
                     if (addressLine) {
-                      const parts = [addressLine, city, state].filter(Boolean);
-                      return parts.join(', ') + (zip ? `, ${zip}` : '');
+                      // If address_line already contains city/state/zip, use it directly
+                      if (addressLine.includes(',')) {
+                        return addressLine;
+                      }
+                      // Otherwise build from parts
+                      const parts = [addressLine, fields?.city, fields?.state].filter(Boolean);
+                      return parts.join(', ') + (fields?.zip ? `, ${fields.zip}` : '');
                     }
                     return formatLocation(session.location);
                   })()}
