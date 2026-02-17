@@ -57,7 +57,7 @@ import ReviewDocument from "./pages/ReviewDocument";
 const queryClient = new QueryClient();
 
 // Routes that bypass both beta gate AND auth (truly public)
-const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password', '/market-trends', '/my-reports', '/invite', '/pricing'];
+const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password', '/market-trends', '/invite', '/pricing'];
 
 function AppRoutes() {
   const location = useLocation();
@@ -79,8 +79,8 @@ function AppRoutes() {
           <Route path="/share/:sessionId" element={<SharedReport />} />
           <Route path="/share/compare" element={<SharedComparisonReport />} />
           <Route path="/market-trends" element={<PublicMarketTrends />} />
-          <Route path="/my-reports" element={<ClientDashboard />} />
-          <Route path="/my-reports/compare" element={<ClientPropertyComparison />} />
+          <Route path="/my-reports" element={<RequireAuth><ClientDashboard /></RequireAuth>} />
+          <Route path="/my-reports/compare" element={<RequireAuth><ClientPropertyComparison /></RequireAuth>} />
           <Route path="/invite" element={<ClientInvite />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/pricing" element={<RequireAuth><Pricing /></RequireAuth>} />

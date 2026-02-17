@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { SkeletonList } from '@/components/ui/skeleton-card';
 import { EmptyClientReports } from '@/components/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { NotificationBell } from '@/components/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,10 +37,30 @@ export default function ClientDashboard() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [clientName, setClientName] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const claimSessionId = searchParams.get('claim') || '';
   const { user, signOut } = useAuth();
   const { isClient } = useUserRole();
 
   const viewerId = user?.id || localStorage.getItem('mc_viewer_id') || '';
+
+  // Claim shared report on mount if claim param exists
+  useEffect(() => {
+    if (!user || !claimSessionId) return;
+    const claimAndRefresh = async () => {
+      try {
+        await supabase.rpc('claim_shared_reports', {
+          p_user_id: user.id,
+          p_email: user.email || '',
+          p_session_id: claimSessionId,
+        });
+        fetchAllClientReports();
+      } catch (err) {
+        console.error('Failed to claim report:', err);
+      }
+    };
+    claimAndRefresh();
+  }, [user, claimSessionId]);
 
   // Fetch client name from profile
   useEffect(() => {
@@ -54,36 +74,53 @@ export default function ClientDashboard() {
   const { showPrePrompt, confirmPermission, dismissPrePrompt } = usePushNotifications('client', reportIds);
 
   useEffect(() => {
-    if (user && isClient) {
-      fetchAuthenticatedClientReports();
-    } else if (viewerId) {
-      fetchClientReports();
+    if (user) {
+      fetchAllClientReports();
     } else {
       setLoading(false);
     }
-  }, [user, isClient, viewerId]);
+  }, [user, isClient]);
 
-  const fetchAuthenticatedClientReports = async () => {
+  const fetchAllClientReports = async () => {
     if (!user) return;
+    setLoading(true);
     try {
+      // Fetch via agent_clients links (invitation-based)
       const { data: agentLinks } = await supabase
         .from('agent_clients')
         .select('agent_user_id')
         .eq('client_user_id', user.id);
 
-      if (!agentLinks || agentLinks.length === 0) { setLoading(false); return; }
+      const agentIds = agentLinks?.map(l => l.agent_user_id) || [];
 
-      const agentIds = agentLinks.map(l => l.agent_user_id);
+      // Fetch sessions linked via agent_clients
+      let agentSessions: any[] = [];
+      if (agentIds.length > 0) {
+        const { data } = await supabase
+          .from('sessions')
+          .select('id, client_name, session_type, location, share_token, updated_at')
+          .in('owner_user_id', agentIds)
+          .eq('share_link_created', true)
+          .eq('share_token_revoked', false);
+        agentSessions = data || [];
+      }
 
-      const { data: sessions } = await supabase
+      // Also fetch sessions claimed directly by this user
+      const { data: claimedSessions } = await supabase
         .from('sessions')
         .select('id, client_name, session_type, location, share_token, updated_at')
-        .in('owner_user_id', agentIds)
+        .eq('claimed_by_user_id', user.id)
         .eq('share_link_created', true)
-        .eq('share_token_revoked', false)
-        .order('updated_at', { ascending: false });
+        .eq('share_token_revoked', false);
 
-      if (!sessions || sessions.length === 0) { setLoading(false); return; }
+      // Merge and deduplicate
+      const allSessions = new Map<string, any>();
+      for (const s of [...agentSessions, ...(claimedSessions || [])]) {
+        if (!allSessions.has(s.id)) allSessions.set(s.id, s);
+      }
+      const sessions = Array.from(allSessions.values());
+
+      if (sessions.length === 0) { setLoading(false); return; }
 
       const rIds = sessions.map(s => s.id);
       const [{ data: messages }, { data: scenarios }] = await Promise.all([
@@ -101,63 +138,12 @@ export default function ClientDashboard() {
         unread_messages: messages?.filter(m => m.report_id === s.id && !m.read_by_client_at).length || 0,
         scenario_count: scenarios?.filter(sc => sc.report_id === s.id).length || 0,
         pending_reviews: scenarios?.filter(sc => sc.report_id === s.id && sc.reviewed_status === 'pending').length || 0,
-      })));
-    } catch (err) {
-      console.error('Failed to load authenticated client reports:', err);
-    } finally { setLoading(false); }
-  };
-
-  const fetchClientReports = async () => {
-    try {
-      const { data: views } = await supabase
-        .from('shared_report_views')
-        .select('report_id, share_token, viewed_at')
-        .eq('viewer_id', viewerId)
-        .order('viewed_at', { ascending: false });
-
-      if (!views || views.length === 0) { setLoading(false); return; }
-
-      const uniqueReports = new Map<string, { report_id: string; share_token: string; last_viewed: string }>();
-      for (const v of views) {
-        if (!uniqueReports.has(v.report_id)) {
-          uniqueReports.set(v.report_id, { report_id: v.report_id, share_token: v.share_token, last_viewed: v.viewed_at });
-        }
-      }
-
-      const rIds = Array.from(uniqueReports.keys());
-
-      const { data: sessions } = await supabase
-        .from('sessions')
-        .select('id, client_name, session_type, location, share_token')
-        .in('id', rIds)
-        .eq('share_link_created', true)
-        .eq('share_token_revoked', false);
-
-      if (!sessions) { setLoading(false); return; }
-
-      const [{ data: messages }, { data: scenarios }] = await Promise.all([
-        supabase.from('report_messages').select('report_id, read_by_client_at').in('report_id', rIds).eq('sender_role', 'agent'),
-        supabase.from('report_scenarios').select('report_id, reviewed_status').in('report_id', rIds).eq('created_by_role', 'client'),
-      ]);
-
-      setReports(sessions.map(s => {
-        const viewInfo = uniqueReports.get(s.id);
-        return {
-          report_id: s.id,
-          share_token: s.share_token || viewInfo?.share_token || '',
-          client_name: s.client_name,
-          session_type: s.session_type,
-          location: s.location,
-          last_viewed: viewInfo?.last_viewed || '',
-          unread_messages: messages?.filter(m => m.report_id === s.id && !m.read_by_client_at).length || 0,
-          scenario_count: scenarios?.filter(sc => sc.report_id === s.id).length || 0,
-          pending_reviews: scenarios?.filter(sc => sc.report_id === s.id && sc.reviewed_status === 'pending').length || 0,
-        };
-      }));
+      })).sort((a, b) => new Date(b.last_viewed).getTime() - new Date(a.last_viewed).getTime()));
     } catch (err) {
       console.error('Failed to load client reports:', err);
     } finally { setLoading(false); }
   };
+
 
   const handleSignOut = async () => {
     await signOut();
