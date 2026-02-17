@@ -326,12 +326,24 @@ const SharedReportContent = () => {
         <div className="container mx-auto px-4 py-6 report-header-mobile">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2 rounded-lg bg-accent/20 shrink-0">
-                {isSeller ? <Building2 className="h-5 w-5 text-accent" /> : <Users className="h-5 w-5 text-accent" />}
-              </div>
+              {agentBranding?.headshot_url ? (
+                <img
+                  src={agentBranding.headshot_url}
+                  alt="Agent"
+                  className="h-10 w-10 rounded-full object-cover border-2 border-primary-foreground/30 shrink-0"
+                />
+              ) : (
+                <div className="p-2 rounded-lg bg-accent/20 shrink-0">
+                  {isSeller ? <Building2 className="h-5 w-5 text-accent" /> : <Users className="h-5 w-5 text-accent" />}
+                </div>
+              )}
               <div className="min-w-0">
                 <h1 className="text-xl sm:text-2xl font-serif font-bold">{isSeller ? 'Seller' : 'Buyer'} Report</h1>
-                <p className="text-sm text-primary-foreground/70 truncate">{session.client_name} • {formatLocation(session.location)}</p>
+                <p className="text-sm text-primary-foreground/70 truncate">
+                  {session.client_name} • {session.address_fields?.address_line 
+                    ? `${session.address_fields.address_line}, ${formatLocation(session.location)}`
+                    : formatLocation(session.location)}
+                </p>
               </div>
             </div>
             {/* Desktop Scenario Explorer CTA */}
