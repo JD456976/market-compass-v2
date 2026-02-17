@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2, Eye, Archive, ArchiveRestore, Search, Trash2, GitCompare } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Send, Calendar, Link2, ExternalLink, FileDown, Loader2, Eye, Archive, ArchiveRestore, Search, Trash2, GitCompare, CheckSquare, X } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { SkeletonList } from '@/components/ui/skeleton-card';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { NotificationPrePrompt } from '@/components/NotificationPrePrompt';
@@ -34,6 +35,9 @@ const SharedReports = () => {
   const [typeFilter, setTypeFilter] = useState<'all' | 'Seller' | 'Buyer'>('all');
   const [compareMode, setCompareMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<string[]>([]);
+  const [confirmBulkAction, setConfirmBulkAction] = useState<'archive' | 'delete' | null>(null);
 
   // Filtered sessions
   const filteredActive = useMemo(() => {
@@ -111,6 +115,52 @@ const SharedReports = () => {
   const handleCompare = () => {
     if (selectedIds.length < 2) return;
     navigate(`/compare?a=${selectedIds[0]}&b=${selectedIds[1]}&from=/shared-reports`);
+  };
+
+  const toggleBulkSelect = (id: string) => {
+    setBulkSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const currentList = activeTab === 'active' ? filteredActive : filteredArchived;
+  const allCurrentSelected = currentList.length > 0 && currentList.every(s => bulkSelectedIds.includes(s.id));
+
+  const toggleSelectAll = () => {
+    if (allCurrentSelected) {
+      setBulkSelectedIds(prev => prev.filter(id => !currentList.some(s => s.id === id)));
+    } else {
+      setBulkSelectedIds(prev => [...new Set([...prev, ...currentList.map(s => s.id)])]);
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    setConfirmBulkAction(null);
+    const toArchive = bulkSelectedIds.filter(id => activeSessions.some(s => s.id === id));
+    for (const id of toArchive) {
+      await archiveSession(id);
+    }
+    toast({ title: `${toArchive.length} report${toArchive.length !== 1 ? 's' : ''} archived` });
+    setBulkSelectedIds([]);
+  };
+
+  const handleBulkDelete = async () => {
+    setConfirmBulkAction(null);
+    const toDelete = bulkSelectedIds.filter(id => archivedSessions.some(s => s.id === id));
+    for (const id of toDelete) {
+      await deleteSession(id);
+    }
+    toast({ title: `${toDelete.length} report${toDelete.length !== 1 ? 's' : ''} deleted` });
+    setBulkSelectedIds([]);
+  };
+
+  const handleBulkUnarchive = async () => {
+    const toRestore = bulkSelectedIds.filter(id => archivedSessions.some(s => s.id === id));
+    for (const id of toRestore) {
+      await unarchiveSession(id);
+    }
+    toast({ title: `${toRestore.length} report${toRestore.length !== 1 ? 's' : ''} restored` });
+    setBulkSelectedIds([]);
   };
 
 
@@ -238,10 +288,18 @@ const SharedReports = () => {
         onDelete={() => isArchived ? handleDeleteArchived(session) : handleArchive(session)}
         deleteLabel={isArchived ? 'Delete' : 'Archive'}
       >
-        <Card className={compareMode && selectedIds.includes(session.id) ? 'border-accent ring-1 ring-accent/30' : ''}>
+        <Card className={`${compareMode && selectedIds.includes(session.id) ? 'border-accent ring-1 ring-accent/30' : ''} ${bulkMode && bulkSelectedIds.includes(session.id) ? 'border-accent ring-1 ring-accent/30 bg-accent/5' : ''}`}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              {compareMode && (
+              {bulkMode && (
+                <Checkbox
+                  checked={bulkSelectedIds.includes(session.id)}
+                  onCheckedChange={() => toggleBulkSelect(session.id)}
+                  className="shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
+              {compareMode && !bulkMode && (
                 <Checkbox
                   checked={selectedIds.includes(session.id)}
                   onCheckedChange={() => toggleCompareSelect(session.id)}
@@ -448,20 +506,32 @@ const SharedReports = () => {
                 </p>
               </div>
             </div>
-            {activeSessions.length >= 2 && (
+            {sessions.length >= 1 && (
               <div className="flex items-center gap-2">
                 <Button
-                  variant={compareMode ? 'default' : 'outline'}
+                  variant={bulkMode ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => { setCompareMode(!compareMode); setSelectedIds([]); }}
+                  onClick={() => { setBulkMode(!bulkMode); setBulkSelectedIds([]); if (compareMode) { setCompareMode(false); setSelectedIds([]); } }}
                 >
-                  <GitCompare className="h-4 w-4 mr-1.5" />
-                  {compareMode ? 'Cancel' : 'Compare'}
+                  <CheckSquare className="h-4 w-4 mr-1.5" />
+                  {bulkMode ? 'Cancel' : 'Select'}
                 </Button>
-                {compareMode && selectedIds.length >= 2 && (
-                  <Button size="sm" onClick={handleCompare}>
-                    Compare {selectedIds.length}
-                  </Button>
+                {!bulkMode && activeSessions.length >= 2 && (
+                  <>
+                    <Button
+                      variant={compareMode ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => { setCompareMode(!compareMode); setSelectedIds([]); }}
+                    >
+                      <GitCompare className="h-4 w-4 mr-1.5" />
+                      {compareMode ? 'Cancel' : 'Compare'}
+                    </Button>
+                    {compareMode && selectedIds.length >= 2 && (
+                      <Button size="sm" onClick={handleCompare}>
+                        Compare {selectedIds.length}
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -509,7 +579,7 @@ const SharedReports = () => {
           </p>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); if (bulkMode) setBulkSelectedIds([]); }} className="space-y-4">
           <TabsList className="w-full">
             <TabsTrigger value="active" className="flex-1">
               Active ({activeSessions.length})
@@ -519,6 +589,22 @@ const SharedReports = () => {
               Archived ({archivedSessions.length})
             </TabsTrigger>
           </TabsList>
+
+          {/* Bulk mode select-all bar */}
+          {bulkMode && currentList.length > 0 && (
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+              <Checkbox
+                checked={allCurrentSelected}
+                onCheckedChange={toggleSelectAll}
+              />
+              <span className="text-sm text-muted-foreground">
+                {allCurrentSelected ? 'Deselect all' : 'Select all'} ({currentList.length})
+              </span>
+              <span className="ml-auto text-xs text-muted-foreground">
+                {bulkSelectedIds.length} selected
+              </span>
+            </div>
+          )}
 
           <TabsContent value="active">
             <AnimatePresence mode="wait">
@@ -547,6 +633,88 @@ const SharedReports = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Sticky bulk action bar */}
+      <AnimatePresence>
+        {bulkMode && bulkSelectedIds.length > 0 && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-sm shadow-lg"
+          >
+            <div className="container mx-auto px-4 py-3 max-w-4xl flex items-center justify-between gap-3">
+              <span className="text-sm font-medium">
+                {bulkSelectedIds.length} selected
+              </span>
+              <div className="flex items-center gap-2">
+                {activeTab === 'active' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setConfirmBulkAction('archive')}
+                  >
+                    <Archive className="h-4 w-4 mr-1.5" />
+                    Archive
+                  </Button>
+                )}
+                {activeTab === 'archived' && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkUnarchive}
+                    >
+                      <ArchiveRestore className="h-4 w-4 mr-1.5" />
+                      Restore
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setConfirmBulkAction('delete')}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1.5" />
+                      Delete
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bulk action confirmation dialogs */}
+      <AlertDialog open={confirmBulkAction === 'archive'} onOpenChange={() => setConfirmBulkAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive {bulkSelectedIds.length} report{bulkSelectedIds.length !== 1 ? 's' : ''}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              These reports will be moved to the Archived tab. You can restore them later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkArchive}>Archive</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmBulkAction === 'delete'} onOpenChange={() => setConfirmBulkAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently delete {bulkSelectedIds.length} report{bulkSelectedIds.length !== 1 ? 's' : ''}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. These reports will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <NotificationPrePrompt open={showPrePrompt} onConfirm={confirmPermission} onDismiss={dismissPrePrompt} role="agent" />
     </div>
   );
