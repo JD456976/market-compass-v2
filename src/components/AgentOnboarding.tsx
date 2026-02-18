@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-  Users, Building2, FolderOpen, FileText, Send, 
-  Database, ChevronRight, ChevronLeft, X, Play
+import {
+  Users, Building2, FolderOpen, Send,
+  Target, Trophy, BookmarkCheck, Bell, Compass,
+  MessageSquare, TrendingUp,
+  ChevronRight, ChevronLeft, X, Play,
 } from 'lucide-react';
 import { AppLogo } from '@/components/AppLogo';
 
@@ -21,32 +23,44 @@ const steps: OnboardingStep[] = [
   {
     icon: <AppLogo size="md" />,
     title: 'Welcome to Market Compass',
-    description: 'A decision-support tool that helps you navigate buyer and seller scenarios with clarity.',
-    detail: 'Market Compass uses public market trend data and transaction logic to help understand tradeoffs — not to predict outcomes.',
+    description: 'A decision-support platform built for real estate agents who want data-backed confidence in every conversation.',
+    detail: 'Market Compass uses public market trend data, live mortgage rates, and your local signals to help clients understand tradeoffs — not to predict outcomes. Every insight is grounded, explainable, and shareable.',
   },
   {
     icon: <div className="flex gap-2"><Users className="h-6 w-6" /><Building2 className="h-6 w-6" /></div>,
-    title: 'Agent Mode vs Client Mode',
-    description: 'Switch between internal analysis and client-ready views.',
-    detail: 'Agent Mode shows full grounding data, explanations, and editing tools. Client Mode shows polished reports safe for sharing. Share links and PDF exports are only available in Client Mode.',
+    title: 'Buyer & Seller Reports',
+    description: 'Create professional, data-backed reports for any side of a transaction in minutes.',
+    detail: 'Agent Mode shows full grounding data, editable fields, and strategy notes. Client Mode produces polished, share-ready reports. PDF exports and share links are available in Client Mode — and your branding carries through both.',
   },
   {
-    icon: <div className="flex gap-2"><FolderOpen className="h-6 w-6" /><FileText className="h-6 w-6" /><Send className="h-6 w-6" /></div>,
-    title: 'Drafts, Templates & Shared Reports',
-    description: 'Three distinct workspaces for different purposes.',
-    detail: 'Draft Analyses are your working sessions — editable and comparable. Templates save your preferred defaults (never client data). Shared Reports log what you\'ve sent to clients.',
+    icon: <div className="flex gap-3"><Target className="h-6 w-6" /><Trophy className="h-6 w-6" /></div>,
+    title: 'Lead Finder & Offer Tracker',
+    description: 'Identify high-opportunity markets and build a personal win-rate record.',
+    detail: 'Lead Finder analyzes FRED economic data across ZIP codes to score buyer and seller opportunity. Offer Tracker logs your offer outcomes to build a win-rate model — showing your price ratio, escalation effectiveness, and competitive patterns over time.',
   },
   {
-    icon: <Database className="h-8 w-8" />,
-    title: 'Market Data & Signals',
-    description: 'Market snapshots, live rates, and agent signals anchor your analysis.',
-    detail: 'Market Compass uses town-level snapshots (median DOM, sale-to-list ratio), live 30-year mortgage rates from FRED, and your agent-reported signals (showing traffic, offer deadlines, price changes) to build a complete picture.',
+    icon: <div className="flex gap-3"><BookmarkCheck className="h-6 w-6" /><Bell className="h-6 w-6" /></div>,
+    title: 'Playbooks & Market Alerts',
+    description: 'Save personalized outreach scripts and get notified when market opportunity shifts.',
+    detail: 'The Prospecting Playbook generates 5 ready-to-use outreach assets (postcards, emails, social posts, door hangers, call scripts) branded with your name and CTA. Market Shift Alerts notify you when a saved ZIP\'s Opportunity Score changes by 8+ points — so you\'re always ahead of the curve.',
   },
   {
-    icon: <Play className="h-8 w-8" />,
+    icon: <div className="flex gap-3"><MessageSquare className="h-6 w-6" /><TrendingUp className="h-6 w-6" /></div>,
+    title: 'Conversation Coach & Momentum Map',
+    description: 'Handle seller objections with data and visualize neighborhood trends side-by-side.',
+    detail: 'The Seller Conversation Coach generates objection-handling scripts backed by local DOM and sale-to-list data. The Neighborhood Momentum Map lets you compare up to 4 ZIP codes on a radar chart — perfect for showing clients why location timing matters.',
+  },
+  {
+    icon: <div className="flex gap-3"><FolderOpen className="h-6 w-6" /><Send className="h-6 w-6" /></div>,
+    title: 'Drafts, Shared Reports & Client Portal',
+    description: 'Manage your working sessions, track client views, and invite clients to collaborate.',
+    detail: 'Draft Analyses are your editable sessions. Shared Reports log what you\'ve sent — with view tracking, messaging, and scenario submissions built in. Invite clients to the portal so they can explore what-if scenarios and message you directly within their report.',
+  },
+  {
+    icon: <div className="flex gap-1"><Compass className="h-8 w-8" /></div>,
     title: 'Ready to Start',
-    description: 'Create a Buyer or Seller report to begin.',
-    detail: 'You can always access this guide later from the home screen. Have questions? Check Data & Methodology for how the tool works.',
+    description: 'Create a Buyer or Seller report, or explore Lead Finder to find your next opportunity.',
+    detail: 'You can always re-open this guide from the home screen. Check Data & Methodology to understand how every score is calculated. Your agent profile and branding settings apply everywhere automatically.',
   },
 ];
 
@@ -60,11 +74,8 @@ export function AgentOnboarding({ onComplete, forceShow = false }: AgentOnboardi
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
-    // Check if onboarding has been completed
     const completed = localStorage.getItem(ONBOARDING_COMPLETE_KEY);
-    if (!completed || forceShow) {
-      setIsOpen(true);
-    }
+    if (!completed || forceShow) setIsOpen(true);
   }, [forceShow]);
 
   const handleComplete = () => {
@@ -79,17 +90,12 @@ export function AgentOnboarding({ onComplete, forceShow = false }: AgentOnboardi
   };
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      handleComplete();
-    }
+    if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1);
+    else handleComplete();
   };
 
   const handlePrev = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
   if (!isOpen) return null;
@@ -119,9 +125,9 @@ export function AgentOnboarding({ onComplete, forceShow = false }: AgentOnboardi
                 <div className="p-3 rounded-xl bg-accent/20 text-accent">
                   {step.icon}
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-8 w-8 text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
                   onClick={handleSkip}
                 >
@@ -133,7 +139,6 @@ export function AgentOnboarding({ onComplete, forceShow = false }: AgentOnboardi
             </div>
 
             <CardContent className="p-6">
-              {/* Detail */}
               {step.detail && (
                 <p className="text-muted-foreground text-sm leading-relaxed mb-6">
                   {step.detail}
@@ -146,12 +151,8 @@ export function AgentOnboarding({ onComplete, forceShow = false }: AgentOnboardi
                   <button
                     key={i}
                     onClick={() => setCurrentStep(i)}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      i === currentStep 
-                        ? 'bg-accent w-6' 
-                        : i < currentStep 
-                        ? 'bg-accent/40' 
-                        : 'bg-muted'
+                    className={`h-2 rounded-full transition-all ${
+                      i === currentStep ? 'bg-accent w-6' : i < currentStep ? 'bg-accent/40 w-2' : 'bg-muted w-2'
                     }`}
                   />
                 ))}
@@ -165,9 +166,9 @@ export function AgentOnboarding({ onComplete, forceShow = false }: AgentOnboardi
                     Back
                   </Button>
                 )}
-                <Button 
-                  variant="accent" 
-                  onClick={handleNext} 
+                <Button
+                  variant="accent"
+                  onClick={handleNext}
                   className={currentStep === 0 ? 'w-full' : 'flex-1'}
                 >
                   {isLastStep ? 'Get Started' : 'Next'}
@@ -175,7 +176,6 @@ export function AgentOnboarding({ onComplete, forceShow = false }: AgentOnboardi
                 </Button>
               </div>
 
-              {/* Don't show again link */}
               {!isLastStep && (
                 <button
                   onClick={handleSkip}
@@ -192,8 +192,7 @@ export function AgentOnboarding({ onComplete, forceShow = false }: AgentOnboardi
   );
 }
 
-// Trigger button to re-open onboarding - matches other nav buttons
-import { forwardRef } from 'react';
+// ─── Trigger ──────────────────────────────────────────────────────────────────
 
 export const OnboardingTrigger = forwardRef<HTMLButtonElement, { className?: string }>(
   ({ className }, ref) => {
@@ -201,9 +200,9 @@ export const OnboardingTrigger = forwardRef<HTMLButtonElement, { className?: str
 
     return (
       <>
-        <Button 
+        <Button
           ref={ref}
-          variant="outline" 
+          variant="outline"
           size="lg"
           onClick={() => setShowOnboarding(true)}
           className={`w-full justify-start flex-col items-start h-auto py-3 gap-0.5 ${className || ''}`}
@@ -215,9 +214,9 @@ export const OnboardingTrigger = forwardRef<HTMLButtonElement, { className?: str
           <span className="text-[10px] text-muted-foreground font-normal pl-6">Tour the key features and workflow</span>
         </Button>
         {showOnboarding && (
-          <AgentOnboarding 
-            forceShow={true} 
-            onComplete={() => setShowOnboarding(false)} 
+          <AgentOnboarding
+            forceShow={true}
+            onComplete={() => setShowOnboarding(false)}
           />
         )}
       </>

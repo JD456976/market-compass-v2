@@ -16,8 +16,18 @@ export function BrandedReportHeader({
   branding,
   showTimestamp = true,
 }: BrandedReportHeaderProps) {
-  const agentProfile = loadAgentProfile();
+  // Prefer live profile data from branding (fetched from DB for shared reports),
+  // fall back to localStorage for agent-side views
+  const localProfile = loadAgentProfile();
+  const agentName   = branding?.agent_name   || localProfile.agent_name;
+  const brokerage   = branding?.brokerage    || localProfile.brokerage_name;
+  const phone       = branding?.phone        || localProfile.phone;
+  const email       = branding?.email        || localProfile.email;
+  const license     = branding?.license      || localProfile.license;
+  const website     = localProfile.website;
+
   const clientDisplay = clientName?.trim() || 'Client';
+  const headshotUrl   = branding?.headshot_url ?? null;
 
   return (
     <div className="pdf-avoid-break mb-6 pb-4 border-b border-border">
@@ -42,10 +52,10 @@ export function BrandedReportHeader({
 
       {/* Agent Info */}
       <div className="flex gap-4 items-start">
-        {branding?.headshot_url && (
+        {headshotUrl && (
           <img
-            src={branding.headshot_url}
-            alt="Agent headshot"
+            src={headshotUrl}
+            alt={agentName || 'Agent'}
             className="h-14 w-14 rounded-full object-cover border-2 border-border shrink-0"
           />
         )}
@@ -53,17 +63,21 @@ export function BrandedReportHeader({
           <p className="text-foreground break-words">
             Prepared for: <span className="font-semibold">{clientDisplay}</span>
           </p>
-          <p className="text-muted-foreground break-words">
-            Prepared by: {agentProfile.agent_name}, {agentProfile.brokerage_name}
-          </p>
-          <p className="text-muted-foreground break-all">
-            {agentProfile.phone} • {agentProfile.email}
-          </p>
-          {agentProfile.website && (
-            <p className="text-muted-foreground break-all">{agentProfile.website}</p>
+          {agentName && (
+            <p className="text-muted-foreground break-words font-medium">
+              {agentName}{brokerage ? `, ${brokerage}` : ''}
+            </p>
           )}
-          {agentProfile.license && (
-            <p className="text-muted-foreground">License: {agentProfile.license}</p>
+          {(phone || email) && (
+            <p className="text-muted-foreground break-all">
+              {[phone, email].filter(Boolean).join(' • ')}
+            </p>
+          )}
+          {website && (
+            <p className="text-muted-foreground break-all">{website}</p>
+          )}
+          {license && (
+            <p className="text-muted-foreground">License: {license}</p>
           )}
         </div>
       </div>
