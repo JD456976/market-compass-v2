@@ -8,6 +8,47 @@ const corsHeaders = {
 
 const FUB_API_BASE = 'https://api.followupboss.com/v1';
 
+// Service-role client for secure server-side operations
+function getAdminClient() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
+}
+
+async function getStoredApiKey(userId: string): Promise<string | null> {
+  const adminClient = getAdminClient();
+  const { data, error } = await adminClient
+    .from('crm_api_keys')
+    .select('encrypted_api_key')
+    .eq('user_id', userId)
+    .eq('crm_type', 'follow_up_boss')
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data.encrypted_api_key;
+}
+
+async function storeApiKey(userId: string, apiKey: string): Promise<void> {
+  const adminClient = getAdminClient();
+  await adminClient
+    .from('crm_api_keys')
+    .upsert({
+      user_id: userId,
+      crm_type: 'follow_up_boss',
+      encrypted_api_key: apiKey,
+    }, { onConflict: 'user_id' });
+}
+
+async function deleteApiKey(userId: string): Promise<void> {
+  const adminClient = getAdminClient();
+  await adminClient
+    .from('crm_api_keys')
+    .delete()
+    .eq('user_id', userId)
+    .eq('crm_type', 'follow_up_boss');
+}
+
 // Push a contact note / event to FUB representing a market analysis
 async function pushMarketAnalysisToFUB(apiKey: string, payload: {
   zip: string;
@@ -20,7 +61,6 @@ async function pushMarketAnalysisToFUB(apiKey: string, payload: {
 }) {
   const authHeader = 'Basic ' + btoa(apiKey + ':');
 
-  // 1. Create or find a "MarketCompass Lead Finder" event in FUB
   const eventBody = {
     type: 'Market Analysis',
     source: 'MarketCompass Lead Finder',
@@ -49,16 +89,14 @@ async function pushMarketAnalysisToFUB(apiKey: string, payload: {
 
   const eventData = await eventsRes.json();
 
-  // 2. If score changed significantly, create a task for the agent
   if (payload.previousScore !== null) {
     const delta = payload.opportunityScore - payload.previousScore;
     const absDelta = Math.abs(delta);
 
-    // Only create task if score changed by >= threshold (handled by caller)
     const taskBody = {
       name: `MarketCompass Alert: ${payload.zip}${payload.cityState ? ` (${payload.cityState})` : ''} score ${delta > 0 ? 'up' : 'down'} ${absDelta} pts`,
       note: `Score changed from ${payload.previousScore} → ${payload.opportunityScore} (${delta > 0 ? '+' : ''}${delta} pts). Lead type: ${payload.leadType}. Top signal: ${payload.topFactor}. Review now: MarketCompass Lead Finder.`,
-      dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Due tomorrow
+      dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     };
 
     await fetch(`${FUB_API_BASE}/tasks`, {
@@ -87,7 +125,7 @@ async function pushCSVLeadsToFUB(apiKey: string, leads: Array<{
   const highScoreLeads = leads.filter(l => l.score !== null && l.score >= 71);
 
   const results = [];
-  for (const lead of highScoreLeads.slice(0, 50)) { // Safety cap
+  for (const lead of highScoreLeads.slice(0, 50)) {
     const personBody = {
       name: lead.address,
       tags: [
@@ -178,7 +216,7 @@ serve(async (req) => {
       }
       const me = await testRes.json();
 
-      // Save connection to DB — store only hint (last 4 chars)
+      // Store hint in crm_connections (public metadata only)
       const hint = apiKey.slice(-4);
       await supabase
         .from('crm_connections')
@@ -189,21 +227,19 @@ serve(async (req) => {
           is_active: true,
         }, { onConflict: 'user_id,crm_type' });
 
-      // Store actual API key as a Supabase secret (per-user, via metadata)
-      // We store it in user metadata since we can't create per-user secrets
-      // The edge function will read it from there
-      await supabase.auth.updateUser({
-        data: { fub_api_key: apiKey },
-      });
+      // Store actual API key securely server-side only (not in user metadata)
+      await storeApiKey(user.id, apiKey);
+
+      // Clear any previously leaked key from user metadata
+      await supabase.auth.updateUser({ data: { fub_api_key: null } });
 
       return new Response(JSON.stringify({ valid: true, account: me.name || me.email || 'Connected', hint }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // For all other actions, retrieve the stored API key from user metadata
-    const { data: { user: fullUser } } = await supabase.auth.getUser(token);
-    const storedApiKey = fullUser?.user_metadata?.fub_api_key;
+    // For all other actions, retrieve the stored API key from secure server-side table
+    const storedApiKey = await getStoredApiKey(user.id);
 
     if (!storedApiKey) {
       return new Response(JSON.stringify({ error: 'No Follow Up Boss API key configured. Please connect your account first.' }), {
@@ -242,9 +278,11 @@ serve(async (req) => {
         .eq('user_id', user.id)
         .eq('crm_type', 'follow_up_boss');
 
-      await supabase.auth.updateUser({
-        data: { fub_api_key: null },
-      });
+      // Remove key from secure storage
+      await deleteApiKey(user.id);
+
+      // Clear any remnant from user metadata
+      await supabase.auth.updateUser({ data: { fub_api_key: null } });
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -257,8 +295,7 @@ serve(async (req) => {
     });
   } catch (error: unknown) {
     console.error('FUB integration error:', error);
-    const msg = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: msg }), {
+    return new Response(JSON.stringify({ error: 'An error occurred processing your request' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
