@@ -1,24 +1,31 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { runAudit, normalizeText, type AuditFlag, type AuditResult } from '@/lib/listingAuditEngine';
+import { runAudit, normalizeText, type AuditFlag, type AuditResult, type PropertyHint, extractPropertyHints } from '@/lib/listingAuditEngine';
 import { extractTextFromPDF } from '@/lib/pdfExtract';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import {
   FileText, ClipboardPaste, Upload, Play, ChevronDown, ChevronUp,
   CheckCircle2, Circle, Copy, Check, Download, AlertTriangle,
-  AlertCircle, Info, Sparkles, RotateCcw, Clock, TrendingUp,
-  ArrowLeft, Loader2, Eye, BookOpen,
+  AlertCircle, Info, RotateCcw, Clock, TrendingUp, TrendingDown,
+  ArrowLeft, Loader2, Eye, BookOpen, Home, Building2,
+  FileDown, ArrowUpRight, MapPin, Hash, ChevronRight,
+  Sparkles, Minus,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ListingNavigatorOnboarding, ListingNavigatorOnboardingTrigger } from '@/components/ListingNavigatorOnboarding';
+import jsPDF from 'jspdf';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,6 +37,17 @@ interface SavedRun {
   summary: { critical: number; moderate: number; presentation: number; positive: number; total: number } | null;
   improved_description: string | null;
   parsed_text: string;
+  property_address: string | null;
+  mls_number: string | null;
+  listing_label: string | null;
+}
+
+interface PropertyGroup {
+  key: string;
+  address: string | null;
+  mls_number: string | null;
+  runs: SavedRun[];
+  bestScore: number | null;
 }
 
 // ─── Score Ring ───────────────────────────────────────────────────────────────
@@ -84,12 +102,48 @@ const CAT_CONFIG = {
   positive: { icon: CheckCircle2, label: 'Positive Signal', bg: 'bg-emerald-50 dark:bg-emerald-950/20', border: 'border-emerald-200 dark:border-emerald-800/40', badge: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/40', dot: 'bg-emerald-500' },
 };
 
+// ─── Property Hint Display Card ───────────────────────────────────────────────
+
+function PropertyHintCard({ hint }: { hint: PropertyHint }) {
+  const fields: { label: string; value: string | undefined }[] = [
+    { label: 'Price', value: hint.price ? `$${hint.price.toLocaleString()}` : undefined },
+    { label: 'Year Built', value: hint.yearBuilt?.toString() },
+    { label: 'Beds', value: hint.beds?.toString() },
+    { label: 'Full Baths', value: hint.fullBaths?.toString() },
+    { label: 'Sqft', value: hint.sqft ? `${hint.sqft.toLocaleString()} sq ft` : undefined },
+    { label: 'Garage', value: hint.garage !== undefined ? (hint.garage === 0 ? 'None' : `${hint.garage}-car`) : undefined },
+    { label: 'DOM', value: hint.dom !== undefined ? `${hint.dom} days` : undefined },
+    { label: 'Assessed Value', value: hint.assessedValue ? `$${hint.assessedValue.toLocaleString()}` : undefined },
+  ].filter(f => f.value !== undefined);
+
+  if (!fields.length) return null;
+
+  return (
+    <Card className="border-primary/20 bg-primary/5">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2 text-primary">
+          <Sparkles className="h-4 w-4" /> Auto-Detected Property Details
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">These values were extracted from the listing text and used to apply price-sensitive and year-based rules. If anything looks wrong, edit your text and re-run.</p>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-2">
+          {fields.map(f => (
+            <span key={f.label} className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-background px-3 py-1 text-xs font-medium">
+              <span className="text-muted-foreground">{f.label}:</span>
+              <span>{f.value}</span>
+            </span>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Flag Card ────────────────────────────────────────────────────────────────
 
 function FlagCard({
-  flag,
-  onToggleAddressed,
-  saving,
+  flag, onToggleAddressed, saving,
 }: {
   flag: AuditFlag & { id?: string };
   onToggleAddressed: (flag: AuditFlag & { id?: string }) => void;
@@ -117,7 +171,12 @@ function FlagCard({
         aria-expanded={expanded}
       >
         <div className="mt-0.5 shrink-0">
-          <Icon className={cn('h-4 w-4', flag.category === 'positive' ? 'text-emerald-600' : flag.category === 'critical' ? 'text-destructive' : flag.category === 'moderate' ? 'text-orange-500' : 'text-yellow-600')} />
+          <Icon className={cn('h-4 w-4',
+            flag.category === 'positive' ? 'text-emerald-600' :
+            flag.category === 'critical' ? 'text-destructive' :
+            flag.category === 'moderate' ? 'text-orange-500' :
+            'text-yellow-600'
+          )} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -193,23 +252,23 @@ function FlagCard({
 // ─── Results Panel ────────────────────────────────────────────────────────────
 
 function ResultsPanel({
-  result,
-  runId,
-  onReset,
-  initialImproved,
+  result, runId, runMeta, onReset, initialImproved,
 }: {
   result: AuditResult;
   runId: string | null;
+  runMeta: { address?: string; mls_number?: string } | null;
   onReset: () => void;
   initialImproved: string;
 }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [flags, setFlags] = useState<(AuditFlag & { id?: string })[]>(result.flags);
   const [activeTab, setActiveTab] = useState<'results' | 'rewrite'>('results');
   const [improved, setImproved] = useState(initialImproved);
   const [copied, setCopied] = useState(false);
   const [savingFlag, setSavingFlag] = useState(false);
   const [savingImproved, setSavingImproved] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const grouped = {
@@ -218,6 +277,11 @@ function ResultsPanel({
     presentation: flags.filter(f => f.category === 'presentation'),
     positive: flags.filter(f => f.category === 'positive'),
   };
+
+  const allIssues = flags.filter(f => f.category !== 'positive');
+  const addressedCount = allIssues.filter(f => f.addressed).length;
+  const progressPct = allIssues.length > 0 ? Math.round((addressedCount / allIssues.length) * 100) : 100;
+  const openIssues = allIssues.filter(f => !f.addressed);
 
   const handleToggleAddressed = async (flag: AuditFlag & { id?: string }) => {
     if (!runId || !user) return;
@@ -252,7 +316,7 @@ function ResultsPanel({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
+  const handleDownloadTxt = () => {
     const blob = new Blob([improved], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -260,7 +324,178 @@ function ResultsPanel({
     URL.revokeObjectURL(url);
   };
 
-  const openIssues = flags.filter(f => f.category !== 'positive' && !f.addressed);
+  const handleDownloadPdf = async () => {
+    setExportingPdf(true);
+    try {
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 18;
+      const contentW = pageW - margin * 2;
+      let y = margin;
+
+      // Header
+      doc.setFillColor(34, 52, 74);
+      doc.rect(0, 0, pageW, 28, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Listing Navigator — Audit Report', margin, 12);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      const meta = runMeta?.address ? runMeta.address : 'Market Compass';
+      const mlsStr = runMeta?.mls_number ? ` · MLS# ${runMeta.mls_number}` : '';
+      doc.text(`${meta}${mlsStr} · ${new Date().toLocaleDateString()}`, margin, 21);
+      y = 36;
+
+      // Score bar
+      doc.setTextColor(30, 30, 30);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Audit Score: ${result.score}/100`, margin, y);
+      const scoreColor = result.score >= 80 ? [34, 139, 34] : result.score >= 60 ? [200, 130, 0] : [180, 40, 40];
+      doc.setFillColor(...(scoreColor as [number, number, number]));
+      doc.roundedRect(margin, y + 3, (contentW * result.score) / 100, 5, 1, 1, 'F');
+      doc.setFillColor(220, 220, 220);
+      doc.roundedRect(margin + (contentW * result.score) / 100, y + 3, contentW - (contentW * result.score) / 100, 5, 1, 1, 'F');
+      y += 16;
+
+      // Summary row
+      const cats = ['critical', 'moderate', 'presentation', 'positive'] as const;
+      const catColors: Record<string, [number, number, number]> = {
+        critical: [200, 50, 50],
+        moderate: [220, 130, 20],
+        presentation: [200, 170, 0],
+        positive: [40, 160, 80],
+      };
+      doc.setFontSize(9);
+      cats.forEach((cat, idx) => {
+        const col = margin + idx * (contentW / 4);
+        const count = result.summary[cat];
+        doc.setFillColor(...catColors[cat]);
+        doc.roundedRect(col, y, contentW / 4 - 4, 14, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${count}`, col + (contentW / 4 - 4) / 2, y + 6, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.text(CAT_CONFIG[cat].label, col + (contentW / 4 - 4) / 2, y + 11, { align: 'center' });
+      });
+      y += 20;
+
+      // Flags
+      const addFlag = (flag: AuditFlag & { id?: string }) => {
+        if (y > 260) { doc.addPage(); y = margin; }
+        const catColor = catColors[flag.category] || [100, 100, 100];
+        doc.setFillColor(...catColor, 0.15);
+        doc.setDrawColor(...catColor);
+        doc.setLineWidth(0.3);
+
+        // Flag title
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(30, 30, 30);
+        const titleLines = doc.splitTextToSize(
+          `${flag.category !== 'positive' ? `[Severity ${flag.severity}] ` : ''}${flag.title}${flag.addressed ? ' ✓ Addressed' : ''}`,
+          contentW - 4
+        );
+        doc.text(titleLines, margin + 2, y);
+        y += titleLines.length * 4.5 + 1;
+
+        // Why it matters
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(80, 80, 80);
+        const whyLines = doc.splitTextToSize(flag.why_it_matters, contentW - 4);
+        doc.text(whyLines, margin + 2, y);
+        y += whyLines.length * 4 + 2;
+
+        // Suggested angles (first 2)
+        if (flag.suggested_angles.length > 0) {
+          doc.setTextColor(60, 60, 60);
+          flag.suggested_angles.slice(0, 2).forEach(angle => {
+            const lines = doc.splitTextToSize(`• ${angle}`, contentW - 8);
+            if (y + lines.length * 4 > 275) { doc.addPage(); y = margin; }
+            doc.text(lines, margin + 4, y);
+            y += lines.length * 4;
+          });
+        }
+        y += 4;
+        doc.setLineWidth(0.1);
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, y - 1, margin + contentW, y - 1);
+        y += 2;
+      };
+
+      cats.forEach(cat => {
+        const catFlags = grouped[cat];
+        if (!catFlags.length) return;
+        if (y > 255) { doc.addPage(); y = margin; }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(30, 30, 30);
+        doc.text(`${CAT_CONFIG[cat].label} (${catFlags.length})`, margin, y);
+        y += 6;
+        catFlags.forEach(addFlag);
+      });
+
+      // Improved description
+      if (improved.trim()) {
+        doc.addPage();
+        y = margin;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(30, 30, 30);
+        doc.text('Improved Listing Description', margin, y);
+        y += 8;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        const descLines = doc.splitTextToSize(improved, contentW);
+        descLines.forEach((line: string) => {
+          if (y > 275) { doc.addPage(); y = margin; }
+          doc.text(line, margin, y);
+          y += 5;
+        });
+      }
+
+      // Footer
+      const totalPages = (doc.internal as any).getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7);
+        doc.setTextColor(160, 160, 160);
+        doc.text(`Market Compass · Listing Navigator · Page ${i} of ${totalPages}`, margin, 290);
+      }
+
+      const filename = runMeta?.address
+        ? `listing-audit-${runMeta.address.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`
+        : 'listing-audit.pdf';
+      doc.save(filename);
+    } catch (err) {
+      toast({ title: 'PDF export failed', description: 'Could not generate PDF. Try again.', variant: 'destructive' });
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
+  // Navigate to Seller flow with pre-populated data
+  const handleStartSellerReport = () => {
+    const hint = result.propertyHint;
+    const params = new URLSearchParams();
+    if (runMeta?.address) params.set('address', runMeta.address);
+    if (hint.price) params.set('listPrice', String(hint.price));
+    if (runMeta?.mls_number) params.set('mls', runMeta.mls_number);
+    params.set('from', 'listing-navigator');
+    navigate(`/seller?${params.toString()}`);
+  };
+
+  const handleStartBuyerReport = () => {
+    const hint = result.propertyHint;
+    const params = new URLSearchParams();
+    if (runMeta?.address) params.set('address', runMeta.address);
+    if (hint.price) params.set('listPrice', String(hint.price));
+    if (runMeta?.mls_number) params.set('mls', runMeta.mls_number);
+    params.set('from', 'listing-navigator');
+    navigate(`/buyer?${params.toString()}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -294,7 +529,23 @@ function ResultsPanel({
                 <div className="flex flex-col sm:flex-row items-center gap-6">
                   <ScoreRing score={result.score} />
                   <div className="flex-1 space-y-3 w-full">
-                    <h2 className="font-serif text-xl font-semibold">Listing Audit Score</h2>
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <div>
+                        <h2 className="font-serif text-xl font-semibold">Listing Audit Score</h2>
+                        {runMeta?.address && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <MapPin className="h-3.5 w-3.5" /> {runMeta.address}
+                            {runMeta.mls_number && <span className="ml-2 flex items-center gap-0.5"><Hash className="h-3 w-3" />{runMeta.mls_number}</span>}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={handleDownloadPdf} disabled={exportingPdf} className="h-8 gap-1.5 text-xs">
+                          {exportingPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+                          PDF Report
+                        </Button>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {(['critical', 'moderate', 'presentation', 'positive'] as const).map(cat => {
                         const cfg = CAT_CONFIG[cat];
@@ -307,18 +558,35 @@ function ResultsPanel({
                         );
                       })}
                     </div>
-                    {openIssues.length > 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">{openIssues.length} open issue{openIssues.length !== 1 ? 's' : ''}</span> remaining — check off each as you address it in your rewrite.
-                      </p>
-                    )}
-                    {openIssues.length === 0 && result.summary.total > 0 && (
-                      <p className="text-sm text-emerald-600 font-medium">✓ All issues marked addressed — ready to rewrite!</p>
+
+                    {/* Progress bar */}
+                    {allIssues.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">
+                            {addressedCount} of {allIssues.length} issues addressed
+                          </span>
+                          <span className={cn('font-medium', progressPct === 100 ? 'text-emerald-600' : 'text-foreground')}>
+                            {progressPct}%
+                          </span>
+                        </div>
+                        <Progress value={progressPct} className="h-2" />
+                        {progressPct === 100 ? (
+                          <p className="text-xs text-emerald-600 font-medium">✓ All issues marked addressed — ready to rewrite!</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">{openIssues.length} open issue{openIssues.length !== 1 ? 's' : ''} — check off each as you address it in your rewrite.</p>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Property hints */}
+            {Object.keys(result.propertyHint).length > 0 && (
+              <PropertyHintCard hint={result.propertyHint} />
+            )}
 
             {/* Flags by category */}
             {(['critical', 'moderate', 'presentation', 'positive'] as const).map(cat => {
@@ -339,11 +607,44 @@ function ResultsPanel({
                 </div>
               );
             })}
+
+            {/* Report Integration */}
+            <Card className="border-primary/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2 text-primary">
+                  <ArrowUpRight className="h-4 w-4" /> Continue to a Client Report
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Use this listing as your starting point for a Seller or Buyer Analysis. Property data detected above will be pre-filled where possible.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-3">
+                  <Button variant="outline" size="sm" onClick={handleStartSellerReport} className="gap-2">
+                    <Building2 className="h-4 w-4" /> Start Seller Analysis
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleStartBuyerReport} className="gap-2">
+                    <Home className="h-4 w-4" /> Start Buyer Analysis
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
         )}
 
         {activeTab === 'rewrite' && (
           <motion.div key="rewrite" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
+            {/* Progress bar in rewrite tab too */}
+            {allIssues.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">{addressedCount} of {allIssues.length} flags addressed</span>
+                  <span className={cn('font-medium', progressPct === 100 ? 'text-emerald-600' : 'text-foreground')}>{progressPct}%</span>
+                </div>
+                <Progress value={progressPct} className="h-2" />
+              </div>
+            )}
+
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
@@ -353,8 +654,12 @@ function ResultsPanel({
                     <Button size="sm" variant="outline" onClick={handleCopy} className="h-8 gap-1.5">
                       {copied ? <><Check className="h-3.5 w-3.5" /> Copied!</> : <><Copy className="h-3.5 w-3.5" /> Copy</>}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={handleDownload} className="h-8 gap-1.5">
+                    <Button size="sm" variant="outline" onClick={handleDownloadTxt} className="h-8 gap-1.5">
                       <Download className="h-3.5 w-3.5" /> .txt
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleDownloadPdf} disabled={exportingPdf} className="h-8 gap-1.5">
+                      {exportingPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+                      PDF
                     </Button>
                   </div>
                 </div>
@@ -382,15 +687,147 @@ function ResultsPanel({
                   {openIssues.map(flag => {
                     const cfg = CAT_CONFIG[flag.category];
                     return (
-                      <div key={flag.rule_key} className={cn('rounded-lg border p-3', cfg.bg, cfg.border)}>
-                        <p className="text-xs font-medium">{flag.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{flag.suggested_angles[0]}</p>
+                      <div key={flag.rule_key} className={cn('rounded-lg border p-3 flex items-start justify-between gap-2', cfg.bg, cfg.border)}>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium">{flag.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{flag.suggested_angles[0]}</p>
+                        </div>
+                        <button
+                          onClick={() => handleToggleAddressed(flag)}
+                          disabled={savingFlag}
+                          className="shrink-0 p-1 rounded hover:bg-background/60"
+                          title="Mark addressed"
+                        >
+                          <Circle className="h-3.5 w-3.5 text-muted-foreground/50" />
+                        </button>
                       </div>
                     );
                   })}
                 </CardContent>
               </Card>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Property Group in Run History ────────────────────────────────────────────
+
+function PropertyGroupCard({
+  group, onSelect,
+}: {
+  group: PropertyGroup;
+  onSelect: (run: SavedRun) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const latestRun = group.runs[0];
+  const hasMultiple = group.runs.length > 1;
+
+  // Score trend: compare latest to previous
+  const scoreDiff = hasMultiple && latestRun.score !== null && group.runs[1].score !== null
+    ? latestRun.score - group.runs[1].score
+    : null;
+
+  return (
+    <div className="rounded-xl border border-border/60 overflow-hidden">
+      {/* Property header */}
+      <button
+        className="w-full text-left p-3 hover:bg-muted/30 transition-colors flex items-start gap-3"
+        onClick={() => hasMultiple ? setExpanded(e => !e) : onSelect(latestRun)}
+      >
+        <div className="mt-0.5 p-1.5 rounded-lg bg-primary/10">
+          <Building2 className="h-4 w-4 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 flex-wrap">
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate">
+                {group.address || `Audit ${new Date(latestRun.created_at).toLocaleDateString()}`}
+              </p>
+              {group.mls_number && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <Hash className="h-3 w-3" /> MLS# {group.mls_number}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {group.runs.length} audit{group.runs.length !== 1 ? 's' : ''} · Latest: {new Date(latestRun.created_at).toLocaleDateString()}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {latestRun.score !== null && (
+                <div className="flex items-center gap-1.5">
+                  <span className={cn('text-sm font-bold',
+                    latestRun.score >= 80 ? 'text-emerald-600' :
+                    latestRun.score >= 60 ? 'text-yellow-600' :
+                    'text-destructive'
+                  )}>
+                    {latestRun.score}
+                  </span>
+                  {scoreDiff !== null && (
+                    <span className={cn('text-xs font-medium flex items-center gap-0.5',
+                      scoreDiff > 0 ? 'text-emerald-600' :
+                      scoreDiff < 0 ? 'text-destructive' :
+                      'text-muted-foreground'
+                    )}>
+                      {scoreDiff > 0 ? <TrendingUp className="h-3 w-3" /> : scoreDiff < 0 ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                      {scoreDiff > 0 ? `+${scoreDiff}` : scoreDiff}
+                    </span>
+                  )}
+                </div>
+              )}
+              {hasMultiple ? (
+                expanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
+          </div>
+        </div>
+      </button>
+
+      {/* Expanded run list */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-border/40 divide-y divide-border/40">
+              {group.runs.map((run, idx) => (
+                <button
+                  key={run.id}
+                  onClick={() => onSelect(run)}
+                  className="w-full text-left px-4 py-2.5 hover:bg-muted/30 transition-colors flex items-center justify-between"
+                >
+                  <div>
+                    <span className="text-xs text-muted-foreground">
+                      {idx === 0 ? '🔵 Latest · ' : `Run ${group.runs.length - idx} · `}
+                      {new Date(run.created_at).toLocaleDateString()}
+                    </span>
+                    {run.summary && (
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {run.summary.critical > 0 && <span className="text-xs text-destructive">{run.summary.critical}↑ critical</span>}
+                        {run.summary.moderate > 0 && <span className="text-xs text-orange-500">{run.summary.moderate} moderate</span>}
+                        {run.summary.positive > 0 && <span className="text-xs text-emerald-600">{run.summary.positive} positive</span>}
+                      </div>
+                    )}
+                  </div>
+                  {run.score !== null && (
+                    <span className={cn('text-sm font-bold',
+                      run.score >= 80 ? 'text-emerald-600' :
+                      run.score >= 60 ? 'text-yellow-600' :
+                      'text-destructive'
+                    )}>
+                      {run.score}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -408,11 +845,11 @@ function RunHistory({ onSelect }: { onSelect: (run: SavedRun) => void }) {
       if (!user) return [];
       const { data, error } = await supabase
         .from('listing_navigator_runs')
-        .select('id, created_at, input_type, score, summary, improved_description, parsed_text')
+        .select('id, created_at, input_type, score, summary, improved_description, parsed_text, property_address, mls_number, listing_label')
         .eq('user_id', user.id)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
       if (error) throw error;
       return (data || []) as SavedRun[];
     },
@@ -422,38 +859,39 @@ function RunHistory({ onSelect }: { onSelect: (run: SavedRun) => void }) {
   if (isLoading) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading history…</div>;
   if (!runs?.length) return null;
 
+  // Group by address (or MLS# or run ID as fallback)
+  const groups: PropertyGroup[] = [];
+  const seen = new Map<string, PropertyGroup>();
+
+  runs.forEach(run => {
+    const key = run.mls_number?.trim()
+      || run.property_address?.trim()
+      || run.id;
+
+    if (seen.has(key)) {
+      seen.get(key)!.runs.push(run);
+    } else {
+      const group: PropertyGroup = {
+        key,
+        address: run.property_address,
+        mls_number: run.mls_number,
+        runs: [run],
+        bestScore: run.score,
+      };
+      seen.set(key, group);
+      groups.push(group);
+    }
+  });
+
   return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-1.5"><Clock className="h-4 w-4" /> Recent Audits</h3>
+    <div className="space-y-3">
+      <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+        <Clock className="h-4 w-4" /> Property Audit Library ({groups.length} {groups.length === 1 ? 'property' : 'properties'})
+      </h3>
       <div className="space-y-2">
-        {runs.map(run => {
-          const summary = run.summary as SavedRun['summary'];
-          return (
-            <button
-              key={run.id}
-              onClick={() => onSelect(run)}
-              className="w-full text-left rounded-xl border border-border/60 p-3 hover:bg-muted/40 hover:border-border transition-all"
-            >
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-sm font-medium">
-                  {run.input_type === 'pdf' ? '📄' : '📋'} Audit from {new Date(run.created_at).toLocaleDateString()}
-                </span>
-                {run.score !== null && (
-                  <span className={cn('text-sm font-bold', run.score >= 80 ? 'text-emerald-600' : run.score >= 60 ? 'text-yellow-600' : 'text-destructive')}>
-                    Score: {run.score}
-                  </span>
-                )}
-              </div>
-              {summary && (
-                <div className="flex items-center gap-3 mt-1.5">
-                  {summary.critical > 0 && <span className="text-xs text-destructive">{summary.critical} critical</span>}
-                  {summary.moderate > 0 && <span className="text-xs text-orange-500">{summary.moderate} moderate</span>}
-                  {summary.positive > 0 && <span className="text-xs text-emerald-600">{summary.positive} positive</span>}
-                </div>
-              )}
-            </button>
-          );
-        })}
+        {groups.map(group => (
+          <PropertyGroupCard key={group.key} group={group} onSelect={onSelect} />
+        ))}
       </div>
     </div>
   );
@@ -467,6 +905,7 @@ type Phase = 'input' | 'pdf-review' | 'results';
 export default function ListingNavigator() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const [phase, setPhase] = useState<Phase>('input');
   const [inputMode, setInputMode] = useState<InputMode>('paste');
@@ -478,7 +917,23 @@ export default function ListingNavigator() {
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [currentRunId, setCurrentRunId] = useState<string | null>(null);
   const [initialImproved, setInitialImproved] = useState('');
+  const [currentRunMeta, setCurrentRunMeta] = useState<{ address?: string; mls_number?: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Property metadata fields
+  const [propertyAddress, setPropertyAddress] = useState('');
+  const [mlsNumber, setMlsNumber] = useState('');
+
+  // Live hint preview while typing
+  const [liveHint, setLiveHint] = useState<PropertyHint>({});
+  useEffect(() => {
+    const textToCheck = inputMode === 'paste' ? pasteText : parsedText;
+    if (textToCheck.trim().length > 50) {
+      setLiveHint(extractPropertyHints(textToCheck));
+    } else {
+      setLiveHint({});
+    }
+  }, [pasteText, parsedText, inputMode]);
 
   // ── PDF Upload ──────────────────────────────────────────────────────────
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -495,7 +950,7 @@ export default function ListingNavigator() {
       setRawText(text);
       setParsedText(cleaned);
       setPhase('pdf-review');
-    } catch (err) {
+    } catch {
       toast({ title: 'PDF extraction failed', description: 'Could not read text from this PDF. Try pasting the text instead.', variant: 'destructive' });
     } finally {
       setPdfLoading(false);
@@ -516,11 +971,12 @@ export default function ListingNavigator() {
     }
 
     setRunning(true);
+    const meta = { address: propertyAddress.trim() || undefined, mls_number: mlsNumber.trim() || undefined };
+    setCurrentRunMeta(meta);
+
     try {
       const result = runAudit(textToAudit);
 
-      // Save run to DB
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: runRow, error: runErr } = await (supabase as any)
         .from('listing_navigator_runs')
         .insert({
@@ -531,13 +987,14 @@ export default function ListingNavigator() {
           score: result.score,
           summary: result.summary,
           property_hint: result.propertyHint,
+          property_address: meta.address || null,
+          mls_number: meta.mls_number || null,
         })
         .select('id')
         .single();
 
       if (runErr || !runRow) throw runErr;
 
-      // Save flags
       if (result.flags.length > 0) {
         const flagRows = result.flags.map(f => ({
           run_id: runRow.id,
@@ -550,11 +1007,9 @@ export default function ListingNavigator() {
           suggested_angles: f.suggested_angles as unknown as import('@/integrations/supabase/types').Json,
           addressed: false,
         }));
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: flagData } = await (supabase as any).from('listing_navigator_flags').insert(flagRows).select('id, rule_key');
-        // Merge IDs back into flags
         if (flagData) {
-          const idMap = Object.fromEntries(flagData.map(f => [f.rule_key, f.id]));
+          const idMap = Object.fromEntries(flagData.map((f: any) => [f.rule_key, f.id]));
           result.flags.forEach(f => { (f as AuditFlag & { id?: string }).id = idMap[f.rule_key]; });
         }
       }
@@ -564,21 +1019,21 @@ export default function ListingNavigator() {
       setInitialImproved('');
       setPhase('results');
       queryClient.invalidateQueries({ queryKey: ['listing-navigator-runs', user.id] });
-    } catch (err) {
-      toast({ title: 'Error saving audit', description: 'Audit ran successfully but could not be saved. Results shown below.', variant: 'destructive' });
+    } catch {
+      toast({ title: 'Error saving audit', description: 'Audit ran but could not be saved. Results shown below.', variant: 'destructive' });
       const result = runAudit(textToAudit);
       setAuditResult(result);
+      setCurrentRunMeta(meta);
       setPhase('results');
     } finally {
       setRunning(false);
     }
-  }, [inputMode, pasteText, parsedText, rawText, user, queryClient]);
+  }, [inputMode, pasteText, parsedText, rawText, user, queryClient, propertyAddress, mlsNumber]);
 
   // ── Load saved run ──────────────────────────────────────────────────────
   const handleSelectRun = async (run: SavedRun) => {
     setRunning(true);
     try {
-      // Re-run engine on parsed_text to rebuild flags (or fetch from DB)
       const { data: dbFlags } = await supabase
         .from('listing_navigator_flags')
         .select('*')
@@ -598,14 +1053,15 @@ export default function ListingNavigator() {
           addressed: f.addressed,
         }));
         const summary = run.summary || { critical: 0, moderate: 0, presentation: 0, positive: 0, total: 0 };
-        setAuditResult({ score: run.score ?? 0, flags, propertyHint: {}, summary });
+        const hint = run.parsed_text ? extractPropertyHints(run.parsed_text) : {};
+        setAuditResult({ score: run.score ?? 0, flags, propertyHint: hint, summary });
       } else {
-        // Fallback: re-run engine
         const result = runAudit(run.parsed_text);
         setAuditResult(result);
       }
 
       setCurrentRunId(run.id);
+      setCurrentRunMeta({ address: run.property_address || undefined, mls_number: run.mls_number || undefined });
       setInitialImproved(run.improved_description || '');
       setPhase('results');
     } finally {
@@ -617,11 +1073,15 @@ export default function ListingNavigator() {
     setPhase('input');
     setAuditResult(null);
     setCurrentRunId(null);
+    setCurrentRunMeta(null);
     setPasteText('');
     setParsedText('');
     setRawText('');
     setInitialImproved('');
   };
+
+  const textToCheck = inputMode === 'paste' ? pasteText : parsedText;
+  const liveHintFields = Object.keys(liveHint).filter(k => liveHint[k as keyof PropertyHint] !== undefined);
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
@@ -649,6 +1109,40 @@ export default function ListingNavigator() {
           {/* ── INPUT PHASE ── */}
           {(phase === 'input' || phase === 'pdf-review') && (
             <motion.div key="input" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="space-y-6">
+
+              {/* Property Metadata */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" /> Property Identification <span className="text-muted-foreground font-normal text-xs">(optional)</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="prop-address" className="text-xs">Property Address</Label>
+                      <Input
+                        id="prop-address"
+                        placeholder="123 Main St, Boston, MA 02101"
+                        value={propertyAddress}
+                        onChange={e => setPropertyAddress(e.target.value)}
+                        className="text-sm h-9"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="mls-num" className="text-xs">MLS Listing Number</Label>
+                      <Input
+                        id="mls-num"
+                        placeholder="MLS-12345678"
+                        value={mlsNumber}
+                        onChange={e => setMlsNumber(e.target.value)}
+                        className="text-sm h-9"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Mode toggle */}
               <div className="flex gap-2">
                 {(['paste', 'pdf'] as const).map(mode => (
@@ -678,12 +1172,23 @@ export default function ListingNavigator() {
                     <Textarea
                       value={pasteText}
                       onChange={e => setPasteText(e.target.value)}
-                      placeholder="Paste the full MLS listing remarks here — include property description, feature notes, and any agent remarks. The more complete the text, the more accurate the audit.
-
-Example: 'Welcome to this 4-bedroom colonial at 12 Elm Street. The sun-filled home features an updated kitchen with granite counters and stainless appliances, hardwood floors throughout, and a heated workshop in the backyard. 100-amp electrical. Price improved from $875,000...'
-"
+                      placeholder={`Paste the full MLS listing remarks here — include property description, feature notes, and any agent remarks. The more complete the text, the more accurate the audit.\n\nExample: 'Welcome to this 4-bedroom colonial at 12 Elm Street. The sun-filled home features an updated kitchen with granite counters and stainless appliances, hardwood floors throughout, and a heated workshop in the backyard. 100-amp electrical. Price improved from $875,000...'`}
                       className="min-h-[280px] text-sm resize-y font-mono"
                     />
+                    {/* Live hint preview */}
+                    {liveHintFields.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        <span className="text-xs text-muted-foreground flex items-center gap-1"><Sparkles className="h-3 w-3" /> Detected:</span>
+                        {liveHintFields.map(k => {
+                          const val = liveHint[k as keyof PropertyHint];
+                          return (
+                            <span key={k} className="text-xs bg-primary/5 border border-primary/15 rounded-full px-2 py-0.5">
+                              {k}: {k === 'price' || k === 'assessedValue' ? `$${Number(val).toLocaleString()}` : String(val)}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">{pasteText.length} characters</span>
                       <Button onClick={handleRunAudit} disabled={running || !pasteText.trim()} className="gap-2">
@@ -740,6 +1245,20 @@ Example: 'Welcome to this 4-bedroom colonial at 12 Elm Street. The sun-filled ho
                       onChange={e => setParsedText(e.target.value)}
                       className="min-h-[280px] text-sm resize-y font-mono"
                     />
+                    {/* Live hint preview for PDF mode */}
+                    {liveHintFields.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        <span className="text-xs text-muted-foreground flex items-center gap-1"><Sparkles className="h-3 w-3" /> Detected:</span>
+                        {liveHintFields.map(k => {
+                          const val = liveHint[k as keyof PropertyHint];
+                          return (
+                            <span key={k} className="text-xs bg-primary/5 border border-primary/15 rounded-full px-2 py-0.5">
+                              {k}: {k === 'price' || k === 'assessedValue' ? `$${Number(val).toLocaleString()}` : String(val)}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">{parsedText.length} characters extracted</span>
                       <Button onClick={handleRunAudit} disabled={running || !parsedText.trim()} className="gap-2">
@@ -751,8 +1270,16 @@ Example: 'Welcome to this 4-bedroom colonial at 12 Elm Street. The sun-filled ho
                 </Card>
               )}
 
-              {/* Run history */}
-              {phase === 'input' && <RunHistory onSelect={handleSelectRun} />}
+              {/* Loading overlay for audit */}
+              {running && (
+                <div className="flex items-center justify-center py-8 gap-3 text-muted-foreground">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="text-sm">Running audit engine…</span>
+                </div>
+              )}
+
+              {/* Run history (property library) */}
+              {phase === 'input' && !running && <RunHistory onSelect={handleSelectRun} />}
             </motion.div>
           )}
 
@@ -762,6 +1289,7 @@ Example: 'Welcome to this 4-bedroom colonial at 12 Elm Street. The sun-filled ho
               <ResultsPanel
                 result={auditResult}
                 runId={currentRunId}
+                runMeta={currentRunMeta}
                 onReset={handleReset}
                 initialImproved={initialImproved}
               />

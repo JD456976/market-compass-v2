@@ -630,7 +630,10 @@ export type Database = {
           id: string
           improved_description: string | null
           input_type: string
+          listing_label: string | null
+          mls_number: string | null
           parsed_text: string
+          property_address: string | null
           property_hint: Json | null
           raw_text: string
           score: number | null
@@ -644,7 +647,10 @@ export type Database = {
           id?: string
           improved_description?: string | null
           input_type?: string
+          listing_label?: string | null
+          mls_number?: string | null
           parsed_text?: string
+          property_address?: string | null
           property_hint?: Json | null
           raw_text?: string
           score?: number | null
@@ -658,7 +664,10 @@ export type Database = {
           id?: string
           improved_description?: string | null
           input_type?: string
+          listing_label?: string | null
+          mls_number?: string | null
           parsed_text?: string
+          property_address?: string | null
           property_hint?: Json | null
           raw_text?: string
           score?: number | null

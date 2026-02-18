@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,6 +62,7 @@ const DEFAULT_VALUES = {
 
 const SellerFlow = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [stepDirection, setStepDirection] = useState(1);
@@ -117,7 +118,17 @@ const SellerFlow = () => {
 
   useEffect(() => {
     setMarketScenarios(loadMarketScenarios());
-    
+
+    // Pre-fill from Listing Navigator
+    const fromLN = searchParams.get('from') === 'listing-navigator';
+    if (fromLN) {
+      const addr = searchParams.get('address');
+      const price = searchParams.get('listPrice');
+      if (addr) { setLocation(addr); setFullAddress(addr); }
+      if (price) setListPrice(price);
+      toast({ title: 'Listing Navigator data loaded', description: 'Address and list price pre-filled from your audit.' });
+    }
+
     // Only restore session if explicitly returning from report (flag set by report page)
     const returningToEdit = sessionStorage.getItem('returning_to_edit');
     const sessionData = sessionStorage.getItem('current_session');
