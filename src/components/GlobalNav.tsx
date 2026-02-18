@@ -454,20 +454,21 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 
 // ─── Desktop Nav ──────────────────────────────────────────────────────────────
 
-// Primary: Home | Lead Finder | Listing Nav | [Your Reports button] | More ↓
+// Primary: Home | Lead Finder | Listing Nav | Market Intel | [Your Reports button] | More ↓
 const PRIMARY_NAV: NavItem[] = [
   { to: '/', label: 'Home', icon: <Home className="h-4 w-4" /> },
   { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-4 w-4" /> },
   { to: '/listing-navigator', label: 'Listing Nav', icon: <Eye className="h-4 w-4" /> },
+  { to: '/market-intelligence', label: 'Market Intel', icon: <TrendingUp className="h-4 w-4" /> },
 ];
 
-// More dropdown: Offers | Drafts | Shared | Playbooks | Market Intel | Pro Plan | Admin
+// More dropdown: Offers | Drafts | Shared | Playbooks | Pro Plan | Admin
 const SECONDARY_NAV: NavItem[] = [
   { to: '/offer-tracker', label: 'Offer Tracker', icon: <Trophy className="h-4 w-4" /> },
   { to: '/drafts', label: 'Draft Analyses', icon: <FolderOpen className="h-4 w-4" /> },
   { to: '/shared-reports', label: 'Shared Reports', icon: <Send className="h-4 w-4" /> },
   { to: '/saved-playbooks', label: 'Playbooks', icon: <BookmarkCheck className="h-4 w-4" /> },
-  { to: '/market-intelligence', label: 'Market Intel', icon: <TrendingUp className="h-4 w-4" /> },
+  { to: '/market-data', label: 'Market Data', icon: <Database className="h-4 w-4" /> },
   { to: '/subscription', label: 'Pro Plan', icon: <Sparkles className="h-4 w-4" /> },
   { to: '/admin', label: 'Admin', icon: <Settings className="h-4 w-4" />, adminOnly: true },
 ];

@@ -560,14 +560,20 @@ function SavedMarketsPanel({
           'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all cursor-pointer group',
           m.zip_code === activeZip
             ? 'border-primary/40 bg-primary/5'
-            : 'border-border/50 hover:border-border hover:bg-muted/30'
+            : m.is_pinned
+              ? 'border-primary/20 bg-primary/3 hover:border-primary/30'
+              : 'border-border/50 hover:border-border hover:bg-muted/30'
         )}
         onClick={() => onSelect(m.zip_code, m.city_state ?? '')}
       >
+        {/* Pinned indicator bar */}
+        {m.is_pinned && (
+          <div className="w-0.5 h-8 rounded-full bg-primary/50 shrink-0 -ml-0.5" />
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-bold font-mono">{m.zip_code}</span>
-            {m.is_pinned && <Pin className="h-3 w-3 text-primary" />}
+            {m.is_pinned && <Pin className="h-3 w-3 text-primary fill-primary/20" />}
           </div>
           {m.city_state && <p className="text-[10px] text-muted-foreground truncate">{m.city_state}</p>}
           <p className="text-[10px] text-muted-foreground/60">
