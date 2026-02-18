@@ -58,6 +58,8 @@ import {
 import { RotateCcw } from 'lucide-react';
 import { AnalysisMethodology } from '@/components/AnalysisMethodology';
 import { DraftStatusIndicator } from '@/components/DraftStatusIndicator';
+import { SellerConversationCoach } from '@/components/SellerConversationCoach';
+import { NeighborhoodMomentumMap } from '@/components/NeighborhoodMomentumMap';
 import { HistoricalTrends } from '@/components/report/HistoricalTrends';
 import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore';
 // CompetitiveAnalysis merged into CompetingOffersCard
@@ -916,6 +918,13 @@ const SellerReport = () => {
                   }}
                 />
                 {playbookInput && <ProspectingPlaybook input={playbookInput} />}
+                <SellerConversationCoach
+                  location={formatLocation(session.location)}
+                  likelihood30={reportData?.likelihood30}
+                  dom={marketSnapshot?.snapshot?.medianDOM}
+                  saleToList={marketSnapshot?.snapshot?.saleToListRatio}
+                />
+                <NeighborhoodMomentumMap primaryZip={(session.address_fields as any)?.postalCode || (session.address_fields as any)?.zip} />
                 <MarketAwareDealTimeline
                   sessionType="seller"
                   clientName={session.client_name}
