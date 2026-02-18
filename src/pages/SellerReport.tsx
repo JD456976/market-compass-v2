@@ -91,6 +91,8 @@ import { SellerTimingCard } from '@/components/report/TimingCard';
 import { SellerNegotiationCard } from '@/components/report/NegotiationCard';
 import { MortgageRateCard } from '@/components/report/MortgageRateCard';
 import { LeadFinderIntelPanel } from '@/components/report/LeadFinderIntelPanel';
+import { ProspectingPlaybook } from '@/components/ProspectingPlaybook';
+import type { PlaybookInput } from '@/lib/prospectingPlaybook';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
   if (band === 'High') {
@@ -108,6 +110,7 @@ const SellerReport = () => {
   const { isClientMode } = useClientMode();
   const [reportData, setReportData] = useState<SellerReportData | null>(null);
   const [saved, setSaved] = useState(false);
+  const [playbookInput, setPlaybookInput] = useState<PlaybookInput | null>(null);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [editSheetOpen, setEditSheetOpen] = useState(false);
@@ -893,7 +896,26 @@ const SellerReport = () => {
             {/* Lead Finder Intel — Agent Only, Outside PDF */}
             {!isClientMode && (
               <div className="pdf-hide-agent-notes space-y-4">
-                <LeadFinderIntelPanel location={session.location} reportType="seller" />
+                <LeadFinderIntelPanel
+                  location={session.location}
+                  reportType="seller"
+                  onResult={(fredResult) => {
+                    setPlaybookInput({
+                      zip: fredResult.zip,
+                      cityState: session.location,
+                      opportunityScore: fredResult.opportunityScore,
+                      leadType: fredResult.leadType,
+                      metrics: {
+                        mortgage: { current: fredResult.metrics.mortgage.current, trend: fredResult.metrics.mortgage.trend, flagged: fredResult.metrics.mortgage.flagged },
+                        inventory: { current: fredResult.metrics.inventory.current, trend: fredResult.metrics.inventory.trend, flagged: fredResult.metrics.inventory.flagged },
+                        daysOnMarket: { current: fredResult.metrics.daysOnMarket.current, trend: fredResult.metrics.daysOnMarket.trend, flagged: fredResult.metrics.daysOnMarket.flagged },
+                        hpi: { current: fredResult.metrics.hpi.current, trend: fredResult.metrics.hpi.trend, change90d: fredResult.metrics.hpi.change90d, flagged: fredResult.metrics.hpi.flagged },
+                        unemployment: { current: fredResult.metrics.unemployment.current, trend: fredResult.metrics.unemployment.trend, flagged: fredResult.metrics.unemployment.flagged },
+                      },
+                    });
+                  }}
+                />
+                {playbookInput && <ProspectingPlaybook input={playbookInput} />}
                 <MarketAwareDealTimeline
                   sessionType="seller"
                   clientName={session.client_name}
