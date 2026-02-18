@@ -806,24 +806,37 @@ function PropertyGroupCard({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {latestRun.score !== null && (
-              <div className="flex items-center gap-1.5">
-                <span className={cn('text-sm font-bold',
-                  latestRun.score >= 80 ? 'text-emerald-600' :
-                  latestRun.score >= 60 ? 'text-yellow-600' :
-                  'text-destructive'
-                )}>
-                  {latestRun.score}
-                </span>
-                {scoreDiff !== null && (
-                  <span className={cn('text-xs font-medium flex items-center gap-0.5',
-                    scoreDiff > 0 ? 'text-emerald-600' :
-                    scoreDiff < 0 ? 'text-destructive' :
-                    'text-muted-foreground'
+              <div className="flex flex-col items-end gap-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className={cn('text-sm font-bold',
+                    latestRun.score >= 80 ? 'text-emerald-600' :
+                    latestRun.score >= 60 ? 'text-yellow-600' :
+                    'text-destructive'
                   )}>
-                    {scoreDiff > 0 ? <TrendingUp className="h-3 w-3" /> : scoreDiff < 0 ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                    {scoreDiff > 0 ? `+${scoreDiff}` : scoreDiff}
+                    {latestRun.score}<span className="text-[9px] font-normal text-muted-foreground">/100</span>
                   </span>
-                )}
+                  {scoreDiff !== null && (
+                    <span
+                      className={cn('text-xs font-medium flex items-center gap-0.5',
+                        scoreDiff > 0 ? 'text-emerald-600' :
+                        scoreDiff < 0 ? 'text-destructive' :
+                        'text-muted-foreground'
+                      )}
+                      title={scoreDiff > 0
+                        ? `Score improved by ${scoreDiff} pts vs. prior audit`
+                        : scoreDiff < 0
+                        ? `Score dropped ${Math.abs(scoreDiff)} pts vs. prior audit`
+                        : 'No change vs. prior audit'}
+                    >
+                      {scoreDiff > 0 ? <TrendingUp className="h-3 w-3" /> : scoreDiff < 0 ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                      {scoreDiff > 0 ? `+${scoreDiff}` : scoreDiff}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[9px] text-muted-foreground leading-none">
+                  Audit score
+                  {scoreDiff !== null && hasMultiple ? ' · vs. prior run' : ''}
+                </span>
               </div>
             )}
             {hasMultiple ? (
