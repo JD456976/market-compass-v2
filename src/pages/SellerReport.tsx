@@ -88,6 +88,7 @@ import { BuyerMotivationCard } from '@/components/report/MotivationCard';
 import { SellerTimingCard } from '@/components/report/TimingCard';
 import { SellerNegotiationCard } from '@/components/report/NegotiationCard';
 import { MortgageRateCard } from '@/components/report/MortgageRateCard';
+import { LeadFinderIntelPanel } from '@/components/report/LeadFinderIntelPanel';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand }) {
   if (band === 'High') {
@@ -874,6 +875,13 @@ const SellerReport = () => {
               isPdfExported={session.pdf_exported ?? false}
               isShareLinkCreated={session.share_link_created ?? false}
             />
+            {/* Lead Finder Intel — Agent Only, Outside PDF */}
+            {!isClientMode && (
+              <div className="pdf-hide-agent-notes">
+                <LeadFinderIntelPanel location={session.location} reportType="seller" />
+              </div>
+            )}
+
           </ReportProvider>
           </div>
 
