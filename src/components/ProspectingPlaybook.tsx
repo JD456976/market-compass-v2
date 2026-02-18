@@ -402,6 +402,34 @@ export function ProspectingPlaybook({ input, analysisId }: ProspectingPlaybookPr
   const [cfg, setCfg] = useState<PersonalizationConfig>(DEFAULT_CONFIG);
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+  const [autoFilled, setAutoFilled] = useState(false);
+
+  // ── Auto-fill from agent profile ──────────────────────────────────────────
+  useQuery({
+    queryKey: ['agent-profile-prefill', user?.id],
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, brokerage, phone')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+      if (data) {
+        setCfg(prev => {
+          // Only pre-fill if the field is still empty (don't overwrite user edits)
+          const next: PersonalizationConfig = { ...prev };
+          if (!prev.agentName && data.full_name) next.agentName = data.full_name;
+          if (!prev.brokerage && data.brokerage) next.brokerage = data.brokerage;
+          if (!prev.phone && data.phone) next.phone = data.phone;
+          const didFill = next.agentName !== prev.agentName || next.brokerage !== prev.brokerage || next.phone !== prev.phone;
+          if (didFill) setAutoFilled(true);
+          return next;
+        });
+      }
+      return data;
+    },
+  });
 
   const playbook = generatePlaybook(input);
   const isPersonalized = !!(cfg.agentName || cfg.brokerage || cfg.phone || cfg.cta);
@@ -492,14 +520,16 @@ export function ProspectingPlaybook({ input, analysisId }: ProspectingPlaybookPr
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setShowCustomize(v => !v)}
+            onClick={() => { setShowCustomize(v => !v); setAutoFilled(false); }}
             className={cn(
               'h-7 px-2 gap-1.5 text-xs',
               isPersonalized && 'text-primary border border-primary/30 bg-primary/5',
+              autoFilled && !showCustomize && 'animate-pulse',
             )}
+            title={autoFilled && !showCustomize ? 'Auto-filled from your profile — click to review' : undefined}
           >
             <Settings2 className="h-3.5 w-3.5" />
-            {isPersonalized ? 'Personalized ✓' : 'Customize'}
+            {isPersonalized ? (autoFilled && !showCustomize ? 'Pre-filled ✓' : 'Personalized ✓') : 'Customize'}
           </Button>
           {user && (
             <Button
