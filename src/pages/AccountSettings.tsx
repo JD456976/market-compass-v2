@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { DealPilotConnectionCard } from '@/components/DealPilotButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -177,6 +178,19 @@ const AccountSettings = () => {
                 <p className="text-xl font-semibold">{sharedCount}</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Deal Pilot Integration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ExternalLink className="h-5 w-5" />
+              Integrations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DealPilotConnectionCard />
           </CardContent>
         </Card>
 

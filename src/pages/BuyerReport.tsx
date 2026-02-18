@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, Clock, Users, Target, TrendingUp, AlertCircle, CheckCircle2, AlertTriangle, ShieldAlert, FileDown, Share2, FileText, Pencil, Link2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Session, BuyerReportData, ExtendedLikelihoodBand } from '@/types';
+import { DealPilotButton } from '@/components/DealPilotButton';
+import { MarketAwareDealTimeline } from '@/components/MarketAwareDealTimeline';
 import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateBuyerReport } from '@/lib/scoring';
 import { useToast } from '@/hooks/use-toast';
@@ -426,7 +428,18 @@ const BuyerReport = () => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 self-end sm:self-auto">
+            <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+              {!isClientMode && (
+                <DealPilotButton
+                  clientName={reportData?.session.client_name}
+                  location={reportData?.session.location}
+                  sessionType="buyer"
+                  sessionId={reportData?.session.id}
+                  variant="outline"
+                  size="sm"
+                  className="bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs"
+                />
+              )}
               <ModeSwitcher className="bg-primary-foreground/10 rounded-lg px-3 py-2" />
             </div>
           </div>
@@ -861,8 +874,14 @@ const BuyerReport = () => {
             />
             {/* Lead Finder Intel — Agent Only, Outside PDF */}
             {!isClientMode && (
-              <div className="pdf-hide-agent-notes">
+              <div className="pdf-hide-agent-notes space-y-4">
                 <LeadFinderIntelPanel location={session.location} reportType="buyer" />
+                <MarketAwareDealTimeline
+                  sessionType="buyer"
+                  clientName={session.client_name}
+                  location={session.location}
+                  zip={(session.address_fields as any)?.postalCode || (session.address_fields as any)?.zip}
+                />
               </div>
             )}
 
