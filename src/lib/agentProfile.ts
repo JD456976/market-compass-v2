@@ -5,6 +5,7 @@ export interface AgentProfile {
   email: string;
   website?: string;
   license?: string;
+  custom_cta?: string;
 }
 
 const AGENT_PROFILE_KEY = 'reality_engine_agent_profile';
@@ -16,6 +17,7 @@ const DEFAULT_PROFILE: AgentProfile = {
   email: 'jason.craig@chinattirealty.com',
   website: 'bostonsuburbliving.com',
   license: '9628503-RE-S',
+  custom_cta: '',
 };
 
 export function loadAgentProfile(): AgentProfile {

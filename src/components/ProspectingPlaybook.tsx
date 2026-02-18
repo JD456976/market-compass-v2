@@ -412,17 +412,20 @@ export function ProspectingPlaybook({ input, analysisId }: ProspectingPlaybookPr
     queryFn: async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, brokerage, phone')
+        .select('full_name, brokerage, phone, license, custom_cta')
         .eq('user_id', user!.id)
         .maybeSingle();
       if (data) {
         setCfg(prev => {
-          // Only pre-fill if the field is still empty (don't overwrite user edits)
           const next: PersonalizationConfig = { ...prev };
           if (!prev.agentName && data.full_name) next.agentName = data.full_name;
           if (!prev.brokerage && data.brokerage) next.brokerage = data.brokerage;
           if (!prev.phone && data.phone) next.phone = data.phone;
-          const didFill = next.agentName !== prev.agentName || next.brokerage !== prev.brokerage || next.phone !== prev.phone;
+          // New fields: license and custom_cta stored in profiles table
+          const d = data as any;
+          if (!prev.licenseNum && d.license) next.licenseNum = d.license;
+          if (!prev.cta && d.custom_cta) next.cta = d.custom_cta;
+          const didFill = next.agentName !== prev.agentName || next.brokerage !== prev.brokerage || next.phone !== prev.phone || next.licenseNum !== prev.licenseNum || next.cta !== prev.cta;
           if (didFill) setAutoFilled(true);
           return next;
         });
