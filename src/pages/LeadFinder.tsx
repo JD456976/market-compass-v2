@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -17,11 +17,12 @@ import {
   ChevronDown, ChevronUp, Upload, Download, Clock, ExternalLink,
   CheckCircle2, CircleDot, Loader2, Search, History, Star,
   BadgeDollarSign, Home, Briefcase, Users, Pin, PinOff,
-  RefreshCw, Share2, Copy, Check, X, Bell, BellOff,
+  RefreshCw, Share2, Copy, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
+import { FubIntegrationPanel } from '@/components/FubIntegrationPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -758,6 +759,7 @@ export default function LeadFinder() {
   const [zip, setZip] = useState('');
   const [cityState, setCityState] = useState('');
   const [result, setResult] = useState<LeadFinderResult | null>(null);
+  const [previousScore, setPreviousScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -814,6 +816,12 @@ export default function LeadFinder() {
       const fredData: LeadFinderResult = await resp.json();
       if ((fredData as any).error) throw new Error((fredData as any).error);
 
+      // Track previous score for FUB score-change alerts
+      if (result?.zip === trimmedZip) {
+        setPreviousScore(result.opportunityScore);
+      } else {
+        setPreviousScore(null);
+      }
       setResult(fredData);
       setRetryCount(0);
 
@@ -1024,10 +1032,38 @@ export default function LeadFinder() {
                   <MarketBrief result={result} cityState={cityState} />
                 </section>
 
-                {/* CSV */}
+                {/* Follow Up Boss Integration */}
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">6</div>
+                    <h2 className="font-serif text-xl font-semibold">Push to Follow Up Boss</h2>
+                  </div>
+                  <FubIntegrationPanel
+                    pendingPush={{
+                      zip: result.zip,
+                      cityState: cityState || null,
+                      opportunityScore: result.opportunityScore,
+                      leadType: result.leadType,
+                      topFactor: result.topFactors[0]?.reason ?? 'No specific factor identified.',
+                      briefText: [
+                        `📍 Market Intelligence: ${result.zip}${cityState ? ` — ${cityState}` : ''}`,
+                        `📊 Opportunity Score: ${result.opportunityScore}/100 (${result.leadType} market)`,
+                        `🏦 Borrowing Cost: ${result.metrics.mortgage.current?.toFixed(2) ?? '—'}% — ${result.metrics.mortgage.trend}`,
+                        `🏠 Active Listings: ${result.metrics.inventory.current?.toLocaleString() ?? '—'} — ${result.metrics.inventory.trend}`,
+                        `📅 Median Days on Market: ${result.metrics.daysOnMarket.current ? `${Math.round(result.metrics.daysOnMarket.current)} days` : '—'}`,
+                        `📌 Key Signal: ${result.topFactors[0]?.reason ?? 'Analysis complete.'}`,
+                        `Source: Federal Reserve Economic Data (FRED). Generated ${new Date(result.fetchedAt).toLocaleDateString()}.`,
+                      ].join('\n'),
+                      previousScore,
+                      scoreDelta: previousScore !== null ? result.opportunityScore - previousScore : 0,
+                    }}
+                  />
+                </section>
+
+                {/* CSV */}
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">7</div>
                     <h2 className="font-serif text-xl font-semibold">Score Your Lead List</h2>
                   </div>
                   <CsvUpload currentResult={result} />
@@ -1072,6 +1108,7 @@ export default function LeadFinder() {
               onSelect={handleSelectMarket}
               activeZip={result?.zip ?? ''}
             />
+            <FubIntegrationPanel />
           </div>
 
         </div>
