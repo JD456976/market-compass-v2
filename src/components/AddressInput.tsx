@@ -202,21 +202,9 @@ export function AddressInput({
         </div>
       </div>
       
-      <div>
-        <Label className="text-xs text-muted-foreground">Town / City</Label>
-        <Input
-          value={town}
-          onChange={(e) => onTownChange(e.target.value)}
-          placeholder="Auto-filled from address, or enter manually"
-          className="h-9 text-sm mt-1"
-        />
-      </div>
-      
       {attempted && !town.trim() && (
         <p className="text-xs text-destructive">Location is required (enter an address or town)</p>
       )}
-      
-      {attempted && !fullAddress.trim() && !town.trim() && null}
     </div>
   );
 }
