@@ -294,12 +294,14 @@ export type Database = {
           auto_push_on_csv_upload: boolean
           auto_push_on_score_change: boolean
           created_at: string
+          crm_display_name: string | null
           crm_type: string
           id: string
           is_active: boolean
           score_change_threshold: number
           updated_at: string
           user_id: string
+          webhook_url: string | null
         }
         Insert: {
           api_key_hint?: string | null
@@ -307,12 +309,14 @@ export type Database = {
           auto_push_on_csv_upload?: boolean
           auto_push_on_score_change?: boolean
           created_at?: string
+          crm_display_name?: string | null
           crm_type?: string
           id?: string
           is_active?: boolean
           score_change_threshold?: number
           updated_at?: string
           user_id: string
+          webhook_url?: string | null
         }
         Update: {
           api_key_hint?: string | null
@@ -320,12 +324,62 @@ export type Database = {
           auto_push_on_csv_upload?: boolean
           auto_push_on_score_change?: boolean
           created_at?: string
+          crm_display_name?: string | null
           crm_type?: string
           id?: string
           is_active?: boolean
           score_change_threshold?: number
           updated_at?: string
           user_id?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      crm_push_log: {
+        Row: {
+          action: string
+          city_state: string | null
+          created_at: string
+          crm_type: string
+          error_msg: string | null
+          id: string
+          lead_type: string | null
+          leads_pushed: number | null
+          opportunity_score: number | null
+          score_delta: number | null
+          status: string
+          user_id: string
+          zip_code: string | null
+        }
+        Insert: {
+          action: string
+          city_state?: string | null
+          created_at?: string
+          crm_type?: string
+          error_msg?: string | null
+          id?: string
+          lead_type?: string | null
+          leads_pushed?: number | null
+          opportunity_score?: number | null
+          score_delta?: number | null
+          status?: string
+          user_id: string
+          zip_code?: string | null
+        }
+        Update: {
+          action?: string
+          city_state?: string | null
+          created_at?: string
+          crm_type?: string
+          error_msg?: string | null
+          id?: string
+          lead_type?: string | null
+          leads_pushed?: number | null
+          opportunity_score?: number | null
+          score_delta?: number | null
+          status?: string
+          user_id?: string
+          zip_code?: string | null
         }
         Relationships: []
       }

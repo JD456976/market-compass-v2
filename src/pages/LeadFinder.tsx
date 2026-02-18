@@ -17,12 +17,12 @@ import {
   ChevronDown, ChevronUp, Upload, Download, Clock, ExternalLink,
   CheckCircle2, CircleDot, Loader2, Search, History, Star,
   BadgeDollarSign, Home, Briefcase, Users, Pin, PinOff,
-  RefreshCw, Share2, Copy, Check,
+  RefreshCw, Share2, Copy, Check, ArrowUpRight, ArrowDownRight, Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
-import { FubIntegrationPanel } from '@/components/FubIntegrationPanel';
+import { CrmIntegrationHub } from '@/components/CrmIntegrationHub';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -622,9 +622,11 @@ function SavedMarketsPanel({
 // ─── CSV Upload ───────────────────────────────────────────────────────────────
 
 function CsvUpload({ currentResult }: { currentResult: LeadFinderResult | null }) {
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<CsvRow[]>([]);
   const [processing, setProcessing] = useState(false);
+  const [pushing, setPushing] = useState(false);
   const [sortBy, setSortBy] = useState<'score' | 'address'>('score');
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -650,6 +652,75 @@ function CsvUpload({ currentResult }: { currentResult: LeadFinderResult | null }
         return { address, zip, score, leadType, topSignal };
       }).filter(r => r.address);
       setRows(parsed);
+
+      // Auto-push high-scoring leads to all connected CRMs with auto_push_on_csv_upload
+      if (user) {
+        const highScoreLeads = parsed.filter(r => r.score !== null && r.score >= 71);
+        if (highScoreLeads.length > 0) {
+          const { data: crmConns } = await supabase
+            .from('crm_connections')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .eq('auto_push_on_csv_upload', true);
+
+          if (crmConns && crmConns.length > 0) {
+            setPushing(true);
+            for (const conn of crmConns) {
+              try {
+                if (conn.crm_type === 'follow_up_boss') {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (session) {
+                    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                    await fetch(`${supabaseUrl}/functions/v1/follow-up-boss`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${session.access_token}`,
+                        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                      },
+                      body: JSON.stringify({ action: 'push_csv_leads', leads: highScoreLeads }),
+                    });
+                  }
+                } else if (conn.webhook_url) {
+                  await fetch(conn.webhook_url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      source: 'MarketCompass',
+                      event: 'csv_high_score_leads',
+                      leads: highScoreLeads,
+                      timestamp: new Date().toISOString(),
+                    }),
+                  });
+                }
+                // Log the push
+                await supabase.from('crm_push_log' as any).insert({
+                  user_id: user.id,
+                  crm_type: conn.crm_type,
+                  action: 'push_csv_leads',
+                  leads_pushed: highScoreLeads.length,
+                  status: 'success',
+                });
+              } catch (err: any) {
+                await supabase.from('crm_push_log' as any).insert({
+                  user_id: user.id,
+                  crm_type: conn.crm_type,
+                  action: 'push_csv_leads',
+                  leads_pushed: 0,
+                  status: 'error',
+                  error_msg: err.message,
+                });
+              }
+            }
+            setPushing(false);
+            toast({
+              title: `📤 Auto-pushed ${highScoreLeads.length} high-score leads`,
+              description: `Sent to ${crmConns.length} connected CRM${crmConns.length > 1 ? 's' : ''}`,
+            });
+          }
+        }
+      }
     } catch {
       toast({ title: 'Could not parse file', variant: 'destructive' });
     }
@@ -983,6 +1054,46 @@ export default function LeadFinder() {
                   </Button>
                 </div>
 
+                {/* Score Change Alert Banner */}
+                {previousScore !== null && Math.abs(result.opportunityScore - previousScore) >= 10 && (() => {
+                  const delta = result.opportunityScore - previousScore;
+                  const isUp = delta > 0;
+                  return (
+                    <div className={cn(
+                      'rounded-xl border-2 p-4 flex items-center gap-4 flex-wrap',
+                      isUp
+                        ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30'
+                        : 'border-red-400 bg-red-50 dark:bg-red-950/30'
+                    )}>
+                      <div className={cn('h-10 w-10 rounded-full flex items-center justify-center shrink-0', isUp ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-red-100 dark:bg-red-900/40')}>
+                        {isUp
+                          ? <ArrowUpRight className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                          : <ArrowDownRight className="h-5 w-5 text-red-600 dark:text-red-400" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn('font-bold text-base', isUp ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300')}>
+                          Score {isUp ? 'increased' : 'decreased'} by {Math.abs(delta)} points
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {previousScore} → <span className="font-semibold text-foreground">{result.opportunityScore}</span>
+                          {' '}({isUp ? '+' : ''}{delta} pts) — {isUp ? 'Market opportunity is strengthening. Time to act.' : 'Market opportunity is weakening. Review your pipeline.'}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={cn('gap-1.5 shrink-0', isUp ? 'border-emerald-400 text-emerald-700 hover:bg-emerald-100 dark:text-emerald-400' : 'border-red-400 text-red-700 hover:bg-red-100 dark:text-red-400')}
+                        onClick={() => {
+                          document.getElementById('crm-hub-section')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                      >
+                        <Zap className="h-3.5 w-3.5" />
+                        Push Alert to CRM
+                      </Button>
+                    </div>
+                  );
+                })()}
+
                 {/* Step 2 — Market Data */}
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
@@ -1032,13 +1143,13 @@ export default function LeadFinder() {
                   <MarketBrief result={result} cityState={cityState} />
                 </section>
 
-                {/* Follow Up Boss Integration */}
-                <section className="space-y-4">
+                {/* CRM Hub */}
+                <section id="crm-hub-section" className="space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">6</div>
-                    <h2 className="font-serif text-xl font-semibold">Push to Follow Up Boss</h2>
+                    <h2 className="font-serif text-xl font-semibold">Push to Your CRM</h2>
                   </div>
-                  <FubIntegrationPanel
+                  <CrmIntegrationHub
                     pendingPush={{
                       zip: result.zip,
                       cityState: cityState || null,
@@ -1108,7 +1219,16 @@ export default function LeadFinder() {
               onSelect={handleSelectMarket}
               activeZip={result?.zip ?? ''}
             />
-            <FubIntegrationPanel />
+            <CrmIntegrationHub sidebarMode pendingPush={result ? {
+                zip: result.zip,
+                cityState: cityState || null,
+                opportunityScore: result.opportunityScore,
+                leadType: result.leadType,
+                topFactor: result.topFactors[0]?.reason ?? '',
+                briefText: '',
+                previousScore,
+                scoreDelta: previousScore !== null ? result.opportunityScore - previousScore : 0,
+              } : null} />
           </div>
 
         </div>
