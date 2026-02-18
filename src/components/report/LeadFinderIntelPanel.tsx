@@ -223,9 +223,11 @@ interface LeadFinderIntelPanelProps {
   location: string;
   /** 'buyer' or 'seller' — used to frame the recommendation copy */
   reportType: 'buyer' | 'seller';
+  /** Optional callback fired when FRED data has been successfully loaded */
+  onResult?: (result: LeadFinderResult) => void;
 }
 
-export function LeadFinderIntelPanel({ location, reportType }: LeadFinderIntelPanelProps) {
+export function LeadFinderIntelPanel({ location, reportType, onResult }: LeadFinderIntelPanelProps) {
   const { user } = useAuth();
   const [result, setResult] = useState<LeadFinderResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -260,8 +262,10 @@ export function LeadFinderIntelPanel({ location, reportType }: LeadFinderIntelPa
         if (cached?.fred_data && cached.refreshed_at) {
           const age = Date.now() - new Date(cached.refreshed_at).getTime();
           if (age < 24 * 60 * 60 * 1000) {
-            setResult(cached.fred_data as unknown as LeadFinderResult);
+            const cachedResult = cached.fred_data as unknown as LeadFinderResult;
+            setResult(cachedResult);
             setLastUpdated(cached.refreshed_at);
+            onResult?.(cachedResult);
             setLoading(false);
             return;
           }
@@ -286,6 +290,7 @@ export function LeadFinderIntelPanel({ location, reportType }: LeadFinderIntelPa
       const data: LeadFinderResult = await res.json();
       setResult(data);
       setLastUpdated(data.fetchedAt);
+      onResult?.(data);
 
       // Cache in DB
       if (user) {
