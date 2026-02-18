@@ -494,20 +494,22 @@ export function ProspectingPlaybook({ input, analysisId }: ProspectingPlaybookPr
   return (
     <Card className="border-primary/20 overflow-hidden">
       {/* Header strip */}
-      <div className="px-4 py-2.5 flex items-center justify-between gap-2 bg-primary/5 border-b border-primary/10">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
+      <div className="px-4 py-2.5 bg-primary/5 border-b border-primary/10 space-y-2">
+        {/* Row 1: title + lead type badge */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Sparkles className="h-4 w-4 text-primary shrink-0" />
           <span className="text-xs font-bold uppercase tracking-widest text-foreground/70">
             Prospecting Playbook
           </span>
           <Badge variant="outline" className="text-[10px] px-2 py-0 border-primary/30 text-primary">
             Agent Only
           </Badge>
-        </div>
-        <div className="flex items-center gap-1.5">
           <Badge variant="outline" className={cn('text-[10px] px-2 py-0', leadTypeColor)}>
             {leadTypeLabel}
           </Badge>
+        </div>
+        {/* Row 2: action buttons */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           {user && (
             <Button
               variant="ghost"
