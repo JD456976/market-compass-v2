@@ -17,10 +17,14 @@ import {
 import {
   ChevronDown, ChevronUp, Copy, Check, Sparkles,
   Instagram, Linkedin, Mail, Users, Phone, Settings2, X,
+  BookmarkPlus, BookmarkCheck, Loader2, Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { generatePlaybook, PlaybookInput, PlaybookPlatform } from '@/lib/prospectingPlaybook';
+import { generatePlaybook, PlaybookInput, PlaybookPlatform, PlaybookItem } from '@/lib/prospectingPlaybook';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // ─── Platform icons + colours ─────────────────────────────────────────────────
 
@@ -290,16 +294,114 @@ function CustomizePanel({
   );
 }
 
+// ─── Saved playbook type ──────────────────────────────────────────────────────
+
+interface SavedPlaybook {
+  id: string;
+  zip_code: string;
+  city_state: string | null;
+  lead_type: string;
+  opportunity_score: number | null;
+  playbook_items: PlaybookItem[];
+  personalization: PersonalizationConfig | null;
+  label: string | null;
+  created_at: string;
+  analysis_id: string | null;
+}
+
+// ─── Saved playbooks panel ────────────────────────────────────────────────────
+
+function SavedPlaybooksPanel({
+  zip,
+  userId,
+  onRestore,
+}: {
+  zip: string;
+  userId: string;
+  onRestore: (saved: SavedPlaybook) => void;
+}) {
+  const queryClient = useQueryClient();
+
+  const { data: saved = [], isLoading } = useQuery<SavedPlaybook[]>({
+    queryKey: ['saved-playbooks', userId, zip],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('saved_playbooks')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('zip_code', zip)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map(r => ({
+        ...r,
+        playbook_items: (r.playbook_items as unknown as PlaybookItem[]) ?? [],
+        personalization: r.personalization as unknown as PersonalizationConfig | null,
+      }));
+    },
+  });
+
+  const handleDelete = async (id: string) => {
+    await supabase.from('saved_playbooks').delete().eq('id', id);
+    queryClient.invalidateQueries({ queryKey: ['saved-playbooks', userId, zip] });
+    toast({ title: 'Playbook deleted' });
+  };
+
+  if (saved.length === 0 && !isLoading) return (
+    <p className="text-xs text-muted-foreground italic px-1">No saved playbooks for this ZIP yet.</p>
+  );
+
+  return (
+    <div className="space-y-2">
+      {isLoading && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
+        </div>
+      )}
+      {saved.map(s => (
+        <div key={s.id} className="flex items-center gap-2 rounded-lg border border-border/50 bg-card px-3 py-2">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium truncate">
+              {s.label || `Playbook — ${new Date(s.created_at).toLocaleDateString()}`}
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              {s.lead_type} · Score {s.opportunity_score ?? '—'}/100
+              {s.personalization?.agentName ? ` · by ${s.personalization.agentName}` : ''}
+            </p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => onRestore(s)}>
+              Load
+            </Button>
+            <button
+              onClick={() => handleDelete(s.id)}
+              className="text-muted-foreground hover:text-destructive transition-colors p-1"
+              title="Delete"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface ProspectingPlaybookProps {
   input: PlaybookInput;
+  analysisId?: string | null;
 }
 
-export function ProspectingPlaybook({ input }: ProspectingPlaybookProps) {
+export function ProspectingPlaybook({ input, analysisId }: ProspectingPlaybookProps) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
   const [cfg, setCfg] = useState<PersonalizationConfig>(DEFAULT_CONFIG);
+  const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
 
   const playbook = generatePlaybook(input);
   const isPersonalized = !!(cfg.agentName || cfg.brokerage || cfg.phone || cfg.cta);
@@ -316,6 +418,48 @@ export function ProspectingPlaybook({ input }: ProspectingPlaybookProps) {
     transitional: 'text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30',
   }[input.leadType];
 
+  const handleSave = async () => {
+    if (!user) {
+      toast({ title: 'Sign in to save playbooks', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    try {
+      const label = `${input.cityState || input.zip} — ${new Date().toLocaleDateString()}`;
+      const { error } = await supabase
+        .from('saved_playbooks')
+        .insert({
+          user_id: user.id,
+          analysis_id: analysisId ?? null,
+          zip_code: input.zip,
+          city_state: input.cityState || null,
+          lead_type: input.leadType,
+          opportunity_score: input.opportunityScore,
+          playbook_items: playbook.items as any,
+          personalization: isPersonalized ? cfg as any : null,
+          label,
+        });
+      if (error) throw error;
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 3000);
+      queryClient.invalidateQueries({ queryKey: ['saved-playbooks', user.id, input.zip] });
+      toast({ title: '✅ Playbook saved!', description: `Saved as "${label}"` });
+    } catch (e: any) {
+      toast({ title: 'Failed to save', description: e.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRestore = (saved: SavedPlaybook) => {
+    if (saved.personalization) {
+      setCfg(saved.personalization);
+      setShowCustomize(true);
+    }
+    setShowSaved(false);
+    toast({ title: 'Playbook loaded', description: 'Personalization restored.' });
+  };
+
   return (
     <Card className="border-primary/20 overflow-hidden">
       {/* Header strip */}
@@ -329,10 +473,22 @@ export function ProspectingPlaybook({ input }: ProspectingPlaybookProps) {
             Agent Only
           </Badge>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Badge variant="outline" className={cn('text-[10px] px-2 py-0', leadTypeColor)}>
             {leadTypeLabel}
           </Badge>
+          {user && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSaved(v => !v)}
+              className="h-7 px-2 gap-1.5 text-xs"
+              title="View saved playbooks"
+            >
+              <BookmarkCheck className="h-3.5 w-3.5" />
+              Saved
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -345,6 +501,23 @@ export function ProspectingPlaybook({ input }: ProspectingPlaybookProps) {
             <Settings2 className="h-3.5 w-3.5" />
             {isPersonalized ? 'Personalized ✓' : 'Customize'}
           </Button>
+          {user && (
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={saving || justSaved}
+              className="h-7 px-2 gap-1.5 text-xs"
+            >
+              {saving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : justSaved ? (
+                <BookmarkCheck className="h-3.5 w-3.5" />
+              ) : (
+                <BookmarkPlus className="h-3.5 w-3.5" />
+              )}
+              {justSaved ? 'Saved!' : 'Save'}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -355,9 +528,27 @@ export function ProspectingPlaybook({ input }: ProspectingPlaybookProps) {
             5 ready-to-use prospecting assets — all grounded in live FRED data.
           </p>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Every post, mailer, and script below uses real numbers from ZIP <span className="font-mono font-semibold">{input.zip}</span>{input.cityState ? ` (${input.cityState})` : ''}. Click <strong>Customize</strong> to personalize with your name and brokerage — then copy and post directly.
+            Every post, mailer, and script below uses real numbers from ZIP <span className="font-mono font-semibold">{input.zip}</span>{input.cityState ? ` (${input.cityState})` : ''}. Click <strong>Customize</strong> to personalize, then <strong>Save</strong> to store this playbook to your account.
           </p>
         </div>
+
+        {/* Saved playbooks panel */}
+        {showSaved && user && (
+          <div className="rounded-xl border border-border/60 bg-muted/20 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BookmarkCheck className="h-4 w-4 text-primary" />
+                <span className="text-xs font-bold uppercase tracking-widest text-foreground/70">
+                  Saved Playbooks — {input.zip}
+                </span>
+              </div>
+              <button onClick={() => setShowSaved(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <SavedPlaybooksPanel zip={input.zip} userId={user.id} onRestore={handleRestore} />
+          </div>
+        )}
 
         {/* Customize panel */}
         {showCustomize && (
@@ -416,3 +607,4 @@ export function ProspectingPlaybook({ input }: ProspectingPlaybookProps) {
     </Card>
   );
 }
+

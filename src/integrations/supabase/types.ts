@@ -859,6 +859,59 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_playbooks: {
+        Row: {
+          analysis_id: string | null
+          city_state: string | null
+          created_at: string
+          id: string
+          label: string | null
+          lead_type: string
+          opportunity_score: number | null
+          personalization: Json | null
+          playbook_items: Json
+          updated_at: string
+          user_id: string
+          zip_code: string
+        }
+        Insert: {
+          analysis_id?: string | null
+          city_state?: string | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          lead_type: string
+          opportunity_score?: number | null
+          personalization?: Json | null
+          playbook_items?: Json
+          updated_at?: string
+          user_id: string
+          zip_code: string
+        }
+        Update: {
+          analysis_id?: string | null
+          city_state?: string | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          lead_type?: string
+          opportunity_score?: number | null
+          personalization?: Json | null
+          playbook_items?: Json
+          updated_at?: string
+          user_id?: string
+          zip_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_playbooks_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "lead_finder_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           address_fields: Json | null

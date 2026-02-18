@@ -835,6 +835,7 @@ export default function LeadFinder() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
 
   // Score history for active ZIP
   const { data: scoreHistory = [] } = useQuery<ScoreHistoryPoint[]>({
@@ -898,8 +899,8 @@ export default function LeadFinder() {
       setRetryCount(0);
 
       if (user) {
-        // Upsert analysis cache
-        await supabase
+        // Upsert analysis cache and capture id
+        const { data: upsertedAnalysis } = await supabase
           .from('lead_finder_analyses')
           .upsert({
             user_id: user.id,
@@ -909,7 +910,10 @@ export default function LeadFinder() {
             opportunity_score: fredData.opportunityScore,
             lead_type: fredData.leadType,
             refreshed_at: new Date().toISOString(),
-          }, { onConflict: 'user_id,zip_code' });
+          }, { onConflict: 'user_id,zip_code' })
+          .select('id')
+          .single();
+        if (upsertedAnalysis?.id) setCurrentAnalysisId(upsertedAnalysis.id);
 
         // Append to score history
         await supabase
@@ -1179,6 +1183,7 @@ export default function LeadFinder() {
                     <h2 className="font-serif text-xl font-semibold">Prospecting Playbook</h2>
                   </div>
                   <ProspectingPlaybook
+                    analysisId={currentAnalysisId}
                     input={{
                       zip: result.zip,
                       cityState: cityState,
