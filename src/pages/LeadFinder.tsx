@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { CrmIntegrationHub } from '@/components/CrmIntegrationHub';
+import { ProspectingPlaybook } from '@/components/ProspectingPlaybook';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1171,10 +1172,33 @@ export default function LeadFinder() {
                   />
                 </section>
 
-                {/* CSV */}
+                {/* Prospecting Playbook */}
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">7</div>
+                    <h2 className="font-serif text-xl font-semibold">Prospecting Playbook</h2>
+                  </div>
+                  <ProspectingPlaybook
+                    input={{
+                      zip: result.zip,
+                      cityState: cityState,
+                      opportunityScore: result.opportunityScore,
+                      leadType: result.leadType,
+                      metrics: {
+                        mortgage: { current: result.metrics.mortgage.current, trend: result.metrics.mortgage.trend, flagged: result.metrics.mortgage.flagged },
+                        inventory: { current: result.metrics.inventory.current, trend: result.metrics.inventory.trend, flagged: result.metrics.inventory.flagged },
+                        daysOnMarket: { current: result.metrics.daysOnMarket.current, trend: result.metrics.daysOnMarket.trend, flagged: result.metrics.daysOnMarket.flagged },
+                        hpi: { current: result.metrics.hpi.current, trend: result.metrics.hpi.trend, change90d: result.metrics.hpi.change90d, flagged: result.metrics.hpi.flagged },
+                        unemployment: { current: result.metrics.unemployment.current, trend: result.metrics.unemployment.trend, flagged: result.metrics.unemployment.flagged },
+                      },
+                    }}
+                  />
+                </section>
+
+                {/* CSV */}
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">8</div>
                     <h2 className="font-serif text-xl font-semibold">Score Your Lead List</h2>
                   </div>
                   <CsvUpload currentResult={result} />
