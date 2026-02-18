@@ -5,16 +5,18 @@
  */
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import {
   ChevronDown, ChevronUp, Copy, Check, Sparkles,
-  Instagram, Linkedin, Mail, Users, Phone,
+  Instagram, Linkedin, Mail, Users, Phone, Settings2, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { generatePlaybook, PlaybookInput, PlaybookPlatform } from '@/lib/prospectingPlaybook';
@@ -66,6 +68,39 @@ const platformMeta: Record<PlaybookPlatform, {
   },
 };
 
+// ─── Personalization state ────────────────────────────────────────────────────
+
+interface PersonalizationConfig {
+  agentName: string;
+  brokerage: string;
+  phone: string;
+  licenseNum: string;
+  cta: string;
+}
+
+const DEFAULT_CONFIG: PersonalizationConfig = {
+  agentName: '',
+  brokerage: '',
+  phone: '',
+  licenseNum: '',
+  cta: '',
+};
+
+function applyPersonalization(body: string, cfg: PersonalizationConfig): string {
+  let out = body;
+  if (cfg.agentName) {
+    out = out.replace(/\[Agent Name\]/g, cfg.agentName);
+    out = out.replace(/\[Name\]/g, cfg.agentName);
+  }
+  if (cfg.brokerage) out = out.replace(/\[Brokerage\]/g, cfg.brokerage);
+  if (cfg.phone) out = out.replace(/\[your number\]/g, cfg.phone);
+  if (cfg.licenseNum) out = out.replace(/\[License #\]/g, cfg.licenseNum);
+  if (cfg.cta) {
+    out = out.trimEnd() + `\n\n${cfg.cta}`;
+  }
+  return out;
+}
+
 // ─── Copy button ──────────────────────────────────────────────────────────────
 
 function CopyButton({ text, small }: { text: string; small?: boolean }) {
@@ -91,9 +126,16 @@ function CopyButton({ text, small }: { text: string; small?: boolean }) {
 
 // ─── Single playbook card ─────────────────────────────────────────────────────
 
-function PlaybookCard({ item }: { item: ReturnType<typeof generatePlaybook>['items'][number] }) {
+function PlaybookCard({
+  item,
+  cfg,
+}: {
+  item: ReturnType<typeof generatePlaybook>['items'][number];
+  cfg: PersonalizationConfig;
+}) {
   const [open, setOpen] = useState(false);
   const meta = platformMeta[item.platform];
+  const personalizedBody = applyPersonalization(item.body, cfg);
 
   return (
     <div className={cn('rounded-xl border overflow-hidden', meta.border)}>
@@ -131,7 +173,6 @@ function PlaybookCard({ item }: { item: ReturnType<typeof generatePlaybook>['ite
       {open && (
         <div className="bg-card border-t border-border">
           <div className="p-4 space-y-3">
-            {/* Data hook label */}
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 Grounded in:
@@ -141,21 +182,108 @@ function PlaybookCard({ item }: { item: ReturnType<typeof generatePlaybook>['ite
               </Badge>
             </div>
 
-            {/* The copy */}
             <div className="relative">
               <pre className="whitespace-pre-wrap text-xs leading-relaxed font-sans text-foreground/90 bg-muted/30 rounded-lg p-4 border border-border/50 overflow-x-auto">
-                {item.body}
+                {personalizedBody}
               </pre>
               <div className="absolute top-2 right-2">
-                <CopyButton text={item.body} small />
+                <CopyButton text={personalizedBody} small />
               </div>
             </div>
 
-            {/* Disclaimer */}
             <p className="text-[10px] text-muted-foreground/60 italic">
-              Replace bracketed placeholders [Name], [your number], etc. before posting. All data points sourced from Federal Reserve Economic Data (FRED).
+              {cfg.agentName || cfg.brokerage || cfg.phone
+                ? 'Personalization applied. Double-check all details before posting.'
+                : 'Replace bracketed placeholders [Name], [your number], etc. before posting. All data points sourced from Federal Reserve Economic Data (FRED).'}
             </p>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Customize panel ──────────────────────────────────────────────────────────
+
+function CustomizePanel({
+  cfg,
+  onChange,
+  onClose,
+}: {
+  cfg: PersonalizationConfig;
+  onChange: (c: PersonalizationConfig) => void;
+  onClose: () => void;
+}) {
+  const set = (key: keyof PersonalizationConfig) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    onChange({ ...cfg, [key]: e.target.value });
+
+  return (
+    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Settings2 className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold text-foreground">Personalize Your Copy</span>
+        </div>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Fill in your details once — all 5 assets update instantly. Leave any field blank to keep the placeholder.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium">Your Name</Label>
+          <Input
+            placeholder="Jane Smith"
+            value={cfg.agentName}
+            onChange={set('agentName')}
+            className="h-8 text-xs"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium">Brokerage</Label>
+          <Input
+            placeholder="Compass / Keller Williams / etc."
+            value={cfg.brokerage}
+            onChange={set('brokerage')}
+            className="h-8 text-xs"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium">Phone / Contact</Label>
+          <Input
+            placeholder="(555) 123-4567"
+            value={cfg.phone}
+            onChange={set('phone')}
+            className="h-8 text-xs"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium">License #</Label>
+          <Input
+            placeholder="DRE 01234567"
+            value={cfg.licenseNum}
+            onChange={set('licenseNum')}
+            className="h-8 text-xs"
+          />
+        </div>
+        <div className="sm:col-span-2 space-y-1.5">
+          <Label className="text-xs font-medium">Custom Call-to-Action <span className="text-muted-foreground font-normal">(appended to every asset)</span></Label>
+          <Input
+            placeholder="Text me at (555) 123-4567 or visit www.yoursite.com to get started."
+            value={cfg.cta}
+            onChange={set('cta')}
+            className="h-8 text-xs"
+          />
+        </div>
+      </div>
+      {(cfg.agentName || cfg.brokerage || cfg.phone || cfg.cta) && (
+        <div className="flex items-center gap-2 pt-1">
+          <Check className="h-3.5 w-3.5 text-emerald-600" />
+          <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+            Personalization active — expand any card to see updated copy.
+          </span>
         </div>
       )}
     </div>
@@ -170,7 +298,11 @@ interface ProspectingPlaybookProps {
 
 export function ProspectingPlaybook({ input }: ProspectingPlaybookProps) {
   const [expanded, setExpanded] = useState(false);
+  const [showCustomize, setShowCustomize] = useState(false);
+  const [cfg, setCfg] = useState<PersonalizationConfig>(DEFAULT_CONFIG);
+
   const playbook = generatePlaybook(input);
+  const isPersonalized = !!(cfg.agentName || cfg.brokerage || cfg.phone || cfg.cta);
 
   const leadTypeLabel = {
     seller: 'Seller Market',
@@ -197,9 +329,23 @@ export function ProspectingPlaybook({ input }: ProspectingPlaybookProps) {
             Agent Only
           </Badge>
         </div>
-        <Badge variant="outline" className={cn('text-[10px] px-2 py-0', leadTypeColor)}>
-          {leadTypeLabel}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className={cn('text-[10px] px-2 py-0', leadTypeColor)}>
+            {leadTypeLabel}
+          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCustomize(v => !v)}
+            className={cn(
+              'h-7 px-2 gap-1.5 text-xs',
+              isPersonalized && 'text-primary border border-primary/30 bg-primary/5',
+            )}
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            {isPersonalized ? 'Personalized ✓' : 'Customize'}
+          </Button>
+        </div>
       </div>
 
       <CardContent className="p-4 space-y-4">
@@ -209,10 +355,18 @@ export function ProspectingPlaybook({ input }: ProspectingPlaybookProps) {
             5 ready-to-use prospecting assets — all grounded in live FRED data.
           </p>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Every post, mailer, and script below uses real numbers from ZIP <span className="font-mono font-semibold">{input.zip}</span>{input.cityState ? ` (${input.cityState})` : ''}. Click any card to expand and copy the full copy.
-            No AI. No guesswork. Just your market data, turned into words.
+            Every post, mailer, and script below uses real numbers from ZIP <span className="font-mono font-semibold">{input.zip}</span>{input.cityState ? ` (${input.cityState})` : ''}. Click <strong>Customize</strong> to personalize with your name and brokerage — then copy and post directly.
           </p>
         </div>
+
+        {/* Customize panel */}
+        {showCustomize && (
+          <CustomizePanel
+            cfg={cfg}
+            onChange={setCfg}
+            onClose={() => setShowCustomize(false)}
+          />
+        )}
 
         {/* Platform legend */}
         <div className="flex flex-wrap gap-1.5">
@@ -229,7 +383,7 @@ export function ProspectingPlaybook({ input }: ProspectingPlaybookProps) {
         {/* Cards — first two always visible */}
         <div className="space-y-3">
           {playbook.items.slice(0, 2).map((item, i) => (
-            <PlaybookCard key={i} item={item} />
+            <PlaybookCard key={i} item={item} cfg={cfg} />
           ))}
         </div>
 
@@ -249,7 +403,7 @@ export function ProspectingPlaybook({ input }: ProspectingPlaybookProps) {
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-3 pt-3">
             {playbook.items.slice(2).map((item, i) => (
-              <PlaybookCard key={i} item={item} />
+              <PlaybookCard key={i} item={item} cfg={cfg} />
             ))}
           </CollapsibleContent>
         </Collapsible>
