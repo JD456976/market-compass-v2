@@ -108,6 +108,7 @@ function AppRoutes() {
           <Route path="/compare/client" element={<RequireAuth><ClientComparisonReport /></RequireAuth>} />
           <Route path="/agent-profile" element={<RequireAuth><AgentProfile /></RequireAuth>} />
           <Route path="/templates" element={<RequireAuth><Templates /></RequireAuth>} />
+          <Route path="/account" element={<RequireAuth><Subscription /></RequireAuth>} />
           <Route path="/subscription" element={<RequireAuth><Subscription /></RequireAuth>} />
           <Route path="/clients" element={<RequireAuth><Clients /></RequireAuth>} />
           <Route path="/lead-finder" element={<RequireAuth><LeadFinder /></RequireAuth>} />

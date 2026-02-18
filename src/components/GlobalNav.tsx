@@ -229,7 +229,7 @@ const DRAWER_TOOLS: DrawerLink[] = [
   { to: '/market-intelligence', label: 'Market Intelligence', icon: <TrendingUp className="h-5 w-5" /> },
   { to: '/market-data', label: 'Market Data', icon: <Database className="h-5 w-5" /> },
   { to: '/templates', label: 'Templates', icon: <FileText className="h-5 w-5" /> },
-  { to: '/subscription', label: 'Pro Plan', icon: <Sparkles className="h-5 w-5" /> },
+  { to: '/account', label: 'My Account', icon: <Sparkles className="h-5 w-5" /> },
 ];
 
 // Account group
@@ -469,7 +469,7 @@ const SECONDARY_NAV: NavItem[] = [
   { to: '/shared-reports', label: 'Shared Reports', icon: <Send className="h-4 w-4" /> },
   { to: '/saved-playbooks', label: 'Playbooks', icon: <BookmarkCheck className="h-4 w-4" /> },
   { to: '/market-data', label: 'Market Data', icon: <Database className="h-4 w-4" /> },
-  { to: '/subscription', label: 'Pro Plan', icon: <Sparkles className="h-4 w-4" /> },
+  { to: '/account', label: 'My Account', icon: <Sparkles className="h-4 w-4" /> },
   { to: '/admin', label: 'Admin', icon: <Settings className="h-4 w-4" />, adminOnly: true },
 ];
 
