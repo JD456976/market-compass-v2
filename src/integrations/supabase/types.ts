@@ -332,6 +332,7 @@ export type Database = {
           created_at: string
           fred_data: Json
           id: string
+          is_pinned: boolean
           lead_type: string | null
           opportunity_score: number | null
           refreshed_at: string
@@ -343,6 +344,7 @@ export type Database = {
           created_at?: string
           fred_data?: Json
           id?: string
+          is_pinned?: boolean
           lead_type?: string | null
           opportunity_score?: number | null
           refreshed_at?: string
@@ -354,9 +356,40 @@ export type Database = {
           created_at?: string
           fred_data?: Json
           id?: string
+          is_pinned?: boolean
           lead_type?: string | null
           opportunity_score?: number | null
           refreshed_at?: string
+          user_id?: string
+          zip_code?: string
+        }
+        Relationships: []
+      }
+      lead_finder_score_history: {
+        Row: {
+          city_state: string | null
+          id: string
+          lead_type: string
+          opportunity_score: number
+          recorded_at: string
+          user_id: string
+          zip_code: string
+        }
+        Insert: {
+          city_state?: string | null
+          id?: string
+          lead_type: string
+          opportunity_score: number
+          recorded_at?: string
+          user_id: string
+          zip_code: string
+        }
+        Update: {
+          city_state?: string | null
+          id?: string
+          lead_type?: string
+          opportunity_score?: number
+          recorded_at?: string
           user_id?: string
           zip_code?: string
         }
