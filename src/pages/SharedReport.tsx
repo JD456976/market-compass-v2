@@ -325,12 +325,13 @@ const SharedReportContent = () => {
       <div className="hero-gradient text-primary-foreground">
         <div className="container mx-auto px-4 py-6 report-header-mobile">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Agent identity + report label */}
             <div className="flex items-center gap-3 min-w-0">
               {agentBranding?.headshot_url ? (
                 <img
                   src={agentBranding.headshot_url}
                   alt="Agent"
-                  className="h-10 w-10 rounded-full object-cover border-2 border-primary-foreground/30 shrink-0"
+                  className="h-11 w-11 rounded-full object-cover border-2 border-primary-foreground/30 shrink-0"
                 />
               ) : (
                 <div className="p-2 rounded-lg bg-accent/20 shrink-0">
@@ -338,17 +339,20 @@ const SharedReportContent = () => {
                 </div>
               )}
               <div className="min-w-0">
+                {/* Agent name / brokerage */}
+                {agentBranding?.agent_name && (
+                  <p className="text-xs font-medium text-primary-foreground/70 truncate">
+                    {agentBranding.agent_name}
+                    {agentBranding.brokerage ? ` · ${agentBranding.brokerage}` : ''}
+                  </p>
+                )}
                 <h1 className="text-xl sm:text-2xl font-serif font-bold">{isSeller ? 'Seller' : 'Buyer'} Report</h1>
                 <p className="text-sm text-primary-foreground/70 truncate">
                   {session.client_name} • {(() => {
                     const fields = session.address_fields;
                     const addressLine = fields?.address_line;
                     if (addressLine) {
-                      // If address_line already contains city/state/zip, use it directly
-                      if (addressLine.includes(',')) {
-                        return addressLine;
-                      }
-                      // Otherwise build from parts
+                      if (addressLine.includes(',')) return addressLine;
                       const parts = [addressLine, fields?.city, fields?.state].filter(Boolean);
                       return parts.join(', ') + (fields?.zip ? `, ${fields.zip}` : '');
                     }
@@ -357,6 +361,7 @@ const SharedReportContent = () => {
                 </p>
               </div>
             </div>
+
             {/* Desktop Scenario Explorer CTA */}
             {!isSeller && (
               <Button

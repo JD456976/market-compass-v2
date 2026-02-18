@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-  FileText, MessageSquare, Layers, 
-  ChevronRight, ChevronLeft, X, Play, Shield
+import {
+  FileText, MessageSquare, Layers, Compass,
+  TrendingUp, Shield, BarChart2,
+  ChevronRight, ChevronLeft, X, Play,
 } from 'lucide-react';
 import { AppLogo } from '@/components/AppLogo';
 
@@ -21,32 +22,44 @@ const steps: OnboardingStep[] = [
   {
     icon: <AppLogo size="md" />,
     title: 'Welcome to Market Compass',
-    description: 'Your agent has shared property analysis reports designed to help you make confident decisions.',
-    detail: 'Market Compass provides clear, data-backed insights into your real estate scenarios — whether you\'re buying or selling.',
+    description: 'Your agent has shared property analysis built to help you make confident, informed decisions.',
+    detail: 'Market Compass provides clear, data-backed insights into your real estate scenario — whether you\'re buying or selling. Every report is prepared personally by your agent and anchored in real market data.',
   },
   {
     icon: <FileText className="h-8 w-8" />,
     title: 'Your Reports',
-    description: 'View detailed property reports shared by your agent.',
-    detail: 'Each report includes likelihood assessments, market context, and risk analysis. You can revisit them anytime from your dashboard.',
+    description: 'View detailed property reports shared by your agent — anytime, from any device.',
+    detail: 'Each report includes a likelihood assessment, market context, timing insights, competing offer analysis, and risk gauges. You can revisit and share them anytime from your dashboard. New reports shared by your agent appear automatically.',
   },
   {
-    icon: <div className="flex gap-2"><MessageSquare className="h-6 w-6" /><Layers className="h-6 w-6" /></div>,
-    title: 'Collaborate with Your Agent',
-    description: 'Send messages and explore what-if scenarios directly in each report.',
-    detail: 'Use the messaging feature to ask questions and the Scenario Explorer to model different offer or pricing strategies. Your agent reviews all submissions.',
+    icon: <div className="flex gap-3"><Compass className="h-6 w-6" /><Layers className="h-6 w-6" /></div>,
+    title: 'Scenario Explorer & What-If Analysis',
+    description: 'Model different offer or pricing strategies and instantly see how the outcome shifts.',
+    detail: 'Use the Scenario Explorer inside each report to adjust offer price, contingencies, escalation clauses, and more. You\'ll see how each change affects your likelihood scores and risk exposure — all before making a real decision.',
+  },
+  {
+    icon: <div className="flex gap-3"><BarChart2 className="h-6 w-6" /><TrendingUp className="h-6 w-6" /></div>,
+    title: 'Market Timing & Deal Velocity',
+    description: 'Understand where the market is headed and what a realistic closing timeline looks like.',
+    detail: 'Your report includes a Deal Velocity Timeline showing key milestones from offer to close, adjusted for current market speed. Timing cards show whether waiting is likely to help or hurt your position — backed by local median DOM and sale-to-list data.',
+  },
+  {
+    icon: <MessageSquare className="h-8 w-8" />,
+    title: 'Message Your Agent Directly',
+    description: 'Ask questions and submit scenario ideas right inside the report.',
+    detail: 'Use the messaging feature in any report to communicate directly with your agent. You can also submit a custom scenario from the Scenario Explorer — your agent will receive it and can respond with updated analysis.',
   },
   {
     icon: <Shield className="h-8 w-8" />,
     title: 'Privacy & Accuracy',
-    description: 'Your data is protected. Property addresses are never exposed in shared views.',
-    detail: 'Market Compass uses public market trend data and transaction logic. It does not provide valuations or use confidential MLS data.',
+    description: 'Your data is protected and your report is grounded in verified public data.',
+    detail: 'Market Compass uses public market trend data (median DOM, sale-to-list ratios) and live mortgage rates. It does not provide formal valuations or use confidential MLS data. Property address details are only visible within your secure report link.',
   },
   {
     icon: <Play className="h-8 w-8" />,
     title: 'You\'re All Set',
-    description: 'Head to your reports to get started.',
-    detail: 'You can always re-watch this guide from the menu. If you have questions, message your agent directly through any report.',
+    description: 'Head to your reports to explore your analysis and connect with your agent.',
+    detail: 'You can re-open this guide anytime from the menu. If you have questions about the data or your report, message your agent directly through any report — they\'ll be notified immediately.',
   },
 ];
 
@@ -61,9 +74,7 @@ export function ClientOnboarding({ onComplete, forceShow = false }: ClientOnboar
 
   useEffect(() => {
     const completed = localStorage.getItem(CLIENT_ONBOARDING_KEY);
-    if (!completed || forceShow) {
-      setIsOpen(true);
-    }
+    if (!completed || forceShow) setIsOpen(true);
   }, [forceShow]);
 
   const handleComplete = () => {
@@ -112,9 +123,9 @@ export function ClientOnboarding({ onComplete, forceShow = false }: ClientOnboar
                 <div className="p-3 rounded-xl bg-accent/20 text-accent">
                   {step.icon}
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-8 w-8 text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
                   onClick={handleSkip}
                 >
@@ -137,12 +148,8 @@ export function ClientOnboarding({ onComplete, forceShow = false }: ClientOnboar
                   <button
                     key={i}
                     onClick={() => setCurrentStep(i)}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      i === currentStep 
-                        ? 'bg-accent w-6' 
-                        : i < currentStep 
-                        ? 'bg-accent/40' 
-                        : 'bg-muted'
+                    className={`h-2 rounded-full transition-all ${
+                      i === currentStep ? 'bg-accent w-6' : i < currentStep ? 'bg-accent/40 w-2' : 'bg-muted w-2'
                     }`}
                   />
                 ))}
@@ -155,9 +162,9 @@ export function ClientOnboarding({ onComplete, forceShow = false }: ClientOnboar
                     Back
                   </Button>
                 )}
-                <Button 
-                  variant="accent" 
-                  onClick={handleNext} 
+                <Button
+                  variant="accent"
+                  onClick={handleNext}
                   className={currentStep === 0 ? 'w-full' : 'flex-1'}
                 >
                   {isLastStep ? 'Get Started' : 'Next'}
@@ -186,8 +193,8 @@ export function ClientOnboardingTrigger({ className }: { className?: string }) {
 
   return (
     <>
-      <Button 
-        variant="outline" 
+      <Button
+        variant="outline"
         size="sm"
         onClick={() => setShowOnboarding(true)}
         className={className}
@@ -196,9 +203,9 @@ export function ClientOnboardingTrigger({ className }: { className?: string }) {
         How It Works
       </Button>
       {showOnboarding && (
-        <ClientOnboarding 
-          forceShow={true} 
-          onComplete={() => setShowOnboarding(false)} 
+        <ClientOnboarding
+          forceShow={true}
+          onComplete={() => setShowOnboarding(false)}
         />
       )}
     </>
