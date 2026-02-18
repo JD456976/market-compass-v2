@@ -26,38 +26,30 @@ const ClientInvite = () => {
 
     const checkInvite = async () => {
       const { data, error } = await supabase
-        .from('client_invitations')
-        .select('*')
-        .eq('invite_token', token)
-        .maybeSingle();
+        .rpc('get_invitation_by_token', { p_token: token });
 
-      if (error || !data) {
+      if (error || !data || data.length === 0) {
         setStatus('invalid');
         return;
       }
 
-      if (data.status === 'accepted') {
+      const invite = data[0];
+
+      if (invite.status === 'accepted') {
         setStatus('already_accepted');
         return;
       }
 
-      if (data.status === 'revoked') {
+      if (invite.status === 'revoked') {
         setStatus('invalid');
         return;
       }
 
-      setClientEmail(data.client_email);
+      setClientEmail(invite.client_email);
       setStatus('valid');
 
-      // Fetch agent name
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('user_id', data.agent_user_id)
-        .maybeSingle();
-
-      if (profile?.full_name) {
-        setAgentName(profile.full_name);
+      if (invite.agent_name) {
+        setAgentName(invite.agent_name);
       }
     };
 

@@ -287,6 +287,33 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_api_keys: {
+        Row: {
+          created_at: string
+          crm_type: string
+          encrypted_api_key: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          crm_type?: string
+          encrypted_api_key: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          crm_type?: string
+          encrypted_api_key?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       crm_connections: {
         Row: {
           api_key_hint: string | null
@@ -1272,6 +1299,16 @@ export type Database = {
           p_issued_to?: string
         }
         Returns: Json
+      }
+      get_invitation_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          agent_name: string
+          client_email: string
+          client_first_name: string
+          client_last_name: string
+          status: string
+        }[]
       }
       has_role: {
         Args: {
