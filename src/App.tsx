@@ -55,6 +55,7 @@ import UploadDocument from "./pages/UploadDocument";
 import ReviewDocument from "./pages/ReviewDocument";
 import LeadFinder from "./pages/LeadFinder";
 import MarketIntelEmbed from "./pages/MarketIntelEmbed";
+import SavedPlaybooks from "./pages/SavedPlaybooks";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,7 @@ function AppRoutes() {
           <Route path="/subscription" element={<RequireAuth><Subscription /></RequireAuth>} />
           <Route path="/clients" element={<RequireAuth><Clients /></RequireAuth>} />
           <Route path="/lead-finder" element={<RequireAuth><LeadFinder /></RequireAuth>} />
+          <Route path="/saved-playbooks" element={<RequireAuth><SavedPlaybooks /></RequireAuth>} />
           <Route path="/documents" element={<RequireAuth><Documents /></RequireAuth>} />
           <Route path="/documents/upload" element={<RequireAuth><UploadDocument /></RequireAuth>} />
           <Route path="/documents/:documentId/review" element={<RequireAuth><ReviewDocument /></RequireAuth>} />
