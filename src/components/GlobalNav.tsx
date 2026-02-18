@@ -11,11 +11,13 @@ import {
   Home, FolderOpen, Send, Settings, Sparkles, Menu,
   TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield,
   Settings as SettingsIcon, LayoutDashboard, LogOut, Target, BookmarkCheck, Trophy, Eye,
+  LayoutList,
 } from 'lucide-react';
 import { MarketShiftAlertBell } from '@/components/MarketShiftAlerts';
 import { AppLogo } from '@/components/AppLogo';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
+import { AllReportsDrawer } from '@/components/AllReportsDrawer';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -199,24 +201,30 @@ function ClientMobileNav() {
 // ─── Mobile Drawer Links ──────────────────────────────────────────────────────
 
 interface DrawerLink {
-  to: string;
+  to?: string;
   label: string;
   icon: React.ReactNode;
   adminOnly?: boolean;
+  action?: 'reports';
 }
 
-// Primary group — mirroring desktop bottom tab bar
+// Primary group — core workflows
 const DRAWER_PRIMARY: DrawerLink[] = [
   { to: '/', label: 'Home', icon: <Home className="h-5 w-5" /> },
   { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-5 w-5" /> },
   { to: '/listing-navigator', label: 'Listing Navigator', icon: <Eye className="h-5 w-5" /> },
-  { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-5 w-5" /> },
+];
+
+// Reports group
+const DRAWER_REPORTS: DrawerLink[] = [
+  { action: 'reports', label: 'All Reports', icon: <LayoutList className="h-5 w-5" /> },
+  { to: '/drafts', label: 'Draft Analyses', icon: <FolderOpen className="h-5 w-5" /> },
   { to: '/shared-reports', label: 'Shared Reports', icon: <Send className="h-5 w-5" /> },
   { to: '/offer-tracker', label: 'Offer Tracker', icon: <Trophy className="h-5 w-5" /> },
 ];
 
-// Secondary group
-const DRAWER_SECONDARY: DrawerLink[] = [
+// Tools group
+const DRAWER_TOOLS: DrawerLink[] = [
   { to: '/saved-playbooks', label: 'Saved Playbooks', icon: <BookmarkCheck className="h-5 w-5" /> },
   { to: '/market-intelligence', label: 'Market Intelligence', icon: <TrendingUp className="h-5 w-5" /> },
   { to: '/market-data', label: 'Market Data', icon: <Database className="h-5 w-5" /> },
@@ -233,32 +241,47 @@ const DRAWER_ACCOUNT: DrawerLink[] = [
   { to: '/admin', label: 'Admin', icon: <Settings className="h-5 w-5" />, adminOnly: true },
 ];
 
-function DrawerSection({ links, isAdmin, pathname }: { links: DrawerLink[]; isAdmin?: boolean; pathname: string }) {
+function DrawerSection({ links, isAdmin, pathname, onAction }: { links: DrawerLink[]; isAdmin?: boolean; pathname: string; onAction?: (action: string) => void }) {
   const visible = links.filter(l => !l.adminOnly || isAdmin);
   return (
     <>
-      {visible.map((link) => (
-        <Link
-          key={link.to}
-          to={link.to}
-          className={cn(
-            'flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium transition-colors min-h-[44px]',
-            pathname === link.to || (link.to !== '/' && pathname.startsWith(link.to))
-              ? 'bg-primary/10 text-primary'
-              : 'text-foreground hover:bg-muted'
-          )}
-        >
-          {link.icon}
-          <span className="flex-1">{link.label}</span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-        </Link>
-      ))}
+      {visible.map((link) => {
+        const isActive = link.to && (pathname === link.to || (link.to !== '/' && pathname.startsWith(link.to)));
+        if (link.action) {
+          return (
+            <button
+              key={link.action}
+              onClick={() => onAction?.(link.action!)}
+              className="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] text-foreground hover:bg-muted w-[calc(100%-1rem)]"
+            >
+              {link.icon}
+              <span className="flex-1 text-left">{link.label}</span>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+            </button>
+          );
+        }
+        return (
+          <Link
+            key={link.to}
+            to={link.to!}
+            className={cn(
+              'flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium transition-colors min-h-[44px]',
+              isActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'
+            )}
+          >
+            {link.icon}
+            <span className="flex-1">{link.label}</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+          </Link>
+        );
+      })}
     </>
   );
 }
 
 function MobileNav({ isAdmin }: { isAdmin: boolean }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(false);
   const location = useLocation();
   const { signOut, user } = useAuth();
   const { avatarUrl, initials, name } = useAgentAvatar();
@@ -267,9 +290,19 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
     setDrawerOpen(false);
   }, [location.pathname]);
 
+  const handleDrawerAction = (action: string) => {
+    if (action === 'reports') {
+      setDrawerOpen(false);
+      setReportsOpen(true);
+    }
+  };
+
   return (
     <>
-      {/* Bottom Tab Bar */}
+      {/* All Reports Drawer */}
+      <AllReportsDrawer open={reportsOpen} onClose={() => setReportsOpen(false)} />
+
+      {/* Bottom Tab Bar — Home | Leads | Reports | Listing | Menu */}
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
@@ -279,7 +312,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
           <NavLink
             to="/"
             end
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] text-muted-foreground transition-colors"
+            className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] text-muted-foreground transition-colors"
             activeClassName="text-primary"
           >
             <Home className="h-5 w-5" />
@@ -287,35 +320,38 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
           </NavLink>
           <NavLink
             to="/lead-finder"
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] text-muted-foreground transition-colors"
+            className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] text-muted-foreground transition-colors"
             activeClassName="text-primary"
           >
             <Target className="h-5 w-5" />
             <span className="text-[10px] font-medium leading-none">Leads</span>
           </NavLink>
+          {/* Reports — opens AllReportsDrawer */}
+          <button
+            onClick={() => setReportsOpen(true)}
+            className={cn(
+              'flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] transition-colors',
+              reportsOpen ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            <LayoutList className="h-5 w-5" />
+            <span className="text-[10px] font-medium leading-none">Reports</span>
+          </button>
           <NavLink
-            to="/drafts"
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] text-muted-foreground transition-colors"
+            to="/listing-navigator"
+            className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] text-muted-foreground transition-colors"
             activeClassName="text-primary"
           >
-            <FolderOpen className="h-5 w-5" />
-            <span className="text-[10px] font-medium leading-none">Drafts</span>
+            <Eye className="h-5 w-5" />
+            <span className="text-[10px] font-medium leading-none">Listing</span>
           </NavLink>
-          <NavLink
-            to="/shared-reports"
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] text-muted-foreground transition-colors"
-            activeClassName="text-primary"
-          >
-            <Send className="h-5 w-5" />
-            <span className="text-[10px] font-medium leading-none">Shared</span>
-          </NavLink>
-          {/* Avatar button opens drawer */}
+          {/* Avatar/Menu button opens drawer */}
           <button
             onClick={() => setDrawerOpen(true)}
             aria-label="Open menu"
             aria-expanded={drawerOpen}
             className={cn(
-              'flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] transition-colors',
+              'flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] transition-colors',
               drawerOpen ? 'text-primary' : 'text-muted-foreground'
             )}
           >
@@ -358,11 +394,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
               <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div className="flex items-center gap-3 min-w-0">
                   {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt="Agent avatar"
-                      className="h-9 w-9 rounded-full object-cover ring-1 ring-border shrink-0"
-                    />
+                    <img src={avatarUrl} alt="Agent avatar" className="h-9 w-9 rounded-full object-cover ring-1 ring-border shrink-0" />
                   ) : (
                     <div className="h-9 w-9 rounded-full bg-primary/15 flex items-center justify-center text-primary text-sm font-semibold shrink-0">
                       {initials}
@@ -370,9 +402,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
                   )}
                   <div className="min-w-0">
                     {name && <p className="text-sm font-semibold truncate">{name}</p>}
-                    {user?.email && (
-                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                    )}
+                    {user?.email && <p className="text-xs text-muted-foreground truncate">{user.email}</p>}
                   </div>
                 </div>
                 <button
@@ -386,17 +416,23 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 
               {/* Scrollable links */}
               <div className="flex-1 overflow-y-auto py-2">
-                {/* Primary */}
-                <DrawerSection links={DRAWER_PRIMARY} pathname={location.pathname} />
+                {/* Core Nav */}
+                <DrawerSection links={DRAWER_PRIMARY} pathname={location.pathname} onAction={handleDrawerAction} />
 
-                {/* Secondary */}
+                {/* Reports */}
                 <div className="mx-4 my-2 border-t border-border/60" />
-                <DrawerSection links={DRAWER_SECONDARY} pathname={location.pathname} />
+                <p className="px-6 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Reports</p>
+                <DrawerSection links={DRAWER_REPORTS} pathname={location.pathname} onAction={handleDrawerAction} />
+
+                {/* Tools */}
+                <div className="mx-4 my-2 border-t border-border/60" />
+                <p className="px-6 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Tools</p>
+                <DrawerSection links={DRAWER_TOOLS} pathname={location.pathname} onAction={handleDrawerAction} />
 
                 {/* Account */}
                 <div className="mx-4 my-2 border-t border-border/60" />
                 <p className="px-6 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Account</p>
-                <DrawerSection links={DRAWER_ACCOUNT} isAdmin={isAdmin} pathname={location.pathname} />
+                <DrawerSection links={DRAWER_ACCOUNT} isAdmin={isAdmin} pathname={location.pathname} onAction={handleDrawerAction} />
 
                 {/* Sign out */}
                 <div className="mx-4 my-2 border-t border-border/60" />
@@ -418,16 +454,18 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 
 // ─── Desktop Nav ──────────────────────────────────────────────────────────────
 
+// Primary: Home | Lead Finder | Listing Nav | [Your Reports button] | More ↓
 const PRIMARY_NAV: NavItem[] = [
   { to: '/', label: 'Home', icon: <Home className="h-4 w-4" /> },
   { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-4 w-4" /> },
   { to: '/listing-navigator', label: 'Listing Nav', icon: <Eye className="h-4 w-4" /> },
-  { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-4 w-4" /> },
-  { to: '/shared-reports', label: 'Shared', icon: <Send className="h-4 w-4" /> },
-  { to: '/offer-tracker', label: 'Offers', icon: <Trophy className="h-4 w-4" /> },
 ];
 
+// More dropdown: Offers | Drafts | Shared | Playbooks | Market Intel | Pro Plan | Admin
 const SECONDARY_NAV: NavItem[] = [
+  { to: '/offer-tracker', label: 'Offer Tracker', icon: <Trophy className="h-4 w-4" /> },
+  { to: '/drafts', label: 'Draft Analyses', icon: <FolderOpen className="h-4 w-4" /> },
+  { to: '/shared-reports', label: 'Shared Reports', icon: <Send className="h-4 w-4" /> },
   { to: '/saved-playbooks', label: 'Playbooks', icon: <BookmarkCheck className="h-4 w-4" /> },
   { to: '/market-intelligence', label: 'Market Intel', icon: <TrendingUp className="h-4 w-4" /> },
   { to: '/subscription', label: 'Pro Plan', icon: <Sparkles className="h-4 w-4" /> },
@@ -482,27 +520,15 @@ function ProfileDropdown() {
 
             {/* Links */}
             <div className="py-1">
-              <Link
-                to="/agent-profile"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-              >
+              <Link to="/agent-profile" onClick={() => setOpen(false)} className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors">
                 <User className="h-4 w-4 text-muted-foreground" />
                 Agent Profile
               </Link>
-              <Link
-                to="/settings"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-              >
+              <Link to="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors">
                 <SettingsIcon className="h-4 w-4 text-muted-foreground" />
                 Account Settings
               </Link>
-              <Link
-                to="/methodology"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-              >
+              <Link to="/methodology" onClick={() => setOpen(false)} className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors">
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
                 Methodology
               </Link>
@@ -562,7 +588,7 @@ function MoreDropdown({ items }: { items: NavItem[] }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-48 bg-background border border-border rounded-xl shadow-lg overflow-hidden z-[100]"
+            className="absolute right-0 top-full mt-2 w-52 bg-background border border-border rounded-xl shadow-lg overflow-hidden z-[100]"
           >
             <div className="py-1">
               {items.map(item => (
@@ -590,40 +616,57 @@ function MoreDropdown({ items }: { items: NavItem[] }) {
 }
 
 function DesktopNav({ items }: { items: NavItem[] }) {
+  const [reportsOpen, setReportsOpen] = useState(false);
   const adminItems = SECONDARY_NAV.filter(i => !i.adminOnly || items.some(n => n.to === '/admin'));
 
   return (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-14 gap-4">
-          <NavLink to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors shrink-0">
-            <AppLogo size="sm" />
-            <span className="font-serif font-semibold text-base">Market Compass</span>
-          </NavLink>
+    <>
+      <AllReportsDrawer open={reportsOpen} onClose={() => setReportsOpen(false)} />
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-14 gap-4">
+            <NavLink to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors shrink-0">
+              <AppLogo size="sm" />
+              <span className="font-serif font-semibold text-base">Market Compass</span>
+            </NavLink>
 
-          <nav className="flex items-center gap-0.5 flex-1">
-            {PRIMARY_NAV.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === '/'}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
-                activeClassName="text-primary bg-primary/5"
+            <nav className="flex items-center gap-0.5 flex-1">
+              {PRIMARY_NAV.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/'}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+                  activeClassName="text-primary bg-primary/5"
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+              {/* Your Reports — opens drawer */}
+              <button
+                onClick={() => setReportsOpen(true)}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
+                  reportsOpen
+                    ? 'text-primary bg-primary/5'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                )}
               >
-                {item.icon}
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
-            <MoreDropdown items={adminItems} />
-          </nav>
+                <LayoutList className="h-4 w-4" />
+                <span>Your Reports</span>
+              </button>
+              <MoreDropdown items={adminItems} />
+            </nav>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <MarketShiftAlertBell />
-            <ProfileDropdown />
+            <div className="flex items-center gap-1 shrink-0">
+              <MarketShiftAlertBell />
+              <ProfileDropdown />
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }
 
@@ -644,3 +687,4 @@ export function MobileNavSpacer() {
     />
   );
 }
+
