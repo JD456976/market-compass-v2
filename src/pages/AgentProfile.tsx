@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Save, CheckCircle2, User, Upload, Palette, Image } from 'lucide-react';
+import { ArrowLeft, Save, CheckCircle2, User, Upload, Palette, Image, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { loadAgentProfile, saveAgentProfile, AgentProfile as AgentProfileType } from '@/lib/agentProfile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -325,6 +325,50 @@ const AgentProfile = () => {
                     selected={branding.report_template as ReportTemplate}
                     onSelect={(t) => handleBrandingChange('report_template', t)}
                   />
+                </div>
+                {/* Live Branding Preview */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium flex items-center gap-1.5">
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    Live Report Header Preview
+                  </p>
+                  <div
+                    className="rounded-xl border border-border overflow-hidden"
+                    style={{ borderLeftColor: branding.primary_color, borderLeftWidth: 4 }}
+                  >
+                    <div
+                      className="px-4 py-3 flex items-center gap-3"
+                      style={{ background: `${branding.primary_color}12` }}
+                    >
+                      {branding.logo_url && (
+                        <img src={branding.logo_url} alt="Logo preview" className="h-10 w-auto max-w-[80px] object-contain" />
+                      )}
+                      {branding.headshot_url && (
+                        <img src={branding.headshot_url} alt="Headshot preview" className="h-10 w-10 rounded-full object-cover border-2 border-white/50" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate" style={{ color: branding.primary_color }}>
+                          {profile.agent_name || 'Your Name'}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {profile.brokerage_name || 'Your Brokerage'}
+                          {profile.license ? ` · Lic# ${profile.license}` : ''}
+                        </p>
+                      </div>
+                      <div
+                        className="px-2 py-1 rounded text-[10px] font-bold text-white"
+                        style={{ background: branding.accent_color }}
+                      >
+                        PREVIEW
+                      </div>
+                    </div>
+                    {branding.footer_text && (
+                      <p className="px-4 py-1.5 text-[10px] text-muted-foreground border-t border-border/50 bg-muted/20 truncate">
+                        {branding.footer_text}
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">This is how your branding appears at the top of shared client reports.</p>
                 </div>
               </CardContent>
             </Card>

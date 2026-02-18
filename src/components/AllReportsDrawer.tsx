@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -11,11 +11,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDraftSessions, useSharedSessions } from '@/hooks/useSessions';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 import {
   Building2, Users, FolderOpen, Send, Eye, FileText,
   ChevronRight, Trash2, Loader2, LayoutList, Hash,
   TrendingUp, TrendingDown, Minus, AlertCircle, CheckCircle2,
-  ClipboardList,
+  ClipboardList, Search, X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -196,6 +197,7 @@ export function AllReportsDrawer({ open, onClose }: AllReportsDrawerProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [search, setSearch] = useState('');
 
   const { sessions: drafts, deleteSession: deleteDraft } = useDraftSessions();
   const { activeSessions: shared } = useSharedSessions();
@@ -216,6 +218,18 @@ export function AllReportsDrawer({ open, onClose }: AllReportsDrawerProps) {
     },
     enabled: !!user && open,
   });
+
+  // Filter logic
+  const q = search.toLowerCase();
+  const filteredDrafts = useMemo(() => drafts.filter(s =>
+    !q || s.client_name?.toLowerCase().includes(q) || s.location?.toLowerCase().includes(q)
+  ), [drafts, q]);
+  const filteredShared = useMemo(() => shared.filter(s =>
+    !q || s.client_name?.toLowerCase().includes(q) || s.location?.toLowerCase().includes(q)
+  ), [shared, q]);
+  const filteredAudits = useMemo(() => (auditRuns || []).filter(r =>
+    !q || r.listing_label?.toLowerCase().includes(q) || r.property_address?.toLowerCase().includes(q) || r.mls_number?.toLowerCase().includes(q)
+  ), [auditRuns, q]);
 
   const deleteAudit = useMutation({
     mutationFn: async (id: string) => {
@@ -250,40 +264,58 @@ export function AllReportsDrawer({ open, onClose }: AllReportsDrawerProps) {
               </p>
             </div>
           </div>
+          {/* Search */}
+          {totalCount > 3 && (
+            <div className="relative mt-2">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search reports…"
+                className="h-8 pl-8 pr-8 text-xs"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          )}
         </SheetHeader>
 
         <ScrollArea className="flex-1 px-4 py-3">
           {/* ── Drafts ── */}
-          {drafts.length > 0 && (
+          {filteredDrafts.length > 0 && (
             <div>
-              <SectionHeader icon={FolderOpen} label="Draft Analyses" count={drafts.length} color="bg-muted text-muted-foreground" />
+              <SectionHeader icon={FolderOpen} label="Draft Analyses" count={filteredDrafts.length} color="bg-muted text-muted-foreground" />
               <div className="space-y-1.5">
-                {drafts.slice(0, 20).map(s => (
+                {filteredDrafts.slice(0, 20).map(s => (
                   <DraftRow
                     key={s.id}
                     session={s}
-      onNavigate={() => handleNav(s.session_type === 'Seller' ? `/seller/report?sessionId=${s.id}` : `/buyer/report?sessionId=${s.id}`)}
-                    onDelete={async () => {
-                      await deleteDraft(s.id);
-                    }}
+                    onNavigate={() => handleNav(s.session_type === 'Seller' ? `/seller/report?sessionId=${s.id}` : `/buyer/report?sessionId=${s.id}`)}
+                    onDelete={async () => { await deleteDraft(s.id); }}
                   />
                 ))}
               </div>
-              {drafts.length > 20 && (
+              {filteredDrafts.length > 20 && (
                 <button onClick={() => handleNav('/drafts')} className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-                  View all {drafts.length} drafts <ChevronRight className="h-3 w-3" />
+                  View all {filteredDrafts.length} drafts <ChevronRight className="h-3 w-3" />
                 </button>
               )}
             </div>
           )}
 
           {/* ── Shared Reports ── */}
-          {shared.length > 0 && (
+          {filteredShared.length > 0 && (
             <div>
-              {drafts.length > 0 && <Separator className="my-4" />}
-              <SectionHeader icon={Send} label="Shared Reports" count={shared.length} color="bg-emerald-500/10 text-emerald-600" />
+              {filteredDrafts.length > 0 && <Separator className="my-4" />}
+              <SectionHeader icon={Send} label="Shared Reports" count={filteredShared.length} color="bg-emerald-500/10 text-emerald-600" />
               <div className="space-y-1.5">
-                {shared.slice(0, 20).map(s => (
+                {filteredShared.slice(0, 20).map(s => (
                   <SharedRow
                     key={s.id}
                     session={s}
@@ -291,26 +323,26 @@ export function AllReportsDrawer({ open, onClose }: AllReportsDrawerProps) {
                   />
                 ))}
               </div>
-              {shared.length > 20 && (
+              {filteredShared.length > 20 && (
                 <button onClick={() => handleNav('/shared-reports')} className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-                  View all {shared.length} shared <ChevronRight className="h-3 w-3" />
+                  View all {filteredShared.length} shared <ChevronRight className="h-3 w-3" />
                 </button>
               )}
             </div>
           )}
 
           {/* ── Listing Audits ── */}
-          {(auditsLoading || (auditRuns && auditRuns.length > 0)) && (
+          {(auditsLoading || filteredAudits.length > 0) && (
             <div>
-              {(drafts.length > 0 || shared.length > 0) && <Separator className="my-4" />}
-              <SectionHeader icon={ClipboardList} label="Listing Audits" count={auditRuns?.length} color="bg-violet-500/10 text-violet-600" />
+              {(filteredDrafts.length > 0 || filteredShared.length > 0) && <Separator className="my-4" />}
+              <SectionHeader icon={ClipboardList} label="Listing Audits" count={filteredAudits.length} color="bg-violet-500/10 text-violet-600" />
               {auditsLoading ? (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground py-3">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading audits…
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  {auditRuns!.slice(0, 20).map(run => (
+                  {filteredAudits.slice(0, 20).map(run => (
                     <AuditRow
                       key={run.id}
                       run={run}
@@ -320,7 +352,7 @@ export function AllReportsDrawer({ open, onClose }: AllReportsDrawerProps) {
                   ))}
                 </div>
               )}
-              {(auditRuns?.length ?? 0) > 20 && (
+              {filteredAudits.length > 20 && (
                 <button onClick={() => handleNav('/listing-navigator')} className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
                   View all in Listing Navigator <ChevronRight className="h-3 w-3" />
                 </button>
@@ -329,14 +361,16 @@ export function AllReportsDrawer({ open, onClose }: AllReportsDrawerProps) {
           )}
 
           {/* Empty state */}
-          {!auditsLoading && totalCount === 0 && (
+          {!auditsLoading && filteredDrafts.length === 0 && filteredShared.length === 0 && filteredAudits.length === 0 && (
             <div className="text-center py-12 space-y-3">
               <div className="mx-auto w-12 h-12 rounded-2xl bg-muted flex items-center justify-center">
                 <FolderOpen className="h-6 w-6 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-sm font-medium">No reports yet</p>
-                <p className="text-xs text-muted-foreground mt-1">Start a Seller or Buyer analysis to see reports here.</p>
+                <p className="text-sm font-medium">{search ? 'No matching reports' : 'No reports yet'}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {search ? 'Try a different search term.' : 'Start a Seller or Buyer analysis to see reports here.'}
+                </p>
               </div>
             </div>
           )}

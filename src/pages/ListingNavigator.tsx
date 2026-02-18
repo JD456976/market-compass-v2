@@ -1014,7 +1014,18 @@ function RunHistory({ onSelect }: { onSelect: (run: SavedRun) => void }) {
   };
 
   if (isLoading) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading history…</div>;
-  if (!runs?.length) return null;
+
+  if (!runs?.length) return (
+    <div className="rounded-xl border-2 border-dashed border-border/60 bg-muted/20 p-8 text-center space-y-3">
+      <div className="mx-auto w-12 h-12 rounded-2xl bg-muted flex items-center justify-center">
+        <ClipboardPaste className="h-5 w-5 text-muted-foreground" />
+      </div>
+      <div>
+        <p className="text-sm font-medium text-foreground">No audits yet</p>
+        <p className="text-xs text-muted-foreground mt-1">Paste or upload listing text above to run your first audit and start building your library.</p>
+      </div>
+    </div>
+  );
 
   // Group by address (or MLS# or run ID as fallback)
   const groups: PropertyGroup[] = [];
