@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { checkSubscription, redirectToCheckout, openCustomerPortal, type SubscriptionStatus } from '@/lib/stripe/stripeService';
 import { getBetaAccessSession } from '@/lib/betaAccess';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EntitlementState {
   isPro: boolean;
@@ -10,6 +11,10 @@ interface EntitlementState {
   trialEndsAt: string | null;
   isActive: boolean;
   expiresAt: string | null;
+  // Server-side beta access
+  betaActive: boolean;
+  betaExpiresAt: string | null;
+  betaExpired: boolean; // was active, now expired
 }
 
 interface EntitlementContextType {
@@ -28,6 +33,9 @@ const DEFAULT_STATE: EntitlementState = {
   trialEndsAt: null,
   isActive: false,
   expiresAt: null,
+  betaActive: false,
+  betaExpiresAt: null,
+  betaExpired: false,
 };
 
 const EntitlementContext = createContext<EntitlementContextType | undefined>(undefined);
@@ -43,24 +51,40 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
   const hasBeta = !!getBetaAccessSession();
 
   const refresh = useCallback(async () => {
+    if (!user) return;
     try {
-      const result: SubscriptionStatus = await checkSubscription();
+      // Fetch server entitlements and stripe status in parallel
+      const [serverResult, stripeData] = await Promise.all([
+        supabase.rpc('get_user_entitlements'),
+        checkSubscription().catch((): SubscriptionStatus => ({ subscribed: false, productId: null, subscriptionEnd: null, isTrial: false, trialEnd: null })),
+      ]);
+
       if (!mountedRef.current) return;
 
-      const isPro = result.subscribed && !result.isTrial;
-      const isTrial = result.isTrial;
+      const serverData = serverResult.data as any;
+
+      const isPro = (stripeData?.subscribed && !stripeData?.isTrial) ?? false;
+      const isTrial = stripeData?.isTrial ?? false;
+
+      // Beta expired = had beta_source but beta_access_active is now false
+      const hadBeta = serverData?.beta_source === 'beta_code';
+      const betaCurrentlyActive = !!serverData?.beta_active;
+      const betaExpired = hadBeta && !betaCurrentlyActive;
 
       setState({
         isPro,
         isTrial,
-        trialEndsAt: result.trialEnd,
-        isActive: result.subscribed,
-        expiresAt: result.subscriptionEnd,
+        trialEndsAt: stripeData?.trialEnd ?? null,
+        isActive: stripeData?.subscribed ?? false,
+        expiresAt: stripeData?.subscriptionEnd ?? null,
+        betaActive: betaCurrentlyActive,
+        betaExpiresAt: serverData?.beta_expires_at ?? null,
+        betaExpired,
       });
     } catch (err) {
       console.warn('[Entitlement] refresh failed:', err);
     }
-  }, []);
+  }, [user]);
 
   // Initial load
   useEffect(() => {
@@ -71,6 +95,7 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
         if (mountedRef.current) setLoading(false);
       })();
     } else {
+      setState(DEFAULT_STATE);
       setLoading(false);
     }
     return () => { mountedRef.current = false; };
@@ -111,7 +136,8 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
     }
   }, []);
 
-  const canWrite = isReviewer || hasBeta || state.isPro || state.isTrial;
+  // canWrite: server beta OR stripe OR legacy localStorage beta OR reviewer
+  const canWrite = isReviewer || hasBeta || state.betaActive || state.isPro || state.isTrial;
 
   return (
     <EntitlementContext.Provider value={{ entitlementState: state, loading, canWrite, isReviewer, startCheckout, manageSubscription, refresh }}>
