@@ -9,8 +9,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
   Home, FolderOpen, Send, Settings, Sparkles, Menu,
   TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield, Settings as SettingsIcon,
-  LayoutDashboard, MessageSquare, LogOut, Target, BookmarkCheck,
+  LayoutDashboard, MessageSquare, LogOut, Target, BookmarkCheck, Trophy,
 } from 'lucide-react';
+import { MarketShiftAlertBell } from '@/components/MarketShiftAlerts';
 import { AppLogo } from '@/components/AppLogo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -79,6 +80,7 @@ export function GlobalNav() {
   const desktopItems: NavItem[] = [
     { to: '/', label: 'Home', icon: <Home className="h-5 w-5" /> },
     { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-5 w-5" /> },
+    { to: '/offer-tracker', label: 'Offers', icon: <Trophy className="h-5 w-5" /> },
     { to: '/saved-playbooks', label: 'Playbooks', icon: <BookmarkCheck className="h-5 w-5" /> },
     { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-5 w-5" /> },
     { to: '/shared-reports', label: 'Shared', icon: <Send className="h-5 w-5" /> },
@@ -169,6 +171,7 @@ interface DrawerLink {
 
 const drawerLinks: DrawerLink[] = [
   { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-5 w-5" /> },
+  { to: '/offer-tracker', label: 'Offer Tracker', icon: <Trophy className="h-5 w-5" /> },
   { to: '/saved-playbooks', label: 'Saved Playbooks', icon: <BookmarkCheck className="h-5 w-5" /> },
   { to: '/templates', label: 'Templates', icon: <FileText className="h-5 w-5" /> },
   { to: '/market-intelligence', label: 'Market Intelligence', icon: <TrendingUp className="h-5 w-5" /> },
@@ -359,11 +362,12 @@ function DesktopNav({ items }: { items: NavItem[] }) {
                 <span>{item.label}</span>
               </NavLink>
             ))}
+            <MarketShiftAlertBell />
             <Button
               variant="ghost"
               size="sm"
               onClick={() => signOut()}
-              className="ml-2 text-muted-foreground hover:text-foreground"
+              className="ml-1 text-muted-foreground hover:text-foreground"
             >
               <LogOut className="h-4 w-4 mr-1.5" />
               Sign Out

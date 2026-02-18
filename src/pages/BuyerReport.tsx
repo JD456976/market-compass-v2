@@ -60,6 +60,8 @@ import {
 import { RotateCcw } from 'lucide-react';
 import { AnalysisMethodology } from '@/components/AnalysisMethodology';
 import { DraftStatusIndicator } from '@/components/DraftStatusIndicator';
+import { ClientReadinessScore } from '@/components/ClientReadinessScore';
+import { DealVelocityTimeline } from '@/components/DealVelocityTimeline';
 import { ScenarioExplorer, ScenarioExplorerCard } from '@/components/ScenarioExplorer';
 import { openScenarioExplorer } from '@/lib/scenarioExplorerEvents';
 import { BuyerInputs } from '@/types';
@@ -898,6 +900,8 @@ const BuyerReport = () => {
                   }}
                 />
                 {playbookInput && <ProspectingPlaybook input={playbookInput} />}
+                <ClientReadinessScore clientName={session.client_name} />
+                <DealVelocityTimeline sessionType="buyer" />
                 <MarketAwareDealTimeline
                   sessionType="buyer"
                   clientName={session.client_name}

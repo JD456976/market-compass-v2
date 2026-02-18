@@ -584,6 +584,99 @@ export type Database = {
         }
         Relationships: []
       }
+      market_shift_alerts: {
+        Row: {
+          city_state: string | null
+          created_at: string
+          current_score: number
+          id: string
+          is_read: boolean
+          lead_type: string
+          previous_score: number
+          score_delta: number
+          user_id: string
+          zip_code: string
+        }
+        Insert: {
+          city_state?: string | null
+          created_at?: string
+          current_score: number
+          id?: string
+          is_read?: boolean
+          lead_type: string
+          previous_score: number
+          score_delta: number
+          user_id: string
+          zip_code: string
+        }
+        Update: {
+          city_state?: string | null
+          created_at?: string
+          current_score?: number
+          id?: string
+          is_read?: boolean
+          lead_type?: string
+          previous_score?: number
+          score_delta?: number
+          user_id?: string
+          zip_code?: string
+        }
+        Relationships: []
+      }
+      offer_outcomes: {
+        Row: {
+          address: string
+          competing_offers: number | null
+          created_at: string
+          days_on_market: number | null
+          financing_type: string | null
+          had_escalation: boolean | null
+          had_inspection_contingency: boolean | null
+          id: string
+          list_price: number
+          notes: string | null
+          offer_price: number
+          result: string
+          session_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          competing_offers?: number | null
+          created_at?: string
+          days_on_market?: number | null
+          financing_type?: string | null
+          had_escalation?: boolean | null
+          had_inspection_contingency?: boolean | null
+          id?: string
+          list_price: number
+          notes?: string | null
+          offer_price: number
+          result: string
+          session_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          competing_offers?: number | null
+          created_at?: string
+          days_on_market?: number | null
+          financing_type?: string | null
+          had_escalation?: boolean | null
+          had_inspection_contingency?: boolean | null
+          id?: string
+          list_price?: number
+          notes?: string | null
+          offer_price?: number
+          result?: string
+          session_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       owner_devices: {
         Row: {
           admin_email: string
