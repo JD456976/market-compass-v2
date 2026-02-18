@@ -326,6 +326,7 @@ function ResultsPanel({
 
   const handleDownloadPdf = async () => {
     setExportingPdf(true);
+    console.log('[LN] Starting PDF export...');
     try {
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = doc.internal.pageSize.getWidth();
@@ -469,7 +470,10 @@ function ResultsPanel({
         ? `listing-audit-${runMeta.address.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`
         : 'listing-audit.pdf';
       doc.save(filename);
+      console.log('[LN] PDF saved:', filename);
+      toast({ title: 'PDF exported', description: `${filename} downloaded successfully.` });
     } catch (err) {
+      console.error('[LN] PDF export error:', err);
       toast({ title: 'PDF export failed', description: 'Could not generate PDF. Try again.', variant: 'destructive' });
     } finally {
       setExportingPdf(false);
