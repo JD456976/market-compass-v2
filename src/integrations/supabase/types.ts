@@ -200,6 +200,41 @@ export type Database = {
           },
         ]
       }
+      beta_code_redemptions: {
+        Row: {
+          code_id: string
+          id: string
+          ip_hash: string | null
+          redeemed_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          code_id: string
+          id?: string
+          ip_hash?: string | null
+          redeemed_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          code_id?: string
+          id?: string
+          ip_hash?: string | null
+          redeemed_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beta_code_redemptions_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "beta_access_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       beta_codes: {
         Row: {
           code_hash: string
@@ -239,6 +274,27 @@ export type Database = {
           used_at?: string | null
           used_by_device_id?: string | null
           used_by_user_agent?: string | null
+        }
+        Relationships: []
+      }
+      beta_redeem_rate_limits: {
+        Row: {
+          attempted_at: string
+          id: string
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          success?: boolean
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          success?: boolean
+          user_id?: string
         }
         Relationships: []
       }
@@ -731,6 +787,9 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          beta_access_active: boolean
+          beta_access_expires_at: string | null
+          beta_access_source: string | null
           brokerage: string | null
           created_at: string
           custom_cta: string | null
@@ -740,6 +799,7 @@ export type Database = {
           id: string
           is_suspended: boolean | null
           last_active_at: string | null
+          last_entitlement_check_at: string | null
           license: string | null
           phone: string | null
           suspended_at: string | null
@@ -748,6 +808,9 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          beta_access_active?: boolean
+          beta_access_expires_at?: string | null
+          beta_access_source?: string | null
           brokerage?: string | null
           created_at?: string
           custom_cta?: string | null
@@ -757,6 +820,7 @@ export type Database = {
           id?: string
           is_suspended?: boolean | null
           last_active_at?: string | null
+          last_entitlement_check_at?: string | null
           license?: string | null
           phone?: string | null
           suspended_at?: string | null
@@ -765,6 +829,9 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          beta_access_active?: boolean
+          beta_access_expires_at?: string | null
+          beta_access_source?: string | null
           brokerage?: string | null
           created_at?: string
           custom_cta?: string | null
@@ -774,6 +841,7 @@ export type Database = {
           id?: string
           is_suspended?: boolean | null
           last_active_at?: string | null
+          last_entitlement_check_at?: string | null
           license?: string | null
           phone?: string | null
           suspended_at?: string | null
@@ -1290,6 +1358,17 @@ export type Database = {
         Args: { p_email: string; p_session_id?: string; p_user_id: string }
         Returns: Json
       }
+      create_beta_access_code: {
+        Args: {
+          p_code: string
+          p_email?: string
+          p_expires_at?: string
+          p_issued_to: string
+          p_max_uses?: number
+          p_notes?: string
+        }
+        Returns: Json
+      }
       create_beta_code: {
         Args: {
           p_admin_email: string
@@ -1300,6 +1379,7 @@ export type Database = {
         }
         Returns: Json
       }
+      expire_stale_beta_access: { Args: never; Returns: Json }
       get_invitation_by_token: {
         Args: { p_token: string }
         Returns: {
@@ -1310,6 +1390,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_user_entitlements: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1318,6 +1399,22 @@ export type Database = {
         Returns: boolean
       }
       is_admin_user: { Args: never; Returns: boolean }
+      list_beta_access_codes: {
+        Args: never
+        Returns: {
+          code: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          issued_to: string
+          max_uses: number
+          notes: string
+          redemptions: Json
+          revoked_at: string
+          uses_count: number
+        }[]
+      }
       list_owner_devices: {
         Args: never
         Returns: {
@@ -1338,14 +1435,14 @@ export type Database = {
         Args: { p_device_id: string; p_email: string }
         Returns: Json
       }
-      redeem_beta_code: {
-        Args: { p_code: string; p_device_id: string }
-        Returns: Json
-      }
+      redeem_beta_code:
+        | { Args: { p_code: string; p_device_id: string }; Returns: Json }
+        | { Args: { p_code: string; p_user_agent?: string }; Returns: Json }
       register_owner_device: {
         Args: { p_admin_email: string; p_device_id: string }
         Returns: Json
       }
+      revoke_beta_access_code: { Args: { p_code_id: string }; Returns: Json }
       revoke_owner_device: { Args: { p_device_id: string }; Returns: Json }
       validate_beta_code: {
         Args: {

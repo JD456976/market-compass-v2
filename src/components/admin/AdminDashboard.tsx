@@ -21,6 +21,7 @@ import { IssueCodePanel } from './IssueCodePanel';
 import { BetaCodesTable, BetaCode } from './BetaCodesTable';
 import { ActivationsTable, BetaActivation } from './ActivationsTable';
 import { OwnerDevicesTable, OwnerDevice } from './OwnerDevicesTable';
+import { AdminBetaCodesPanel } from './AdminBetaCodesPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDeviceId, setOwnerDevice, clearBetaAccessSession, clearOwnerDevice, isOwnerDevice as checkIsOwnerDevice } from '@/lib/betaAccess';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -250,8 +251,8 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-500/10 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-semibold">{stats.active}</p>
@@ -263,8 +264,8 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/10 rounded-lg">
-                  <KeyRound className="h-5 w-5 text-blue-600" />
+                <div className="p-2 bg-accent/10 rounded-lg">
+                  <KeyRound className="h-5 w-5 text-accent" />
                 </div>
                 <div>
                   <p className="text-2xl font-semibold">{stats.used}</p>
@@ -289,8 +290,8 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-500/10 rounded-lg">
-                  <Clock className="h-5 w-5 text-amber-600" />
+                <div className="p-2 bg-muted rounded-lg">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
                   <p className="text-2xl font-semibold">{stats.expired}</p>
@@ -349,16 +350,16 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
         </div>
 
         {/* Tables */}
-        <Tabs defaultValue="codes" className="space-y-4">
+        <Tabs defaultValue="beta-codes" className="space-y-4">
           <div className="overflow-x-auto -mx-4 px-4">
             <TabsList className="inline-flex w-auto min-w-full h-auto gap-1">
-              <TabsTrigger value="codes" className="text-xs px-3 py-2 whitespace-nowrap">
+              <TabsTrigger value="beta-codes" className="text-xs px-3 py-2 whitespace-nowrap">
                 <KeyRound className="h-3.5 w-3.5 mr-1" />
-                Codes ({codes.length})
+                Beta Codes
               </TabsTrigger>
               <TabsTrigger value="activations" className="text-xs px-3 py-2 whitespace-nowrap">
                 <Smartphone className="h-3.5 w-3.5 mr-1" />
-                Active ({activations.length})
+                Legacy ({activations.length})
               </TabsTrigger>
               <TabsTrigger value="owner-devices" className="text-xs px-3 py-2 whitespace-nowrap">
                 <Monitor className="h-3.5 w-3.5 mr-1" />
@@ -379,8 +380,8 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
             </TabsList>
           </div>
 
-          <TabsContent value="codes">
-            <BetaCodesTable codes={codes} onRefresh={fetchData} />
+          <TabsContent value="beta-codes">
+            <AdminBetaCodesPanel />
           </TabsContent>
 
           <TabsContent value="activations">
