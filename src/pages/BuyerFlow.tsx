@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { ArrowLeft, ArrowRight, Users, Home, Sparkles, DollarSign, FileCheck, RotateCcw, Check, ClipboardList, Pencil, Save, Loader2 } from 'lucide-react';
+import { ListingNavigatorImportPanel } from '@/components/ListingNavigatorImportPanel';
 import { MLSVoiceCameraInput } from '@/components/MLSVoiceCameraInput';
 import { ReportTemplateSelector, ReportTemplate } from '@/components/report/ReportTemplateSelector';
 import { 
@@ -550,6 +551,15 @@ const BuyerFlow = () => {
             {/* Step 0: Property & Client */}
             {step === 0 && (
               <>
+              {/* Import from Listing Navigator */}
+              <ListingNavigatorImportPanel
+                reportType="buyer"
+                onImport={(data) => {
+                  if (data.address) { setFullAddress(data.address); setLocation(data.address); }
+                  if (data.price) setReferencePrice(String(data.price));
+                }}
+              />
+
               {/* Smart Input - Voice & Camera */}
               <MLSVoiceCameraInput
                 reportType="buyer"

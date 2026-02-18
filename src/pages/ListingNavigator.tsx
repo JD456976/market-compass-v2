@@ -21,7 +21,7 @@ import {
   AlertCircle, Info, RotateCcw, Clock, TrendingUp, TrendingDown,
   ArrowLeft, Loader2, Eye, BookOpen, Home, Building2,
   FileDown, ArrowUpRight, MapPin, Hash, ChevronRight,
-  Sparkles, Minus,
+  Sparkles, Minus, Trash2, Pencil, X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ListingNavigatorOnboarding, ListingNavigatorOnboardingTrigger } from '@/components/ListingNavigatorOnboarding';
@@ -716,76 +716,142 @@ function ResultsPanel({
 // ─── Property Group in Run History ────────────────────────────────────────────
 
 function PropertyGroupCard({
-  group, onSelect,
+  group, onSelect, onDeleteRun, onRenameGroup,
 }: {
   group: PropertyGroup;
   onSelect: (run: SavedRun) => void;
+  onDeleteRun: (runId: string) => Promise<void>;
+  onRenameGroup: (runId: string, label: string) => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState(false);
+  const [labelInput, setLabelInput] = useState(group.runs[0]?.listing_label || group.address || '');
   const latestRun = group.runs[0];
   const hasMultiple = group.runs.length > 1;
 
-  // Score trend: compare latest to previous
   const scoreDiff = hasMultiple && latestRun.score !== null && group.runs[1].score !== null
     ? latestRun.score - group.runs[1].score
     : null;
 
+  const handleDelete = async (e: React.MouseEvent, runId: string) => {
+    e.stopPropagation();
+    setDeleting(runId);
+    await onDeleteRun(runId);
+    setDeleting(null);
+  };
+
+  const handleRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onRenameGroup(latestRun.id, labelInput);
+    setRenaming(false);
+  };
+
   return (
     <div className="rounded-xl border border-border/60 overflow-hidden">
       {/* Property header */}
-      <button
-        className="w-full text-left p-3 hover:bg-muted/30 transition-colors flex items-start gap-3"
-        onClick={() => hasMultiple ? setExpanded(e => !e) : onSelect(latestRun)}
-      >
-        <div className="mt-0.5 p-1.5 rounded-lg bg-primary/10">
-          <Building2 className="h-4 w-4 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 flex-wrap">
-            <div className="min-w-0">
-              <p className="text-sm font-medium truncate">
-                {group.address || `Audit ${new Date(latestRun.created_at).toLocaleDateString()}`}
-              </p>
-              {group.mls_number && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                  <Hash className="h-3 w-3" /> MLS# {group.mls_number}
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {group.runs.length} audit{group.runs.length !== 1 ? 's' : ''} · Latest: {new Date(latestRun.created_at).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {latestRun.score !== null && (
-                <div className="flex items-center gap-1.5">
-                  <span className={cn('text-sm font-bold',
-                    latestRun.score >= 80 ? 'text-emerald-600' :
-                    latestRun.score >= 60 ? 'text-yellow-600' :
-                    'text-destructive'
-                  )}>
-                    {latestRun.score}
-                  </span>
-                  {scoreDiff !== null && (
-                    <span className={cn('text-xs font-medium flex items-center gap-0.5',
-                      scoreDiff > 0 ? 'text-emerald-600' :
-                      scoreDiff < 0 ? 'text-destructive' :
-                      'text-muted-foreground'
-                    )}>
-                      {scoreDiff > 0 ? <TrendingUp className="h-3 w-3" /> : scoreDiff < 0 ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                      {scoreDiff > 0 ? `+${scoreDiff}` : scoreDiff}
-                    </span>
-                  )}
-                </div>
-              )}
-              {hasMultiple ? (
-                expanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              )}
-            </div>
+      <div className="flex items-stretch">
+        <button
+          className="flex-1 text-left p-3 hover:bg-muted/30 transition-colors flex items-start gap-3"
+          onClick={() => hasMultiple ? setExpanded(e => !e) : onSelect(latestRun)}
+        >
+          <div className="mt-0.5 p-1.5 rounded-lg bg-primary/10 shrink-0">
+            <Building2 className="h-4 w-4 text-primary" />
           </div>
+          <div className="flex-1 min-w-0">
+            {renaming ? (
+              <form onSubmit={handleRename} onClick={e => e.stopPropagation()} className="flex gap-1.5">
+                <Input
+                  autoFocus
+                  value={labelInput}
+                  onChange={e => setLabelInput(e.target.value)}
+                  className="h-7 text-xs flex-1"
+                  placeholder="Label or address…"
+                />
+                <Button type="submit" size="sm" variant="ghost" className="h-7 px-2">
+                  <Check className="h-3 w-3" />
+                </Button>
+                <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={() => setRenaming(false)}>
+                  <X className="h-3 w-3" />
+                </Button>
+              </form>
+            ) : (
+              <>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {latestRun.listing_label || group.address || `Audit ${new Date(latestRun.created_at).toLocaleDateString()}`}
+                  </p>
+                  <button
+                    onClick={e => { e.stopPropagation(); setRenaming(true); }}
+                    className="shrink-0 opacity-0 group-hover:opacity-100 hover:opacity-100 p-0.5 rounded hover:bg-muted"
+                    title="Rename"
+                  >
+                    <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
+                  </button>
+                </div>
+                {group.mls_number && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <Hash className="h-3 w-3" /> MLS# {group.mls_number}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {group.runs.length} audit{group.runs.length !== 1 ? 's' : ''} · Latest: {new Date(latestRun.created_at).toLocaleDateString()}
+                </p>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {latestRun.score !== null && (
+              <div className="flex items-center gap-1.5">
+                <span className={cn('text-sm font-bold',
+                  latestRun.score >= 80 ? 'text-emerald-600' :
+                  latestRun.score >= 60 ? 'text-yellow-600' :
+                  'text-destructive'
+                )}>
+                  {latestRun.score}
+                </span>
+                {scoreDiff !== null && (
+                  <span className={cn('text-xs font-medium flex items-center gap-0.5',
+                    scoreDiff > 0 ? 'text-emerald-600' :
+                    scoreDiff < 0 ? 'text-destructive' :
+                    'text-muted-foreground'
+                  )}>
+                    {scoreDiff > 0 ? <TrendingUp className="h-3 w-3" /> : scoreDiff < 0 ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                    {scoreDiff > 0 ? `+${scoreDiff}` : scoreDiff}
+                  </span>
+                )}
+              </div>
+            )}
+            {hasMultiple ? (
+              expanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+        </button>
+
+        {/* CRUD actions */}
+        <div className="flex flex-col justify-center gap-1 px-2 border-l border-border/40">
+          <button
+            onClick={e => { e.stopPropagation(); setRenaming(r => !r); }}
+            title="Rename"
+            className="p-1.5 rounded hover:bg-muted transition-colors"
+          >
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+          <button
+            onClick={e => handleDelete(e, latestRun.id)}
+            disabled={deleting === latestRun.id}
+            title="Delete latest run"
+            className="p-1.5 rounded hover:bg-destructive/10 transition-colors"
+          >
+            {deleting === latestRun.id
+              ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              : <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+            }
+          </button>
         </div>
-      </button>
+      </div>
 
       {/* Expanded run list */}
       <AnimatePresence>
@@ -798,34 +864,46 @@ function PropertyGroupCard({
           >
             <div className="border-t border-border/40 divide-y divide-border/40">
               {group.runs.map((run, idx) => (
-                <button
-                  key={run.id}
-                  onClick={() => onSelect(run)}
-                  className="w-full text-left px-4 py-2.5 hover:bg-muted/30 transition-colors flex items-center justify-between"
-                >
-                  <div>
-                    <span className="text-xs text-muted-foreground">
-                      {idx === 0 ? '🔵 Latest · ' : `Run ${group.runs.length - idx} · `}
-                      {new Date(run.created_at).toLocaleDateString()}
-                    </span>
-                    {run.summary && (
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {run.summary.critical > 0 && <span className="text-xs text-destructive">{run.summary.critical}↑ critical</span>}
-                        {run.summary.moderate > 0 && <span className="text-xs text-orange-500">{run.summary.moderate} moderate</span>}
-                        {run.summary.positive > 0 && <span className="text-xs text-emerald-600">{run.summary.positive} positive</span>}
-                      </div>
+                <div key={run.id} className="flex items-center">
+                  <button
+                    onClick={() => onSelect(run)}
+                    className="flex-1 text-left px-4 py-2.5 hover:bg-muted/30 transition-colors flex items-center justify-between"
+                  >
+                    <div>
+                      <span className="text-xs text-muted-foreground">
+                        {idx === 0 ? '🔵 Latest · ' : `Run ${group.runs.length - idx} · `}
+                        {new Date(run.created_at).toLocaleDateString()}
+                      </span>
+                      {run.summary && (
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {run.summary.critical > 0 && <span className="text-xs text-destructive">{run.summary.critical}↑ critical</span>}
+                          {run.summary.moderate > 0 && <span className="text-xs text-orange-500">{run.summary.moderate} moderate</span>}
+                          {run.summary.positive > 0 && <span className="text-xs text-emerald-600">{run.summary.positive} positive</span>}
+                        </div>
+                      )}
+                    </div>
+                    {run.score !== null && (
+                      <span className={cn('text-sm font-bold',
+                        run.score >= 80 ? 'text-emerald-600' :
+                        run.score >= 60 ? 'text-yellow-600' :
+                        'text-destructive'
+                      )}>
+                        {run.score}
+                      </span>
                     )}
-                  </div>
-                  {run.score !== null && (
-                    <span className={cn('text-sm font-bold',
-                      run.score >= 80 ? 'text-emerald-600' :
-                      run.score >= 60 ? 'text-yellow-600' :
-                      'text-destructive'
-                    )}>
-                      {run.score}
-                    </span>
-                  )}
-                </button>
+                  </button>
+                  <button
+                    onClick={e => handleDelete(e, run.id)}
+                    disabled={deleting === run.id}
+                    className="px-3 py-2.5 hover:bg-destructive/10 transition-colors"
+                    title="Delete this run"
+                  >
+                    {deleting === run.id
+                      ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                      : <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                    }
+                  </button>
+                </div>
               ))}
             </div>
           </motion.div>
@@ -839,6 +917,7 @@ function PropertyGroupCard({
 
 function RunHistory({ onSelect }: { onSelect: (run: SavedRun) => void }) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: runs, isLoading } = useQuery({
     queryKey: ['listing-navigator-runs', user?.id],
     queryFn: async () => {
@@ -855,6 +934,18 @@ function RunHistory({ onSelect }: { onSelect: (run: SavedRun) => void }) {
     },
     enabled: !!user,
   });
+
+  const handleDeleteRun = async (runId: string) => {
+    await supabase.from('listing_navigator_runs').delete().eq('id', runId);
+    queryClient.invalidateQueries({ queryKey: ['listing-navigator-runs', user?.id] });
+    toast({ title: 'Run deleted' });
+  };
+
+  const handleRenameGroup = async (runId: string, label: string) => {
+    await supabase.from('listing_navigator_runs').update({ listing_label: label }).eq('id', runId);
+    queryClient.invalidateQueries({ queryKey: ['listing-navigator-runs', user?.id] });
+    toast({ title: 'Label updated' });
+  };
 
   if (isLoading) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading history…</div>;
   if (!runs?.length) return null;
@@ -890,7 +981,13 @@ function RunHistory({ onSelect }: { onSelect: (run: SavedRun) => void }) {
       </h3>
       <div className="space-y-2">
         {groups.map(group => (
-          <PropertyGroupCard key={group.key} group={group} onSelect={onSelect} />
+          <PropertyGroupCard
+            key={group.key}
+            group={group}
+            onSelect={onSelect}
+            onDeleteRun={handleDeleteRun}
+            onRenameGroup={handleRenameGroup}
+          />
         ))}
       </div>
     </div>
