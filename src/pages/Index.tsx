@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, LayoutList } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Upload, Sparkles, Zap } from 'lucide-react';
+import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Sparkles, Zap } from 'lucide-react';
 import { AppLogo } from '@/components/AppLogo';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
+import { AllReportsDrawer } from '@/components/AllReportsDrawer';
 import { useDraftSessions, useSharedSessions } from '@/hooks/useSessions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -36,15 +37,19 @@ const Index = () => {
   const [proBannerDismissed, setProBannerDismissed] = useState(
     () => localStorage.getItem('pro_banner_dismissed') === 'true'
   );
+  const [allReportsOpen, setAllReportsOpen] = useState(false);
   const loadError = draftsError || sharedError;
 
   // Progressive disclosure: has the user created at least one report?
   const hasCreatedReport = !loadError && (drafts.length > 0 || allShared.length > 0);
+  const totalReports = drafts.length + shared.length;
 
   return (
     <div className="bg-background" role="main" aria-label="Market Compass Home">
       {/* Agent Onboarding Modal */}
       <AgentOnboarding />
+      {/* All Reports Drawer */}
+      <AllReportsDrawer open={allReportsOpen} onClose={() => setAllReportsOpen(false)} />
 
       {/* Hero Section */}
       <div className="hero-gradient text-primary-foreground">
@@ -242,7 +247,19 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <h3 className="text-sm font-sans font-medium text-muted-foreground mb-3 px-1">Your Reports</h3>
+          <div className="flex items-center justify-between mb-3 px-1">
+            <h3 className="text-sm font-sans font-medium text-muted-foreground">Your Reports</h3>
+            <button
+              onClick={() => setAllReportsOpen(true)}
+              className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+            >
+              <LayoutList className="h-3.5 w-3.5" />
+              All Reports
+              {totalReports > 0 && (
+                <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">{totalReports}</Badge>
+              )}
+            </button>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Link to="/drafts" className="block">
               <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
@@ -286,17 +303,6 @@ const Index = () => {
                   </span>
                   <span className="text-[10px] text-muted-foreground font-normal pl-6">Manage and invite your clients</span>
                 </Button>
-              </Link>
-            )}
-            {user && isAgent && (
-              <Link to="/documents" className="block">
-              <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
-                <span className="flex items-center w-full">
-                  <Upload className="mr-2 h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">Property Documents</span>
-                </span>
-                <span className="text-[10px] text-muted-foreground font-normal pl-6">Upload and review property data sheets</span>
-              </Button>
               </Link>
             )}
           </div>

@@ -11,7 +11,6 @@ import { BetaAccessGate } from "@/components/BetaAccessGate";
 import { RequireAuth } from "@/components/RequireAuth";
 import { GlobalNav, MobileNavSpacer } from "@/components/GlobalNav";
 import { ScrollToTop } from "@/components/ScrollToTop";
-import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { PageTransition } from "@/components/PageTransition";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
@@ -142,7 +141,6 @@ function AppLayout() {
       <main className="flex-1">
         <AppRoutes />
       </main>
-      <FloatingActionButton />
       <MobileNavSpacer />
     </>
   );
