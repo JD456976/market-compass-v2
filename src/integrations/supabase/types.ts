@@ -287,6 +287,48 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_connections: {
+        Row: {
+          api_key_hint: string | null
+          auto_push_on_analyze: boolean
+          auto_push_on_csv_upload: boolean
+          auto_push_on_score_change: boolean
+          created_at: string
+          crm_type: string
+          id: string
+          is_active: boolean
+          score_change_threshold: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key_hint?: string | null
+          auto_push_on_analyze?: boolean
+          auto_push_on_csv_upload?: boolean
+          auto_push_on_score_change?: boolean
+          created_at?: string
+          crm_type?: string
+          id?: string
+          is_active?: boolean
+          score_change_threshold?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_key_hint?: string | null
+          auto_push_on_analyze?: boolean
+          auto_push_on_csv_upload?: boolean
+          auto_push_on_score_change?: boolean
+          created_at?: string
+          crm_type?: string
+          id?: string
+          is_active?: boolean
+          score_change_threshold?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_queue: {
         Row: {
           body_html: string
