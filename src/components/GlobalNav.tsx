@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   Home, FolderOpen, Send, Settings, Sparkles, Menu,
   TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield,
-  Settings as SettingsIcon, LayoutDashboard, LogOut, Target, BookmarkCheck, Trophy,
+  Settings as SettingsIcon, LayoutDashboard, LogOut, Target, BookmarkCheck, Trophy, Eye,
 } from 'lucide-react';
 import { MarketShiftAlertBell } from '@/components/MarketShiftAlerts';
 import { AppLogo } from '@/components/AppLogo';
@@ -209,6 +209,7 @@ interface DrawerLink {
 const DRAWER_PRIMARY: DrawerLink[] = [
   { to: '/', label: 'Home', icon: <Home className="h-5 w-5" /> },
   { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-5 w-5" /> },
+  { to: '/listing-navigator', label: 'Listing Navigator', icon: <Eye className="h-5 w-5" /> },
   { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-5 w-5" /> },
   { to: '/shared-reports', label: 'Shared Reports', icon: <Send className="h-5 w-5" /> },
   { to: '/offer-tracker', label: 'Offer Tracker', icon: <Trophy className="h-5 w-5" /> },
@@ -420,6 +421,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 const PRIMARY_NAV: NavItem[] = [
   { to: '/', label: 'Home', icon: <Home className="h-4 w-4" /> },
   { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-4 w-4" /> },
+  { to: '/listing-navigator', label: 'Listing Nav', icon: <Eye className="h-4 w-4" /> },
   { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-4 w-4" /> },
   { to: '/shared-reports', label: 'Shared', icon: <Send className="h-4 w-4" /> },
   { to: '/offer-tracker', label: 'Offers', icon: <Trophy className="h-4 w-4" /> },

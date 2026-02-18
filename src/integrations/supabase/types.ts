@@ -574,6 +574,137 @@ export type Database = {
         }
         Relationships: []
       }
+      listing_navigator_flags: {
+        Row: {
+          addressed: boolean
+          addressed_at: string | null
+          category: string
+          evidence: Json | null
+          id: string
+          rule_key: string
+          run_id: string
+          severity: number
+          suggested_angles: Json | null
+          title: string
+          why_it_matters: string
+        }
+        Insert: {
+          addressed?: boolean
+          addressed_at?: string | null
+          category?: string
+          evidence?: Json | null
+          id?: string
+          rule_key: string
+          run_id: string
+          severity?: number
+          suggested_angles?: Json | null
+          title: string
+          why_it_matters?: string
+        }
+        Update: {
+          addressed?: boolean
+          addressed_at?: string | null
+          category?: string
+          evidence?: Json | null
+          id?: string
+          rule_key?: string
+          run_id?: string
+          severity?: number
+          suggested_angles?: Json | null
+          title?: string
+          why_it_matters?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_navigator_flags_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "listing_navigator_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_navigator_runs: {
+        Row: {
+          created_at: string
+          id: string
+          improved_description: string | null
+          input_type: string
+          parsed_text: string
+          property_hint: Json | null
+          raw_text: string
+          score: number | null
+          status: string
+          summary: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          improved_description?: string | null
+          input_type?: string
+          parsed_text?: string
+          property_hint?: Json | null
+          raw_text?: string
+          score?: number | null
+          status?: string
+          summary?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          improved_description?: string | null
+          input_type?: string
+          parsed_text?: string
+          property_hint?: Json | null
+          raw_text?: string
+          score?: number | null
+          status?: string
+          summary?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      listing_rules: {
+        Row: {
+          category: string
+          description: string
+          enabled: boolean
+          logic: Json | null
+          name: string
+          rule_key: string
+          severity_default: number
+          suggested_angles: Json | null
+          why_it_matters_template: string
+        }
+        Insert: {
+          category?: string
+          description?: string
+          enabled?: boolean
+          logic?: Json | null
+          name: string
+          rule_key: string
+          severity_default?: number
+          suggested_angles?: Json | null
+          why_it_matters_template?: string
+        }
+        Update: {
+          category?: string
+          description?: string
+          enabled?: boolean
+          logic?: Json | null
+          name?: string
+          rule_key?: string
+          severity_default?: number
+          suggested_angles?: Json | null
+          why_it_matters_template?: string
+        }
+        Relationships: []
+      }
       market_profiles: {
         Row: {
           contingency_tolerance: string
