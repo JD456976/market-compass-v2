@@ -1,24 +1,23 @@
-import React from 'react';
-import { useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, Link } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { isAllowedAdmin } from '@/lib/adminConfig';
 import { getBetaAccessSession } from '@/lib/betaAccess';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
+import { supabase } from '@/integrations/supabase/client';
+import {
   Home, FolderOpen, Send, Settings, Sparkles, Menu,
-  TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield, Settings as SettingsIcon,
-  LayoutDashboard, MessageSquare, LogOut, Target, BookmarkCheck, Trophy,
+  TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield,
+  Settings as SettingsIcon, LayoutDashboard, LogOut, Target, BookmarkCheck, Trophy,
 } from 'lucide-react';
 import { MarketShiftAlertBell } from '@/components/MarketShiftAlerts';
 import { AppLogo } from '@/components/AppLogo';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect } from 'react';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface NavItem {
   to: string;
@@ -26,6 +25,65 @@ interface NavItem {
   icon: React.ReactNode;
   adminOnly?: boolean;
 }
+
+// ─── Avatar hook ──────────────────────────────────────────────────────────────
+
+function useAgentAvatar() {
+  const { user } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    async function fetchAvatar() {
+      const [brandingRes, profileRes] = await Promise.all([
+        supabase.from('agent_branding').select('headshot_url').eq('user_id', user!.id).maybeSingle(),
+        supabase.from('profiles').select('avatar_url, full_name').eq('user_id', user!.id).maybeSingle(),
+      ]);
+      if (cancelled) return;
+      const headshot = brandingRes.data?.headshot_url ?? null;
+      const profileAvatar = profileRes.data?.avatar_url ?? null;
+      setAvatarUrl(headshot || profileAvatar);
+      setName(profileRes.data?.full_name ?? null);
+    }
+
+    fetchAvatar();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  const initials = name
+    ? name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+    : (user?.email?.slice(0, 2).toUpperCase() ?? 'AG');
+
+  return { avatarUrl, initials, name };
+}
+
+// ─── Shared Avatar Component ──────────────────────────────────────────────────
+
+function AgentAvatar({ size = 'sm' }: { size?: 'sm' | 'md' }) {
+  const { avatarUrl, initials } = useAgentAvatar();
+  const cls = size === 'md' ? 'h-10 w-10 text-sm' : 'h-7 w-7 text-xs';
+
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt="Agent avatar"
+        className={cn(cls, 'rounded-full object-cover ring-1 ring-border')}
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+      />
+    );
+  }
+  return (
+    <div className={cn(cls, 'rounded-full bg-primary/15 flex items-center justify-center text-primary font-semibold shrink-0')}>
+      {initials}
+    </div>
+  );
+}
+
+// ─── GlobalNav ────────────────────────────────────────────────────────────────
 
 export function GlobalNav() {
   const location = useLocation();
@@ -35,7 +93,6 @@ export function GlobalNav() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    // Check admin from beta session OR authenticated user email
     const session = getBetaAccessSession();
     if (session?.email && isAllowedAdmin(session.email)) {
       setIsAdmin(true);
@@ -44,49 +101,34 @@ export function GlobalNav() {
     }
   }, [user?.email]);
 
-  // Don't show nav on shared pages
-  if (location.pathname.startsWith('/share/') || location.pathname === '/share') {
-    return null;
-  }
+  if (location.pathname.startsWith('/share/') || location.pathname === '/share') return null;
 
-  // Don't show nav on auth pages
   const authPages = ['/login', '/signup', '/forgot-password', '/reset-password', '/beta', '/invite'];
-  if (authPages.includes(location.pathname)) {
-    return null;
-  }
+  if (authPages.includes(location.pathname)) return null;
 
-  // Don't show full nav if not authenticated (unless on client/public pages)
   const clientPublicRoutes = ['/my-reports'];
   const isClientPublicRoute = clientPublicRoutes.some(r => location.pathname.startsWith(r));
-  if (!loading && !user && !isClient && !isClientPublicRoute) {
-    return null;
-  }
+  if (!loading && !user && !isClient && !isClientPublicRoute) return null;
 
-  // Show client nav for unauthenticated users on client public routes
   if (!loading && !user && !isClient && isClientPublicRoute) {
-    if (isMobile) return <ClientMobileNav />;
-    return <ClientDesktopNav />;
+    return isMobile ? <ClientMobileNav /> : <ClientDesktopNav />;
   }
 
-  // Client-specific navigation
   if (isClient) {
-    if (isMobile) return <ClientMobileNav />;
-    return <ClientDesktopNav />;
+    return isMobile ? <ClientMobileNav /> : <ClientDesktopNav />;
   }
 
   if (isMobile) {
     return <MobileNav isAdmin={isAdmin} />;
   }
 
-  const desktopItems: NavItem[] = [
-    { to: '/admin', label: 'Admin', icon: <Settings className="h-4 w-4" />, adminOnly: true },
-  ];
-
-  const visibleItems = desktopItems.filter(item => !item.adminOnly || isAdmin);
+  const visibleItems: NavItem[] = isAdmin
+    ? [{ to: '/admin', label: 'Admin', icon: <Settings className="h-4 w-4" /> }]
+    : [];
   return <DesktopNav items={visibleItems} />;
 }
 
-// ─── Client Desktop Nav ──────────────────────────────────────────────────────
+// ─── Client Desktop Nav ───────────────────────────────────────────────────────
 
 function ClientDesktopNav() {
   return (
@@ -122,11 +164,11 @@ function ClientDesktopNav() {
   );
 }
 
-// ─── Client Mobile Nav ───────────────────────────────────────────────────────
+// ─── Client Mobile Nav ────────────────────────────────────────────────────────
 
 function ClientMobileNav() {
   return (
-    <nav 
+    <nav
       className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="Client navigation"
@@ -154,7 +196,7 @@ function ClientMobileNav() {
   );
 }
 
-// ─── Mobile Bottom Nav ───────────────────────────────────────────────────────
+// ─── Mobile Drawer Links ──────────────────────────────────────────────────────
 
 interface DrawerLink {
   to: string;
@@ -163,49 +205,71 @@ interface DrawerLink {
   adminOnly?: boolean;
 }
 
-const drawerLinks: DrawerLink[] = [
+// Primary group — mirroring desktop bottom tab bar
+const DRAWER_PRIMARY: DrawerLink[] = [
+  { to: '/', label: 'Home', icon: <Home className="h-5 w-5" /> },
   { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-5 w-5" /> },
+  { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-5 w-5" /> },
+  { to: '/shared-reports', label: 'Shared Reports', icon: <Send className="h-5 w-5" /> },
   { to: '/offer-tracker', label: 'Offer Tracker', icon: <Trophy className="h-5 w-5" /> },
+];
+
+// Secondary group
+const DRAWER_SECONDARY: DrawerLink[] = [
   { to: '/saved-playbooks', label: 'Saved Playbooks', icon: <BookmarkCheck className="h-5 w-5" /> },
-  { to: '/templates', label: 'Templates', icon: <FileText className="h-5 w-5" /> },
   { to: '/market-intelligence', label: 'Market Intelligence', icon: <TrendingUp className="h-5 w-5" /> },
   { to: '/market-data', label: 'Market Data', icon: <Database className="h-5 w-5" /> },
-  { to: '/agent-profile', label: 'Agent Profile', icon: <User className="h-5 w-5" /> },
-  { to: '/methodology', label: 'Data & Methodology', icon: <BookOpen className="h-5 w-5" /> },
-  { to: '/settings', label: 'Account Settings', icon: <SettingsIcon className="h-5 w-5" /> },
+  { to: '/templates', label: 'Templates', icon: <FileText className="h-5 w-5" /> },
   { to: '/subscription', label: 'Pro Plan', icon: <Sparkles className="h-5 w-5" /> },
+];
+
+// Account group
+const DRAWER_ACCOUNT: DrawerLink[] = [
+  { to: '/agent-profile', label: 'Agent Profile', icon: <User className="h-5 w-5" /> },
+  { to: '/settings', label: 'Account Settings', icon: <SettingsIcon className="h-5 w-5" /> },
+  { to: '/methodology', label: 'Data & Methodology', icon: <BookOpen className="h-5 w-5" /> },
   { to: '/privacy', label: 'Privacy Policy', icon: <Shield className="h-5 w-5" /> },
   { to: '/admin', label: 'Admin', icon: <Settings className="h-5 w-5" />, adminOnly: true },
 ];
 
-function MobileSignOutButton() {
-  const { signOut } = useAuth();
+function DrawerSection({ links, isAdmin, pathname }: { links: DrawerLink[]; isAdmin?: boolean; pathname: string }) {
+  const visible = links.filter(l => !l.adminOnly || isAdmin);
   return (
-    <button
-      onClick={() => signOut()}
-      className="flex items-center gap-3 px-4 py-3 mx-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors min-h-[44px] w-[calc(100%-1rem)]"
-    >
-      <LogOut className="h-5 w-5" />
-      <span className="flex-1 text-left">Sign Out</span>
-    </button>
+    <>
+      {visible.map((link) => (
+        <Link
+          key={link.to}
+          to={link.to}
+          className={cn(
+            'flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium transition-colors min-h-[44px]',
+            pathname === link.to || (link.to !== '/' && pathname.startsWith(link.to))
+              ? 'bg-primary/10 text-primary'
+              : 'text-foreground hover:bg-muted'
+          )}
+        >
+          {link.icon}
+          <span className="flex-1">{link.label}</span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+        </Link>
+      ))}
+    </>
   );
 }
 
 function MobileNav({ isAdmin }: { isAdmin: boolean }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
+  const { signOut, user } = useAuth();
+  const { avatarUrl, initials, name } = useAgentAvatar();
 
-  // Close drawer on route change
   useEffect(() => {
     setDrawerOpen(false);
   }, [location.pathname]);
 
-  const visibleDrawerLinks = drawerLinks.filter(l => !l.adminOnly || isAdmin);
-
   return (
     <>
       {/* Bottom Tab Bar */}
-      <nav 
+      <nav
         className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label="Main navigation"
@@ -244,26 +308,35 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
             <Send className="h-5 w-5" />
             <span className="text-[10px] font-medium leading-none">Shared</span>
           </NavLink>
+          {/* Avatar button opens drawer */}
           <button
             onClick={() => setDrawerOpen(true)}
             aria-label="Open menu"
             aria-expanded={drawerOpen}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] transition-colors",
-              drawerOpen ? "text-primary" : "text-muted-foreground"
+              'flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] transition-colors',
+              drawerOpen ? 'text-primary' : 'text-muted-foreground'
             )}
           >
-            <Menu className="h-5 w-5" />
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Agent avatar"
+                className="h-6 w-6 rounded-full object-cover ring-1 ring-border"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
             <span className="text-[10px] font-medium leading-none">Menu</span>
           </button>
         </div>
       </nav>
 
-      {/* Menu Drawer */}
+      {/* Slide-in Drawer */}
       <AnimatePresence>
         {drawerOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -272,53 +345,67 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
               className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
               onClick={() => setDrawerOpen(false)}
             />
-            {/* Drawer Panel */}
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 z-[70] w-72 bg-background border-l border-border shadow-xl"
+              className="fixed right-0 top-0 bottom-0 z-[70] w-72 bg-background border-l border-border shadow-xl flex flex-col"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between p-4 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <AppLogo size="sm" />
-                  <span className="font-serif font-semibold">Menu</span>
+              {/* Drawer Header — agent card */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <div className="flex items-center gap-3 min-w-0">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Agent avatar"
+                      className="h-9 w-9 rounded-full object-cover ring-1 ring-border shrink-0"
+                    />
+                  ) : (
+                    <div className="h-9 w-9 rounded-full bg-primary/15 flex items-center justify-center text-primary text-sm font-semibold shrink-0">
+                      {initials}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    {name && <p className="text-sm font-semibold truncate">{name}</p>}
+                    {user?.email && (
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    )}
+                  </div>
                 </div>
                 <button
                   onClick={() => setDrawerOpen(false)}
                   aria-label="Close menu"
-                  className="p-2 rounded-full hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  className="p-2 rounded-full hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {/* Drawer Links */}
-              <div className="py-2 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 80px)' }}>
-                {visibleDrawerLinks.map((link) => (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 mx-2 rounded-lg text-sm font-medium transition-colors min-h-[44px]",
-                      location.pathname === link.to
-                        ? "bg-primary/10 text-primary"
-                        : "text-foreground hover:bg-muted"
-                    )}
-                  >
-                    {link.icon}
-                    <span className="flex-1">{link.label}</span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </Link>
-                ))}
+              {/* Scrollable links */}
+              <div className="flex-1 overflow-y-auto py-2">
+                {/* Primary */}
+                <DrawerSection links={DRAWER_PRIMARY} pathname={location.pathname} />
 
-                {/* Sign Out */}
-                <div className="border-t border-border mt-2 pt-2">
-                  <MobileSignOutButton />
-                </div>
+                {/* Secondary */}
+                <div className="mx-4 my-2 border-t border-border/60" />
+                <DrawerSection links={DRAWER_SECONDARY} pathname={location.pathname} />
+
+                {/* Account */}
+                <div className="mx-4 my-2 border-t border-border/60" />
+                <p className="px-6 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Account</p>
+                <DrawerSection links={DRAWER_ACCOUNT} isAdmin={isAdmin} pathname={location.pathname} />
+
+                {/* Sign out */}
+                <div className="mx-4 my-2 border-t border-border/60" />
+                <button
+                  onClick={() => signOut()}
+                  className="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors min-h-[44px] w-[calc(100%-1rem)]"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="flex-1 text-left">Sign Out</span>
+                </button>
               </div>
             </motion.div>
           </>
@@ -328,7 +415,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
-// ─── Desktop Nav ─────────────────────────────────────────────────────────────
+// ─── Desktop Nav ──────────────────────────────────────────────────────────────
 
 const PRIMARY_NAV: NavItem[] = [
   { to: '/', label: 'Home', icon: <Home className="h-4 w-4" /> },
@@ -349,6 +436,7 @@ function ProfileDropdown() {
   const { signOut, user } = useAuth();
   const [open, setOpen] = useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
+  const { avatarUrl, initials, name } = useAgentAvatar();
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -358,22 +446,18 @@ function ProfileDropdown() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
 
-  const initials = user?.email?.slice(0, 2).toUpperCase() ?? 'AG';
-
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(o => !o)}
         aria-label="Account menu"
         className={cn(
-          "flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm font-medium transition-colors",
-          open ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          'flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm font-medium transition-colors',
+          open ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
         )}
       >
-        <div className="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center text-primary text-xs font-semibold">
-          {initials}
-        </div>
-        <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-90")} />
+        <AgentAvatar size="sm" />
+        <ChevronRight className={cn('h-3.5 w-3.5 transition-transform text-muted-foreground', open && 'rotate-90')} />
       </button>
 
       <AnimatePresence>
@@ -383,13 +467,18 @@ function ProfileDropdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-52 bg-background border border-border rounded-xl shadow-lg overflow-hidden z-[100]"
+            className="absolute right-0 top-full mt-2 w-56 bg-background border border-border rounded-xl shadow-lg overflow-hidden z-[100]"
           >
-            {user?.email && (
-              <div className="px-3 py-2.5 border-b border-border">
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            {/* Agent identity header */}
+            <div className="flex items-center gap-3 px-3 py-3 border-b border-border">
+              <AgentAvatar size="md" />
+              <div className="min-w-0 flex-1">
+                {name && <p className="text-sm font-semibold truncate">{name}</p>}
+                {user?.email && <p className="text-xs text-muted-foreground truncate">{user.email}</p>}
               </div>
-            )}
+            </div>
+
+            {/* Links */}
             <div className="py-1">
               <Link
                 to="/agent-profile"
@@ -416,6 +505,8 @@ function ProfileDropdown() {
                 Methodology
               </Link>
             </div>
+
+            {/* Sign out */}
             <div className="border-t border-border py-1">
               <button
                 onClick={() => { setOpen(false); signOut(); }}
@@ -451,15 +542,15 @@ function MoreDropdown({ items }: { items: NavItem[] }) {
       <button
         onClick={() => setOpen(o => !o)}
         className={cn(
-          "flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+          'flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors',
           hasActive || open
-            ? "text-primary bg-primary/5"
-            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            ? 'text-primary bg-primary/5'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
         )}
       >
         <Menu className="h-4 w-4" />
         <span>More</span>
-        <ChevronRight className={cn("h-3 w-3 transition-transform", open && "rotate-90")} />
+        <ChevronRight className={cn('h-3 w-3 transition-transform', open && 'rotate-90')} />
       </button>
 
       <AnimatePresence>
@@ -478,10 +569,10 @@ function MoreDropdown({ items }: { items: NavItem[] }) {
                   to={item.to}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "flex items-center gap-2.5 px-3 py-2 text-sm transition-colors",
+                    'flex items-center gap-2.5 px-3 py-2 text-sm transition-colors',
                     location.pathname === item.to
-                      ? "text-primary bg-primary/5"
-                      : "text-foreground hover:bg-muted"
+                      ? 'text-primary bg-primary/5'
+                      : 'text-foreground hover:bg-muted'
                   )}
                 >
                   {item.icon}
@@ -503,13 +594,11 @@ function DesktopNav({ items }: { items: NavItem[] }) {
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 gap-4">
-          {/* Logo */}
           <NavLink to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors shrink-0">
             <AppLogo size="sm" />
             <span className="font-serif font-semibold text-base">Market Compass</span>
           </NavLink>
 
-          {/* Primary nav */}
           <nav className="flex items-center gap-0.5 flex-1">
             {PRIMARY_NAV.map((item) => (
               <NavLink
@@ -526,7 +615,6 @@ function DesktopNav({ items }: { items: NavItem[] }) {
             <MoreDropdown items={adminItems} />
           </nav>
 
-          {/* Right side */}
           <div className="flex items-center gap-1 shrink-0">
             <MarketShiftAlertBell />
             <ProfileDropdown />
@@ -537,24 +625,20 @@ function DesktopNav({ items }: { items: NavItem[] }) {
   );
 }
 
-// ─── Spacer ──────────────────────────────────────────────────────────────────
+// ─── Spacer ───────────────────────────────────────────────────────────────────
 
 export function MobileNavSpacer() {
   const isMobile = useIsMobile();
   const location = useLocation();
 
-  if (location.pathname.startsWith('/share/') || location.pathname === '/share') {
-    return null;
-  }
-  if (!isMobile) {
-    return null;
-  }
+  if (location.pathname.startsWith('/share/') || location.pathname === '/share') return null;
+  if (!isMobile) return null;
 
   return (
-    <div 
-      className="h-16" 
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} 
-      aria-hidden="true" 
+    <div
+      className="h-16"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      aria-hidden="true"
     />
   );
 }
