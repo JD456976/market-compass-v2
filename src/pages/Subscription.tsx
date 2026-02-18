@@ -1,16 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   ArrowLeft, FileText, BarChart3, Share2, Sparkles, Users, Building2,
-  PenTool, User, Palette, TrendingUp, Activity, RefreshCw, ChevronRight,
-  Layers, MessageSquare, Compass, CheckCircle2, AlertCircle, Clock, Eye,
-  UserPlus, Mail, Copy, XCircle, Settings
+  Activity, RefreshCw, ChevronRight,
+  MessageSquare, Compass, CheckCircle2, AlertCircle, Clock, Eye,
+  UserPlus, Mail, XCircle, Settings
 } from 'lucide-react';
 import { NotificationBell } from '@/components/NotificationBell';
 import { ScenarioCompareSheet } from '@/components/ScenarioCompareSheet';
@@ -80,12 +81,12 @@ interface LinkedClient {
 }
 
 export default function Subscription() {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const { sessions } = useSessions();
-  const [isRestoring, setIsRestoring] = useState(false);
+  
   const [profile, setProfile] = useState<AgentProfile | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [clientMessages, setClientMessages] = useState<ClientMessage[]>([]);
   const [pendingScenarios, setPendingScenarios] = useState<PendingScenario[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
@@ -107,8 +108,8 @@ export default function Subscription() {
   
   const session = getBetaAccessSession();
   const hasBetaAccess = !!session;
-  const { entitlementState, canWrite, startCheckout, manageSubscription, refresh, loading: entLoading } = useEntitlement();
-  const isPro = entitlementState.isPro;
+  const { entitlementState, canWrite, startCheckout, manageSubscription } = useEntitlement();
+  
   const subStatus = entitlementState.isTrial ? 'trial' : entitlementState.isPro ? 'active' : 'none';
   const trialDaysRemaining = entitlementState.trialEndsAt 
     ? Math.max(0, Math.ceil((new Date(entitlementState.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
@@ -119,6 +120,19 @@ export default function Subscription() {
   useEffect(() => {
     setProfile(loadAgentProfile());
   }, []);
+
+  // Fetch avatar from agent_branding
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('agent_branding')
+      .select('headshot_url, logo_url')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.headshot_url) setAvatarUrl(data.headshot_url);
+      });
+  }, [user]);
 
   // Fetch client management data
   useEffect(() => {
@@ -323,16 +337,8 @@ export default function Subscription() {
     if (sessions.length > 0) fetchAnalytics();
   }, [sessions]);
 
-  const handleRestorePurchases = async () => {
-    setIsRestoring(true);
-    try {
-      await refresh();
-      toast({ title: 'Subscription checked', description: isPro ? 'Your Professional subscription is active.' : 'No active subscription found.' });
-    } catch {
-      toast({ title: 'Check failed', description: 'Please try again later.', variant: 'destructive' });
-    }
-    setIsRestoring(false);
-  };
+
+
 
   const handleScenarioAction = async (scenarioId: string, action: 'accepted' | 'needs_changes') => {
     const { error } = await supabase
@@ -363,12 +369,8 @@ export default function Subscription() {
 
   const unreadCount = clientMessages.filter(m => !m.read_by_agent_at).length;
 
-  const quickActions = [
-    { label: 'New Seller Report', icon: Building2, to: '/seller', color: 'text-primary' },
-    { label: 'New Buyer Report', icon: Users, to: '/buyer', color: 'text-primary' },
-    { label: 'Agent Profile', icon: User, to: '/agent-profile', color: 'text-accent' },
-    { label: 'Market Trends', icon: TrendingUp, to: '/market-trends', color: 'text-accent' },
-  ];
+
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -382,24 +384,29 @@ export default function Subscription() {
               </Button>
             </Link>
             <div className="flex items-center gap-3 flex-1">
-              <div className="p-2 rounded-lg bg-accent/20">
-                <Sparkles className="h-5 w-5 text-accent" />
-              </div>
+              <Avatar className="h-11 w-11 border-2 border-primary-foreground/20">
+                <AvatarImage src={avatarUrl || undefined} alt={profile?.agent_name} />
+                <AvatarFallback className="bg-accent/20 text-primary-foreground text-sm font-medium">
+                  {profile?.agent_name ? profile.agent_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'MC'}
+                </AvatarFallback>
+              </Avatar>
               <div>
-                <h1 className="text-2xl font-serif font-bold">Pro Dashboard</h1>
+                <h1 className="text-xl font-serif font-bold leading-tight">
+                  {profile?.agent_name || 'Agent Dashboard'}
+                </h1>
                 <p className="text-sm text-primary-foreground/70">
-                  {profile?.agent_name || 'Agent'} • {profile?.brokerage_name || 'Brokerage'}
+                  {profile?.brokerage_name || 'Agent Dashboard'}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <Link to="/settings">
-                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 min-h-[44px] min-w-[44px]" title="Account Settings">
+              <Link to="/agent-profile">
+                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 min-h-[44px] min-w-[44px]" title="Agent Profile">
                   <Settings className="h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/my-reports?preview=admin">
-                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 min-h-[44px] min-w-[44px]" title="Preview Client Dashboard">
+                <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 min-h-[44px] min-w-[44px]" title="Preview Client View">
                   <Eye className="h-5 w-5" />
                 </Button>
               </Link>
@@ -409,10 +416,16 @@ export default function Subscription() {
             </div>
           </div>
         </div>
+        {/* Wave */}
+        <div className="relative h-8 -mb-1">
+          <svg className="absolute bottom-0 w-full h-8" preserveAspectRatio="none" viewBox="0 0 1440 32">
+            <path fill="hsl(var(--background))" d="M0,16L120,18.7C240,21,480,27,720,26.7C960,27,1200,21,1320,18.7L1440,16L1440,32L1320,32C1200,32,960,32,720,32C480,32,240,32,120,32L0,32Z" />
+          </svg>
+        </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 max-w-3xl -mt-4 space-y-6">
-        {/* Plan Status */}
+      <div className="container mx-auto px-4 py-8 max-w-3xl -mt-2 space-y-6">
+        {/* Subscription Status */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <Card className={hasFullAccess ? 'border-accent/30' : ''}>
             <CardContent className="pt-6">
@@ -423,8 +436,8 @@ export default function Subscription() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold">
-                      {subStatus === 'active' ? 'Professional Plan' :
-                       subStatus === 'trial' ? 'Professional Trial' :
+                      {subStatus === 'active' ? 'Market Compass Subscription' :
+                       subStatus === 'trial' ? 'Free Trial' :
                        hasBetaAccess ? 'Early Access' : 'Free Plan'}
                     </h3>
                     <Badge variant="secondary" className={`text-xs ${hasFullAccess ? 'bg-accent/10 text-accent-foreground' : ''}`}>
@@ -434,12 +447,17 @@ export default function Subscription() {
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {subStatus === 'active' ? 'All professional features are unlocked.' :
-                     subStatus === 'trial' ? `Your free trial ends ${trialEndsAt ? new Date(trialEndsAt).toLocaleDateString() : 'soon'}. All features unlocked.` :
-                     hasFullAccess ? 'All professional features are unlocked.' :
+                    {subStatus === 'active' ? 'Full access to all features. Thank you!' :
+                     subStatus === 'trial' ? `Trial ends ${trialEndsAt ? new Date(trialEndsAt).toLocaleDateString() : 'soon'}. All features unlocked.` :
+                     hasFullAccess ? 'All features are unlocked.' :
                      `${FREE_TIER_LIMITS.reportsPerMonth} reports/month on the free plan.`}
                   </p>
                 </div>
+                {subStatus === 'active' && (
+                  <Button size="sm" variant="outline" onClick={() => manageSubscription()} className="shrink-0 text-xs">
+                    Manage
+                  </Button>
+                )}
               </div>
               {!hasFullAccess && (
                 <div className="mt-4 space-y-3">
@@ -449,65 +467,45 @@ export default function Subscription() {
                   </div>
                   <Progress value={(monthReports / FREE_TIER_LIMITS.reportsPerMonth) * 100} className="h-2" />
                   <Button className="w-full" size="lg" onClick={() => startCheckout()}>
-                    Start {PRICING.trialDays}-Day Free Trial
+                    Start {PRICING.trialDays}-Day Free Trial — {PRICING.monthly.label} after
                   </Button>
-                  <p className="text-[10px] text-muted-foreground text-center">
-                    Full access to all features. Then {PRICING.monthly.label}. Cancel anytime.
-                  </p>
                 </div>
               )}
               {subStatus === 'trial' && (
                 <div className="mt-4 space-y-2">
                   <Progress value={((PRICING.trialDays - trialDaysRemaining) / PRICING.trialDays) * 100} className="h-2" />
-                  <p className="text-[10px] text-muted-foreground text-center">
-                    Subscribe before your trial ends to keep full access. {PRICING.monthly.label}.
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] text-muted-foreground">Subscribe to keep full access — {PRICING.monthly.label}</p>
+                    <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => startCheckout()}>Subscribe</Button>
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Usage Stats */}
+        {/* Usage Stats — clickable tiles */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Total Reports', value: totalReports, icon: FileText },
-              { label: 'Shared', value: sharedCount, icon: Share2 },
-              { label: 'Buyer Reports', value: buyerCount, icon: Users },
-              { label: 'Seller Reports', value: sellerCount, icon: Building2 },
+              { label: 'Total Reports', value: totalReports, icon: FileText, to: '/drafts' },
+              { label: 'Shared', value: sharedCount, icon: Share2, to: '/shared-reports' },
+              { label: 'Buyer Reports', value: buyerCount, icon: Users, to: '/drafts?type=buyer' },
+              { label: 'Seller Reports', value: sellerCount, icon: Building2, to: '/drafts?type=seller' },
             ].map((stat, i) => (
-              <Card key={i}>
-                <CardContent className="pt-4 pb-4 text-center">
-                  <stat.icon className="h-4 w-4 mx-auto mb-1.5 text-muted-foreground" />
-                  <p className="text-2xl font-serif font-bold">{stat.value}</p>
-                  <p className="text-[10px] text-muted-foreground">{stat.label}</p>
-                </CardContent>
-              </Card>
+              <Link key={i} to={stat.to} className="block">
+                <Card className="cursor-pointer hover:border-accent/40 hover:shadow-sm transition-all duration-200 group">
+                  <CardContent className="pt-4 pb-4 text-center">
+                    <stat.icon className="h-4 w-4 mx-auto mb-1.5 text-muted-foreground group-hover:text-accent transition-colors" />
+                    <p className="text-2xl font-serif font-bold">{stat.value}</p>
+                    <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         </motion.div>
 
-        {/* Quick Actions */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-2">
-                {quickActions.map((action, i) => (
-                  <Link key={i} to={action.to}>
-                    <Button variant="outline" className="w-full justify-start gap-2 min-h-[44px]">
-                      <action.icon className={`h-4 w-4 ${action.color}`} />
-                      <span className="text-sm">{action.label}</span>
-                    </Button>
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
 
         {/* Client Management */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}>
@@ -562,7 +560,7 @@ export default function Subscription() {
                           <p className="text-sm font-medium">{c.profile?.full_name || 'Unnamed'}</p>
                           <p className="text-[10px] text-muted-foreground">{c.profile?.email}</p>
                         </div>
-                        <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300">
+                        <Badge variant="outline" className="text-[10px] text-foreground border-border">
                           <CheckCircle2 className="h-2.5 w-2.5 mr-1" />Active
                         </Badge>
                       </div>
@@ -582,8 +580,8 @@ export default function Subscription() {
                           <p className="text-[10px] text-muted-foreground">{(inv.client_first_name || inv.client_last_name) ? inv.client_email + ' · ' : ''}{new Date(inv.created_at).toLocaleDateString()}</p>
                         </div>
                         <div className="flex items-center gap-1.5 ml-2">
-                          {inv.status === 'pending' && <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300"><Clock className="h-2.5 w-2.5 mr-1" />Pending</Badge>}
-                          {inv.status === 'accepted' && <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300"><CheckCircle2 className="h-2.5 w-2.5 mr-1" />Joined</Badge>}
+                          {inv.status === 'pending' && <Badge variant="outline" className="text-[10px]"><Clock className="h-2.5 w-2.5 mr-1" />Pending</Badge>}
+                          {inv.status === 'accepted' && <Badge variant="outline" className="text-[10px] text-foreground border-border"><CheckCircle2 className="h-2.5 w-2.5 mr-1" />Joined</Badge>}
                           {inv.status === 'revoked' && <Badge variant="outline" className="text-[10px] text-destructive"><XCircle className="h-2.5 w-2.5 mr-1" />Revoked</Badge>}
                           {inv.status === 'pending' && (
                             <>
@@ -864,91 +862,18 @@ export default function Subscription() {
           </motion.div>
         )}
 
-        {/* Pro Features */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-serif">Pro Features</CardTitle>
-              <p className="text-sm text-accent font-medium mt-1">Designed to help you win more offers and close faster.</p>
-              <CardDescription className="mt-1">
-                Unlock your full competitive advantage in competitive markets.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Left column */}
-                {[
-                  { icon: FileText, label: 'Unlimited Reports', desc: 'Create professional reports for every client and property.', highlight: false },
-                  { icon: Compass, label: 'Scenario Explorer', desc: 'Model winning strategies before submitting offers.', highlight: true },
-                  { icon: Palette, label: 'Custom Branding', desc: 'Present polished reports with your identity and contact details.', highlight: false },
-                  { icon: PenTool, label: 'Branded Exports', desc: 'Deliver client-ready reports that are easy to share and understand.', highlight: false },
-                  { icon: BarChart3, label: 'Advanced Market Insights', desc: 'Understand offer strength, risk tradeoffs, and positioning.', highlight: false },
-                  { icon: BarChart3, label: 'Offer & Seller Meters', desc: 'Visualize offer positioning and seller leverage at a glance.', highlight: false },
-                ].map((f, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-start gap-3 p-3 rounded-lg transition-colors hover:bg-secondary/50 ${
-                      f.highlight ? 'bg-accent/5 ring-1 ring-accent/20' : 'bg-secondary/30'
-                    }`}
-                  >
-                    <div className={`p-1.5 rounded-md mt-0.5 ${f.highlight ? 'bg-accent/20' : 'bg-accent/10'}`}>
-                      <f.icon className={`h-4 w-4 ${f.highlight ? 'text-accent' : 'text-accent'}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-medium">{f.label}</span>
-                        {f.highlight && (
-                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-accent/10 text-accent border-0">
-                            Key Feature
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{f.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[11px] text-muted-foreground text-center pt-1">
-                Trusted by agents to present stronger offers with confidence.
-              </p>
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <Card className="border-accent/20 bg-accent/5">
-                  <CardContent className="p-3 text-center">
-                    <p className="text-lg font-serif font-bold">{PRICING.monthly.label}</p>
-                    <p className="text-[10px] text-muted-foreground">Billed monthly</p>
-                  </CardContent>
-                </Card>
-                <Card className="border-accent/30 bg-accent/10 ring-1 ring-accent/20">
-                  <CardContent className="p-3 text-center">
-                    <p className="text-lg font-serif font-bold">{PRICING.trialDays}-day free trial</p>
-                    <p className="text-[10px] text-muted-foreground">Then {PRICING.monthly.label}</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Restore & Legal */}
-        <div className="text-center space-y-4 pt-4">
-          <Button variant="outline" size="sm" onClick={handleRestorePurchases} disabled={isRestoring}>
-            {isRestoring ? (
-              <><RefreshCw className="h-3 w-3 mr-1 animate-spin" /> Checking...</>
-            ) : (
-              <><RefreshCw className="h-3 w-3 mr-1" /> Check Subscription</>
-            )}
-          </Button>
-          <div className="space-y-2">
-            <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-              <Link to="/terms" className="hover:underline">Terms of Service</Link>
-              <span>•</span>
-              <Link to="/privacy" className="hover:underline">Privacy Policy</Link>
-            </div>
-            <p className="text-[10px] text-muted-foreground max-w-sm mx-auto leading-snug">
-              Subscription is managed through Stripe. It automatically renews unless 
-              canceled from your account settings. Cancel anytime.
-            </p>
+        {/* Legal Footer */}
+        <div className="text-center space-y-3 pt-2 pb-4">
+          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+            <span>·</span>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <span>·</span>
+            <a href="mailto:support@market-compass.com" className="hover:text-foreground transition-colors">Support</a>
           </div>
+          <p className="text-[10px] text-muted-foreground max-w-sm mx-auto leading-snug">
+            Subscription managed securely. Automatically renews unless canceled from account settings. Cancel anytime.
+          </p>
         </div>
       </div>
       {/* Scenario Compare Sheet */}
