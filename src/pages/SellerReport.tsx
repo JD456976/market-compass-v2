@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, Clock, Building2, Target, TrendingUp, AlertCircle, CheckCircle2, FileDown, Share2, FileText, Pencil, Link2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Session, SellerReportData, LikelihoodBand, SellerInputs } from '@/types';
+import { DealPilotButton } from '@/components/DealPilotButton';
+import { MarketAwareDealTimeline } from '@/components/MarketAwareDealTimeline';
 import { upsertSession, getMarketProfileById } from '@/lib/storage';
 import { calculateSellerReport } from '@/lib/scoring';
 import { useToast } from '@/hooks/use-toast';
@@ -401,7 +403,20 @@ const SellerReport = () => {
                 </div>
               </div>
             </div>
-            <ModeSwitcher className="bg-primary-foreground/10 rounded-lg px-3 py-2 self-end sm:self-auto" />
+            <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+              {!isClientMode && (
+                <DealPilotButton
+                  clientName={reportData?.session.client_name}
+                  location={reportData?.session.location}
+                  sessionType="seller"
+                  sessionId={reportData?.session.id}
+                  variant="outline"
+                  size="sm"
+                  className="bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs"
+                />
+              )}
+              <ModeSwitcher className="bg-primary-foreground/10 rounded-lg px-3 py-2" />
+            </div>
           </div>
         </div>
       </div>
@@ -877,8 +892,14 @@ const SellerReport = () => {
             />
             {/* Lead Finder Intel — Agent Only, Outside PDF */}
             {!isClientMode && (
-              <div className="pdf-hide-agent-notes">
+              <div className="pdf-hide-agent-notes space-y-4">
                 <LeadFinderIntelPanel location={session.location} reportType="seller" />
+                <MarketAwareDealTimeline
+                  sessionType="seller"
+                  clientName={session.client_name}
+                  location={session.location}
+                  zip={(session.address_fields as any)?.postalCode || (session.address_fields as any)?.zip}
+                />
               </div>
             )}
 

@@ -54,11 +54,12 @@ import Documents from "./pages/Documents";
 import UploadDocument from "./pages/UploadDocument";
 import ReviewDocument from "./pages/ReviewDocument";
 import LeadFinder from "./pages/LeadFinder";
+import MarketIntelEmbed from "./pages/MarketIntelEmbed";
 
 const queryClient = new QueryClient();
 
 // Routes that bypass both beta gate AND auth (truly public)
-const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password', '/market-trends', '/invite', '/pricing', '/my-reports'];
+const PUBLIC_ROUTES = ['/share/', '/admin', '/beta', '/privacy', '/terms', '/login', '/signup', '/forgot-password', '/reset-password', '/market-trends', '/invite', '/pricing', '/my-reports', '/embed/'];
 
 function AppRoutes() {
   const location = useLocation();
@@ -85,6 +86,7 @@ function AppRoutes() {
           <Route path="/invite" element={<ClientInvite />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/pricing" element={<RequireAuth><Pricing /></RequireAuth>} />
+          <Route path="/embed/market-intel" element={<MarketIntelEmbed />} />
 
           {/* Protected routes - require auth */}
           <Route path="/" element={<RequireAuth><Index /></RequireAuth>} />
