@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { loadAgentBranding, saveAgentBranding, uploadAgentAsset, AgentBranding } from '@/lib/agentBranding';
 import { ReportTemplateSelector, ReportTemplate } from '@/components/report/ReportTemplateSelector';
 import { getBetaAccessSession, getDeviceId } from '@/lib/betaAccess';
+import { supabase } from '@/integrations/supabase/client';
 
 const AgentProfile = () => {
   const { toast } = useToast();
@@ -79,6 +80,17 @@ const AgentProfile = () => {
     }
 
     saveAgentProfile(profile);
+
+    // Sync license + CTA to the profiles table so playbook auto-fill picks them up
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({
+          license: profile.license || null,
+          custom_cta: profile.custom_cta || null,
+        } as any)
+        .eq('user_id', user.id);
+    }
 
     if (effectiveUserId && branding) {
       try {
@@ -173,6 +185,11 @@ const AgentProfile = () => {
               <div className="space-y-2">
                 <Label htmlFor="license">License # (optional)</Label>
                 <Input id="license" value={profile.license || ''} onChange={(e) => handleChange('license', e.target.value)} placeholder="License number" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="custom_cta">Custom Call-to-Action (optional)</Label>
+                <Input id="custom_cta" value={profile.custom_cta || ''} onChange={(e) => handleChange('custom_cta', e.target.value)} placeholder="Text me at (555) 123-4567 or visit www.yoursite.com" />
+                <p className="text-xs text-muted-foreground">Auto-filled into Prospecting Playbook assets.</p>
               </div>
             </CardContent>
           </Card>

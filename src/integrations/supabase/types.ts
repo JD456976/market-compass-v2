@@ -613,12 +613,14 @@ export type Database = {
           avatar_url: string | null
           brokerage: string | null
           created_at: string
+          custom_cta: string | null
           email: string | null
           email_verified: boolean | null
           full_name: string | null
           id: string
           is_suspended: boolean | null
           last_active_at: string | null
+          license: string | null
           phone: string | null
           suspended_at: string | null
           updated_at: string
@@ -628,12 +630,14 @@ export type Database = {
           avatar_url?: string | null
           brokerage?: string | null
           created_at?: string
+          custom_cta?: string | null
           email?: string | null
           email_verified?: boolean | null
           full_name?: string | null
           id?: string
           is_suspended?: boolean | null
           last_active_at?: string | null
+          license?: string | null
           phone?: string | null
           suspended_at?: string | null
           updated_at?: string
@@ -643,12 +647,14 @@ export type Database = {
           avatar_url?: string | null
           brokerage?: string | null
           created_at?: string
+          custom_cta?: string | null
           email?: string | null
           email_verified?: boolean | null
           full_name?: string | null
           id?: string
           is_suspended?: boolean | null
           last_active_at?: string | null
+          license?: string | null
           phone?: string | null
           suspended_at?: string | null
           updated_at?: string
