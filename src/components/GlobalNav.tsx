@@ -1,3 +1,4 @@
+import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { NavLink } from '@/components/NavLink';
@@ -78,14 +79,7 @@ export function GlobalNav() {
   }
 
   const desktopItems: NavItem[] = [
-    { to: '/', label: 'Home', icon: <Home className="h-5 w-5" /> },
-    { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-5 w-5" /> },
-    { to: '/offer-tracker', label: 'Offers', icon: <Trophy className="h-5 w-5" /> },
-    { to: '/saved-playbooks', label: 'Playbooks', icon: <BookmarkCheck className="h-5 w-5" /> },
-    { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-5 w-5" /> },
-    { to: '/shared-reports', label: 'Shared', icon: <Send className="h-5 w-5" /> },
-    { to: '/subscription', label: 'Pro Plan', icon: <Sparkles className="h-5 w-5" /> },
-    { to: '/admin', label: 'Admin', icon: <Settings className="h-5 w-5" />, adminOnly: true },
+    { to: '/admin', label: 'Admin', icon: <Settings className="h-4 w-4" />, adminOnly: true },
   ];
 
   const visibleItems = desktopItems.filter(item => !item.adminOnly || isAdmin);
@@ -334,45 +328,209 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
-// ─── Desktop Nav (unchanged) ─────────────────────────────────────────────────
+// ─── Desktop Nav ─────────────────────────────────────────────────────────────
+
+const PRIMARY_NAV: NavItem[] = [
+  { to: '/', label: 'Home', icon: <Home className="h-4 w-4" /> },
+  { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-4 w-4" /> },
+  { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-4 w-4" /> },
+  { to: '/shared-reports', label: 'Shared', icon: <Send className="h-4 w-4" /> },
+  { to: '/offer-tracker', label: 'Offers', icon: <Trophy className="h-4 w-4" /> },
+];
+
+const SECONDARY_NAV: NavItem[] = [
+  { to: '/saved-playbooks', label: 'Playbooks', icon: <BookmarkCheck className="h-4 w-4" /> },
+  { to: '/market-intelligence', label: 'Market Intel', icon: <TrendingUp className="h-4 w-4" /> },
+  { to: '/subscription', label: 'Pro Plan', icon: <Sparkles className="h-4 w-4" /> },
+  { to: '/admin', label: 'Admin', icon: <Settings className="h-4 w-4" />, adminOnly: true },
+];
+
+function ProfileDropdown() {
+  const { signOut, user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  const initials = user?.email?.slice(0, 2).toUpperCase() ?? 'AG';
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-label="Account menu"
+        className={cn(
+          "flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm font-medium transition-colors",
+          open ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+        )}
+      >
+        <div className="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center text-primary text-xs font-semibold">
+          {initials}
+        </div>
+        <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-90")} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full mt-2 w-52 bg-background border border-border rounded-xl shadow-lg overflow-hidden z-[100]"
+          >
+            {user?.email && (
+              <div className="px-3 py-2.5 border-b border-border">
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              </div>
+            )}
+            <div className="py-1">
+              <Link
+                to="/agent-profile"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+              >
+                <User className="h-4 w-4 text-muted-foreground" />
+                Agent Profile
+              </Link>
+              <Link
+                to="/settings"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+              >
+                <SettingsIcon className="h-4 w-4 text-muted-foreground" />
+                Account Settings
+              </Link>
+              <Link
+                to="/methodology"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+              >
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+                Methodology
+              </Link>
+            </div>
+            <div className="border-t border-border py-1">
+              <button
+                onClick={() => { setOpen(false); signOut(); }}
+                className="flex items-center gap-2.5 px-3 py-2 w-full text-sm text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function MoreDropdown({ items }: { items: NavItem[] }) {
+  const location = useLocation();
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  const hasActive = items.some(i => location.pathname === i.to);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className={cn(
+          "flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+          hasActive || open
+            ? "text-primary bg-primary/5"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+        )}
+      >
+        <Menu className="h-4 w-4" />
+        <span>More</span>
+        <ChevronRight className={cn("h-3 w-3 transition-transform", open && "rotate-90")} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full mt-2 w-48 bg-background border border-border rounded-xl shadow-lg overflow-hidden z-[100]"
+          >
+            <div className="py-1">
+              {items.map(item => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2 text-sm transition-colors",
+                    location.pathname === item.to
+                      ? "text-primary bg-primary/5"
+                      : "text-foreground hover:bg-muted"
+                  )}
+                >
+                  {item.icon}
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 function DesktopNav({ items }: { items: NavItem[] }) {
-  const { signOut } = useAuth();
+  const adminItems = SECONDARY_NAV.filter(i => !i.adminOnly || items.some(n => n.to === '/admin'));
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-14">
-          <NavLink to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
+        <div className="flex items-center justify-between h-14 gap-4">
+          {/* Logo */}
+          <NavLink to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors shrink-0">
             <AppLogo size="sm" />
-            <span className="font-serif font-semibold text-lg">Market Compass</span>
+            <span className="font-serif font-semibold text-base">Market Compass</span>
           </NavLink>
-          <nav className="flex items-center gap-1">
-            {items.map((item) => (
+
+          {/* Primary nav */}
+          <nav className="flex items-center gap-0.5 flex-1">
+            {PRIMARY_NAV.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium",
-                  "text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                )}
+                end={item.to === '/'}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
                 activeClassName="text-primary bg-primary/5"
               >
                 {item.icon}
                 <span>{item.label}</span>
               </NavLink>
             ))}
-            <MarketShiftAlertBell />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => signOut()}
-              className="ml-1 text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="h-4 w-4 mr-1.5" />
-              Sign Out
-            </Button>
+            <MoreDropdown items={adminItems} />
           </nav>
+
+          {/* Right side */}
+          <div className="flex items-center gap-1 shrink-0">
+            <MarketShiftAlertBell />
+            <ProfileDropdown />
+          </div>
         </div>
       </div>
     </header>
