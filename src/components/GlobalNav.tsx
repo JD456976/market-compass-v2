@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
   Home, FolderOpen, Send, Settings, Sparkles, Menu,
   TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield, Settings as SettingsIcon,
-  LayoutDashboard, MessageSquare, LogOut
+  LayoutDashboard, MessageSquare, LogOut, Target
 } from 'lucide-react';
 import { AppLogo } from '@/components/AppLogo';
 import { Button } from '@/components/ui/button';
@@ -78,6 +78,7 @@ export function GlobalNav() {
 
   const desktopItems: NavItem[] = [
     { to: '/', label: 'Home', icon: <Home className="h-5 w-5" /> },
+    { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-5 w-5" /> },
     { to: '/drafts', label: 'Drafts', icon: <FolderOpen className="h-5 w-5" /> },
     { to: '/shared-reports', label: 'Shared', icon: <Send className="h-5 w-5" /> },
     { to: '/subscription', label: 'Pro Plan', icon: <Sparkles className="h-5 w-5" /> },
@@ -166,6 +167,7 @@ interface DrawerLink {
 }
 
 const drawerLinks: DrawerLink[] = [
+  { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-5 w-5" /> },
   { to: '/templates', label: 'Templates', icon: <FileText className="h-5 w-5" /> },
   { to: '/market-intelligence', label: 'Market Intelligence', icon: <TrendingUp className="h-5 w-5" /> },
   { to: '/market-data', label: 'Market Data', icon: <Database className="h-5 w-5" /> },
@@ -218,6 +220,14 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
           >
             <Home className="h-5 w-5" />
             <span className="text-[10px] font-medium leading-none">Home</span>
+          </NavLink>
+          <NavLink
+            to="/lead-finder"
+            className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px] min-h-[44px] text-muted-foreground transition-colors"
+            activeClassName="text-primary"
+          >
+            <Target className="h-5 w-5" />
+            <span className="text-[10px] font-medium leading-none">Leads</span>
           </NavLink>
           <NavLink
             to="/drafts"

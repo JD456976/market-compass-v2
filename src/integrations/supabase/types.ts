@@ -326,6 +326,42 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_finder_analyses: {
+        Row: {
+          city_state: string | null
+          created_at: string
+          fred_data: Json
+          id: string
+          lead_type: string | null
+          opportunity_score: number | null
+          refreshed_at: string
+          user_id: string
+          zip_code: string
+        }
+        Insert: {
+          city_state?: string | null
+          created_at?: string
+          fred_data?: Json
+          id?: string
+          lead_type?: string | null
+          opportunity_score?: number | null
+          refreshed_at?: string
+          user_id: string
+          zip_code: string
+        }
+        Update: {
+          city_state?: string | null
+          created_at?: string
+          fred_data?: Json
+          id?: string
+          lead_type?: string | null
+          opportunity_score?: number | null
+          refreshed_at?: string
+          user_id?: string
+          zip_code?: string
+        }
+        Relationships: []
+      }
       market_profiles: {
         Row: {
           contingency_tolerance: string
