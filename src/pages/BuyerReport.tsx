@@ -93,6 +93,7 @@ import { WaitSimulatorCard } from '@/components/report/WaitSimulatorCard';
 import { AddressIntelligenceCard } from '@/components/report/AddressIntelligenceCard';
 import { MortgageRateCard } from '@/components/report/MortgageRateCard';
 import { SignalBadge } from '@/components/report/SignalBadge';
+import { LeadFinderIntelPanel } from '@/components/report/LeadFinderIntelPanel';
 
 function LikelihoodBadge({ band }: { band: ExtendedLikelihoodBand }) {
   if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
@@ -858,6 +859,13 @@ const BuyerReport = () => {
               isPdfExported={session.pdf_exported ?? false}
               isShareLinkCreated={session.share_link_created ?? false}
             />
+            {/* Lead Finder Intel — Agent Only, Outside PDF */}
+            {!isClientMode && (
+              <div className="pdf-hide-agent-notes">
+                <LeadFinderIntelPanel location={session.location} reportType="buyer" />
+              </div>
+            )}
+
           </ReportProvider>
           </div>
 
