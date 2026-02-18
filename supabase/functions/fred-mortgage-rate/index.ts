@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const FRED_API_KEY = 'b46baf05500cf297f3d29065d604a92f';
+const FRED_API_KEY = Deno.env.get('FRED_API_KEY') ?? 'b46baf05500cf297f3d29065d604a92f';
 const FRED_SERIES_ID = 'MORTGAGE30US';
 const FRED_API_URL = `https://api.stlouisfed.org/fred/series/observations`;
 
