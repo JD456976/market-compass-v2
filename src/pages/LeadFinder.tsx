@@ -24,6 +24,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { CrmIntegrationHub } from '@/components/CrmIntegrationHub';
 import { ProspectingPlaybook } from '@/components/ProspectingPlaybook';
+import { LeadFinderOnboarding, LeadFinderOnboardingTrigger } from '@/components/LeadFinderOnboarding';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -949,6 +950,9 @@ export default function LeadFinder() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Auto-show onboarding for first-time visitors */}
+      <LeadFinderOnboarding />
+
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 items-start">
 
@@ -957,9 +961,12 @@ export default function LeadFinder() {
 
             {/* Page Header */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-primary/60">
-                <Target className="h-4 w-4" />
-                <span className="text-xs font-bold uppercase tracking-widest">Lead Finder</span>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-primary/60">
+                  <Target className="h-4 w-4" />
+                  <span className="text-xs font-bold uppercase tracking-widest">Lead Finder</span>
+                </div>
+                <LeadFinderOnboardingTrigger />
               </div>
               <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight">
                 Find Your Next Listing Opportunity
