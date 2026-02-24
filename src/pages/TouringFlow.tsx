@@ -86,7 +86,7 @@ const TouringFlow = () => {
 
   const buildSession = (): Session => ({
     id: draftId,
-    session_type: 'Buyer', // Use Buyer type for DB compatibility, tagged via touring flag
+    session_type: 'touring_brief',
     client_name: clientName,
     location,
     property_type: propertyType,
