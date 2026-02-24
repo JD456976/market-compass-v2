@@ -207,7 +207,7 @@ const SharedReportContent = () => {
     try {
       await exportReportToPdf('shared-report-export', {
         clientName: session.client_name,
-        reportType: session.session_type === 'Seller' ? 'Seller' : 'Buyer',
+        reportType: session.session_type === 'Seller' ? 'Seller' : session.session_type === 'touring_brief' ? 'Touring Brief' : 'Buyer',
         snapshotTimestamp: reportData?.snapshotTimestamp,
         isClientMode: true,
         customNotice: isWhatIfModified 
@@ -408,7 +408,7 @@ const SharedReportContent = () => {
           {/* Prepared For/By Header Block */}
           <div className="pdf-section pdf-header-section">
             <ReportHeader
-              reportType={isSeller ? 'Seller' : 'Buyer'}
+              reportType={isSeller ? 'Seller' : session.session_type === 'touring_brief' ? 'Touring Brief' : 'Buyer'}
               clientName={session.client_name}
               snapshotTimestamp={reportData.snapshotTimestamp}
               branding={agentBranding}
