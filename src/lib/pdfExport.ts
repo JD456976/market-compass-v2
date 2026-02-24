@@ -5,7 +5,7 @@ import { toast } from '@/hooks/use-toast';
 
 interface ExportOptions {
   clientName: string;
-  reportType: 'Seller' | 'Buyer' | 'Comparison';
+  reportType: 'Seller' | 'Buyer' | 'Comparison' | 'Touring Brief';
   snapshotTimestamp?: string;
   isClientMode?: boolean;
   customNotice?: string;
