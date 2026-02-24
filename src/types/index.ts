@@ -77,6 +77,27 @@ export interface PropertyFactor {
   source: 'field' | 'remarks';
 }
 
+export interface MarketHistoryEvent {
+  mlsNumber: string;
+  date: string;
+  action: string; // 'Listed' | 'Price Changed' | 'Canceled' | 'Expired' | 'Sold' | 'Pending' | 'Withdrawn' | 'Status Changed'
+  price: number | null;
+  agent?: string;
+  dom?: number;
+  dto?: number;
+}
+
+export interface ListingHistory {
+  events: MarketHistoryEvent[];
+  cumulativeDom: number;
+  priceChanges: number;
+  wasRelisted: boolean;
+  wasCanceled: boolean;
+  totalPriceDrop: number; // from highest to current
+  highestPrice: number;
+  currentPrice: number;
+}
+
 export interface AddressFields {
   address_line?: string;
   city?: string;
@@ -104,6 +125,8 @@ export interface Session {
   address_fields?: AddressFields;
   // Property intelligence factors from document extraction
   property_factors?: PropertyFactor[];
+  // Listing market history (price changes, cancellations, re-listings)
+  listing_history?: ListingHistory;
   // Privacy toggle (default true = hide address from client)
   client_privacy?: boolean;
   seller_inputs?: SellerInputs;

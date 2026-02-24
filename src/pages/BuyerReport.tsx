@@ -86,6 +86,7 @@ import { MetricCallout, MetricCalloutGrid } from '@/components/report/MetricCall
 import { ImprovementPanel } from '@/components/report/ImprovementPanel';
 import { ScenarioComparisonBanner } from '@/components/report/ScenarioComparisonBanner';
 import { BuyerCompetingOffersCard } from '@/components/report/CompetingOffersCard';
+import { ListingHistoryCard } from '@/components/report/ListingHistoryCard';
 import { SellerMotivationCard } from '@/components/report/MotivationCard';
 import { BuyerTimingCard } from '@/components/report/TimingCard';
 import { BuyerNegotiationCard } from '@/components/report/NegotiationCard';
@@ -175,6 +176,14 @@ const BuyerReport = () => {
         try {
           const mlsData = sessionStorage.getItem('current_mls_details');
           if (mlsData) setMlsDetails(JSON.parse(mlsData));
+        } catch { /* ignore */ }
+
+        // Load listing history from sessionStorage if not on session
+        try {
+          const historyData = sessionStorage.getItem('current_listing_history');
+          if (historyData && !session.listing_history) {
+            session.listing_history = JSON.parse(historyData);
+          }
         } catch { /* ignore */ }
 
         // Get market snapshot based on location
@@ -713,8 +722,13 @@ const BuyerReport = () => {
             {/* Competitive Intelligence */}
             <BuyerCompetingOffersCard inputs={inputs} snapshot={marketSnapshot?.snapshot} isGenericBaseline={marketSnapshot?.isGenericBaseline} className="pdf-exclude" />
 
+            {/* Listing History */}
+            {session.listing_history && (
+              <ListingHistoryCard history={session.listing_history} />
+            )}
+
             {/* Seller Motivation Profile */}
-            <SellerMotivationCard inputs={inputs} snapshot={marketSnapshot?.snapshot} />
+            <SellerMotivationCard inputs={inputs} snapshot={marketSnapshot?.snapshot} listingHistory={session.listing_history} />
 
             {/* Offer Timing Advantage */}
             <BuyerTimingCard inputs={inputs} snapshot={marketSnapshot?.snapshot} />

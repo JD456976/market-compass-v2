@@ -21,7 +21,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { extractTextFromPDF } from '@/lib/pdfExtract';
-import { parseMLSPINText, getExtractionConfidence } from '@/lib/mlspinParser';
+import { parseMLSPINText, getExtractionConfidence, buildListingHistory } from '@/lib/mlspinParser';
 
 export interface MLSExtractedData {
   clientName?: string;
@@ -33,6 +33,7 @@ export interface MLSExtractedData {
   daysOnMarket?: number;
   notes?: string;
   factors?: import('@/types').PropertyFactor[];
+  listingHistory?: import('@/types').ListingHistory;
 }
 
 interface MLSVoiceCameraInputProps {
@@ -267,6 +268,12 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
         sessionStorage.setItem('current_mls_details', JSON.stringify(mlsDetails));
       }
 
+      // Build listing history from market history events
+      const listingHistory = buildListingHistory(extraction.marketHistory);
+      if (listingHistory) {
+        sessionStorage.setItem('current_listing_history', JSON.stringify(listingHistory));
+      }
+
       const data: MLSExtractedData = {
         location: locationParts.join(', ') || undefined,
         address: addressParts.join(', ') || undefined,
@@ -276,6 +283,7 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
         daysOnMarket: extraction.daysOnMarket?.value ? (isNaN(parseInt(extraction.daysOnMarket.value)) ? undefined : parseInt(extraction.daysOnMarket.value)) : undefined,
         notes: undefined, // No longer stuffing MLS details into notes
         factors: propertyFactors.length > 0 ? propertyFactors : undefined,
+        listingHistory: listingHistory || undefined,
       };
 
       handleDataExtracted(data);
@@ -428,6 +436,12 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
           sessionStorage.setItem('current_mls_details', JSON.stringify(mlsDetails));
         }
 
+        // Build listing history from market history events
+        const listingHistory = buildListingHistory(extraction.marketHistory);
+        if (listingHistory) {
+          sessionStorage.setItem('current_listing_history', JSON.stringify(listingHistory));
+        }
+
         const data: MLSExtractedData = {
           location: locationParts.join(', ') || undefined,
           address: addressParts.join(', ') || undefined,
@@ -436,6 +450,7 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
           listPrice: extraction.listPrice?.value ? parseInt(extraction.listPrice.value.replace(/,/g, '')) || undefined : undefined,
           daysOnMarket: extraction.daysOnMarket?.value ? parseInt(extraction.daysOnMarket.value) || undefined : undefined,
           factors: propertyFactors.length > 0 ? propertyFactors : undefined,
+          listingHistory: listingHistory || undefined,
         };
 
         handleDataExtracted(data);

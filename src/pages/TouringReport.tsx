@@ -26,6 +26,7 @@ import { BuyerTimingCard } from '@/components/report/TimingCard';
 import { WaitSimulatorCard } from '@/components/report/WaitSimulatorCard';
 import { HistoricalTrends } from '@/components/report/HistoricalTrends';
 import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore';
+import { ListingHistoryCard } from '@/components/report/ListingHistoryCard';
 import { ReportProvider, ReportTemplate } from '@/components/report/ReportContext';
 import { ReportTemplateSelector } from '@/components/report/ReportTemplateSelector';
 import { ReportWatermark } from '@/components/report/ReportWatermark';
@@ -54,6 +55,13 @@ const TouringReport = () => {
     }
     try {
       const parsed: Session = JSON.parse(sessionData);
+      // Load listing history from sessionStorage if not on session
+      try {
+        const historyData = sessionStorage.getItem('current_listing_history');
+        if (historyData && !parsed.listing_history) {
+          parsed.listing_history = JSON.parse(historyData);
+        }
+      } catch { /* ignore */ }
       setSession(parsed);
       setMarketSnapshot(getMarketSnapshotOrBaseline(parsed.location));
 
@@ -347,6 +355,11 @@ const TouringReport = () => {
                 </MetricCalloutGrid>
               )}
 
+              {/* Listing History */}
+              {session.listing_history && (
+                <ListingHistoryCard history={session.listing_history} />
+              )}
+
               {/* Competitive Intelligence */}
               {hasListPrice && (
                 <BuyerCompetingOffersCard
@@ -357,7 +370,7 @@ const TouringReport = () => {
               )}
 
               {/* Seller Motivation Profile */}
-              <SellerMotivationCard inputs={inputs} snapshot={marketSnapshot?.snapshot} />
+              <SellerMotivationCard inputs={inputs} snapshot={marketSnapshot?.snapshot} listingHistory={session.listing_history} />
 
               {/* Timing Signals */}
               <BuyerTimingCard inputs={inputs} snapshot={marketSnapshot?.snapshot} />
