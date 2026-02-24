@@ -110,7 +110,8 @@ function DraftRow({ session, onNavigate, onDelete }: { session: any; onNavigate:
 }
 
 // ─── Shared Report Row ────────────────────────────────────────────────────────
-function SharedRow({ session, onNavigate }: { session: any; onNavigate: () => void }) {
+function SharedRow({ session, onNavigate, onArchive }: { session: any; onNavigate: () => void; onArchive: () => void }) {
+  const [archiving, setArchiving] = useState(false);
   const Icon = session.session_type === 'Seller' ? Building2 : session.session_type === 'touring_brief' ? Eye : Users;
   const color = session.session_type === 'Seller' ? 'bg-primary/10 text-primary' : session.session_type === 'touring_brief' ? 'bg-violet-500/10 text-violet-600' : 'bg-accent/10 text-accent';
 
@@ -118,18 +119,29 @@ function SharedRow({ session, onNavigate }: { session: any; onNavigate: () => vo
     <motion.div
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-background px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer"
-      onClick={onNavigate}
+      className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-background px-3 py-2.5 hover:bg-muted/30 transition-colors group"
     >
       <div className={cn('p-1.5 rounded-lg shrink-0', color)}>
         <Icon className="h-3.5 w-3.5" />
       </div>
-      <div className="flex-1 min-w-0">
+      <button className="flex-1 min-w-0 text-left" onClick={onNavigate}>
         <p className="text-xs font-medium truncate">{session.client_name || session.location || 'Shared report'}</p>
         <p className="text-[10px] text-muted-foreground">{session.location} · Shared {relativeDate(session.updated_at)}</p>
-      </div>
+      </button>
       <div className="flex items-center gap-1.5 shrink-0">
         <div className="h-1.5 w-1.5 rounded-full bg-[hsl(142,72%,40%)]" title="Live share link active" />
+        <button
+          onClick={async (e) => {
+            e.stopPropagation();
+            setArchiving(true);
+            await onArchive();
+            setArchiving(false);
+          }}
+          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 transition-all"
+          title="Archive report"
+        >
+          {archiving ? <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" /> : <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />}
+        </button>
         <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
       </div>
     </motion.div>
@@ -200,7 +212,7 @@ export function AllReportsDrawer({ open, onClose }: AllReportsDrawerProps) {
   const [search, setSearch] = useState('');
 
   const { sessions: drafts, deleteSession: deleteDraft } = useDraftSessions();
-  const { activeSessions: shared } = useSharedSessions();
+  const { activeSessions: shared, archiveSession } = useSharedSessions();
 
   // Listing Navigator runs
   const { data: auditRuns, isLoading: auditsLoading } = useQuery({
@@ -320,6 +332,10 @@ export function AllReportsDrawer({ open, onClose }: AllReportsDrawerProps) {
                     key={s.id}
                     session={s}
                     onNavigate={() => handleNav(`/shared-reports`)}
+                    onArchive={async () => {
+                      await archiveSession(s.id);
+                      toast({ title: 'Report archived', description: `"${s.client_name}" moved to Archived.` });
+                    }}
                   />
                 ))}
               </div>
