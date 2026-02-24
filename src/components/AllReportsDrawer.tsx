@@ -73,8 +73,8 @@ function SectionHeader({ icon: Icon, label, count, color }: { icon: React.Elemen
 // ─── Draft Report Row ─────────────────────────────────────────────────────────
 function DraftRow({ session, onNavigate, onDelete }: { session: any; onNavigate: () => void; onDelete: () => void }) {
   const [deleting, setDeleting] = useState(false);
-  const Icon = session.session_type === 'Seller' ? Building2 : Users;
-  const color = session.session_type === 'Seller' ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent';
+  const Icon = session.session_type === 'Seller' ? Building2 : session.session_type === 'touring_brief' ? Eye : Users;
+  const color = session.session_type === 'Seller' ? 'bg-primary/10 text-primary' : session.session_type === 'touring_brief' ? 'bg-violet-500/10 text-violet-600' : 'bg-accent/10 text-accent';
 
   return (
     <motion.div
@@ -90,7 +90,7 @@ function DraftRow({ session, onNavigate, onDelete }: { session: any; onNavigate:
         <p className="text-[10px] text-muted-foreground">{session.location} · {relativeDate(session.updated_at)}</p>
       </button>
       <div className="flex items-center gap-1 shrink-0">
-        <Badge variant="outline" className="text-[9px] h-4 px-1.5 capitalize">{session.session_type}</Badge>
+        <Badge variant="outline" className="text-[9px] h-4 px-1.5 capitalize">{session.session_type === 'touring_brief' ? 'Touring' : session.session_type}</Badge>
         <button
           onClick={async (e) => {
             e.stopPropagation();
@@ -111,8 +111,8 @@ function DraftRow({ session, onNavigate, onDelete }: { session: any; onNavigate:
 
 // ─── Shared Report Row ────────────────────────────────────────────────────────
 function SharedRow({ session, onNavigate }: { session: any; onNavigate: () => void }) {
-  const Icon = session.session_type === 'Seller' ? Building2 : Users;
-  const color = session.session_type === 'Seller' ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent';
+  const Icon = session.session_type === 'Seller' ? Building2 : session.session_type === 'touring_brief' ? Eye : Users;
+  const color = session.session_type === 'Seller' ? 'bg-primary/10 text-primary' : session.session_type === 'touring_brief' ? 'bg-violet-500/10 text-violet-600' : 'bg-accent/10 text-accent';
 
   return (
     <motion.div
@@ -296,7 +296,7 @@ export function AllReportsDrawer({ open, onClose }: AllReportsDrawerProps) {
                   <DraftRow
                     key={s.id}
                     session={s}
-                    onNavigate={() => handleNav(s.session_type === 'Seller' ? `/seller/report?sessionId=${s.id}` : `/buyer/report?sessionId=${s.id}`)}
+                    onNavigate={() => handleNav(s.session_type === 'Seller' ? `/seller/report?sessionId=${s.id}` : s.session_type === 'touring_brief' ? `/touring/report?sessionId=${s.id}` : `/buyer/report?sessionId=${s.id}`)}
                     onDelete={async () => { await deleteDraft(s.id); }}
                   />
                 ))}
