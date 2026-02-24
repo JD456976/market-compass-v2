@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { BuyerInputs, SellerInputs, LikelihoodBand } from '@/types';
+import { BuyerInputs, SellerInputs, LikelihoodBand, ListingHistory } from '@/types';
 import { MarketSnapshot } from '@/lib/marketSnapshots';
 import { inferSellerMotivation, inferBuyerMotivation, MotivationSignal } from '@/lib/sellerMotivation';
 
@@ -47,11 +47,12 @@ const MOTIVATION_BADGE: Record<string, 'success' | 'warning' | 'destructive' | '
 interface SellerMotivationCardProps {
   inputs: BuyerInputs;
   snapshot?: MarketSnapshot;
+  listingHistory?: ListingHistory;
   className?: string;
 }
 
-export function SellerMotivationCard({ inputs, snapshot, className }: SellerMotivationCardProps) {
-  const result = useMemo(() => inferSellerMotivation(inputs, snapshot), [inputs, snapshot]);
+export function SellerMotivationCard({ inputs, snapshot, listingHistory, className }: SellerMotivationCardProps) {
+  const result = useMemo(() => inferSellerMotivation(inputs, snapshot, listingHistory), [inputs, snapshot, listingHistory]);
 
   return (
     <Card className={cn('pdf-section pdf-avoid-break overflow-hidden', className)}>

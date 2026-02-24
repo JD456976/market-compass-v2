@@ -117,6 +117,7 @@ const BuyerFlow = () => {
   const [priceChangeDirection, setPriceChangeDirection] = useState<PriceChangeDirection>(DEFAULT_VALUES.priceChangeDirection);
   const [priceChangeAmount, setPriceChangeAmount] = useState(DEFAULT_VALUES.priceChangeAmount);
   const [propertyFactors, setPropertyFactors] = useState<import('@/types').PropertyFactor[]>([]);
+  const [listingHistory, setListingHistory] = useState<import('@/types').ListingHistory | undefined>();
   const [reportTemplate, setReportTemplate] = useState<ReportTemplate>('modern');
   
   // Scenario overrides
@@ -135,6 +136,7 @@ const BuyerFlow = () => {
     setCondition(session.condition);
     if (session.market_scenario_id) setSelectedScenarioId(session.market_scenario_id);
     if (session.property_factors) setPropertyFactors(session.property_factors);
+    if (session.listing_history) setListingHistory(session.listing_history);
     const bi = session.buyer_inputs;
     if (bi) {
       if (bi.reference_price) setReferencePrice(String(bi.reference_price));
@@ -180,6 +182,7 @@ const BuyerFlow = () => {
           if (session.market_scenario_id) setSelectedScenarioId(session.market_scenario_id);
           setDraftId(session.id);
           if (session.property_factors) setPropertyFactors(session.property_factors);
+          if (session.listing_history) setListingHistory(session.listing_history);
           const bi = session.buyer_inputs;
           if (bi) {
             if (bi.offer_price) setOfferPrice(String(bi.offer_price));
@@ -321,6 +324,7 @@ const BuyerFlow = () => {
     } : undefined,
     client_privacy: true,
     property_factors: propertyFactors.length > 0 ? propertyFactors : undefined,
+    listing_history: listingHistory,
     buyer_inputs: {
       offer_price: parsePriceValue(offerPrice),
       reference_price: referencePrice ? parsePriceValue(referencePrice) : undefined,
@@ -574,6 +578,7 @@ const BuyerFlow = () => {
                   if (data.notes) setClientNotes(prev => prev ? `${prev}\n${data.notes}` : data.notes || '');
                   if (data.listPrice) setReferencePrice(String(data.listPrice));
                   if (data.factors) setPropertyFactors(data.factors);
+                  if (data.listingHistory) setListingHistory(data.listingHistory);
                 }}
               />
 

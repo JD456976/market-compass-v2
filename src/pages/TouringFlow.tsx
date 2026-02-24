@@ -50,6 +50,7 @@ const TouringFlow = () => {
   const [daysOnMarket, setDaysOnMarket] = useState(DEFAULT_VALUES.daysOnMarket);
   const [marketConditions, setMarketConditions] = useState<MarketConditions>(DEFAULT_VALUES.marketConditions);
   const [propertyFactors, setPropertyFactors] = useState<import('@/types').PropertyFactor[]>([]);
+  const [listingHistory, setListingHistory] = useState<import('@/types').ListingHistory | undefined>();
   const [attempted, setAttempted] = useState(false);
 
   const handleMLSData = useCallback((data: MLSExtractedData) => {
@@ -61,6 +62,7 @@ const TouringFlow = () => {
     if (data.listPrice) setListPrice(String(data.listPrice));
     if (data.daysOnMarket !== undefined) setDaysOnMarket(String(data.daysOnMarket));
     if (data.factors) setPropertyFactors(data.factors);
+    if (data.listingHistory) setListingHistory(data.listingHistory);
   }, []);
 
   const handleListingNavigatorImport = useCallback((data: { address?: string; listPrice?: string }) => {
@@ -96,6 +98,7 @@ const TouringFlow = () => {
     } : undefined,
     client_privacy: true,
     property_factors: propertyFactors.length > 0 ? propertyFactors : undefined,
+    listing_history: listingHistory,
     buyer_inputs: {
       offer_price: 0, // No offer yet — touring brief
       reference_price: listPrice ? parsePriceValue(listPrice) : undefined,

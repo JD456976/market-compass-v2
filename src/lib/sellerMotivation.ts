@@ -4,7 +4,7 @@
  * Seller side: how motivated are buyers in this market?
  */
 
-import { BuyerInputs, SellerInputs, LikelihoodBand } from '@/types';
+import { BuyerInputs, SellerInputs, LikelihoodBand, ListingHistory } from '@/types';
 import { MarketSnapshot } from '@/lib/marketSnapshots';
 
 export type MotivationLevel = 'Hot Listing' | 'Neutral' | 'Motivated' | 'Stale';
@@ -34,7 +34,8 @@ export interface MotivationSignal {
 
 export function inferSellerMotivation(
   inputs: BuyerInputs,
-  snapshot?: MarketSnapshot
+  snapshot?: MarketSnapshot,
+  listingHistory?: ListingHistory
 ): SellerMotivationResult {
   let score = 2; // Neutral baseline
   const signals: MotivationSignal[] = [];
@@ -99,6 +100,51 @@ export function inferSellerMotivation(
     score -= 0.3;
   } else {
     signals.push({ label: 'Seasonal Timing', indicator: 'neutral', detail: 'Standard selling season' });
+  }
+  
+  // Listing History signals
+  if (listingHistory) {
+    if (listingHistory.wasRelisted) {
+      signals.push({
+        label: 'Re-Listed Property',
+        indicator: 'positive',
+        detail: `Property was previously listed and re-listed${listingHistory.wasCanceled ? ' after cancellation' : ''} — seller may be more flexible on terms`,
+      });
+      score += 1;
+    } else if (listingHistory.wasCanceled) {
+      signals.push({
+        label: 'Previously Canceled',
+        indicator: 'positive',
+        detail: 'Prior listing was canceled — circumstances may have changed, increasing motivation',
+      });
+      score += 0.5;
+    }
+
+    if (listingHistory.cumulativeDom > 60) {
+      signals.push({
+        label: 'Cumulative Market Exposure',
+        indicator: 'positive',
+        detail: `${listingHistory.cumulativeDom} total days across all listings — extended exposure strongly suggests willingness to negotiate`,
+      });
+      score += 1;
+    } else if (listingHistory.cumulativeDom > 30) {
+      signals.push({
+        label: 'Cumulative Market Exposure',
+        indicator: 'positive',
+        detail: `${listingHistory.cumulativeDom} total days across all listings — moderate exposure may indicate flexibility`,
+      });
+      score += 0.5;
+    }
+
+    if (listingHistory.totalPriceDrop > 0 && listingHistory.highestPrice > 0) {
+      const pct = ((listingHistory.totalPriceDrop / listingHistory.highestPrice) * 100).toFixed(1);
+      signals.push({
+        label: 'Price Reduction History',
+        indicator: 'positive',
+        detail: `Price dropped ${pct}% ($${listingHistory.totalPriceDrop.toLocaleString()}) from original — seller adjusting expectations`,
+      });
+      score += 0.5;
+    }
   }
   
   // Clamp and determine level

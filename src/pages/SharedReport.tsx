@@ -55,6 +55,7 @@ import { SellerWaitSimulatorCard } from '@/components/report/SellerWaitSimulator
 import { AddressIntelligenceCard } from '@/components/report/AddressIntelligenceCard';
 import { getMarketSnapshotOrBaseline, MarketSnapshot } from '@/lib/marketSnapshots';
 import { BuyerCompetingOffersCard, SellerCompetingOffersCard } from '@/components/report/CompetingOffersCard';
+import { ListingHistoryCard } from '@/components/report/ListingHistoryCard';
 import { SellerMotivationCard, BuyerMotivationCard } from '@/components/report/MotivationCard';
 import { BuyerTimingCard, SellerTimingCard } from '@/components/report/TimingCard';
 import { BuyerNegotiationCard, SellerNegotiationCard } from '@/components/report/NegotiationCard';
@@ -906,8 +907,13 @@ const SharedReportContent = () => {
               {/* Competing Offer Simulator */}
               <BuyerCompetingOffersCard inputs={whatIfInputs || session.buyer_inputs!} snapshot={marketSnapshot?.snapshot} className="pdf-exclude" />
 
+              {/* Listing History */}
+              {session.listing_history && (
+                <ListingHistoryCard history={session.listing_history} />
+              )}
+
               {/* Seller Motivation Profile */}
-              <SellerMotivationCard inputs={whatIfInputs || session.buyer_inputs!} snapshot={marketSnapshot?.snapshot} />
+              <SellerMotivationCard inputs={whatIfInputs || session.buyer_inputs!} snapshot={marketSnapshot?.snapshot} listingHistory={session.listing_history} />
 
               {/* Offer Timing Advantage */}
               <BuyerTimingCard inputs={whatIfInputs || session.buyer_inputs!} snapshot={marketSnapshot?.snapshot} />

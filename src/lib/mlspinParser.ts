@@ -14,6 +14,16 @@ export interface ExtractedField {
   source: 'field' | 'remarks';
 }
 
+export interface MarketHistoryEvent {
+  mlsNumber: string;
+  date: string;
+  action: string;
+  price: number | null;
+  agent?: string;
+  dom?: number;
+  dto?: number;
+}
+
 export interface MLSPINExtraction {
   mlsNumber: ExtractedField | null;
   listPrice: ExtractedField | null;
@@ -60,6 +70,8 @@ export interface MLSPINExtraction {
   listingOffice: ExtractedField | null;
   listingAgent: ExtractedField | null;
   originalPrice: ExtractedField | null;
+  // Market history
+  marketHistory: MarketHistoryEvent[];
   // Property intelligence factors
   factors: PropertyFactor[];
 }
@@ -610,13 +622,173 @@ function extractFactors(text: string, fields: Partial<MLSPINExtraction>): Proper
     }
   }
 
+  // Market History signals (re-listing, cancellation, cumulative DOM)
+  if (fields.marketHistory && Array.isArray(fields.marketHistory)) {
+    const historyEvents = fields.marketHistory as unknown as MarketHistoryEvent[];
+    const listingCount = historyEvents.filter(e => e.action === 'Listed').length;
+    const wasCanceled = historyEvents.some(e => e.action === 'Canceled' || e.action === 'Expired' || e.action === 'Withdrawn');
+    const cdomEvent = historyEvents.find(e => e.action === 'CumulativeDom');
+    const cdom = cdomEvent?.dom;
+    const prices = historyEvents.filter(e => e.price && e.price > 0).map(e => e.price!);
+    const highestPrice = prices.length > 0 ? Math.max(...prices) : 0;
+    const currentPrice = prices.length > 0 ? prices[prices.length - 1] : 0;
+
+    if (listingCount > 1) {
+      factors.push({
+        label: 'Re-Listed Property',
+        weight: -1.5,
+        explanation: `This property has been listed ${listingCount} times${wasCanceled ? ' (previously canceled/withdrawn)' : ''}. Re-listings often indicate pricing issues or seller motivation to sell.`,
+        evidence: `${listingCount} listing attempts found in market history`,
+        confidence: 'high',
+        source: 'field',
+      });
+    }
+
+    if (wasCanceled && listingCount <= 1) {
+      factors.push({
+        label: 'Previously Canceled/Withdrawn',
+        weight: -1,
+        explanation: 'This listing was previously canceled or withdrawn, which may signal pricing challenges or changing seller circumstances.',
+        evidence: 'Status change to Canceled/Withdrawn found in history',
+        confidence: 'high',
+        source: 'field',
+      });
+    }
+
+    if (cdom && cdom > 60) {
+      factors.push({
+        label: 'High Cumulative DOM',
+        weight: -1.5,
+        explanation: `Total market exposure of ${cdom} days across all listings. Extended cumulative DOM strongly suggests seller motivation and negotiation opportunity.`,
+        evidence: `Cumulative days on market: ${cdom}`,
+        confidence: 'high',
+        source: 'field',
+      });
+    }
+
+    if (highestPrice > 0 && currentPrice > 0 && highestPrice > currentPrice) {
+      const totalDrop = highestPrice - currentPrice;
+      const pctDrop = ((totalDrop / highestPrice) * 100).toFixed(1);
+      if (parseFloat(pctDrop) >= 3) {
+        factors.push({
+          label: 'Cumulative Price Drop',
+          weight: -1,
+          explanation: `Price has dropped ${pctDrop}% ($${totalDrop.toLocaleString()}) from highest listing of $${highestPrice.toLocaleString()} to current $${currentPrice.toLocaleString()}.`,
+          evidence: `Original: $${highestPrice.toLocaleString()} → Current: $${currentPrice.toLocaleString()}`,
+          confidence: 'high',
+          source: 'field',
+        });
+      }
+    }
+  }
+
   return factors;
+}
+
+/**
+ * Extract market history events from MLSPIN "Market History" table
+ * Format: MLS# | Date | DOM | DTO | Price | Status/Action | Agent | $Price
+ */
+function extractMarketHistory(text: string): MarketHistoryEvent[] {
+  const events: MarketHistoryEvent[] = [];
+  
+  // Pattern 1: "MLS#  Date  Listed for $XXX,XXX" or "Status Changed to: Canceled"
+  // MLSPIN format: 7345874312/1/2025Listed for $729,000
+  const listingPattern = /(\d{7,10})(\d{1,2}\/\d{1,2}\/\d{2,4})(?:.*?)Listed\s+for\s+\$?([\d,]+)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = listingPattern.exec(text)) !== null) {
+    events.push({
+      mlsNumber: m[1],
+      date: m[2],
+      action: 'Listed',
+      price: parseInt(m[3].replace(/,/g, '')),
+    });
+  }
+
+  // Pattern 2: Status changes (Canceled, Expired, Withdrawn, Pending, Sold)
+  const statusPattern = /(\d{1,2}\/\d{1,2}\/\d{2,4})(?:.*?)Status\s+Changed\s+to:\s*(Canceled|Cancelled|Expired|Withdrawn|Pending|Sold|Active)/gi;
+  while ((m = statusPattern.exec(text)) !== null) {
+    events.push({
+      mlsNumber: '',
+      date: m[1],
+      action: m[2].replace('Cancelled', 'Canceled'),
+      price: null,
+    });
+  }
+
+  // Pattern 3: Price changes  
+  const priceChangePattern = /(\d{1,2}\/\d{1,2}\/\d{2,4})(?:.*?)(?:Price\s+Changed?\s+to|New\s+Price)\s*:?\s*\$?([\d,]+)/gi;
+  while ((m = priceChangePattern.exec(text)) !== null) {
+    events.push({
+      mlsNumber: '',
+      date: m[1],
+      action: 'Price Changed',
+      price: parseInt(m[2].replace(/,/g, '')),
+    });
+  }
+
+  // Pattern 4: Cumulative/total DOM from "Market History for this property XX"
+  const cdomMatch = text.match(/Market\s+History\s+for\s+this\s+property\s*(\d+)/i);
+  if (cdomMatch) {
+    // Store as metadata - we'll use this to override cumulative DOM
+    events.push({
+      mlsNumber: 'CDOM',
+      date: '',
+      action: 'CumulativeDom',
+      price: null,
+      dom: parseInt(cdomMatch[1]),
+    });
+  }
+
+  // Pattern 5: DOM/DTO values near MLS numbers  
+  const domPattern = /(\d{7,10}).*?(\d{1,2}\/\d{1,2}\/\d{2,4}).*?(\d+)\s*(\d+)/g;
+  // Try to attach DOM to existing events (best effort)
+
+  // Sort by date
+  events.sort((a, b) => {
+    if (!a.date || !b.date) return 0;
+    const da = new Date(a.date);
+    const db = new Date(b.date);
+    return da.getTime() - db.getTime();
+  });
+
+  return events;
+}
+
+/**
+ * Build ListingHistory summary from extracted events
+ */
+export function buildListingHistory(events: MarketHistoryEvent[]): import('@/types').ListingHistory | null {
+  const realEvents = events.filter(e => e.action !== 'CumulativeDom');
+  if (realEvents.length === 0) return null;
+
+  const cdomEvent = events.find(e => e.action === 'CumulativeDom');
+  const prices = realEvents.filter(e => e.price && e.price > 0).map(e => e.price!);
+  const highestPrice = prices.length > 0 ? Math.max(...prices) : 0;
+  const currentPrice = prices.length > 0 ? prices[prices.length - 1] : 0;
+  const priceChanges = new Set(prices).size - 1;
+  const wasCanceled = realEvents.some(e => e.action === 'Canceled' || e.action === 'Expired' || e.action === 'Withdrawn');
+  const listingCount = realEvents.filter(e => e.action === 'Listed').length;
+  const wasRelisted = listingCount > 1;
+
+  return {
+    events: realEvents,
+    cumulativeDom: cdomEvent?.dom || 0,
+    priceChanges: Math.max(0, priceChanges),
+    wasRelisted,
+    wasCanceled,
+    totalPriceDrop: highestPrice - currentPrice,
+    highestPrice,
+    currentPrice,
+  };
 }
 
 /**
  * Main extraction function — parses raw text from an MLSPIN PDF
  */
 export function parseMLSPINText(rawText: string): MLSPINExtraction {
+  const historyEvents = extractMarketHistory(rawText);
+
   const result: MLSPINExtraction = {
     mlsNumber: extractMLSNumber(rawText),
     listPrice: extractListPrice(rawText),
@@ -662,6 +834,7 @@ export function parseMLSPINText(rawText: string): MLSPINExtraction {
     listingOffice: extractListingOffice(rawText),
     listingAgent: extractListingAgent(rawText),
     originalPrice: extractOriginalPrice(rawText),
+    marketHistory: historyEvents,
     factors: [],
   };
 
