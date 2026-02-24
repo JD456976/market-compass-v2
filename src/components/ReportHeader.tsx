@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Mail, Phone, Globe, Award } from 'lucide-react';
 
 interface ReportHeaderProps {
-  reportType: 'Seller' | 'Buyer' | 'Comparison';
+  reportType: 'Seller' | 'Buyer' | 'Comparison' | 'Touring Brief';
   clientName: string;
   snapshotTimestamp: string;
   showTimestamp?: boolean;
