@@ -267,10 +267,11 @@ function ScenarioForm({
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
 
-  // Slider ranges based on original values
-  const priceMin = Math.round(originalInputs.offer_price * 0.80);
-  const priceMax = Math.round(originalInputs.offer_price * 1.30);
-  const priceStep = Math.max(1000, Math.round(originalInputs.offer_price * 0.005 / 1000) * 1000);
+  // Slider ranges based on original values, fallback to reference_price if offer_price is 0
+  const basePrice = originalInputs.offer_price || originalInputs.reference_price || 0;
+  const priceMin = Math.round(basePrice * 0.80);
+  const priceMax = Math.round(basePrice * 1.30);
+  const priceStep = Math.max(1000, Math.round(basePrice * 0.005 / 1000) * 1000);
 
   return (
     <TooltipProvider>

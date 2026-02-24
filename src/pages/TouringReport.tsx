@@ -90,7 +90,7 @@ const TouringReport = () => {
     try {
       await exportReportToPdf('report-export', {
         clientName: session.client_name,
-        reportType: 'Touring Brief' as any,
+        reportType: 'Touring Brief',
         snapshotTimestamp: session.created_at,
         isClientMode,
       });

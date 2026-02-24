@@ -406,9 +406,9 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Hide header section in PDF export since jsPDF renders its own header */
+/* Ensure header section is visible in PDF export */
 .pdf-export .pdf-header-section {
-  display: none !important;
+  display: block !important;
 }
 
 /* Stat tiles alignment stabilization for PDF export */
