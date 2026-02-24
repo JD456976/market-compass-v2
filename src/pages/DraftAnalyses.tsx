@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Eye, Copy, Building2, Users, FileEdit, Calendar, GitCompare, Check, X, Loader2, Search, Pencil } from 'lucide-react';
+import { ArrowLeft, Eye, Copy, Building2, Users, FileEdit, Calendar, GitCompare, Check, X, Loader2, Search, Pencil, Compass } from 'lucide-react';
 import { SkeletonList } from '@/components/ui/skeleton-card';
 import { EmptyDrafts } from '@/components/EmptyState';
 import { Session } from '@/types';
@@ -22,7 +22,7 @@ const DraftAnalyses = () => {
   
   // Search & filter state
   const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'Seller' | 'Buyer'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'Seller' | 'Buyer' | 'touring_brief'>('all');
   
   // Compare mode state
   const [compareMode, setCompareMode] = useState(false);
@@ -49,6 +49,9 @@ const DraftAnalyses = () => {
     sessionStorage.setItem('current_session', JSON.stringify(session));
     if (session.session_type === 'Seller') {
       navigate('/seller/report');
+    } else if (session.session_type === 'touring_brief') {
+      sessionStorage.setItem('touring_brief', 'true');
+      navigate('/touring/report');
     } else {
       navigate('/buyer/report');
     }
@@ -60,6 +63,9 @@ const DraftAnalyses = () => {
     sessionStorage.setItem('current_session', JSON.stringify(session));
     if (session.session_type === 'Seller') {
       navigate('/seller');
+    } else if (session.session_type === 'touring_brief') {
+      sessionStorage.setItem('touring_brief', 'true');
+      navigate('/touring');
     } else {
       navigate('/buyer');
     }
@@ -219,14 +225,15 @@ const DraftAnalyses = () => {
                 className="pl-9 h-11"
               />
             </div>
-            <Select value={typeFilter} onValueChange={(v: 'all' | 'Seller' | 'Buyer') => setTypeFilter(v)}>
-              <SelectTrigger className="w-[120px] h-11">
+            <Select value={typeFilter} onValueChange={(v: 'all' | 'Seller' | 'Buyer' | 'touring_brief') => setTypeFilter(v)}>
+              <SelectTrigger className="w-[140px] h-11">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="Seller">Seller</SelectItem>
                 <SelectItem value="Buyer">Buyer</SelectItem>
+                <SelectItem value="touring_brief">Touring</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -328,9 +335,11 @@ const DraftAnalyses = () => {
                                 {isSelected && <Check className="h-4 w-4" />}
                               </div>
                             )}
-                            <div className={`p-2.5 rounded-xl shrink-0 ${session.session_type === 'Seller' ? 'bg-primary/10' : 'bg-accent/10'}`}>
+                            <div className={`p-2.5 rounded-xl shrink-0 ${session.session_type === 'Seller' ? 'bg-primary/10' : session.session_type === 'touring_brief' ? 'bg-violet-500/10' : 'bg-accent/10'}`}>
                               {session.session_type === 'Seller' ? (
                                 <Building2 className="h-5 w-5 text-primary" />
+                              ) : session.session_type === 'touring_brief' ? (
+                                <Compass className="h-5 w-5 text-violet-600" />
                               ) : (
                                 <Users className="h-5 w-5 text-accent" />
                               )}
@@ -339,7 +348,7 @@ const DraftAnalyses = () => {
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <h3 className="font-serif font-semibold truncate">{session.client_name}</h3>
                                 <Badge variant={session.session_type === 'Seller' ? 'default' : 'accent'} className="text-xs shrink-0">
-                                  {session.session_type}
+                                  {session.session_type === 'touring_brief' ? 'Touring' : session.session_type}
                                 </Badge>
                               </div>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">

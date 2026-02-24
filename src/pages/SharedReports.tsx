@@ -32,7 +32,7 @@ const SharedReports = () => {
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('active');
   const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'Seller' | 'Buyer'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'Seller' | 'Buyer' | 'touring_brief'>('all');
   const [compareMode, setCompareMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkMode, setBulkMode] = useState(false);
@@ -188,7 +188,7 @@ const SharedReports = () => {
       
       const h2 = document.createElement('h2');
       h2.style.cssText = 'margin: 0 0 8px; font-size: 18px;';
-      h2.textContent = `${session.session_type} Report`;
+      h2.textContent = `${session.session_type === 'touring_brief' ? 'Touring Brief' : session.session_type} Report`;
       
       const p1 = document.createElement('p');
       p1.style.cssText = 'margin: 0 0 4px; color: #666;';
@@ -211,7 +211,7 @@ const SharedReports = () => {
       
       await exportReportToPdf('pdf-export-temp', {
         clientName: session.client_name,
-        reportType: session.session_type === 'Seller' ? 'Seller' : 'Buyer',
+        reportType: session.session_type === 'Seller' ? 'Seller' : session.session_type === 'touring_brief' ? 'Touring Brief' : 'Buyer',
         snapshotTimestamp: reportData.snapshotTimestamp,
         isClientMode: true,
       });
@@ -307,9 +307,11 @@ const SharedReports = () => {
                   onClick={(e) => e.stopPropagation()}
                 />
               )}
-              <div className={`p-2.5 rounded-xl shrink-0 ${session.session_type === 'Seller' ? 'bg-primary/10' : 'bg-accent/10'}`}>
+              <div className={`p-2.5 rounded-xl shrink-0 ${session.session_type === 'Seller' ? 'bg-primary/10' : session.session_type === 'touring_brief' ? 'bg-violet-500/10' : 'bg-accent/10'}`}>
                 {session.session_type === 'Seller' ? (
                   <Building2 className="h-5 w-5 text-primary" />
+                ) : session.session_type === 'touring_brief' ? (
+                  <Eye className="h-5 w-5 text-violet-600" />
                 ) : (
                   <Users className="h-5 w-5 text-accent" />
                 )}
@@ -318,7 +320,7 @@ const SharedReports = () => {
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <h3 className="font-serif font-semibold truncate">{session.client_name}</h3>
                   <Badge variant={session.session_type === 'Seller' ? 'default' : 'accent'} className="text-xs shrink-0">
-                    {session.session_type}
+                    {session.session_type === 'touring_brief' ? 'Touring' : session.session_type}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
@@ -552,14 +554,15 @@ const SharedReports = () => {
                 className="pl-9 h-11"
               />
             </div>
-            <Select value={typeFilter} onValueChange={(v: 'all' | 'Seller' | 'Buyer') => setTypeFilter(v)}>
-              <SelectTrigger className="w-[120px] h-11">
+            <Select value={typeFilter} onValueChange={(v: 'all' | 'Seller' | 'Buyer' | 'touring_brief') => setTypeFilter(v)}>
+              <SelectTrigger className="w-[140px] h-11">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="Seller">Seller</SelectItem>
                 <SelectItem value="Buyer">Buyer</SelectItem>
+                <SelectItem value="touring_brief">Touring</SelectItem>
               </SelectContent>
             </Select>
           </div>
