@@ -96,7 +96,7 @@ export function createTemplateFromSession(session: Session, templateName: string
   const template: SessionTemplate = {
     id: crypto.randomUUID(),
     name: templateName,
-    session_type: session.session_type,
+    session_type: session.session_type === 'touring_brief' ? 'Buyer' : session.session_type,
     property_type: session.property_type,
     condition: session.condition,
     market_scenario_id: options?.market_scenario_id || session.selected_market_profile_id,
