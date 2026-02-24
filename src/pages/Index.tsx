@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Sparkles, Zap } from 'lucide-react';
+import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Sparkles, Zap, Eye } from 'lucide-react';
 import { AppLogo } from '@/components/AppLogo';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
 import { AllReportsDrawer } from '@/components/AllReportsDrawer';
@@ -150,6 +150,24 @@ const Index = () => {
                     Start Buyer Analysis
                     <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                   </Button>
+                </CardContent>
+              </Card>
+            </Link>
+          </motion.div>
+
+          {/* Touring Brief CTA */}
+          <motion.div variants={fadeInUp} className="md:col-span-2">
+            <Link to="/touring" className="block">
+              <Card className="cursor-pointer group border-2 border-dashed border-primary/20 hover:border-primary/40 bg-primary/5">
+                <CardContent className="flex items-center gap-4 py-4">
+                  <div className="p-2.5 rounded-full bg-primary/10">
+                    <Eye className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">Touring Brief</p>
+                    <p className="text-xs text-muted-foreground">Pre-showing property intelligence — import a listing and share with your client before they tour</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                 </CardContent>
               </Card>
             </Link>
