@@ -57,6 +57,8 @@ import MarketIntelEmbed from "./pages/MarketIntelEmbed";
 import SavedPlaybooks from "./pages/SavedPlaybooks";
 import OfferTracker from "./pages/OfferTracker";
 import ListingNavigator from "./pages/ListingNavigator";
+import TouringFlow from "./pages/TouringFlow";
+import TouringReport from "./pages/TouringReport";
 
 const queryClient = new QueryClient();
 
@@ -113,6 +115,8 @@ function AppRoutes() {
           <Route path="/clients" element={<RequireAuth><Clients /></RequireAuth>} />
           <Route path="/lead-finder" element={<RequireAuth><LeadFinder /></RequireAuth>} />
           <Route path="/listing-navigator" element={<RequireAuth><ListingNavigator /></RequireAuth>} />
+          <Route path="/touring" element={<RequireAuth><TouringFlow /></RequireAuth>} />
+          <Route path="/touring/report" element={<RequireAuth><TouringReport /></RequireAuth>} />
           <Route path="/saved-playbooks" element={<RequireAuth><SavedPlaybooks /></RequireAuth>} />
           <Route path="/offer-tracker" element={<RequireAuth><OfferTracker /></RequireAuth>} />
           <Route path="/documents" element={<RequireAuth><Documents /></RequireAuth>} />
