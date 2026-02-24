@@ -2,7 +2,7 @@ import { AgentBranding } from '@/lib/agentBranding';
 import { loadAgentProfile } from '@/lib/agentProfile';
 
 interface BrandedReportHeaderProps {
-  reportType: 'Seller' | 'Buyer' | 'Comparison';
+  reportType: 'Seller' | 'Buyer' | 'Comparison' | 'Touring Brief';
   clientName: string;
   snapshotTimestamp: string;
   branding?: AgentBranding | null;

@@ -90,7 +90,7 @@ const TouringReport = () => {
     try {
       await exportReportToPdf('report-export', {
         clientName: session.client_name,
-        reportType: 'Buyer',
+        reportType: 'Touring Brief' as any,
         snapshotTimestamp: session.created_at,
         isClientMode,
       });
@@ -185,7 +185,7 @@ const TouringReport = () => {
               {/* Report Header */}
               <div className="pdf-section pdf-header-section">
               <ReportHeader
-                  reportType="Buyer"
+                  reportType="Touring Brief"
                   clientName={session.client_name}
                   snapshotTimestamp={session.created_at}
                   showTimestamp={false}
