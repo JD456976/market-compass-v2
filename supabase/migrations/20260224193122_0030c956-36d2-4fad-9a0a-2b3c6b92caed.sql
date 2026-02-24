@@ -1,0 +1,2 @@
+ALTER TABLE public.sessions DROP CONSTRAINT sessions_session_type_check;
+ALTER TABLE public.sessions ADD CONSTRAINT sessions_session_type_check CHECK (session_type = ANY (ARRAY['Seller'::text, 'Buyer'::text, 'touring_brief'::text]));
