@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Mail, Clock, CheckCircle2, XCircle, Copy, Users, Trash2, Share2 } from 'lucide-react';
 import { InviteShareDialog } from './InviteShareDialog';
+import { DealPilotImportButton } from './DealPilotImportButton';
 
 interface Invitation {
   id: string;
@@ -217,8 +218,14 @@ export function ClientManagement() {
               <UserPlus className="h-5 w-5" />
               Invite Client
             </CardTitle>
-            <CardDescription>
-              Enter the client's name and email to generate an invitation link.
+            <CardDescription className="flex items-center justify-between">
+              <span>Enter the client's name and email to generate an invitation link.</span>
+              <DealPilotImportButton onSelect={(fn, ln, em) => {
+                setFirstName(fn);
+                setLastName(ln);
+                setEmail(em);
+                setShowInviteForm(true);
+              }} />
             </CardDescription>
           </CardHeader>
           <CardContent>

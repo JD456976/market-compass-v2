@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.follow-up-boss]
 verify_jwt = false
+
+[functions.federation-search]
+verify_jwt = false
