@@ -15,6 +15,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { TrialBanner } from "@/components/TrialBanner";
+import { PWAUpdateToast } from "@/components/PWAUpdateToast";
 import Index from "./pages/Index";
 import MarketIntelligence from "./pages/MarketIntelligence";
 import QuickReport from "./pages/QuickReport";
@@ -162,7 +163,8 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <div className="min-h-screen flex flex-col">
-                  <OfflineBanner />
+                <OfflineBanner />
+                  <PWAUpdateToast />
                   <AppLayout />
                 </div>
               </BrowserRouter>
