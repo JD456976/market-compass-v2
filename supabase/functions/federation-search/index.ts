@@ -60,7 +60,13 @@ Deno.serve(async (req) => {
       throw new Error("DEAL_PILOT_SUPABASE_URL is not configured");
     }
 
-    const endpoint = `${dealPilotUrl}/functions/v1/federation-api`;
+    const trimmedBase = dealPilotUrl.trim().replace(/\/+$/, "");
+    const withoutFunctionsPath = trimmedBase.includes("/functions/v1")
+      ? trimmedBase.split("/functions/v1")[0]
+      : trimmedBase;
+    const normalizedBase = withoutFunctionsPath.replace(".supabase.com", ".supabase.co");
+
+    const endpoint = `${normalizedBase}/functions/v1/federation-api`;
     console.log(`Calling Deal Pilot federation API: ${endpoint}`);
 
     const response = await fetch(endpoint, {
