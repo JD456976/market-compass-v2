@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,7 +18,6 @@ interface Props {
 
 export function DealPilotImportButton({ onSelect }: Props) {
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<DealPilotClient[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,7 +38,6 @@ export function DealPilotImportButton({ onSelect }: Props) {
       });
 
       if (error) {
-        // Check for 404 (agent not found)
         if (error.message?.includes('404') || (data as any)?.error?.includes('not found')) {
           toast({
             title: "Your Deal Pilot account wasn't found",
@@ -68,7 +65,6 @@ export function DealPilotImportButton({ onSelect }: Props) {
 
   const handleSelect = (client: DealPilotClient) => {
     onSelect(client.first_name || '', client.last_name || '', client.email || '');
-    setOpen(false);
     setQuery('');
     setResults([]);
     setSearched(false);
@@ -76,20 +72,17 @@ export function DealPilotImportButton({ onSelect }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setQuery(''); setResults([]); setSearched(false); } }}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Sparkles className="h-4 w-4 mr-2" />
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" />
           Import from Deal Pilot
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Import Client from Deal Pilot
-          </DialogTitle>
-        </DialogHeader>
+        </CardTitle>
+        <CardDescription>
+          Search your Deal Pilot clients to quickly pre-fill an invitation.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <div className="space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -98,7 +91,6 @@ export function DealPilotImportButton({ onSelect }: Props) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-9"
-              autoFocus
             />
           </div>
 
@@ -137,7 +129,7 @@ export function DealPilotImportButton({ onSelect }: Props) {
             <p className="text-sm text-muted-foreground text-center py-4">No clients found</p>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   );
 }
