@@ -218,14 +218,8 @@ export function ClientManagement() {
               <UserPlus className="h-5 w-5" />
               Invite Client
             </CardTitle>
-            <CardDescription className="flex items-center justify-between">
-              <span>Enter the client's name and email to generate an invitation link.</span>
-              <DealPilotImportButton onSelect={(fn, ln, em) => {
-                setFirstName(fn);
-                setLastName(ln);
-                setEmail(em);
-                setShowInviteForm(true);
-              }} />
+            <CardDescription>
+              Enter the client's name and email to generate an invitation link.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -279,7 +273,15 @@ export function ClientManagement() {
         </Card>
       )}
 
-      {/* Active Clients */}
+      {/* Deal Pilot Import */}
+      {(showInviteForm || hasAnyData) && (
+        <DealPilotImportButton onSelect={(fn, ln, em) => {
+          setFirstName(fn);
+          setLastName(ln);
+          setEmail(em);
+          setShowInviteForm(true);
+        }} />
+      )}
       {clients.length > 0 && (
         <Card>
           <CardHeader>

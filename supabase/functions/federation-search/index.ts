@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authenticate caller
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -27,16 +26,15 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const agentEmail = claimsData.claims.email as string;
+    const agentEmail = user.email;
     if (!agentEmail) {
       return new Response(JSON.stringify({ error: "No email in token" }), {
         status: 400,
@@ -62,7 +60,10 @@ Deno.serve(async (req) => {
       throw new Error("DEAL_PILOT_SUPABASE_URL is not configured");
     }
 
-    const response = await fetch(`${dealPilotUrl}/functions/v1/federation-api`, {
+    const endpoint = `${dealPilotUrl}/functions/v1/federation-api`;
+    console.log(`Calling Deal Pilot federation API: ${endpoint}`);
+
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -75,7 +76,22 @@ Deno.serve(async (req) => {
       }),
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    console.log(`Deal Pilot response status: ${response.status}, body preview: ${responseText.substring(0, 200)}`);
+
+    // Try to parse as JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error("Deal Pilot returned non-JSON response:", responseText.substring(0, 500));
+      return new Response(JSON.stringify({ 
+        error: "Deal Pilot federation endpoint is not available. Make sure the federation-api function is deployed on Deal Pilot." 
+      }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!response.ok) {
       return new Response(JSON.stringify(data), {
