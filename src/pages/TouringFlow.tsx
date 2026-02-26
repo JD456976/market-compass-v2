@@ -39,18 +39,38 @@ const TouringFlow = () => {
   const [step, setStep] = useState(0);
   const [stepDirection, setStepDirection] = useState(1);
   const [saving, setSaving] = useState(false);
-  const [draftId] = useState(() => generateId());
 
-  const [clientName, setClientName] = useState(DEFAULT_VALUES.clientName);
-  const [location, setLocation] = useState(DEFAULT_VALUES.location);
-  const [fullAddress, setFullAddress] = useState('');
-  const [propertyType, setPropertyType] = useState<PropertyType>(DEFAULT_VALUES.propertyType);
-  const [condition, setCondition] = useState<Condition>(DEFAULT_VALUES.condition);
-  const [listPrice, setListPrice] = useState(DEFAULT_VALUES.listPrice);
-  const [daysOnMarket, setDaysOnMarket] = useState(DEFAULT_VALUES.daysOnMarket);
-  const [marketConditions, setMarketConditions] = useState<MarketConditions>(DEFAULT_VALUES.marketConditions);
-  const [propertyFactors, setPropertyFactors] = useState<import('@/types').PropertyFactor[]>([]);
-  const [listingHistory, setListingHistory] = useState<import('@/types').ListingHistory | undefined>();
+  // Restore session if returning to edit a draft
+  const restoredSession = (() => {
+    try {
+      const isReturning = sessionStorage.getItem('returning_to_edit');
+      if (!isReturning) return null;
+      const raw = sessionStorage.getItem('current_session');
+      if (!raw) return null;
+      const parsed: Session = JSON.parse(raw);
+      sessionStorage.removeItem('returning_to_edit');
+      return parsed;
+    } catch { return null; }
+  })();
+
+  const [draftId] = useState(() => restoredSession?.id || generateId());
+
+  const [clientName, setClientName] = useState(restoredSession?.client_name || DEFAULT_VALUES.clientName);
+  const [location, setLocation] = useState(restoredSession?.location || DEFAULT_VALUES.location);
+  const [fullAddress, setFullAddress] = useState(restoredSession?.address_fields?.address_line || '');
+  const [propertyType, setPropertyType] = useState<PropertyType>((restoredSession?.property_type as PropertyType) || DEFAULT_VALUES.propertyType);
+  const [condition, setCondition] = useState<Condition>((restoredSession?.condition as Condition) || DEFAULT_VALUES.condition);
+  const [listPrice, setListPrice] = useState(
+    restoredSession?.buyer_inputs?.reference_price ? String(restoredSession.buyer_inputs.reference_price) : DEFAULT_VALUES.listPrice
+  );
+  const [daysOnMarket, setDaysOnMarket] = useState(
+    restoredSession?.buyer_inputs?.days_on_market !== undefined ? String(restoredSession.buyer_inputs.days_on_market) : DEFAULT_VALUES.daysOnMarket
+  );
+  const [marketConditions, setMarketConditions] = useState<MarketConditions>(
+    (restoredSession?.buyer_inputs?.market_conditions as MarketConditions) || DEFAULT_VALUES.marketConditions
+  );
+  const [propertyFactors, setPropertyFactors] = useState<import('@/types').PropertyFactor[]>(restoredSession?.property_factors || []);
+  const [listingHistory, setListingHistory] = useState<import('@/types').ListingHistory | undefined>(restoredSession?.listing_history);
   const [attempted, setAttempted] = useState(false);
 
   const handleMLSData = useCallback((data: MLSExtractedData) => {
