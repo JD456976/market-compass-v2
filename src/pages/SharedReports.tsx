@@ -171,7 +171,7 @@ const SharedReports = () => {
     
     try {
       // Load the shared report page in the iframe
-      const shareUrl = `/share/${session.share_token || session.id}`;
+      const shareUrl = `/share/${(session as any).share_token || session.id}`;
       
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => reject(new Error('Report load timeout')), 15000);
