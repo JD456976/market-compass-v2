@@ -728,6 +728,23 @@ const SharedReportContent = () => {
                 </Card>
               )}
 
+              {/* Agent Notes for Client */}
+              {(session.buyer_inputs.client_notes || session.buyer_inputs.notes) && (
+                <Card className="pdf-section pdf-avoid-break">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <AlertCircle className="h-5 w-5 text-accent" />
+                      Agent Notes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {session.buyer_inputs.client_notes || session.buyer_inputs.notes}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Market Confidence */}
               {marketSnapshot && (
                 <div className="flex justify-center">
