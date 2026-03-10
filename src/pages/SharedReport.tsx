@@ -1147,7 +1147,7 @@ const SharedReportContent = () => {
       </div>
 
       {/* Scenario Explorer for Buyer reports */}
-      {!isSeller && session.buyer_inputs && originalBuyerInputs && whatIfInputs && (
+      {!isSeller && !isTouringBrief && session.buyer_inputs && originalBuyerInputs && whatIfInputs && (
         <ScenarioExplorer
           originalInputs={originalBuyerInputs}
           currentInputs={whatIfInputs}
