@@ -91,6 +91,7 @@ const SharedReportContent = () => {
   const { session, marketProfile, shareToken, loading, error } = useSharedSession(sessionId);
   const [exporting, setExporting] = useState(false);
   const viewLoggedRef = useRef(false);
+  const autoExportTriggered = useRef(false);
   const [agentBranding, setAgentBranding] = useState<AgentBranding | null>(null);
   const [marketSnapshot, setMarketSnapshot] = useState<{ snapshot: MarketSnapshot; isGenericBaseline: boolean } | null>(null);
   // What-If state for buyer reports
@@ -242,6 +243,19 @@ const SharedReportContent = () => {
         ? calculateSellerReport(effectiveSession, marketProfile)
         : calculateBuyerReport(effectiveSession, marketProfile))
     : null;
+
+  // Auto-export PDF when opened with ?export=pdf from SharedReports list
+  useEffect(() => {
+    if (!reportData || !session || autoExportTriggered.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('export') === 'pdf') {
+      autoExportTriggered.current = true;
+      // Wait for render to complete before triggering export
+      setTimeout(() => {
+        handleExportPdf();
+      }, 1500);
+    }
+  }, [reportData, session]);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);

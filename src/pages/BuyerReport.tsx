@@ -323,13 +323,16 @@ const BuyerReport = () => {
 
   const { session, marketProfile, acceptanceLikelihood, riskOfLosingHome, riskOfOverpaying, snapshotTimestamp } = reportData;
   const inputs = session.buyer_inputs!;
+  const hasNoOfferPrice = (reportData as any)._noOfferPrice === true;
 
   const formatCurrency = (value: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
 
   // Get mode-appropriate text
   const mode = isClientMode ? 'client' : 'agent';
-  const whatThisMeansText = acceptanceLikelihood === 'High' 
+  const whatThisMeansText = hasNoOfferPrice
+    ? 'Enter an offer price to see this analysis.'
+    : acceptanceLikelihood === 'High' 
     ? buyerWhatThisMeans[mode].high
     : acceptanceLikelihood === 'Moderate'
     ? buyerWhatThisMeans[mode].moderate
@@ -666,6 +669,19 @@ const BuyerReport = () => {
             )}
             </TemplateSection>
 
+            {/* Offer-dependent analysis — guarded for $0 price */}
+            {hasNoOfferPrice && (
+              <Card className="pdf-section pdf-avoid-break border-amber-500/30 bg-amber-500/5">
+                <CardContent className="py-6 text-center">
+                  <AlertCircle className="h-8 w-8 text-amber-500 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-foreground mb-1">Offer price required</p>
+                  <p className="text-xs text-muted-foreground">Enter an offer price to see Acceptance Likelihood, Offer Position, Competitive Position, and Risk Analysis.</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {!hasNoOfferPrice && (
+            <>
             <TemplateSection hide={['snapshot']}>
             {/* Success Prediction */}
             {marketSnapshot && (
@@ -874,6 +890,8 @@ const BuyerReport = () => {
                 description={overpayingDesc}
               />
             </MetricCalloutGrid>
+            </>
+            )}
 
             <TemplateSection show={['executive']}>
             {/* How This Analysis Is Formed - Collapsible */}
