@@ -259,6 +259,23 @@ const TouringReport = () => {
                 </CardContent>
               </Card>
 
+              {/* Agent Notes */}
+              {(inputs.client_notes || inputs.notes) && (
+                <Card className="pdf-section pdf-avoid-break">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Eye className="h-5 w-5 text-accent" />
+                      Agent Notes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {inputs.client_notes || inputs.notes}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Market Confidence */}
               {marketSnapshot && (
                 <div className="flex justify-center">
@@ -358,32 +375,6 @@ const TouringReport = () => {
               {/* Listing History */}
               {session.listing_history && (
                 <ListingHistoryCard history={session.listing_history} />
-              )}
-
-              {/* Competitive Intelligence */}
-              {hasListPrice && (
-                <BuyerCompetingOffersCard
-                  inputs={inputs}
-                  snapshot={marketSnapshot?.snapshot}
-                  isGenericBaseline={marketSnapshot?.isGenericBaseline}
-                />
-              )}
-
-              {/* Seller Motivation Profile */}
-              <SellerMotivationCard inputs={inputs} snapshot={marketSnapshot?.snapshot} listingHistory={session.listing_history} />
-
-              {/* Timing Signals */}
-              <BuyerTimingCard inputs={inputs} snapshot={marketSnapshot?.snapshot} />
-
-              {/* What If You Wait? */}
-              {hasListPrice && (
-                <WaitSimulatorCard
-                  marketConditions={inputs.market_conditions || 'Balanced'}
-                  daysOnMarket={inputs.days_on_market ?? null}
-                  offerPrice={inputs.reference_price!}
-                  referencePrice={inputs.reference_price!}
-                  snapshot={marketSnapshot?.snapshot}
-                />
               )}
 
               {/* Client-mode market note */}

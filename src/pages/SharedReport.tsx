@@ -728,6 +728,23 @@ const SharedReportContent = () => {
                 </Card>
               )}
 
+              {/* Agent Notes for Client */}
+              {(session.buyer_inputs.client_notes || session.buyer_inputs.notes) && (
+                <Card className="pdf-section pdf-avoid-break">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <AlertCircle className="h-5 w-5 text-accent" />
+                      Agent Notes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {session.buyer_inputs.client_notes || session.buyer_inputs.notes}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Market Confidence */}
               {marketSnapshot && (
                 <div className="flex justify-center">
@@ -820,30 +837,6 @@ const SharedReportContent = () => {
                 <ListingHistoryCard history={session.listing_history} />
               )}
 
-              {/* Competitive Intelligence */}
-              {session.buyer_inputs.reference_price && session.buyer_inputs.reference_price > 0 && (
-                <BuyerCompetingOffersCard
-                  inputs={session.buyer_inputs}
-                  snapshot={marketSnapshot?.snapshot}
-                />
-              )}
-
-              {/* Seller Motivation Profile */}
-              <SellerMotivationCard inputs={session.buyer_inputs} snapshot={marketSnapshot?.snapshot} listingHistory={session.listing_history} />
-
-              {/* Timing Signals */}
-              <BuyerTimingCard inputs={session.buyer_inputs} snapshot={marketSnapshot?.snapshot} />
-
-              {/* What If You Wait? */}
-              {session.buyer_inputs.reference_price && session.buyer_inputs.reference_price > 0 && (
-                <WaitSimulatorCard
-                  marketConditions={session.buyer_inputs.market_conditions || 'Balanced'}
-                  daysOnMarket={session.buyer_inputs.days_on_market ?? null}
-                  offerPrice={session.buyer_inputs.reference_price}
-                  referencePrice={session.buyer_inputs.reference_price}
-                  snapshot={marketSnapshot?.snapshot}
-                />
-              )}
 
               {/* Pre-showing note */}
               <p className="text-xs text-muted-foreground text-center py-2">
