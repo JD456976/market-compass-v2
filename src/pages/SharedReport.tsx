@@ -360,7 +360,7 @@ const SharedReportContent = () => {
             </div>
 
             {/* Desktop Scenario Explorer CTA */}
-            {!isSeller && (
+            {!isSeller && !isTouringBrief && (
               <Button
                 variant="outline"
                 size="sm"
