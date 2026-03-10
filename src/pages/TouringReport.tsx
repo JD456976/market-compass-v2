@@ -259,6 +259,23 @@ const TouringReport = () => {
                 </CardContent>
               </Card>
 
+              {/* Agent Notes */}
+              {(inputs.client_notes || inputs.notes) && (
+                <Card className="pdf-section pdf-avoid-break">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Eye className="h-5 w-5 text-accent" />
+                      Agent Notes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {inputs.client_notes || inputs.notes}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Market Confidence */}
               {marketSnapshot && (
                 <div className="flex justify-center">
