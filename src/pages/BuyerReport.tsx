@@ -323,13 +323,16 @@ const BuyerReport = () => {
 
   const { session, marketProfile, acceptanceLikelihood, riskOfLosingHome, riskOfOverpaying, snapshotTimestamp } = reportData;
   const inputs = session.buyer_inputs!;
+  const hasNoOfferPrice = (reportData as any)._noOfferPrice === true;
 
   const formatCurrency = (value: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
 
   // Get mode-appropriate text
   const mode = isClientMode ? 'client' : 'agent';
-  const whatThisMeansText = acceptanceLikelihood === 'High' 
+  const whatThisMeansText = hasNoOfferPrice
+    ? 'Enter an offer price to see this analysis.'
+    : acceptanceLikelihood === 'High' 
     ? buyerWhatThisMeans[mode].high
     : acceptanceLikelihood === 'Moderate'
     ? buyerWhatThisMeans[mode].moderate
