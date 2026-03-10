@@ -273,6 +273,7 @@ const SharedReportContent = () => {
   if (!session || !effectiveSession || !reportData) return null;
 
   const isSeller = session.session_type === 'Seller';
+  const isTouringBrief = session.session_type === 'touring_brief';
 
   // Get mode-appropriate text for buyer
   const buyerAcceptance = !isSeller && 'acceptanceLikelihood' in reportData ? reportData.acceptanceLikelihood : 'Moderate';
