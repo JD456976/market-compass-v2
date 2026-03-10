@@ -59,6 +59,11 @@ import { ListingHistoryCard } from '@/components/report/ListingHistoryCard';
 import { SellerMotivationCard, BuyerMotivationCard } from '@/components/report/MotivationCard';
 import { BuyerTimingCard, SellerTimingCard } from '@/components/report/TimingCard';
 import { BuyerNegotiationCard, SellerNegotiationCard } from '@/components/report/NegotiationCard';
+import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore';
+import { HistoricalTrends } from '@/components/report/HistoricalTrends';
+import { MortgageRateCard } from '@/components/report/MortgageRateCard';
+import { PropertyDetailsCard } from '@/components/report/PropertyDetailsCard';
+import { PropertyFactorsCard } from '@/components/report/PropertyFactorsCard';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand | ExtendedLikelihoodBand }) {
   if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
@@ -273,6 +278,7 @@ const SharedReportContent = () => {
   if (!session || !effectiveSession || !reportData) return null;
 
   const isSeller = session.session_type === 'Seller';
+  const isTouringBrief = session.session_type === 'touring_brief';
 
   // Get mode-appropriate text for buyer
   const buyerAcceptance = !isSeller && 'acceptanceLikelihood' in reportData ? reportData.acceptanceLikelihood : 'Moderate';
@@ -354,7 +360,7 @@ const SharedReportContent = () => {
             </div>
 
             {/* Desktop Scenario Explorer CTA */}
-            {!isSeller && (
+            {!isSeller && !isTouringBrief && (
               <Button
                 variant="outline"
                 size="sm"
@@ -689,8 +695,165 @@ const SharedReportContent = () => {
             </>
           )}
 
+          {/* Touring Brief content — pre-showing intelligence only */}
+          {isTouringBrief && session.buyer_inputs && (
+            <>
+              {/* List Price / DOM / Market snapshot */}
+              {(session.buyer_inputs.reference_price && session.buyer_inputs.reference_price > 0) && (
+                <Card className="pdf-section pdf-avoid-break">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <TrendingUp className="h-5 w-5 text-accent" />
+                      Property Snapshot
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div className="p-3 rounded-xl bg-secondary/50 text-center">
+                        <p className="text-xs text-muted-foreground mb-1">List Price</p>
+                        <p className="text-lg font-serif font-bold">{formatCurrency(session.buyer_inputs.reference_price)}</p>
+                      </div>
+                      {session.buyer_inputs.days_on_market !== undefined && session.buyer_inputs.days_on_market > 0 && (
+                        <div className="p-3 rounded-xl bg-secondary/50 text-center">
+                          <p className="text-xs text-muted-foreground mb-1">Days on Market</p>
+                          <p className="text-lg font-serif font-bold">{session.buyer_inputs.days_on_market}</p>
+                        </div>
+                      )}
+                      <div className="p-3 rounded-xl bg-secondary/50 text-center">
+                        <p className="text-xs text-muted-foreground mb-1">Market</p>
+                        <p className="text-lg font-serif font-bold">{session.buyer_inputs.market_conditions || 'Balanced'}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Market Confidence */}
+              {marketSnapshot && (
+                <div className="flex justify-center">
+                  <MarketConfidenceScore
+                    snapshot={marketSnapshot.snapshot}
+                    isGenericBaseline={marketSnapshot.isGenericBaseline}
+                    session={session}
+                  />
+                </div>
+              )}
+
+              {/* Historical Trends */}
+              {marketSnapshot && (
+                <HistoricalTrends
+                  snapshot={marketSnapshot.snapshot}
+                  isGenericBaseline={marketSnapshot.isGenericBaseline}
+                  isClientMode={isClientMode}
+                />
+              )}
+
+              {/* Mortgage Rate */}
+              <MortgageRateCard />
+
+              {/* Property Intelligence Factors */}
+              {session.property_factors && session.property_factors.length > 0 && (
+                <PropertyFactorsCard
+                  factors={session.property_factors}
+                  editable={false}
+                />
+              )}
+
+              {/* Address Intelligence */}
+              {marketSnapshot && (
+                <AddressIntelligenceCard
+                  session={session}
+                  snapshot={marketSnapshot.snapshot}
+                  isGenericBaseline={marketSnapshot.isGenericBaseline}
+                  reportType="Buyer"
+                />
+              )}
+
+              {/* Market Read Callouts */}
+              {marketSnapshot && (
+                <MetricCalloutGrid>
+                  <MetricCallout
+                    type="acceptance"
+                    band={marketSnapshot.snapshot.medianDOM <= 14 ? 'High' : marketSnapshot.snapshot.medianDOM <= 30 ? 'Moderate' : 'Low'}
+                    label="Market Heat"
+                    description={
+                      marketSnapshot.snapshot.medianDOM <= 14
+                        ? 'Fast-moving market — properties sell quickly with strong demand.'
+                        : marketSnapshot.snapshot.medianDOM <= 30
+                        ? 'Average pace — reasonable time for decision-making.'
+                        : 'Slower market — more room for negotiation and due diligence.'
+                    }
+                  />
+                  <MetricCallout
+                    type="risk-overpay"
+                    band={marketSnapshot.snapshot.saleToListRatio >= 1.03 ? 'High' : marketSnapshot.snapshot.saleToListRatio >= 0.98 ? 'Moderate' : 'Low'}
+                    label="Premium Likelihood"
+                    description={
+                      marketSnapshot.snapshot.saleToListRatio >= 1.03
+                        ? 'Homes in this area typically sell above asking — expect competitive pricing.'
+                        : marketSnapshot.snapshot.saleToListRatio >= 0.98
+                        ? 'Homes tend to sell near asking price in this market.'
+                        : 'Homes typically sell below asking — room for negotiation.'
+                    }
+                  />
+                  <MetricCallout
+                    type="risk-losing"
+                    band={
+                      (session.buyer_inputs.days_on_market ?? marketSnapshot.snapshot.medianDOM) <= 7 ? 'High'
+                      : (session.buyer_inputs.days_on_market ?? marketSnapshot.snapshot.medianDOM) <= 21 ? 'Moderate'
+                      : 'Low'
+                    }
+                    label="Urgency Level"
+                    description={
+                      (session.buyer_inputs.days_on_market ?? marketSnapshot.snapshot.medianDOM) <= 7
+                        ? 'New or fast-selling listing — act quickly if interested.'
+                        : (session.buyer_inputs.days_on_market ?? marketSnapshot.snapshot.medianDOM) <= 21
+                        ? 'Moderate timeline — still time to evaluate but don\'t delay.'
+                        : 'This listing has been available — less pressure to rush.'
+                    }
+                  />
+                </MetricCalloutGrid>
+              )}
+
+              {/* Listing History */}
+              {session.listing_history && (
+                <ListingHistoryCard history={session.listing_history} />
+              )}
+
+              {/* Competitive Intelligence */}
+              {session.buyer_inputs.reference_price && session.buyer_inputs.reference_price > 0 && (
+                <BuyerCompetingOffersCard
+                  inputs={session.buyer_inputs}
+                  snapshot={marketSnapshot?.snapshot}
+                />
+              )}
+
+              {/* Seller Motivation Profile */}
+              <SellerMotivationCard inputs={session.buyer_inputs} snapshot={marketSnapshot?.snapshot} listingHistory={session.listing_history} />
+
+              {/* Timing Signals */}
+              <BuyerTimingCard inputs={session.buyer_inputs} snapshot={marketSnapshot?.snapshot} />
+
+              {/* What If You Wait? */}
+              {session.buyer_inputs.reference_price && session.buyer_inputs.reference_price > 0 && (
+                <WaitSimulatorCard
+                  marketConditions={session.buyer_inputs.market_conditions || 'Balanced'}
+                  daysOnMarket={session.buyer_inputs.days_on_market ?? null}
+                  offerPrice={session.buyer_inputs.reference_price}
+                  referencePrice={session.buyer_inputs.reference_price}
+                  snapshot={marketSnapshot?.snapshot}
+                />
+              )}
+
+              {/* Pre-showing note */}
+              <p className="text-xs text-muted-foreground text-center py-2">
+                This is a pre-showing intelligence brief — not a formal offer analysis. Ready to make an offer? Ask your agent to promote this to a full Buyer Report.
+              </p>
+            </>
+          )}
+
           {/* Buyer-specific content */}
-          {!isSeller && session.buyer_inputs && (
+          {!isSeller && !isTouringBrief && session.buyer_inputs && (
             <>
               {/* What-If Modified Banner */}
               {isWhatIfModified && (
@@ -984,7 +1147,7 @@ const SharedReportContent = () => {
       </div>
 
       {/* Scenario Explorer for Buyer reports */}
-      {!isSeller && session.buyer_inputs && originalBuyerInputs && whatIfInputs && (
+      {!isSeller && !isTouringBrief && session.buyer_inputs && originalBuyerInputs && whatIfInputs && (
         <ScenarioExplorer
           originalInputs={originalBuyerInputs}
           currentInputs={whatIfInputs}
