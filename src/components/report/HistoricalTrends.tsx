@@ -187,11 +187,6 @@ export function HistoricalTrends({ snapshot, isGenericBaseline, isClientMode }: 
           </p>
         </div>
 
-        {isGenericBaseline && (
-          <p className="text-[10px] text-amber-600 dark:text-amber-500 italic">
-            This location is outside the current dataset. Baseline assumptions are being used.
-          </p>
-        )}
       </CardContent>
     </Card>
   );
