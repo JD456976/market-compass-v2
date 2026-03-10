@@ -670,6 +670,19 @@ const BuyerReport = () => {
             </TemplateSection>
 
             <TemplateSection hide={['snapshot']}>
+            {/* Offer-dependent analysis — guarded for $0 price */}
+            {hasNoOfferPrice && (
+              <Card className="pdf-section pdf-avoid-break border-amber-500/30 bg-amber-500/5">
+                <CardContent className="py-6 text-center">
+                  <AlertCircle className="h-8 w-8 text-amber-500 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-foreground mb-1">Offer price required</p>
+                  <p className="text-xs text-muted-foreground">Enter an offer price to see Acceptance Likelihood, Offer Position, Competitive Position, and Risk Analysis.</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {!hasNoOfferPrice && (
+            <>
             {/* Success Prediction */}
             {marketSnapshot && (
               <SuccessPrediction
