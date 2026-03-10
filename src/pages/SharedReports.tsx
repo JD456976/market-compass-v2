@@ -517,7 +517,7 @@ const SharedReports = () => {
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="Seller">Seller</SelectItem>
                 <SelectItem value="Buyer">Buyer</SelectItem>
-                <SelectItem value="touring_brief">Touring</SelectItem>
+                <SelectItem value="touring_brief">Touring Brief</SelectItem>
               </SelectContent>
             </Select>
           </div>

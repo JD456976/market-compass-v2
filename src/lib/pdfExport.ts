@@ -23,7 +23,7 @@ interface ComparisonExportOptions {
   optionBLabel: string;
 }
 
-const IMPORTANT_NOTICE = `Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome. Actual results depend on market conditions, competing properties or offers, and buyer/seller decisions outside the scope of this analysis.`;
+const IMPORTANT_NOTICE = `This report is prepared by your agent as a decision-support tool. Market data reflects current conditions and patterns. For binding valuations or legal advice, consult a licensed appraiser or attorney.`;
 
 const html2canvasOptions = {
   scale: 2,

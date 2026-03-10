@@ -373,11 +373,6 @@ export function AddressIntelligenceCard({ session, snapshot, isGenericBaseline, 
           </div>
         </div>
 
-        {isGenericBaseline && (
-          <p className="text-[10px] text-muted-foreground italic">
-            Add a market snapshot for this area to improve signal accuracy.
-          </p>
-        )}
       </CardContent>
     </Card>
   );
