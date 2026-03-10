@@ -174,11 +174,6 @@ export function MarketGrounding({
             <span>•</span>
             <span>Inventory: {snapshot.inventorySignal}</span>
           </div>
-          {isGenericBaseline && (
-            <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1">
-              This town is outside the current Market Compass dataset. Baseline assumptions are being used.
-            </p>
-          )}
         </div>
       </div>
     </div>
