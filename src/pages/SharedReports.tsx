@@ -162,17 +162,167 @@ const SharedReports = () => {
 
 
   const handleExportPdf = async (session: Session) => {
-    // Navigate to the full report page which has proper pdf-section markup
-    // and let the user export from there with the built-in export button
-    sessionStorage.setItem('current_session', JSON.stringify(session));
-    sessionStorage.setItem('auto_export_pdf', 'true');
+    setExportingId(session.id);
     
-    if (session.session_type === 'Seller') {
-      navigate('/seller-report');
-    } else if (session.session_type === 'touring_brief') {
-      navigate('/touring-report');
-    } else {
-      navigate('/buyer-report');
+    // Use a hidden iframe to load the full shared report and capture it
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;height:3000px;border:none;';
+    document.body.appendChild(iframe);
+    
+    try {
+      // Load the shared report page in the iframe
+      const shareUrl = `/share/${(session as any).share_token || session.id}`;
+      
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('Report load timeout')), 15000);
+        
+        iframe.onload = () => {
+          // Wait for the report to fully render (data fetch + animations)
+          setTimeout(() => {
+            clearTimeout(timeout);
+            resolve();
+          }, 3000);
+        };
+        iframe.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error('Failed to load report'));
+        };
+        iframe.src = shareUrl;
+      });
+      
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      const reportElement = iframeDoc?.getElementById('shared-report-export');
+      
+      if (!reportElement) {
+        throw new Error('Report content not found');
+      }
+      
+      // Import html2canvas and jsPDF for capture
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+      
+      // Add export classes
+      reportElement.classList.add('pdf-export');
+      iframeDoc?.body.classList.add('is-exporting');
+      
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Capture each pdf-section
+      const sections = reportElement.querySelectorAll('.pdf-section');
+      const canvases: HTMLCanvasElement[] = [];
+      
+      const canvasOptions = {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: 794,
+      };
+      
+      if (sections.length > 0) {
+        for (const section of Array.from(sections)) {
+          try {
+            const canvas = await html2canvas(section as HTMLElement, canvasOptions);
+            canvases.push(canvas);
+          } catch (err) {
+            console.warn('Failed to render section:', err);
+          }
+        }
+      }
+      
+      // Fallback: capture the whole element
+      if (canvases.length === 0) {
+        const fullCanvas = await html2canvas(reportElement, canvasOptions);
+        canvases.push(fullCanvas);
+      }
+      
+      if (canvases.length === 0) {
+        throw new Error('No content could be rendered');
+      }
+      
+      // Build PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 12.7;
+      const contentWidth = pageWidth - margin * 2;
+      const footerHeight = 18;
+      
+      let currentY = margin + 6;
+      let currentPage = 1;
+      let totalPages = 1;
+      
+      // Header accent bars
+      pdf.setFillColor(45, 58, 74);
+      pdf.rect(0, 0, pageWidth, 4, 'F');
+      pdf.setFillColor(200, 132, 46);
+      pdf.rect(0, 4, pageWidth, 1.5, 'F');
+      
+      for (let i = 0; i < canvases.length; i++) {
+        const canvas = canvases[i];
+        const imgWidth = contentWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        const availableHeight = pageHeight - currentY - footerHeight - 5;
+        
+        if (imgHeight > availableHeight && currentY > margin + 10) {
+          currentPage++;
+          totalPages++;
+          pdf.addPage();
+          currentY = margin + 5;
+        }
+        
+        try {
+          const imgData = canvas.toDataURL('image/jpeg', 0.72);
+          pdf.addImage(imgData, 'JPEG', margin, currentY, imgWidth, imgHeight, undefined, 'FAST');
+          currentY += imgHeight + 4;
+        } catch (imgErr) {
+          console.warn('Failed to add image:', imgErr);
+        }
+      }
+      
+      // Add footers
+      const reportDate = new Date().toISOString().split('T')[0];
+      for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+        pdf.setPage(pageNum);
+        const footerY = pageHeight - margin;
+        
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`Page ${pageNum} of ${totalPages}`, pageWidth / 2, footerY - 12, { align: 'center' });
+        
+        pdf.setFontSize(7);
+        pdf.setTextColor(160, 160, 160);
+        pdf.text(`Generated: ${reportDate}`, pageWidth / 2, footerY - 8, { align: 'center' });
+        
+        pdf.setFontSize(6);
+        pdf.setTextColor(130, 130, 130);
+        const disclaimer = 'Important Notice: This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome.';
+        const disclaimerLines = pdf.splitTextToSize(disclaimer, contentWidth);
+        pdf.text(disclaimerLines, margin, footerY - 4);
+      }
+      
+      // Save
+      const date = new Date().toISOString().split('T')[0];
+      const sanitizedName = session.client_name.replace(/[^a-zA-Z0-9]/g, '-');
+      const reportType = session.session_type === 'Seller' ? 'Seller' : session.session_type === 'touring_brief' ? 'Touring-Brief' : 'Buyer';
+      pdf.save(`${reportType}-Report-${sanitizedName}-${date}.pdf`);
+      
+      toast({
+        title: "PDF exported",
+        description: "Your full report has been downloaded.",
+      });
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      toast({
+        title: "Export failed",
+        description: "Could not generate PDF. Try opening the shared report and exporting from there.",
+        variant: "destructive",
+      });
+    } finally {
+      document.body.removeChild(iframe);
+      setExportingId(null);
     }
   };
 
@@ -314,10 +464,10 @@ const SharedReports = () => {
                   size="icon" 
                   onClick={(e) => { e.stopPropagation(); handleExportPdf(session); }}
                   disabled={exportingId === session.id}
-                  title="Export PDF"
+                  title={exportingId === session.id ? "Generating PDF..." : "Export PDF"}
                   className="min-h-[44px] min-w-[44px]"
                 >
-                  <FileDown className="h-4 w-4" />
+                  {exportingId === session.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
                 </Button>
                 <Link to={`/share/${session.id}`} target="_blank">
                   <Button 

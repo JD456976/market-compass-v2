@@ -74,18 +74,6 @@ const TouringReport = () => {
     }
   }, [navigate]);
 
-  // Auto-export PDF when navigated from SharedReports
-  useEffect(() => {
-    if (!session) return;
-    const autoExport = sessionStorage.getItem('auto_export_pdf');
-    if (!autoExport) return;
-    sessionStorage.removeItem('auto_export_pdf');
-    const timer = setTimeout(() => {
-      handleExportPdf(false);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [session]);
-
   const handleSave = () => {
     if (!session) return;
     try {
