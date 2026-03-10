@@ -464,10 +464,10 @@ const SharedReports = () => {
                   size="icon" 
                   onClick={(e) => { e.stopPropagation(); handleExportPdf(session); }}
                   disabled={exportingId === session.id}
-                  title="Export PDF"
+                  title={exportingId === session.id ? "Generating PDF..." : "Export PDF"}
                   className="min-h-[44px] min-w-[44px]"
                 >
-                  <FileDown className="h-4 w-4" />
+                  {exportingId === session.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
                 </Button>
                 <Link to={`/share/${session.id}`} target="_blank">
                   <Button 
