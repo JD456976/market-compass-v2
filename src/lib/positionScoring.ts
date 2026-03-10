@@ -34,6 +34,11 @@ export function calculateOfferPosition(
   const inputs = session.buyer_inputs;
   if (!inputs) return { level: 'Moderate', score: 50, factors: [] };
 
+  // Guard: if offer price is $0 or missing, return indeterminate
+  if (!inputs.offer_price || inputs.offer_price <= 0) {
+    return { level: 'Moderate', score: 50, factors: ['Enter an offer price to see position analysis'], _noOfferPrice: true } as any;
+  }
+
   let score = 50; // baseline
   const factors: string[] = [];
 

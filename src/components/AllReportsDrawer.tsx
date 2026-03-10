@@ -90,7 +90,7 @@ function DraftRow({ session, onNavigate, onDelete }: { session: any; onNavigate:
         <p className="text-[10px] text-muted-foreground">{session.location} · {relativeDate(session.updated_at)}</p>
       </button>
       <div className="flex items-center gap-1 shrink-0">
-        <Badge variant="outline" className="text-[9px] h-4 px-1.5 capitalize">{session.session_type === 'touring_brief' ? 'Touring' : session.session_type}</Badge>
+        <Badge variant="outline" className="text-[9px] h-4 px-1.5 capitalize">{session.session_type === 'touring_brief' ? 'Touring Brief' : session.session_type}</Badge>
         <button
           onClick={async (e) => {
             e.stopPropagation();

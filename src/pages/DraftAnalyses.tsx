@@ -348,7 +348,7 @@ const DraftAnalyses = () => {
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <h3 className="font-serif font-semibold truncate">{session.client_name}</h3>
                                 <Badge variant={session.session_type === 'Seller' ? 'default' : 'accent'} className="text-xs shrink-0">
-                                  {session.session_type === 'touring_brief' ? 'Touring' : session.session_type}
+                                  {session.session_type === 'touring_brief' ? 'Touring Brief' : session.session_type}
                                 </Badge>
                               </div>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">

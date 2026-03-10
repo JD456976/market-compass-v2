@@ -200,6 +200,34 @@ export function calculateBuyerReport(
   }
 
   const offerPrice = inputs.offer_price;
+
+  // Guard: if offer price is $0 or null/undefined, return indeterminate results
+  if (!offerPrice || offerPrice <= 0) {
+    return {
+      session,
+      marketProfile,
+      acceptanceLikelihood: null as any,
+      riskOfLosingHome: null as any,
+      riskOfOverpaying: null as any,
+      snapshotTimestamp: new Date().toISOString(),
+      confidence: 'Limited',
+      debug: {
+        referencePrice: inputs.reference_price || 0,
+        offerPrice: 0,
+        priceRatio: 0,
+        marketConditions: inputs.market_conditions || 'Balanced',
+        daysOnMarket: inputs.days_on_market ?? null,
+        investmentType: inputs.investment_type || 'Primary Residence',
+        baseTiers: { acceptance: 'Very Low', overpayRisk: 'Very Low', losingHomeRisk: 'Very Low' },
+        modifiers: ['Offer price is $0 — analysis unavailable'],
+        finalTiers: { acceptance: 'Very Low', overpayRisk: 'Very Low', losingHomeRisk: 'Very Low' },
+        confidence: 'Limited',
+        warnings: ['Offer price is $0 or missing — all offer-dependent calculations are unavailable'],
+      },
+      _noOfferPrice: true,
+    } as any;
+  }
+
   const marketConditions: MarketConditions = inputs.market_conditions || 'Balanced';
   const daysOnMarket: number | null = inputs.days_on_market ?? null;
   const investmentType: InvestmentType = inputs.investment_type || 'Primary Residence';
