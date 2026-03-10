@@ -353,7 +353,7 @@ const SharedReportContent = () => {
               </div>
               <div className="min-w-0">
                 <h1 className="text-xl sm:text-2xl font-serif font-bold">
-                  {session.session_type === 'touring_brief' ? 'Touring Brief' : isSeller ? 'Seller' : 'Buyer'} Report
+                  {session.session_type === 'touring_brief' ? 'Touring Brief' : isSeller ? 'Seller Report' : 'Buyer Report'}
                   {session.session_type === 'touring_brief' && (
                     <Badge variant="outline" className="ml-2 bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground text-[10px] align-middle">Pre-Showing</Badge>
                   )}
