@@ -360,32 +360,6 @@ const TouringReport = () => {
                 <ListingHistoryCard history={session.listing_history} />
               )}
 
-              {/* Competitive Intelligence */}
-              {hasListPrice && (
-                <BuyerCompetingOffersCard
-                  inputs={inputs}
-                  snapshot={marketSnapshot?.snapshot}
-                  isGenericBaseline={marketSnapshot?.isGenericBaseline}
-                />
-              )}
-
-              {/* Seller Motivation Profile */}
-              <SellerMotivationCard inputs={inputs} snapshot={marketSnapshot?.snapshot} listingHistory={session.listing_history} />
-
-              {/* Timing Signals */}
-              <BuyerTimingCard inputs={inputs} snapshot={marketSnapshot?.snapshot} />
-
-              {/* What If You Wait? */}
-              {hasListPrice && (
-                <WaitSimulatorCard
-                  marketConditions={inputs.market_conditions || 'Balanced'}
-                  daysOnMarket={inputs.days_on_market ?? null}
-                  offerPrice={inputs.reference_price!}
-                  referencePrice={inputs.reference_price!}
-                  snapshot={marketSnapshot?.snapshot}
-                />
-              )}
-
               {/* Client-mode market note */}
               {isClientMode && (
                 <p className="text-xs text-muted-foreground text-center py-2">
