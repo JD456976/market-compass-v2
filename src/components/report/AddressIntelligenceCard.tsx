@@ -305,7 +305,7 @@ export function AddressIntelligenceCard({ session, snapshot, isGenericBaseline, 
         </CardTitle>
         <p className="text-[11px] text-muted-foreground mt-1">
           {isGenericBaseline
-            ? 'Estimated signals based on general market patterns'
+            ? 'Market pattern analysis for this area'
             : `Derived from market data for ${snapshot.location}`
           }
         </p>
