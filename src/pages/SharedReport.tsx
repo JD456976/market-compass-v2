@@ -820,30 +820,6 @@ const SharedReportContent = () => {
                 <ListingHistoryCard history={session.listing_history} />
               )}
 
-              {/* Competitive Intelligence */}
-              {session.buyer_inputs.reference_price && session.buyer_inputs.reference_price > 0 && (
-                <BuyerCompetingOffersCard
-                  inputs={session.buyer_inputs}
-                  snapshot={marketSnapshot?.snapshot}
-                />
-              )}
-
-              {/* Seller Motivation Profile */}
-              <SellerMotivationCard inputs={session.buyer_inputs} snapshot={marketSnapshot?.snapshot} listingHistory={session.listing_history} />
-
-              {/* Timing Signals */}
-              <BuyerTimingCard inputs={session.buyer_inputs} snapshot={marketSnapshot?.snapshot} />
-
-              {/* What If You Wait? */}
-              {session.buyer_inputs.reference_price && session.buyer_inputs.reference_price > 0 && (
-                <WaitSimulatorCard
-                  marketConditions={session.buyer_inputs.market_conditions || 'Balanced'}
-                  daysOnMarket={session.buyer_inputs.days_on_market ?? null}
-                  offerPrice={session.buyer_inputs.reference_price}
-                  referencePrice={session.buyer_inputs.reference_price}
-                  snapshot={marketSnapshot?.snapshot}
-                />
-              )}
 
               {/* Pre-showing note */}
               <p className="text-xs text-muted-foreground text-center py-2">
