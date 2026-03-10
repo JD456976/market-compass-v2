@@ -81,7 +81,7 @@ function RiskBadge({ band }: { band: LikelihoodBand | ExtendedLikelihoodBand }) 
   return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very Low</Badge>;
 }
 
-const IMPORTANT_NOTICE_SHORT = `This report is a decision-support tool and not a guarantee of outcome.`;
+const IMPORTANT_NOTICE_SHORT = `This report is a decision-support tool. For binding valuations or legal advice, consult a licensed appraiser or attorney.`;
 
 const SharedReportContent = () => {
   const { sessionId } = useParams<{ sessionId: string }>();

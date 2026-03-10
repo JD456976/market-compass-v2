@@ -342,7 +342,7 @@ const SharedComparisonReport = () => {
           <div className="flex gap-3 p-4 rounded-xl bg-muted/50 border border-border/50">
             <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
             <p className="text-xs text-muted-foreground leading-relaxed">
-              This report is an informational decision-support tool. It is not an appraisal, valuation, guarantee, or prediction of outcome.
+              This report is prepared by your agent as a decision-support tool. Market data reflects current conditions and patterns. For binding valuations or legal advice, consult a licensed appraiser or attorney.
             </p>
           </div>
 
