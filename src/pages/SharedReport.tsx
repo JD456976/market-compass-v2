@@ -91,6 +91,7 @@ const SharedReportContent = () => {
   const { session, marketProfile, shareToken, loading, error } = useSharedSession(sessionId);
   const [exporting, setExporting] = useState(false);
   const viewLoggedRef = useRef(false);
+  const autoExportTriggered = useRef(false);
   const [agentBranding, setAgentBranding] = useState<AgentBranding | null>(null);
   const [marketSnapshot, setMarketSnapshot] = useState<{ snapshot: MarketSnapshot; isGenericBaseline: boolean } | null>(null);
   // What-If state for buyer reports
