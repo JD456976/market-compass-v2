@@ -17,10 +17,7 @@ import { useSharedSessions } from '@/hooks/useSessions';
 import { useBatchViewStats, useReportViewNotifications } from '@/hooks/useReportViewStats';
 import { useToast } from '@/hooks/use-toast';
 import { formatLocation } from '@/lib/utils';
-import { exportReportToPdf } from '@/lib/pdfExport';
 import { getShareUrl } from '@/lib/shareUrl';
-import { calculateSellerReport, calculateBuyerReport } from '@/lib/scoring';
-import { getMarketProfileByIdFromSupabase } from '@/lib/supabaseStorage';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SwipeableCard } from '@/components/SwipeableCard';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -165,72 +162,17 @@ const SharedReports = () => {
 
 
   const handleExportPdf = async (session: Session) => {
-    setExportingId(session.id);
-    try {
-      let marketProfile = undefined;
-      if (session.selected_market_profile_id) {
-        marketProfile = await getMarketProfileByIdFromSupabase(session.selected_market_profile_id) || undefined;
-      }
-      
-      const reportData = session.session_type === 'Seller'
-        ? calculateSellerReport(session, marketProfile)
-        : calculateBuyerReport(session, marketProfile);
-      
-      const tempContainer = document.createElement('div');
-      tempContainer.id = 'pdf-export-temp';
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.width = '794px';
-      
-      const pdfSection = document.createElement('div');
-      pdfSection.className = 'pdf-section';
-      pdfSection.style.cssText = 'padding: 20px; font-family: system-ui, sans-serif;';
-      
-      const h2 = document.createElement('h2');
-      h2.style.cssText = 'margin: 0 0 8px; font-size: 18px;';
-      h2.textContent = `${session.session_type === 'touring_brief' ? 'Touring Brief' : session.session_type} Report`;
-      
-      const p1 = document.createElement('p');
-      p1.style.cssText = 'margin: 0 0 4px; color: #666;';
-      p1.textContent = `Prepared for: ${session.client_name}`;
-      
-      const p2 = document.createElement('p');
-      p2.style.cssText = 'margin: 0 0 16px; color: #666;';
-      p2.textContent = `Location: ${formatLocation(session.location)}`;
-      
-      const p3 = document.createElement('p');
-      p3.style.cssText = 'margin: 0; font-size: 12px; color: #999;';
-      p3.textContent = 'Please open the full shared report link for detailed content.';
-      
-      pdfSection.appendChild(h2);
-      pdfSection.appendChild(p1);
-      pdfSection.appendChild(p2);
-      pdfSection.appendChild(p3);
-      tempContainer.appendChild(pdfSection);
-      document.body.appendChild(tempContainer);
-      
-      await exportReportToPdf('pdf-export-temp', {
-        clientName: session.client_name,
-        reportType: session.session_type === 'Seller' ? 'Seller' : session.session_type === 'touring_brief' ? 'Touring Brief' : 'Buyer',
-        snapshotTimestamp: reportData.snapshotTimestamp,
-        isClientMode: true,
-      });
-      
-      document.body.removeChild(tempContainer);
-      
-      toast({
-        title: "PDF exported",
-        description: "Your report has been downloaded.",
-      });
-    } catch (error) {
-      console.error('PDF export failed:', error);
-      toast({
-        title: "Export failed",
-        description: "Could not generate PDF. Please try opening the shared report link instead.",
-        variant: "destructive",
-      });
-    } finally {
-      setExportingId(null);
+    // Navigate to the full report page which has proper pdf-section markup
+    // and let the user export from there with the built-in export button
+    sessionStorage.setItem('current_session', JSON.stringify(session));
+    sessionStorage.setItem('auto_export_pdf', 'true');
+    
+    if (session.session_type === 'Seller') {
+      navigate('/seller-report');
+    } else if (session.session_type === 'touring_brief') {
+      navigate('/touring-report');
+    } else {
+      navigate('/buyer-report');
     }
   };
 
