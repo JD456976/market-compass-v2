@@ -59,6 +59,11 @@ import { ListingHistoryCard } from '@/components/report/ListingHistoryCard';
 import { SellerMotivationCard, BuyerMotivationCard } from '@/components/report/MotivationCard';
 import { BuyerTimingCard, SellerTimingCard } from '@/components/report/TimingCard';
 import { BuyerNegotiationCard, SellerNegotiationCard } from '@/components/report/NegotiationCard';
+import { MarketConfidenceScore } from '@/components/report/MarketConfidenceScore';
+import { HistoricalTrends } from '@/components/report/HistoricalTrends';
+import { MortgageRateCard } from '@/components/report/MortgageRateCard';
+import { PropertyDetailsCard } from '@/components/report/PropertyDetailsCard';
+import { PropertyFactorsCard } from '@/components/report/PropertyFactorsCard';
 
 function LikelihoodBadge({ band }: { band: LikelihoodBand | ExtendedLikelihoodBand }) {
   if (band === 'Very High') return <Badge variant="success" className="px-4 py-1.5 text-sm font-medium">Very High</Badge>;
