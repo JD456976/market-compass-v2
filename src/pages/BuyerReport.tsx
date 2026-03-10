@@ -669,7 +669,6 @@ const BuyerReport = () => {
             )}
             </TemplateSection>
 
-            <TemplateSection hide={['snapshot']}>
             {/* Offer-dependent analysis — guarded for $0 price */}
             {hasNoOfferPrice && (
               <Card className="pdf-section pdf-avoid-break border-amber-500/30 bg-amber-500/5">
@@ -683,6 +682,7 @@ const BuyerReport = () => {
 
             {!hasNoOfferPrice && (
             <>
+            <TemplateSection hide={['snapshot']}>
             {/* Success Prediction */}
             {marketSnapshot && (
               <SuccessPrediction
@@ -890,6 +890,8 @@ const BuyerReport = () => {
                 description={overpayingDesc}
               />
             </MetricCalloutGrid>
+            </>
+            )}
 
             <TemplateSection show={['executive']}>
             {/* How This Analysis Is Formed - Collapsible */}
