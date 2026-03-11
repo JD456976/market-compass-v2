@@ -197,8 +197,8 @@ export async function exportReportToPdf(
       
       // Add section image using JPEG compression
       try {
-        const imgData = canvas.toDataURL('image/jpeg', 0.72);
-        pdf.addImage(imgData, 'JPEG', margin, currentY, imgWidth, imgHeight, undefined, 'FAST');
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', margin, currentY, imgWidth, imgHeight, undefined, 'FAST');
         currentY += imgHeight + 4; // 4mm gap between sections
       } catch (imgErr) {
         console.warn('Failed to add image to PDF:', imgErr);
