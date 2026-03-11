@@ -26,12 +26,15 @@ interface ComparisonExportOptions {
 const IMPORTANT_NOTICE = `This report is prepared by your agent as a decision-support tool. Market data reflects current conditions and patterns. For binding valuations or legal advice, consult a licensed appraiser or attorney.`;
 
 const html2canvasOptions = {
-  scale: 2,
+  scale: 3,
   useCORS: true,
   allowTaint: true,
   backgroundColor: '#ffffff',
   logging: false,
-  windowWidth: 794,
+  windowWidth: 1200,
+  imageTimeout: 0,
+  removeContainer: true,
+  letterRendering: true,
 };
 
 async function renderSectionToCanvas(section: HTMLElement): Promise<HTMLCanvasElement | null> {
@@ -194,8 +197,8 @@ export async function exportReportToPdf(
       
       // Add section image using JPEG compression
       try {
-        const imgData = canvas.toDataURL('image/jpeg', 0.72);
-        pdf.addImage(imgData, 'JPEG', margin, currentY, imgWidth, imgHeight, undefined, 'FAST');
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', margin, currentY, imgWidth, imgHeight, undefined, 'FAST');
         currentY += imgHeight + 4; // 4mm gap between sections
       } catch (imgErr) {
         console.warn('Failed to add image to PDF:', imgErr);
