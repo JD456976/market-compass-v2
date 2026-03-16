@@ -96,10 +96,13 @@ export type Database = {
           expires_at: string | null
           id: string
           issued_to: string | null
+          max_uses: number
           note: string | null
+          revoked_at: string | null
           status: Database["public"]["Enums"]["beta_code_status"]
           used_at: string | null
           used_by_device_id: string | null
+          uses_count: number
         }
         Insert: {
           code: string
@@ -108,10 +111,13 @@ export type Database = {
           expires_at?: string | null
           id?: string
           issued_to?: string | null
+          max_uses?: number
           note?: string | null
+          revoked_at?: string | null
           status?: Database["public"]["Enums"]["beta_code_status"]
           used_at?: string | null
           used_by_device_id?: string | null
+          uses_count?: number
         }
         Update: {
           code?: string
@@ -120,10 +126,13 @@ export type Database = {
           expires_at?: string | null
           id?: string
           issued_to?: string | null
+          max_uses?: number
           note?: string | null
+          revoked_at?: string | null
           status?: Database["public"]["Enums"]["beta_code_status"]
           used_at?: string | null
           used_by_device_id?: string | null
+          uses_count?: number
         }
         Relationships: []
       }
