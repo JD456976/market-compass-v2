@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Search, Loader2, Eye, Ban, UserCheck, Mail, Calendar, Building2 } from 'lucide-react';
+import { Users, Search, Loader2, Eye, Ban, UserCheck, Mail, Calendar, Building2, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Profile {
@@ -18,6 +19,8 @@ interface Profile {
   phone: string | null;
   brokerage: string | null;
   is_suspended: boolean | null;
+  beta_access_active: boolean;
+  beta_access_expires_at: string | null;
   last_active_at: string | null;
   created_at: string;
 }
@@ -33,6 +36,7 @@ export function AdminUsersPanel() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [togglingBeta, setTogglingBeta] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchData = async () => {
@@ -85,6 +89,39 @@ export function AdminUsersPanel() {
     }
   };
 
+  const handleToggleBeta = async (profile: Profile) => {
+    const newActive = !profile.beta_access_active;
+    setTogglingBeta(profile.id);
+    
+    const updateData: Record<string, any> = {
+      beta_access_active: newActive,
+      beta_access_source: newActive ? 'admin_grant' : profile.beta_access_source,
+    };
+
+    // When granting, set a 30-day expiry if none exists
+    if (newActive && !profile.beta_access_expires_at) {
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 30);
+      updateData.beta_access_expires_at = expires.toISOString();
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update(updateData)
+      .eq('id', profile.id);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: newActive ? 'Beta access granted' : 'Beta access revoked' });
+      fetchData();
+      if (selectedUser?.id === profile.id) {
+        setSelectedUser({ ...profile, beta_access_active: newActive });
+      }
+    }
+    setTogglingBeta(null);
+  };
+
   if (loading) {
     return (
       <Card>
@@ -127,6 +164,7 @@ export function AdminUsersPanel() {
                     <TableHead>Email</TableHead>
                     <TableHead>Brokerage</TableHead>
                     <TableHead>Roles</TableHead>
+                    <TableHead>Beta</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -148,6 +186,13 @@ export function AdminUsersPanel() {
                               </Badge>
                             ))}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={profile.beta_access_active}
+                            onCheckedChange={() => handleToggleBeta(profile)}
+                            disabled={togglingBeta === profile.id}
+                          />
                         </TableCell>
                         <TableCell>
                           <Badge variant={profile.is_suspended ? 'destructive' : 'outline'} className="text-xs">
@@ -215,6 +260,25 @@ export function AdminUsersPanel() {
                 {getRolesForUser(selectedUser.user_id).map(r => (
                   <Badge key={r} variant="secondary">{r}</Badge>
                 ))}
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-lg border">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Beta Access</p>
+                    {selectedUser.beta_access_active && selectedUser.beta_access_expires_at && (
+                      <p className="text-xs text-muted-foreground">
+                        Expires {format(new Date(selectedUser.beta_access_expires_at), 'MMM d, yyyy')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Switch
+                  checked={selectedUser.beta_access_active}
+                  onCheckedChange={() => handleToggleBeta(selectedUser)}
+                  disabled={togglingBeta === selectedUser.id}
+                />
               </div>
 
               <div className="flex gap-2 pt-4 border-t">
