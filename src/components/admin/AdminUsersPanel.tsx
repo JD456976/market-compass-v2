@@ -21,6 +21,7 @@ interface Profile {
   is_suspended: boolean | null;
   beta_access_active: boolean;
   beta_access_expires_at: string | null;
+  beta_access_source: string | null;
   last_active_at: string | null;
   created_at: string;
 }
