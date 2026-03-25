@@ -60,6 +60,7 @@ import OfferTracker from "./pages/OfferTracker";
 import ListingNavigator from "./pages/ListingNavigator";
 import TouringFlow from "./pages/TouringFlow";
 import TouringReport from "./pages/TouringReport";
+import MarketNarrative from "./pages/MarketNarrative";
 
 const queryClient = new QueryClient();
 
