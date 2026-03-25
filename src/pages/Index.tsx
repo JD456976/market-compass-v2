@@ -107,7 +107,12 @@ const Index = () => {
             </Link>
           </motion.div>
 
-          {/* Seller */}
+          {/* Pulse Score Widget */}
+          <motion.div variants={fadeInUp} className="md:col-span-2">
+            <PulseScoreWidget />
+          </motion.div>
+
+
           <motion.div variants={fadeInUp}>
             <Link to="/seller" className="block h-full">
               <Card className="h-full cursor-pointer group">
