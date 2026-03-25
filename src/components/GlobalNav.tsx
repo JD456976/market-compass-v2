@@ -536,7 +536,7 @@ function ProfileDropdown() {
             </div>
 
             {/* Sign out */}
-            <div className="border-t border-border py-1">
+            <div className="py-1" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
               <button
                 onClick={() => { setOpen(false); signOut(); }}
                 className="flex items-center gap-2.5 px-3 py-2 w-full text-sm text-destructive hover:bg-destructive/10 transition-colors"
