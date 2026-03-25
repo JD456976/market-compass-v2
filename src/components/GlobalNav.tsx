@@ -508,7 +508,7 @@ function ProfileDropdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-56 bg-background border border-border rounded-xl shadow-lg overflow-hidden z-[100]"
+            className="absolute right-0 top-full mt-2 w-56 bg-card border border-border/60 rounded-xl shadow-2xl overflow-hidden z-[100]"
           >
             {/* Agent identity header */}
             <div className="flex items-center gap-3 px-3 py-3 border-b border-border">
