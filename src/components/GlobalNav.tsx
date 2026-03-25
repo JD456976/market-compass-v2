@@ -387,11 +387,11 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 z-[70] w-72 bg-card border-l border-border/50 shadow-2xl flex flex-col"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+              className="fixed right-0 top-0 bottom-0 z-[70] w-72 bg-card shadow-2xl flex flex-col"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom)', borderLeft: '1px solid rgba(255,255,255,0.08)' }}
             >
-              {/* Drawer Header — agent card */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="flex items-center gap-3 min-w-0">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Agent avatar" className="h-9 w-9 rounded-full object-cover ring-1 ring-border shrink-0" />
