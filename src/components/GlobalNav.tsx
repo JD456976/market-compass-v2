@@ -623,7 +623,7 @@ function DesktopNav({ items }: { items: NavItem[] }) {
   return (
     <>
       <AllReportsDrawer open={reportsOpen} onClose={() => setReportsOpen(false)} />
-      <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
+      <header className="sticky top-0 z-50 glass-effect" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14 gap-4">
             <NavLink to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors shrink-0">
