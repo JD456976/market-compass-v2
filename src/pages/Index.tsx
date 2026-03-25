@@ -45,15 +45,21 @@ const Index = () => {
   const totalReports = drafts.length + shared.length;
 
   return (
-    <div className="bg-background" role="main" aria-label="Market Compass Home">
+    <div className="bg-background min-h-screen" role="main" aria-label="Market Compass Home">
       {/* Agent Onboarding Modal */}
       <AgentOnboarding />
       {/* All Reports Drawer */}
       <AllReportsDrawer open={allReportsOpen} onClose={() => setAllReportsOpen(false)} />
 
       {/* Hero Section */}
-      <div className="hero-gradient text-primary-foreground">
-        <div className="container mx-auto px-4 py-16 md:py-24">
+      <div className="hero-gradient text-foreground relative overflow-hidden">
+        {/* Subtle grid texture */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: 'linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)',
+          backgroundSize: '60px 60px'
+        }} />
+        
+        <div className="container mx-auto px-4 py-20 md:py-28 relative z-10">
           <motion.div 
             className="text-center max-w-3xl mx-auto"
             initial={{ opacity: 0, y: 30 }}
@@ -63,29 +69,22 @@ const Index = () => {
             <div className="flex items-center justify-center gap-3 mb-6">
               <AppLogo size="lg" />
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-tight">
-              Market Compass
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-tight text-foreground">
+              Market <span className="text-gradient">Compass</span>
             </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Agent decision-support tool for navigating Seller and Buyer scenarios 
               with confidence and clarity.
             </p>
           </motion.div>
         </div>
         
-        {/* Decorative wave */}
-        <div className="relative h-16 -mb-1">
-          <svg className="absolute bottom-0 w-full h-16" preserveAspectRatio="none" viewBox="0 0 1440 74">
-            <path 
-              fill="hsl(var(--background))" 
-              d="M0,32L60,37.3C120,43,240,53,360,53.3C480,53,600,43,720,42.7C840,43,960,53,1080,58.7C1200,64,1320,64,1380,64L1440,64L1440,74L1380,74C1320,74,1200,74,1080,74C960,74,840,74,720,74C600,74,480,74,360,74C240,74,120,74,60,74L0,74Z"
-            />
-          </svg>
-        </div>
+        {/* Gold accent line */}
+        <div className="gold-line w-full" />
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-12 -mt-8">
+      <div className="container mx-auto px-4 py-12">
         {/* Main Actions */}
         <motion.div 
           className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-16"
@@ -96,16 +95,16 @@ const Index = () => {
           {/* Quick Report CTA */}
           <motion.div variants={fadeInUp} className="md:col-span-2">
             <Link to="/quick-report" className="block">
-              <Card className="cursor-pointer group border-2 border-dashed border-accent/30 hover:border-accent/50 bg-accent/5">
+              <Card className="cursor-pointer group border-primary/20 hover:border-primary/40 bg-primary/5">
                 <CardContent className="flex items-center gap-4 py-4">
-                  <div className="p-2.5 rounded-full bg-accent/10">
-                    <Zap className="h-5 w-5 text-accent" />
+                  <div className="p-2.5 rounded-full bg-primary/10">
+                    <Zap className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">Quick Report</p>
+                    <p className="font-medium text-sm text-foreground">Quick Report</p>
                     <p className="text-xs text-muted-foreground">Address + price → instant analysis in 30 seconds</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary transition-all" />
                 </CardContent>
               </Card>
             </Link>
@@ -113,9 +112,9 @@ const Index = () => {
 
           <motion.div variants={fadeInUp}>
             <Link to="/seller" className="block h-full">
-              <Card className="h-full cursor-pointer group border-2 border-transparent hover:border-accent/30">
+              <Card className="h-full cursor-pointer group hover:border-primary/40">
                 <CardHeader className="text-center pb-4">
-                  <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 border border-primary/10">
                     <Building2 className="h-10 w-10 text-primary" />
                   </div>
                   <CardTitle className="text-2xl">Seller Report</CardTitle>
@@ -124,7 +123,7 @@ const Index = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full group-hover:bg-accent group-hover:text-accent-foreground transition-colors" size="lg">
+                  <Button className="w-full" size="lg">
                     Start Seller Analysis
                     <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                   </Button>
@@ -135,9 +134,9 @@ const Index = () => {
 
           <motion.div variants={fadeInUp}>
             <Link to="/buyer" className="block h-full">
-              <Card className="h-full cursor-pointer group border-2 border-transparent hover:border-accent/30">
+              <Card className="h-full cursor-pointer group hover:border-primary/40">
                 <CardHeader className="text-center pb-4">
-                  <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 border border-primary/10">
                     <Users className="h-10 w-10 text-primary" />
                   </div>
                   <CardTitle className="text-2xl">Buyer Report</CardTitle>
@@ -146,7 +145,7 @@ const Index = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full group-hover:bg-accent group-hover:text-accent-foreground transition-colors" size="lg">
+                  <Button className="w-full" size="lg">
                     Start Buyer Analysis
                     <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                   </Button>
@@ -158,16 +157,16 @@ const Index = () => {
           {/* Touring Brief CTA */}
           <motion.div variants={fadeInUp} className="md:col-span-2">
             <Link to="/touring" className="block">
-              <Card className="cursor-pointer group border-2 border-dashed border-primary/20 hover:border-primary/40 bg-primary/5">
+              <Card className="cursor-pointer group border-border/40 hover:border-primary/30">
                 <CardContent className="flex items-center gap-4 py-4">
-                  <div className="p-2.5 rounded-full bg-primary/10">
-                    <Eye className="h-5 w-5 text-primary" />
+                  <div className="p-2.5 rounded-full bg-secondary">
+                    <Eye className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">Touring Brief</p>
+                    <p className="font-medium text-sm text-foreground">Touring Brief</p>
                     <p className="text-xs text-muted-foreground">Pre-showing property intelligence — import a listing and share with your client before they tour</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary transition-all" />
                 </CardContent>
               </Card>
             </Link>
@@ -225,18 +224,18 @@ const Index = () => {
             transition={{ delay: 0.25 }}
           >
             <Link to="/subscription" className="block">
-              <Card className="border-accent/30 bg-gradient-to-r from-accent/5 to-transparent hover:from-accent/10 transition-colors cursor-pointer">
+              <Card className="border-primary/20 bg-gradient-to-r from-primary/5 via-primary/3 to-transparent hover:from-primary/10 transition-colors cursor-pointer">
                 <CardContent className="flex items-center gap-4 py-5">
-                  <div className="p-2.5 rounded-full bg-accent/10">
-                    <Sparkles className="h-5 w-5 text-accent" />
+                  <div className="p-2.5 rounded-full bg-primary/10">
+                    <Sparkles className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">Unlock your competitive advantage</p>
+                    <p className="font-medium text-sm text-foreground">Unlock your competitive advantage</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Unlimited reports • Scenario modeling • Branded exports
                     </p>
                   </div>
-                  <Button size="sm" variant="outline" className="shrink-0 border-accent/30 text-accent hover:bg-accent/10">
+                  <Button size="sm" variant="outline" className="shrink-0 border-primary/30 text-primary hover:bg-primary/10">
                     View Professional Plan
                     <ChevronRight className="h-3.5 w-3.5 ml-1" />
                   </Button>
@@ -250,7 +249,7 @@ const Index = () => {
                 setProBannerDismissed(true);
                 localStorage.setItem('pro_banner_dismissed', 'true');
               }}
-              className="absolute top-1 right-1 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              className="absolute top-1 right-1 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               aria-label="Dismiss"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -266,7 +265,7 @@ const Index = () => {
           transition={{ delay: 0.3 }}
         >
           <div className="flex items-center justify-between mb-3 px-1">
-            <h3 className="text-sm font-sans font-medium text-muted-foreground">Your Reports</h3>
+            <h3 className="text-xs font-sans font-semibold uppercase tracking-widest text-muted-foreground">Your Reports</h3>
             <button
               onClick={() => setAllReportsOpen(true)}
               className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium transition-colors"
@@ -334,7 +333,7 @@ const Index = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            <h3 className="text-sm font-sans font-medium text-muted-foreground mb-3 px-1">Market & Settings</h3>
+            <h3 className="text-xs font-sans font-semibold uppercase tracking-widest text-muted-foreground mb-3 px-1">Market & Settings</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Link to="/market-intelligence" className="block">
                 <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
@@ -374,7 +373,7 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <h3 className="text-sm font-sans font-medium text-muted-foreground mb-3 px-1">Help & Info</h3>
+          <h3 className="text-xs font-sans font-semibold uppercase tracking-widest text-muted-foreground mb-3 px-1">Help & Info</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Link to="/methodology" className="block">
               <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
@@ -391,25 +390,26 @@ const Index = () => {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 mt-16">
+      <footer className="border-t border-border/40 mt-16">
+        <div className="gold-line w-full" />
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <AppLogo size="sm" />
-              <span>Market Compass</span>
+              <span className="font-serif font-semibold text-foreground/80">Market Compass</span>
             </div>
             <p className="text-xs text-center max-w-md">
               Uses public market trend research and transaction logic. 
               Does not use MLS data or provide valuations.
             </p>
             <div className="flex items-center gap-4 text-xs">
-              <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-              <span>·</span>
-              <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
-              <span>·</span>
-              <a href="mailto:support@market-compass.com" className="hover:text-foreground transition-colors">Contact</a>
+              <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+              <span className="text-border">·</span>
+              <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+              <span className="text-border">·</span>
+              <a href="mailto:support@market-compass.com" className="hover:text-primary transition-colors">Contact</a>
             </div>
-            <p className="text-xs">© {new Date().getFullYear()} Market Compass. All rights reserved.</p>
+            <p className="text-xs text-muted-foreground/60">© {new Date().getFullYear()} Market Compass. All rights reserved.</p>
           </div>
         </div>
       </footer>

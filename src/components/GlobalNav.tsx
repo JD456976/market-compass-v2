@@ -134,7 +134,7 @@ export function GlobalNav() {
 
 function ClientDesktopNav() {
   return (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
+    <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           <NavLink to="/my-reports" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
@@ -171,7 +171,7 @@ function ClientDesktopNav() {
 function ClientMobileNav() {
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border"
+      className="fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-border/50"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="Client navigation"
     >
@@ -304,7 +304,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 
       {/* Bottom Tab Bar — Home | Leads | Reports | Listing | Menu */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border"
+        className="fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-border/50"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label="Main navigation"
       >
@@ -387,7 +387,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 z-[70] w-72 bg-background border-l border-border shadow-xl flex flex-col"
+              className="fixed right-0 top-0 bottom-0 z-[70] w-72 bg-card border-l border-border/50 shadow-2xl flex flex-col"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
               {/* Drawer Header — agent card */}
@@ -508,7 +508,7 @@ function ProfileDropdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-56 bg-background border border-border rounded-xl shadow-lg overflow-hidden z-[100]"
+            className="absolute right-0 top-full mt-2 w-56 bg-card border border-border/60 rounded-xl shadow-2xl overflow-hidden z-[100]"
           >
             {/* Agent identity header */}
             <div className="flex items-center gap-3 px-3 py-3 border-b border-border">
@@ -589,7 +589,7 @@ function MoreDropdown({ items }: { items: NavItem[] }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-52 bg-background border border-border rounded-xl shadow-lg overflow-hidden z-[100]"
+            className="absolute right-0 top-full mt-2 w-52 bg-card border border-border/60 rounded-xl shadow-2xl overflow-hidden z-[100]"
           >
             <div className="py-1">
               {items.map(item => (
@@ -623,7 +623,7 @@ function DesktopNav({ items }: { items: NavItem[] }) {
   return (
     <>
       <AllReportsDrawer open={reportsOpen} onClose={() => setReportsOpen(false)} />
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
+      <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14 gap-4">
             <NavLink to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors shrink-0">
