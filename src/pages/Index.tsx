@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { AlertTriangle, LayoutList } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Sparkles, Zap, Eye } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Sparkles, Zap, Eye, Activity, Search } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { AppLogo } from '@/components/AppLogo';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
 import { AllReportsDrawer } from '@/components/AllReportsDrawer';
@@ -27,6 +29,127 @@ const staggerContainer = {
     }
   }
 };
+
+// ─── Pulse Score Widget ───────────────────────────────────────────────────────
+
+function getPulseLabel(score: number) {
+  if (score >= 80) return { label: 'Hot Market', color: 'text-green-400', bg: 'bg-green-400' };
+  if (score >= 60) return { label: 'Warm Market', color: 'text-primary', bg: 'bg-primary' };
+  if (score >= 40) return { label: 'Balanced', color: 'text-blue-400', bg: 'bg-blue-400' };
+  if (score >= 20) return { label: 'Cool Market', color: 'text-sky-400', bg: 'bg-sky-400' };
+  return { label: 'Cold Market', color: 'text-slate-400', bg: 'bg-slate-400' };
+}
+
+function PulseScoreWidget() {
+  const [zip, setZip] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ score: number; cityState: string; leadType: string } | null>(null);
+  const [error, setError] = useState('');
+
+  const lookup = useCallback(async () => {
+    const cleaned = zip.replace(/\s/g, '');
+    if (!/^\d{5}$/.test(cleaned)) {
+      setError('Enter a valid 5-digit ZIP code');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('fred-lead-finder', {
+        body: { zipCode: cleaned },
+      });
+      if (fnError) throw fnError;
+      const score = data?.opportunityScore ?? data?.opportunity_score ?? null;
+      const cityState = data?.cityState ?? data?.city_state ?? cleaned;
+      const leadType = data?.leadType ?? data?.lead_type ?? 'transitional';
+      if (score == null) throw new Error('No score returned');
+      setResult({ score: Math.round(score), cityState, leadType });
+    } catch (e: any) {
+      setError('Could not fetch market data. Try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [zip]);
+
+  const pulse = result ? getPulseLabel(result.score) : null;
+
+  return (
+    <Card className="overflow-hidden">
+      <CardContent className="p-0">
+        <div className="flex flex-col sm:flex-row">
+          {/* Left: Input */}
+          <div className="flex-1 p-5 space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Activity className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">Pulse Score</span>
+              <Badge variant="secondary" className="text-[10px]">Industry First</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Instant 0–100 market health score for any ZIP. One number that tells you if it's a buyer's, seller's, or balanced market — powered by live federal data.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                value={zip}
+                onChange={(e) => setZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                onKeyDown={(e) => e.key === 'Enter' && lookup()}
+                placeholder="ZIP code"
+                className="max-w-[140px] font-mono"
+                maxLength={5}
+              />
+              <Button size="sm" onClick={lookup} disabled={loading || zip.length < 5}>
+                {loading ? (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-3.5 w-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    Checking
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5"><Search className="h-3.5 w-3.5" /> Check</span>
+                )}
+              </Button>
+            </div>
+            {error && <p className="text-xs text-destructive">{error}</p>}
+          </div>
+
+          {/* Right: Score display */}
+          <div className="sm:w-48 flex items-center justify-center p-5 bg-muted/30" style={{ borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
+            {result && pulse ? (
+              <div className="text-center space-y-2">
+                <div className={`text-5xl font-bold font-mono tabular-nums ${pulse.color}`}>
+                  {result.score}
+                </div>
+                <div className="space-y-1">
+                  <p className={`text-xs font-semibold ${pulse.color}`}>{pulse.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{result.cityState}</p>
+                </div>
+                {/* Mini bar */}
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <motion.div
+                    className={`h-full rounded-full ${pulse.bg}`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${result.score}%` }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                  />
+                </div>
+                <Link to="/lead-finder" className="text-[10px] text-primary hover:underline">
+                  Full analysis →
+                </Link>
+              </div>
+            ) : (
+              <div className="text-center">
+                <div className="text-4xl font-bold font-mono text-muted-foreground/20">—</div>
+                <p className="text-[10px] text-muted-foreground mt-1">Enter a ZIP</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Index Page ───────────────────────────────────────────────────────────────
 
 const Index = () => {
   const { sessions: drafts, error: draftsError } = useDraftSessions();
@@ -105,7 +228,12 @@ const Index = () => {
             </Link>
           </motion.div>
 
-          {/* Seller */}
+          {/* Pulse Score Widget */}
+          <motion.div variants={fadeInUp} className="md:col-span-2">
+            <PulseScoreWidget />
+          </motion.div>
+
+
           <motion.div variants={fadeInUp}>
             <Link to="/seller" className="block h-full">
               <Card className="h-full cursor-pointer group">
