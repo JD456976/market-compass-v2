@@ -420,22 +420,19 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
                 <DrawerSection links={DRAWER_PRIMARY} pathname={location.pathname} onAction={handleDrawerAction} />
 
                 {/* Reports */}
-                <div className="mx-4 my-2 border-t border-border/60" />
+                <div className="mx-4 my-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
                 <p className="px-6 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Reports</p>
                 <DrawerSection links={DRAWER_REPORTS} pathname={location.pathname} onAction={handleDrawerAction} />
 
-                {/* Tools */}
-                <div className="mx-4 my-2 border-t border-border/60" />
+                <div className="mx-4 my-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
                 <p className="px-6 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Tools</p>
                 <DrawerSection links={DRAWER_TOOLS} pathname={location.pathname} onAction={handleDrawerAction} />
 
-                {/* Account */}
-                <div className="mx-4 my-2 border-t border-border/60" />
+                <div className="mx-4 my-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
                 <p className="px-6 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Account</p>
                 <DrawerSection links={DRAWER_ACCOUNT} isAdmin={isAdmin} pathname={location.pathname} onAction={handleDrawerAction} />
 
-                {/* Sign out */}
-                <div className="mx-4 my-2 border-t border-border/60" />
+                <div className="mx-4 my-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
                 <button
                   onClick={() => signOut()}
                   className="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors min-h-[44px] w-[calc(100%-1rem)]"
