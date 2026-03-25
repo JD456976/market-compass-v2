@@ -134,7 +134,7 @@ export function GlobalNav() {
 
 function ClientDesktopNav() {
   return (
-    <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
+    <header className="sticky top-0 z-50 glass-effect" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           <NavLink to="/my-reports" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
@@ -171,8 +171,8 @@ function ClientDesktopNav() {
 function ClientMobileNav() {
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-border/50"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="fixed bottom-0 left-0 right-0 z-50 glass-effect"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)', borderTop: '1px solid rgba(255,255,255,0.08)' }}
       aria-label="Client navigation"
     >
       <div className="flex items-center justify-around h-16">
@@ -304,8 +304,8 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 
       {/* Bottom Tab Bar — Home | Leads | Reports | Listing | Menu */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-border/50"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="fixed bottom-0 left-0 right-0 z-50 glass-effect"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)', borderTop: '1px solid rgba(255,255,255,0.08)' }}
         aria-label="Main navigation"
       >
         <div className="flex items-center justify-around h-16">
@@ -387,11 +387,11 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 z-[70] w-72 bg-card border-l border-border/50 shadow-2xl flex flex-col"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+              className="fixed right-0 top-0 bottom-0 z-[70] w-72 bg-card shadow-2xl flex flex-col"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom)', borderLeft: '1px solid rgba(255,255,255,0.08)' }}
             >
-              {/* Drawer Header — agent card */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="flex items-center gap-3 min-w-0">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Agent avatar" className="h-9 w-9 rounded-full object-cover ring-1 ring-border shrink-0" />
@@ -420,22 +420,19 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
                 <DrawerSection links={DRAWER_PRIMARY} pathname={location.pathname} onAction={handleDrawerAction} />
 
                 {/* Reports */}
-                <div className="mx-4 my-2 border-t border-border/60" />
+                <div className="mx-4 my-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
                 <p className="px-6 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Reports</p>
                 <DrawerSection links={DRAWER_REPORTS} pathname={location.pathname} onAction={handleDrawerAction} />
 
-                {/* Tools */}
-                <div className="mx-4 my-2 border-t border-border/60" />
+                <div className="mx-4 my-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
                 <p className="px-6 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Tools</p>
                 <DrawerSection links={DRAWER_TOOLS} pathname={location.pathname} onAction={handleDrawerAction} />
 
-                {/* Account */}
-                <div className="mx-4 my-2 border-t border-border/60" />
+                <div className="mx-4 my-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
                 <p className="px-6 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Account</p>
                 <DrawerSection links={DRAWER_ACCOUNT} isAdmin={isAdmin} pathname={location.pathname} onAction={handleDrawerAction} />
 
-                {/* Sign out */}
-                <div className="mx-4 my-2 border-t border-border/60" />
+                <div className="mx-4 my-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
                 <button
                   onClick={() => signOut()}
                   className="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors min-h-[44px] w-[calc(100%-1rem)]"
@@ -508,10 +505,10 @@ function ProfileDropdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-56 bg-card border border-border/60 rounded-xl shadow-2xl overflow-hidden z-[100]"
+            className="absolute right-0 top-full mt-2 w-56 bg-card rounded-xl shadow-2xl overflow-hidden z-[100]"
+            style={{ border: '1px solid rgba(255,255,255,0.08)' }}
           >
-            {/* Agent identity header */}
-            <div className="flex items-center gap-3 px-3 py-3 border-b border-border">
+            <div className="flex items-center gap-3 px-3 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
               <AgentAvatar size="md" />
               <div className="min-w-0 flex-1">
                 {name && <p className="text-sm font-semibold truncate">{name}</p>}
@@ -536,7 +533,7 @@ function ProfileDropdown() {
             </div>
 
             {/* Sign out */}
-            <div className="border-t border-border py-1">
+            <div className="py-1" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
               <button
                 onClick={() => { setOpen(false); signOut(); }}
                 className="flex items-center gap-2.5 px-3 py-2 w-full text-sm text-destructive hover:bg-destructive/10 transition-colors"
@@ -589,7 +586,8 @@ function MoreDropdown({ items }: { items: NavItem[] }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-52 bg-card border border-border/60 rounded-xl shadow-2xl overflow-hidden z-[100]"
+            className="absolute right-0 top-full mt-2 w-52 bg-card rounded-xl shadow-2xl overflow-hidden z-[100]"
+            style={{ border: '1px solid rgba(255,255,255,0.08)' }}
           >
             <div className="py-1">
               {items.map(item => (
@@ -623,7 +621,7 @@ function DesktopNav({ items }: { items: NavItem[] }) {
   return (
     <>
       <AllReportsDrawer open={reportsOpen} onClose={() => setReportsOpen(false)} />
-      <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
+      <header className="sticky top-0 z-50 glass-effect" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14 gap-4">
             <NavLink to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors shrink-0">
