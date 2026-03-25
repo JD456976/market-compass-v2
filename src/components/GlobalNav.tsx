@@ -134,7 +134,7 @@ export function GlobalNav() {
 
 function ClientDesktopNav() {
   return (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
+    <header className="sticky top-0 z-50 glass-effect border-b border-border/50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           <NavLink to="/my-reports" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
