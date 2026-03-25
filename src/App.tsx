@@ -60,6 +60,7 @@ import OfferTracker from "./pages/OfferTracker";
 import ListingNavigator from "./pages/ListingNavigator";
 import TouringFlow from "./pages/TouringFlow";
 import TouringReport from "./pages/TouringReport";
+import MarketNarrative from "./pages/MarketNarrative";
 
 const queryClient = new QueryClient();
 
@@ -120,6 +121,7 @@ function AppRoutes() {
           <Route path="/touring/report" element={<RequireAuth><TouringReport /></RequireAuth>} />
           <Route path="/saved-playbooks" element={<RequireAuth><SavedPlaybooks /></RequireAuth>} />
           <Route path="/offer-tracker" element={<RequireAuth><OfferTracker /></RequireAuth>} />
+          <Route path="/market-narrative" element={<RequireAuth><MarketNarrative /></RequireAuth>} />
           <Route path="/documents" element={<RequireAuth><Documents /></RequireAuth>} />
           <Route path="/documents/upload" element={<RequireAuth><UploadDocument /></RequireAuth>} />
           <Route path="/documents/:documentId/review" element={<RequireAuth><ReviewDocument /></RequireAuth>} />
