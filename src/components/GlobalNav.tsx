@@ -457,6 +457,7 @@ const PRIMARY_NAV: NavItem[] = [
   { to: '/', label: 'Home', icon: <Home className="h-4 w-4" /> },
   { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-4 w-4" /> },
   { to: '/listing-navigator', label: 'Listing Nav', icon: <Eye className="h-4 w-4" /> },
+  { to: '/market-narrative', label: 'Narrative', icon: <PenLine className="h-4 w-4" /> },
   { to: '/market-intelligence', label: 'Market Intel', icon: <TrendingUp className="h-4 w-4" /> },
 ];
 
