@@ -589,7 +589,7 @@ function MoreDropdown({ items }: { items: NavItem[] }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-52 bg-background border border-border rounded-xl shadow-lg overflow-hidden z-[100]"
+            className="absolute right-0 top-full mt-2 w-52 bg-card border border-border/60 rounded-xl shadow-2xl overflow-hidden z-[100]"
           >
             <div className="py-1">
               {items.map(item => (
