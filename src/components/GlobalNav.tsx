@@ -225,6 +225,7 @@ const DRAWER_REPORTS: DrawerLink[] = [
 
 // Tools group
 const DRAWER_TOOLS: DrawerLink[] = [
+  { to: '/market-narrative', label: 'Market Narrative', icon: <PenLine className="h-5 w-5" /> },
   { to: '/saved-playbooks', label: 'Saved Playbooks', icon: <BookmarkCheck className="h-5 w-5" /> },
   { to: '/market-intelligence', label: 'Market Intelligence', icon: <TrendingUp className="h-5 w-5" /> },
   { to: '/market-data', label: 'Market Data', icon: <Database className="h-5 w-5" /> },
