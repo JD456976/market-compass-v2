@@ -387,7 +387,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 z-[70] w-72 bg-background border-l border-border shadow-xl flex flex-col"
+              className="fixed right-0 top-0 bottom-0 z-[70] w-72 bg-card border-l border-border/50 shadow-2xl flex flex-col"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
               {/* Drawer Header — agent card */}
