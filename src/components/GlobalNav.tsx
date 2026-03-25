@@ -304,7 +304,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 
       {/* Bottom Tab Bar — Home | Leads | Reports | Listing | Menu */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border"
+        className="fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-border/50"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label="Main navigation"
       >
