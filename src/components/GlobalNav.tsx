@@ -508,10 +508,10 @@ function ProfileDropdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-56 bg-card border border-border/60 rounded-xl shadow-2xl overflow-hidden z-[100]"
+            className="absolute right-0 top-full mt-2 w-56 bg-card rounded-xl shadow-2xl overflow-hidden z-[100]"
+            style={{ border: '1px solid rgba(255,255,255,0.08)' }}
           >
-            {/* Agent identity header */}
-            <div className="flex items-center gap-3 px-3 py-3 border-b border-border">
+            <div className="flex items-center gap-3 px-3 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
               <AgentAvatar size="md" />
               <div className="min-w-0 flex-1">
                 {name && <p className="text-sm font-semibold truncate">{name}</p>}
