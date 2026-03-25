@@ -11,7 +11,7 @@ import {
   Home, FolderOpen, Send, Settings, Sparkles, Menu,
   TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield,
   Settings as SettingsIcon, LayoutDashboard, LogOut, Target, BookmarkCheck, Trophy, Eye,
-  LayoutList, PenLine,
+  LayoutList, PenLine, Users,
 } from 'lucide-react';
 import { MarketShiftAlertBell } from '@/components/MarketShiftAlerts';
 import { AppLogo } from '@/components/AppLogo';
@@ -225,6 +225,7 @@ const DRAWER_REPORTS: DrawerLink[] = [
 
 // Tools group
 const DRAWER_TOOLS: DrawerLink[] = [
+  { to: '/buyer-match', label: 'Buyer Match', icon: <Users className="h-5 w-5" /> },
   { to: '/market-narrative', label: 'Market Narrative', icon: <PenLine className="h-5 w-5" /> },
   { to: '/saved-playbooks', label: 'Saved Playbooks', icon: <BookmarkCheck className="h-5 w-5" /> },
   { to: '/market-intelligence', label: 'Market Intelligence', icon: <TrendingUp className="h-5 w-5" /> },
@@ -457,6 +458,7 @@ const PRIMARY_NAV: NavItem[] = [
   { to: '/', label: 'Home', icon: <Home className="h-4 w-4" /> },
   { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-4 w-4" /> },
   { to: '/listing-navigator', label: 'Listing Nav', icon: <Eye className="h-4 w-4" /> },
+  { to: '/buyer-match', label: 'Buyer Match', icon: <Users className="h-4 w-4" /> },
   { to: '/market-narrative', label: 'Narrative', icon: <PenLine className="h-4 w-4" /> },
   { to: '/market-intelligence', label: 'Market Intel', icon: <TrendingUp className="h-4 w-4" /> },
 ];
