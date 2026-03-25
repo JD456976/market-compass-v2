@@ -20,9 +20,10 @@ export function SplashScreen({ onFinished }: { onFinished: () => void }) {
     <AnimatePresence>
       {phase !== 'exit' ? null : null}
       <motion.div
-        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background"
+        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center"
         style={{
-          background: 'linear-gradient(145deg, hsl(228 20% 6%) 0%, hsl(228 22% 12%) 50%, hsl(228 18% 8%) 100%)',
+          /* #0F172A base */
+          background: 'linear-gradient(145deg, hsl(222 47% 8%) 0%, hsl(217 33% 14%) 50%, hsl(222 47% 11%) 100%)',
         }}
         initial={{ opacity: 1 }}
         animate={{ opacity: phase === 'exit' ? 0 : 1 }}
@@ -31,7 +32,7 @@ export function SplashScreen({ onFinished }: { onFinished: () => void }) {
           if (phase === 'exit') onFinished();
         }}
       >
-        {/* Subtle gold glow behind icon */}
+        {/* Gold glow */}
         <motion.div
           className="absolute rounded-full"
           style={{
@@ -44,7 +45,6 @@ export function SplashScreen({ onFinished }: { onFinished: () => void }) {
           transition={{ duration: 1.6, ease: 'easeOut' }}
         />
 
-        {/* App icon */}
         <motion.img
           src={appIcon}
           alt="Market Compass"
@@ -54,9 +54,9 @@ export function SplashScreen({ onFinished }: { onFinished: () => void }) {
           transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
         />
 
-        {/* App name */}
         <motion.h1
-          className="mt-6 text-3xl font-serif font-bold tracking-tight relative z-10 text-foreground"
+          className="mt-6 text-3xl font-serif font-bold tracking-tight relative z-10"
+          style={{ color: '#E2E8F0' }}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.35 }}
@@ -64,9 +64,9 @@ export function SplashScreen({ onFinished }: { onFinished: () => void }) {
           Market Compass
         </motion.h1>
 
-        {/* Tagline */}
         <motion.p
-          className="mt-2 text-sm font-sans relative z-10 text-muted-foreground"
+          className="mt-2 text-sm font-sans relative z-10"
+          style={{ color: 'hsl(215 16% 52%)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.6 }}
@@ -74,16 +74,16 @@ export function SplashScreen({ onFinished }: { onFinished: () => void }) {
           Navigate every deal with confidence
         </motion.p>
 
-        {/* Gold loading bar */}
         <motion.div
           className="absolute bottom-16 left-1/2 -translate-x-1/2 h-0.5 rounded-full overflow-hidden"
-          style={{ width: 120, background: 'hsl(var(--border))' }}
+          style={{ width: 120, background: 'hsl(0 0% 100% / 0.08)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
         >
           <motion.div
-            className="h-full rounded-full bg-primary"
+            className="h-full rounded-full"
+            style={{ background: 'hsl(38 72% 58%)' }}
             initial={{ width: '0%' }}
             animate={{ width: '100%' }}
             transition={{ duration: 1.2, delay: 0.9, ease: 'easeInOut' }}

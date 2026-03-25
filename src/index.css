@@ -6,98 +6,100 @@
 
 @layer base {
   :root {
-    /* Dark luxury base */
-    --background: 228 20% 10%;
-    --foreground: 40 15% 93%;
+    /* ── Deal Pilot dark palette ── */
+    /* #0F172A */
+    --background: 222 47% 11%;
+    /* #E2E8F0 */
+    --foreground: 214 32% 91%;
 
-    /* Elevated dark cards */
-    --card: 228 18% 14%;
-    --card-foreground: 40 15% 93%;
+    /* #1E293B */
+    --card: 217 33% 17%;
+    --card-foreground: 214 32% 91%;
 
-    --popover: 228 18% 15%;
-    --popover-foreground: 40 15% 93%;
+    --popover: 217 33% 17%;
+    --popover-foreground: 214 32% 91%;
 
     /* Gold primary */
     --primary: 38 72% 58%;
-    --primary-foreground: 228 20% 10%;
+    --primary-foreground: 222 47% 11%;
 
-    /* Subtle elevated surface */
-    --secondary: 228 14% 18%;
-    --secondary-foreground: 40 12% 85%;
+    /* Elevated surface */
+    --secondary: 217 30% 21%;
+    --secondary-foreground: 214 25% 82%;
 
-    /* Muted tones */
-    --muted: 228 12% 16%;
-    --muted-foreground: 220 10% 55%;
+    /* Muted */
+    --muted: 217 28% 19%;
+    --muted-foreground: 215 16% 52%;
 
     /* Warm amber accent */
     --accent: 35 85% 55%;
-    --accent-foreground: 228 20% 10%;
+    --accent-foreground: 222 47% 11%;
 
-    /* Error states */
+    /* Error */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders and inputs */
-    --border: 228 12% 20%;
-    --input: 228 12% 20%;
+    /* Borders — rgba(255,255,255,0.08) mapped to subtle white-tinted */
+    --border: 217 20% 22%;
+    --input: 217 20% 22%;
     --ring: 38 72% 58%;
 
     --radius: 0.75rem;
 
     /* Sidebar */
-    --sidebar-background: 228 20% 8%;
-    --sidebar-foreground: 40 15% 93%;
+    --sidebar-background: 222 47% 9%;
+    --sidebar-foreground: 214 32% 91%;
     --sidebar-primary: 38 72% 58%;
-    --sidebar-primary-foreground: 228 20% 10%;
-    --sidebar-accent: 228 14% 16%;
-    --sidebar-accent-foreground: 40 12% 85%;
-    --sidebar-border: 228 12% 18%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 217 30% 19%;
+    --sidebar-accent-foreground: 214 25% 82%;
+    --sidebar-border: 217 20% 20%;
     --sidebar-ring: 38 72% 58%;
 
-    /* Premium gradients & shadows */
-    --gradient-hero: linear-gradient(145deg, hsl(228 20% 8%) 0%, hsl(228 22% 14%) 50%, hsl(228 18% 10%) 100%);
+    /* Gradients & shadows */
+    --gradient-hero: linear-gradient(145deg, hsl(222 47% 9%) 0%, hsl(217 33% 15%) 50%, hsl(222 47% 11%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(38 72% 58%) 0%, hsl(32 80% 48%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(228 18% 14%) 0%, hsl(228 20% 12%) 100%);
-    --shadow-elegant: 0 4px 24px -6px hsl(0 0% 0% / 0.5), 0 2px 8px -4px hsl(38 72% 58% / 0.06);
-    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.3), 0 4px 16px hsl(0 0% 0% / 0.25);
-    --shadow-card-hover: 0 8px 32px hsl(0 0% 0% / 0.4), 0 0 0 1px hsl(38 72% 58% / 0.08);
+    --gradient-card: linear-gradient(180deg, hsl(217 33% 17%) 0%, hsl(217 33% 15%) 100%);
+    --shadow-elegant: 0 4px 24px -6px hsl(0 0% 0% / 0.6);
+    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.35), 0 4px 16px hsl(0 0% 0% / 0.3);
+    --shadow-card-hover: 0 8px 32px hsl(0 0% 0% / 0.45), 0 0 0 1px hsl(38 72% 58% / 0.1);
   }
 
+  /* Dark mode mirrors root — dark-first design */
   .dark {
-    /* Same as root — dark-first design */
-    --background: 228 20% 10%;
-    --foreground: 40 15% 93%;
-    --card: 228 18% 14%;
-    --card-foreground: 40 15% 93%;
-    --popover: 228 18% 15%;
-    --popover-foreground: 40 15% 93%;
+    --background: 222 47% 11%;
+    --foreground: 214 32% 91%;
+    --card: 217 33% 17%;
+    --card-foreground: 214 32% 91%;
+    --popover: 217 33% 17%;
+    --popover-foreground: 214 32% 91%;
     --primary: 38 72% 58%;
-    --primary-foreground: 228 20% 10%;
-    --secondary: 228 14% 18%;
-    --secondary-foreground: 40 12% 85%;
-    --muted: 228 12% 16%;
-    --muted-foreground: 220 10% 55%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 30% 21%;
+    --secondary-foreground: 214 25% 82%;
+    --muted: 217 28% 19%;
+    --muted-foreground: 215 16% 52%;
     --accent: 35 85% 55%;
-    --accent-foreground: 228 20% 10%;
+    --accent-foreground: 222 47% 11%;
     --destructive: 0 65% 48%;
     --destructive-foreground: 0 0% 100%;
-    --border: 228 12% 20%;
-    --input: 228 12% 20%;
+    --border: 217 20% 22%;
+    --input: 217 20% 22%;
     --ring: 38 72% 58%;
-    --sidebar-background: 228 20% 8%;
-    --sidebar-foreground: 40 15% 93%;
+    --sidebar-background: 222 47% 9%;
+    --sidebar-foreground: 214 32% 91%;
     --sidebar-primary: 38 72% 58%;
-    --sidebar-primary-foreground: 228 20% 10%;
-    --sidebar-accent: 228 14% 16%;
-    --sidebar-accent-foreground: 40 12% 85%;
-    --sidebar-border: 228 12% 18%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 217 30% 19%;
+    --sidebar-accent-foreground: 214 25% 82%;
+    --sidebar-border: 217 20% 20%;
     --sidebar-ring: 38 72% 58%;
-    --gradient-hero: linear-gradient(145deg, hsl(228 20% 8%) 0%, hsl(228 22% 14%) 50%, hsl(228 18% 10%) 100%);
+    --gradient-hero: linear-gradient(145deg, hsl(222 47% 9%) 0%, hsl(217 33% 15%) 50%, hsl(222 47% 11%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(38 72% 58%) 0%, hsl(32 80% 48%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(228 18% 14%) 0%, hsl(228 20% 12%) 100%);
-    --shadow-elegant: 0 4px 24px -6px hsl(0 0% 0% / 0.5);
-    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.3), 0 4px 16px hsl(0 0% 0% / 0.25);
-    --shadow-card-hover: 0 8px 32px hsl(0 0% 0% / 0.4);
+    --gradient-card: linear-gradient(180deg, hsl(217 33% 17%) 0%, hsl(217 33% 15%) 100%);
+    --shadow-elegant: 0 4px 24px -6px hsl(0 0% 0% / 0.6);
+    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.35), 0 4px 16px hsl(0 0% 0% / 0.3);
+    --shadow-card-hover: 0 8px 32px hsl(0 0% 0% / 0.45);
   }
 }
 
@@ -116,7 +118,6 @@
     font-weight: 600;
   }
 
-  /* Ensure all non-heading text uses Inter */
   p, span, a, li, td, th, label, input, textarea, select, button, div {
     font-family: inherit;
   }
@@ -150,14 +151,18 @@
 
   .glass-effect {
     backdrop-filter: blur(16px) saturate(1.4);
-    background: hsl(var(--card) / 0.85);
-    border: 1px solid hsl(var(--border) / 0.5);
+    background: hsl(222 47% 11% / 0.92);
+    border-color: hsl(0 0% 100% / 0.08);
   }
 
-  /* Gold shimmer line for premium sections */
   .gold-line {
     height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(38 72% 58% / 0.4), transparent);
+    background: linear-gradient(90deg, transparent, hsl(38 72% 58% / 0.35), transparent);
+  }
+
+  /* White-opacity borders matching rgba(255,255,255,0.08) */
+  .border-white-8 {
+    border-color: hsl(0 0% 100% / 0.08);
   }
 }
 
@@ -182,7 +187,6 @@
    Report Design System — Unified Tokens
    ============================================ */
 
-/* Base report typography — always Inter body + Playfair headings */
 .report-styled {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 0.8125rem;
@@ -196,7 +200,6 @@
   font-family: 'Playfair Display', Georgia, serif;
 }
 
-/* Report heading hierarchy */
 .report-h1 {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 1.5rem;
@@ -221,163 +224,51 @@
   letter-spacing: 0.04em;
 }
 
-.report-body {
-  font-size: 0.8125rem;
-  line-height: 1.65;
-}
-
-.report-caption {
-  font-size: 0.6875rem;
-  line-height: 1.5;
-}
-
-/* Report disclaimer styling */
-.report-disclaimer {
-  margin-top: 1.5rem;
-}
+.report-body { font-size: 0.8125rem; line-height: 1.65; }
+.report-caption { font-size: 0.6875rem; line-height: 1.5; }
+.report-disclaimer { margin-top: 1.5rem; }
 
 /* ============================================
-   Template: Modern — Airy, generous spacing
+   Template: Modern
    ============================================ */
-.template-modern .pdf-section {
-  margin-bottom: 1.75rem;
-}
-
-.template-modern [class*="CardHeader"] {
-  padding-bottom: 0.75rem;
-  padding-top: 1.5rem;
-}
-
-.template-modern [class*="CardContent"] {
-  padding-bottom: 1.5rem;
-}
-
-.template-modern [class*="CardTitle"] {
-  font-size: 1.0625rem;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-}
-
-.template-modern .pdf-stat-tile {
-  padding: 1.25rem !important;
-  border-radius: 0.875rem;
-}
-
-.template-modern .report-info-block {
-  gap: 1.25rem;
-}
-
-/* Modern: lighter card borders */
-.template-modern [class*="Card"] {
-  border-color: hsl(var(--border) / 0.5);
-}
+.template-modern .pdf-section { margin-bottom: 1.75rem; }
+.template-modern [class*="CardHeader"] { padding-bottom: 0.75rem; padding-top: 1.5rem; }
+.template-modern [class*="CardContent"] { padding-bottom: 1.5rem; }
+.template-modern [class*="CardTitle"] { font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.005em; }
+.template-modern .pdf-stat-tile { padding: 1.25rem !important; border-radius: 0.875rem; }
+.template-modern .report-info-block { gap: 1.25rem; }
+.template-modern [class*="Card"] { border-color: hsl(0 0% 100% / 0.06); }
 
 /* ============================================
-   Template: Executive — Dense, data-forward
+   Template: Executive
    ============================================ */
-.template-executive .pdf-section {
-  margin-bottom: 1rem;
-}
-
-.template-executive [class*="CardHeader"] {
-  padding-top: 1rem;
-  padding-bottom: 0.5rem;
-}
-
-.template-executive [class*="CardContent"] {
-  padding-bottom: 1rem;
-}
-
-.template-executive [class*="CardTitle"] {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
-.template-executive .pdf-stat-tile {
-  padding: 0.875rem !important;
-  border-radius: 0.625rem;
-}
-
-.template-executive .report-info-block {
-  gap: 0.75rem;
-}
-
-/* Executive: body text slightly smaller for density */
-.template-executive p,
-.template-executive li,
-.template-executive span:not([class*="CardTitle"]) {
-  font-size: 0.8125rem;
-  line-height: 1.55;
-}
-
-/* Executive: tighter section label uppercase */
-.template-executive .text-muted-foreground.uppercase {
-  font-size: 0.625rem;
-  letter-spacing: 0.06em;
-}
-
-/* Executive: stronger card borders */
-.template-executive [class*="Card"] {
-  border-color: hsl(var(--border));
-  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.04);
-}
+.template-executive .pdf-section { margin-bottom: 1rem; }
+.template-executive [class*="CardHeader"] { padding-top: 1rem; padding-bottom: 0.5rem; }
+.template-executive [class*="CardContent"] { padding-bottom: 1rem; }
+.template-executive [class*="CardTitle"] { font-size: 0.9375rem; font-weight: 700; }
+.template-executive .pdf-stat-tile { padding: 0.875rem !important; border-radius: 0.625rem; }
+.template-executive .report-info-block { gap: 0.75rem; }
+.template-executive p, .template-executive li, .template-executive span:not([class*="CardTitle"]) { font-size: 0.8125rem; line-height: 1.55; }
+.template-executive .text-muted-foreground.uppercase { font-size: 0.625rem; letter-spacing: 0.06em; }
+.template-executive [class*="Card"] { border-color: hsl(0 0% 100% / 0.08); box-shadow: 0 1px 2px hsl(0 0% 0% / 0.2); }
 
 /* ============================================
-   Template: Snapshot — Compact, single-page
+   Template: Snapshot
    ============================================ */
-.template-snapshot .pdf-section {
-  margin-bottom: 0.625rem;
-}
+.template-snapshot .pdf-section { margin-bottom: 0.625rem; }
+.template-snapshot [class*="CardHeader"] { padding-top: 0.75rem; padding-bottom: 0.25rem; }
+.template-snapshot [class*="CardContent"] { padding: 0.75rem 1rem; }
+.template-snapshot [class*="CardTitle"] { font-size: 0.875rem; font-weight: 600; }
+.template-snapshot .pdf-stat-tile { padding: 0.625rem !important; border-radius: 0.5rem; }
+.template-snapshot .report-info-block { gap: 0.5rem; }
+.template-snapshot p, .template-snapshot li, .template-snapshot span:not([class*="CardTitle"]) { font-size: 0.75rem; line-height: 1.45; }
+.template-snapshot [class*="Card"] { border-color: hsl(0 0% 100% / 0.04); box-shadow: none; }
+.template-snapshot .font-serif.font-bold { font-size: 1rem; }
+.template-snapshot .grid { gap: 0.5rem; }
 
-.template-snapshot [class*="CardHeader"] {
-  padding-top: 0.75rem;
-  padding-bottom: 0.25rem;
-}
-
-.template-snapshot [class*="CardContent"] {
-  padding: 0.75rem 1rem;
-}
-
-.template-snapshot [class*="CardTitle"] {
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.template-snapshot .pdf-stat-tile {
-  padding: 0.625rem !important;
-  border-radius: 0.5rem;
-}
-
-.template-snapshot .report-info-block {
-  gap: 0.5rem;
-}
-
-/* Snapshot: compact body text */
-.template-snapshot p,
-.template-snapshot li,
-.template-snapshot span:not([class*="CardTitle"]) {
-  font-size: 0.75rem;
-  line-height: 1.45;
-}
-
-/* Snapshot: reduced card elevation */
-.template-snapshot [class*="Card"] {
-  border-color: hsl(var(--border) / 0.4);
-  box-shadow: none;
-}
-
-/* Snapshot: metric values stay readable */
-.template-snapshot .font-serif.font-bold {
-  font-size: 1rem;
-}
-
-/* Snapshot: tighter grid gaps */
-.template-snapshot .grid {
-  gap: 0.5rem;
-}
-
-/* PDF Export Styles */
+/* ============================================
+   PDF Export — always light for print
+   ============================================ */
 .pdf-export {
   background: #ffffff !important;
   color: #1a1a2e !important;
@@ -407,12 +298,8 @@
   border-color: #e5e5e5 !important;
 }
 
-/* Ensure header section is visible in PDF export */
-.pdf-export .pdf-header-section {
-  display: block !important;
-}
+.pdf-export .pdf-header-section { display: block !important; }
 
-/* Stat tiles alignment stabilization for PDF export */
 .pdf-export .pdf-stat-tile {
   display: block !important;
   text-align: center !important;
@@ -428,361 +315,96 @@
   line-height: 1.4 !important;
 }
 
-.pdf-export .pdf-stat-tile p:last-child {
-  margin-bottom: 0 !important;
-}
-
-/* Ensure label text is consistent */
-.pdf-export .pdf-stat-tile .text-sm {
-  font-size: 12px !important;
-  line-height: 1.4 !important;
-}
-
-/* Ensure value text is consistent */
+.pdf-export .pdf-stat-tile p:last-child { margin-bottom: 0 !important; }
+.pdf-export .pdf-stat-tile .text-sm { font-size: 12px !important; line-height: 1.4 !important; }
 .pdf-export .pdf-stat-tile .text-lg,
-.pdf-export .pdf-stat-tile .text-xl {
-  font-size: 16px !important;
-  line-height: 1.4 !important;
-}
+.pdf-export .pdf-stat-tile .text-xl { font-size: 16px !important; line-height: 1.4 !important; }
 
-.pdf-avoid-break {
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
-}
+.pdf-avoid-break { break-inside: avoid !important; page-break-inside: avoid !important; }
+.pdf-section { break-inside: avoid !important; page-break-inside: avoid !important; }
 
-.pdf-section {
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
-}
+body.is-exporting .report-actions { display: none !important; }
+body.is-exporting #report-export button { display: none !important; }
 
-/* is-exporting body class for extra safety */
-body.is-exporting .report-actions {
-  display: none !important;
-}
-
-body.is-exporting #report-export button {
-  display: none !important;
-}
-
-/* Hide action buttons during export (safety net) */
 .pdf-export .report-actions,
-.pdf-export button {
-  display: none !important;
-}
+.pdf-export button { display: none !important; }
 
-/* Hide interactive elements in PDF export */
 .pdf-export .pdf-exclude,
-body.is-exporting .pdf-exclude {
-  display: none !important;
-}
+body.is-exporting .pdf-exclude { display: none !important; }
 
-/* Force collapsible content open during PDF export (e.g., AI Insights) */
-.pdf-export [data-state="closed"] {
-  display: block !important;
-}
-.pdf-export [data-state="closed"] > [data-radix-collapsible-content] {
-  display: block !important;
-  height: auto !important;
-  overflow: visible !important;
-}
-.pdf-export [data-radix-collapsible-content][data-state="closed"] {
-  display: block !important;
-  height: auto !important;
-  overflow: visible !important;
-}
+.pdf-export [data-state="closed"] { display: block !important; }
+.pdf-export [data-state="closed"] > [data-radix-collapsible-content] { display: block !important; height: auto !important; overflow: visible !important; }
+.pdf-export [data-radix-collapsible-content][data-state="closed"] { display: block !important; height: auto !important; overflow: visible !important; }
 
-/* Hide agent notes in PDF export when in client mode */
 .pdf-export.client-mode .pdf-hide-agent-notes,
-body.is-exporting .client-mode .pdf-hide-agent-notes {
-  display: none !important;
-}
+body.is-exporting .client-mode .pdf-hide-agent-notes { display: none !important; }
 
 /* ============================================
    Global Mobile Text Overflow Prevention
    ============================================ */
 
-/* Prevent horizontal scroll on body */
-html, body {
-  overflow-x: hidden;
-  max-width: 100vw;
-}
+html, body { overflow-x: hidden; max-width: 100vw; }
 
-/* Universal text wrapping for all containers */
-.container,
-.pdf-section,
-.report-info-block,
-[class*="Card"] {
+.container, .pdf-section, .report-info-block, [class*="Card"] {
   max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-/* Ensure all paragraphs and text wrap properly */
 p, span, h1, h2, h3, h4, h5, h6, label {
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-/* Fix long strings in cards and badges */
-.pdf-stat-tile p,
-.report-info-block p {
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  hyphens: none;
-}
+.pdf-stat-tile p, .report-info-block p { overflow-wrap: anywhere; word-break: break-word; hyphens: none; }
+.pdf-stat-tile { padding: 1rem; min-height: auto; height: auto; }
+.pdf-stat-tile .text-xl, .pdf-stat-tile .text-lg, .pdf-stat-tile .text-base { word-break: break-word; overflow-wrap: anywhere; line-height: 1.3; hyphens: none; }
+.flex > * { min-width: 0; }
+.likelihood-cards-mobile > div, .pdf-stat-tile { height: auto; min-height: auto; }
+[class*="Badge"], [class*="badge"] { white-space: normal; overflow-wrap: anywhere; hyphens: none; }
 
-/* Mobile report card stat tiles - improved spacing and wrapping */
-.pdf-stat-tile {
-  padding: 1rem;
-  min-height: auto;
-  height: auto;
-}
-
-.pdf-stat-tile .text-xl,
-.pdf-stat-tile .text-lg,
-.pdf-stat-tile .text-base {
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  line-height: 1.3;
-  hyphens: none;
-}
-
-/* Flex row children must allow text shrinking */
-.flex > * {
-  min-width: 0;
-}
-
-/* Stat tiles in grids: ensure height auto-adjusts */
-.likelihood-cards-mobile > div,
-.pdf-stat-tile {
-  height: auto;
-  min-height: auto;
-}
-
-/* Pill tags and chips should wrap */
-[class*="Badge"],
-[class*="badge"] {
-  white-space: normal;
-  overflow-wrap: anywhere;
-  hyphens: none;
-}
-
-/* Mobile Responsive Fixes (≤480px) */
+/* Mobile ≤480px */
 @media (max-width: 480px) {
-  /* B1: Report header - prevent overlap and stack cleanly */
-  .report-header-mobile {
-    padding-top: max(1rem, env(safe-area-inset-top));
-  }
-
-  /* Global button text overflow fix */
-  button, [role="button"], a.inline-flex {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-width: 0;
-  }
-
-  /* Dialog/AlertDialog buttons stack on mobile */
-  [class*="DialogFooter"],
-  [class*="AlertDialogFooter"] {
-    flex-direction: column !important;
-    gap: 0.5rem;
-  }
-
-  [class*="DialogFooter"] > *,
-  [class*="AlertDialogFooter"] > * {
-    width: 100%;
-    margin: 0 !important;
-  }
-  
-  /* B2: Section headers - stack title and timestamp */
-  .section-header-mobile {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0.5rem;
-  }
-  
-  .section-header-mobile p {
-    text-align: left;
-    font-size: 0.7rem;
-  }
-  
-  /* B3: Likelihood cards - responsive 2-column grid */
-  .likelihood-cards-mobile {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 0.75rem !important;
-  }
-  
-  /* 3rd item spans full width if it's the last */
-  .likelihood-cards-mobile > *:nth-child(3):last-child {
-    grid-column: 1 / -1;
-  }
-  
-  /* For 3-column grids that should stack on mobile */
-  .grid-cols-3.likelihood-cards-mobile {
-    grid-template-columns: 1fr !important;
-  }
-  
-  .grid-cols-3.likelihood-cards-mobile > * {
-    padding: 1rem;
-  }
-  
-  /* Stat tiles on mobile - tighter padding, auto height */
-  .likelihood-cards-mobile .pdf-stat-tile,
-  .likelihood-cards-mobile > div {
-    padding: 0.875rem !important;
-    height: auto !important;
-    min-height: auto !important;
-  }
-  
-  .likelihood-cards-mobile .text-xl {
-    font-size: 1rem !important;
-  }
-  
-  .likelihood-cards-mobile .text-lg {
-    font-size: 0.9375rem !important;
-  }
-  
-  /* B4: Prepared for/by block - prevent overflow */
-  .report-info-block p {
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    line-height: 1.5;
-  }
-  
-  /* ReportHeader mobile fixes */
-  .pdf-avoid-break.mb-6 p {
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    font-size: 0.8125rem;
-  }
-
-  /* Fix disclaimer and methodology text */
-  .methodology-disclaimer,
-  .important-notice-text {
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    hyphens: none;
-    text-align: left;
-    padding-left: 0;
-    padding-right: 0;
-  }
-
-  /* Fix badge/chip text overflow - allow wrapping */
-  [class*="Badge"],
-  [class*="badge"] {
-    max-width: 100%;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    hyphens: none;
-  }
-
-  /* Fix card title overflow */
-  [class*="CardTitle"] {
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    font-size: 1rem;
-  }
-
-  /* Ensure container doesn't cause horizontal scroll */
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-  
-  /* Report card content - consistent internal padding */
-  .pdf-section .p-4,
-  .pdf-section .p-6 {
-    padding: 1rem !important;
-  }
-  
-  /* Risk cards grid on mobile */
-  .grid.md\:grid-cols-2.gap-6 {
-    gap: 1rem;
-  }
-
-  /* Contingencies tile: clean comma-separated wrapping */
-  .contingencies-list {
-    white-space: normal;
-    overflow-wrap: anywhere;
-    hyphens: none;
-    line-height: 1.5;
-  }
-
-  /* Currency/number overflow protection */
-  .font-serif.font-bold {
-    font-size: clamp(0.875rem, 3.5vw, 1.125rem);
-    overflow-wrap: anywhere;
-  }
+  .report-header-mobile { padding-top: max(1rem, env(safe-area-inset-top)); }
+  button, [role="button"], a.inline-flex { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  [class*="DialogFooter"], [class*="AlertDialogFooter"] { flex-direction: column !important; gap: 0.5rem; }
+  [class*="DialogFooter"] > *, [class*="AlertDialogFooter"] > * { width: 100%; margin: 0 !important; }
+  .section-header-mobile { flex-direction: column !important; align-items: flex-start !important; gap: 0.5rem; }
+  .section-header-mobile p { text-align: left; font-size: 0.7rem; }
+  .likelihood-cards-mobile { grid-template-columns: 1fr 1fr !important; gap: 0.75rem !important; }
+  .likelihood-cards-mobile > *:nth-child(3):last-child { grid-column: 1 / -1; }
+  .grid-cols-3.likelihood-cards-mobile { grid-template-columns: 1fr !important; }
+  .grid-cols-3.likelihood-cards-mobile > * { padding: 1rem; }
+  .likelihood-cards-mobile .pdf-stat-tile, .likelihood-cards-mobile > div { padding: 0.875rem !important; height: auto !important; min-height: auto !important; }
+  .likelihood-cards-mobile .text-xl { font-size: 1rem !important; }
+  .likelihood-cards-mobile .text-lg { font-size: 0.9375rem !important; }
+  .report-info-block p { word-break: break-word; overflow-wrap: anywhere; line-height: 1.5; }
+  .pdf-avoid-break.mb-6 p { word-break: break-word; overflow-wrap: anywhere; font-size: 0.8125rem; }
+  .methodology-disclaimer, .important-notice-text { word-break: break-word; overflow-wrap: anywhere; hyphens: none; text-align: left; padding-left: 0; padding-right: 0; }
+  [class*="Badge"], [class*="badge"] { max-width: 100%; white-space: normal; overflow-wrap: anywhere; hyphens: none; }
+  [class*="CardTitle"] { word-break: break-word; overflow-wrap: anywhere; font-size: 1rem; }
+  .container { padding-left: 1rem; padding-right: 1rem; max-width: 100%; box-sizing: border-box; }
+  .pdf-section .p-4, .pdf-section .p-6 { padding: 1rem !important; }
+  .grid.md\:grid-cols-2.gap-6 { gap: 1rem; }
+  .contingencies-list { white-space: normal; overflow-wrap: anywhere; hyphens: none; line-height: 1.5; }
+  .font-serif.font-bold { font-size: clamp(0.875rem, 3.5vw, 1.125rem); overflow-wrap: anywhere; }
 }
 
-/* B5: Mobile button layout and safe area */
 @media (max-width: 480px) {
-  .saved-sessions-empty-buttons,
-  .drafts-empty-buttons {
-    flex-direction: column !important;
-    width: 100%;
-  }
-  
-  .saved-sessions-empty-buttons > *,
-  .drafts-empty-buttons > * {
-    width: 100%;
-  }
-  
-  .saved-sessions-empty-buttons a,
-  .drafts-empty-buttons a {
-    width: 100%;
-  }
-  
-  .saved-sessions-empty-buttons button,
-  .drafts-empty-buttons button {
-    width: 100%;
-  }
-  
-  /* Ensure report actions wrap nicely on mobile */
-  .report-actions {
-    flex-direction: column;
-  }
-  
-  .report-actions > * {
-    width: 100%;
-  }
-  
-  .report-actions a {
-    width: 100%;
-  }
-  
-  .report-actions button {
-    width: 100%;
-  }
+  .saved-sessions-empty-buttons, .drafts-empty-buttons { flex-direction: column !important; width: 100%; }
+  .saved-sessions-empty-buttons > *, .drafts-empty-buttons > * { width: 100%; }
+  .saved-sessions-empty-buttons a, .drafts-empty-buttons a { width: 100%; }
+  .saved-sessions-empty-buttons button, .drafts-empty-buttons button { width: 100%; }
+  .report-actions { flex-direction: column; }
+  .report-actions > * { width: 100%; }
+  .report-actions a { width: 100%; }
+  .report-actions button { width: 100%; }
 }
 
-/* ============================================
-   Scenario Explorer drawer content
-   ============================================ */
+/* Scenario drawer */
+.scenario-drawer-content { max-height: calc(85vh - 160px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
-/* Scenario drawer scrollable content - auto-scroll to top */
-.scenario-drawer-content {
-  max-height: calc(85vh - 160px);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ============================================
-   Global auto-scroll for forms and menus
-   ============================================ */
-/* Ensure all scrollable containers start at top */
-[data-radix-scroll-area-viewport],
-[data-radix-select-viewport],
-[data-radix-dropdown-menu-content],
-.scroll-area-viewport {
-  scroll-behavior: smooth;
-}
-
-/* Drawer and sheet content should scroll to top on open */
-[data-vaul-drawer-content],
-[data-radix-dialog-content] {
-  scroll-behavior: smooth;
-}
+/* Auto-scroll */
+[data-radix-scroll-area-viewport], [data-radix-select-viewport], [data-radix-dropdown-menu-content], .scroll-area-viewport { scroll-behavior: smooth; }
+[data-vaul-drawer-content], [data-radix-dialog-content] { scroll-behavior: smooth; }

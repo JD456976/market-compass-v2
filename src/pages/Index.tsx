@@ -40,22 +40,19 @@ const Index = () => {
   const [allReportsOpen, setAllReportsOpen] = useState(false);
   const loadError = draftsError || sharedError;
 
-  // Progressive disclosure: has the user created at least one report?
   const hasCreatedReport = !loadError && (drafts.length > 0 || allShared.length > 0);
   const totalReports = drafts.length + shared.length;
 
   return (
     <div className="bg-background min-h-screen" role="main" aria-label="Market Compass Home">
-      {/* Agent Onboarding Modal */}
       <AgentOnboarding />
-      {/* All Reports Drawer */}
       <AllReportsDrawer open={allReportsOpen} onClose={() => setAllReportsOpen(false)} />
 
-      {/* Hero Section */}
+      {/* Hero */}
       <div className="hero-gradient text-foreground relative overflow-hidden">
-        {/* Subtle grid texture */}
+        {/* Subtle grid */}
         <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: 'linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(hsl(0 0% 100%) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 100%) 1px, transparent 1px)',
           backgroundSize: '60px 60px'
         }} />
         
@@ -79,23 +76,21 @@ const Index = () => {
           </motion.div>
         </div>
         
-        {/* Gold accent line */}
         <div className="gold-line w-full" />
       </div>
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-12">
-        {/* Main Actions */}
         <motion.div 
           className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-16"
           variants={staggerContainer}
           initial="initial"
           animate="animate"
         >
-          {/* Quick Report CTA */}
+          {/* Quick Report */}
           <motion.div variants={fadeInUp} className="md:col-span-2">
             <Link to="/quick-report" className="block">
-              <Card className="cursor-pointer group border-primary/20 hover:border-primary/40 bg-primary/5">
+              <Card className="cursor-pointer group bg-primary/5 hover:bg-primary/8" style={{ borderColor: 'hsl(38 72% 58% / 0.2)' }}>
                 <CardContent className="flex items-center gap-4 py-4">
                   <div className="p-2.5 rounded-full bg-primary/10">
                     <Zap className="h-5 w-5 text-primary" />
@@ -110,11 +105,12 @@ const Index = () => {
             </Link>
           </motion.div>
 
+          {/* Seller */}
           <motion.div variants={fadeInUp}>
             <Link to="/seller" className="block h-full">
-              <Card className="h-full cursor-pointer group hover:border-primary/40">
+              <Card className="h-full cursor-pointer group">
                 <CardHeader className="text-center pb-4">
-                  <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 border border-primary/10">
+                  <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300" style={{ borderColor: 'hsl(38 72% 58% / 0.1)', borderWidth: 1 }}>
                     <Building2 className="h-10 w-10 text-primary" />
                   </div>
                   <CardTitle className="text-2xl">Seller Report</CardTitle>
@@ -132,11 +128,12 @@ const Index = () => {
             </Link>
           </motion.div>
 
+          {/* Buyer */}
           <motion.div variants={fadeInUp}>
             <Link to="/buyer" className="block h-full">
-              <Card className="h-full cursor-pointer group hover:border-primary/40">
+              <Card className="h-full cursor-pointer group">
                 <CardHeader className="text-center pb-4">
-                  <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 border border-primary/10">
+                  <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300" style={{ borderColor: 'hsl(38 72% 58% / 0.1)', borderWidth: 1 }}>
                     <Users className="h-10 w-10 text-primary" />
                   </div>
                   <CardTitle className="text-2xl">Buyer Report</CardTitle>
@@ -154,10 +151,10 @@ const Index = () => {
             </Link>
           </motion.div>
 
-          {/* Touring Brief CTA */}
+          {/* Touring Brief */}
           <motion.div variants={fadeInUp} className="md:col-span-2">
             <Link to="/touring" className="block">
-              <Card className="cursor-pointer group border-border/40 hover:border-primary/30">
+              <Card className="cursor-pointer group">
                 <CardContent className="flex items-center gap-4 py-4">
                   <div className="p-2.5 rounded-full bg-secondary">
                     <Eye className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -173,69 +170,47 @@ const Index = () => {
           </motion.div>
         </motion.div>
 
-        {/* Load error banner */}
+        {/* Load error */}
         {loadError && (
-          <motion.div
-            className="max-w-4xl mx-auto mb-8"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Card className="border-destructive/30 bg-destructive/5">
+          <motion.div className="max-w-4xl mx-auto mb-8" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <Card className="bg-destructive/5" style={{ borderColor: 'hsl(0 72% 51% / 0.2)' }}>
               <CardContent className="flex items-center gap-3 py-4">
                 <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-foreground">Could not load your reports</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Please check your connection and try refreshing the page.
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Please check your connection and try refreshing the page.</p>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
         )}
 
-        {/* Post-onboarding CTA for first-time users */}
+        {/* First-time CTA */}
         {!loadError && !hasCreatedReport && (
-          <motion.div
-            className="max-w-4xl mx-auto mb-12 text-center"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <Card className="border-dashed border-2 border-primary/20 bg-primary/5">
+          <motion.div className="max-w-4xl mx-auto mb-12 text-center" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <Card className="border-dashed border-2 bg-primary/5" style={{ borderColor: 'hsl(38 72% 58% / 0.15)' }}>
               <CardContent className="py-6">
-                <p className="text-sm font-medium text-foreground mb-1">
-                  👋 Ready to get started?
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Choose a Seller or Buyer report above to create your first analysis. It only takes a few minutes.
-                </p>
+                <p className="text-sm font-medium text-foreground mb-1">👋 Ready to get started?</p>
+                <p className="text-xs text-muted-foreground">Choose a Seller or Buyer report above to create your first analysis.</p>
               </CardContent>
             </Card>
           </motion.div>
         )}
 
-        {/* Professional Plan Entry Point */}
+        {/* Pro banner */}
         {!isProfessionalUser && !proBannerDismissed && (
-          <motion.div
-            className="max-w-4xl mx-auto mb-8 relative"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-          >
+          <motion.div className="max-w-4xl mx-auto mb-8 relative" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
             <Link to="/subscription" className="block">
-              <Card className="border-primary/20 bg-gradient-to-r from-primary/5 via-primary/3 to-transparent hover:from-primary/10 transition-colors cursor-pointer">
+              <Card className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent hover:from-primary/10 transition-colors cursor-pointer" style={{ borderColor: 'hsl(38 72% 58% / 0.15)' }}>
                 <CardContent className="flex items-center gap-4 py-5">
                   <div className="p-2.5 rounded-full bg-primary/10">
                     <Sparkles className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm text-foreground">Unlock your competitive advantage</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Unlimited reports • Scenario modeling • Branded exports
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Unlimited reports • Scenario modeling • Branded exports</p>
                   </div>
-                  <Button size="sm" variant="outline" className="shrink-0 border-primary/30 text-primary hover:bg-primary/10">
+                  <Button size="sm" variant="outline" className="shrink-0 text-primary hover:bg-primary/10" style={{ borderColor: 'hsl(38 72% 58% / 0.2)' }}>
                     View Professional Plan
                     <ChevronRight className="h-3.5 w-3.5 ml-1" />
                   </Button>
@@ -243,12 +218,7 @@ const Index = () => {
               </Card>
             </Link>
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setProBannerDismissed(true);
-                localStorage.setItem('pro_banner_dismissed', 'true');
-              }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setProBannerDismissed(true); localStorage.setItem('pro_banner_dismissed', 'true'); }}
               className="absolute top-1 right-1 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               aria-label="Dismiss"
             >
@@ -258,23 +228,13 @@ const Index = () => {
         )}
 
         {/* Your Reports */}
-        <motion.div 
-          className="max-w-4xl mx-auto mb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
+        <motion.div className="max-w-4xl mx-auto mb-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           <div className="flex items-center justify-between mb-3 px-1">
             <h3 className="text-xs font-sans font-semibold uppercase tracking-widest text-muted-foreground">Your Reports</h3>
-            <button
-              onClick={() => setAllReportsOpen(true)}
-              className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-            >
+            <button onClick={() => setAllReportsOpen(true)} className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium transition-colors">
               <LayoutList className="h-3.5 w-3.5" />
               All Reports
-              {totalReports > 0 && (
-                <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">{totalReports}</Badge>
-              )}
+              {totalReports > 0 && <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">{totalReports}</Badge>}
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -283,9 +243,7 @@ const Index = () => {
                 <span className="flex items-center w-full">
                   <FolderOpen className="mr-2 h-4 w-4 flex-shrink-0" />
                   <span className="truncate">Draft Analyses</span>
-                  {drafts.length > 0 && (
-                    <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">{drafts.length}</Badge>
-                  )}
+                  {drafts.length > 0 && <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">{drafts.length}</Badge>}
                 </span>
                 <span className="text-[10px] text-muted-foreground font-normal pl-6">In-progress reports not yet shared</span>
               </Button>
@@ -304,9 +262,7 @@ const Index = () => {
                 <span className="flex items-center w-full">
                   <Send className="mr-2 h-4 w-4 flex-shrink-0" />
                   <span className="truncate">Shared Reports</span>
-                  {shared.length > 0 && (
-                    <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">{shared.length}</Badge>
-                  )}
+                  {shared.length > 0 && <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">{shared.length}</Badge>}
                 </span>
                 <span className="text-[10px] text-muted-foreground font-normal pl-6">Reports sent to clients</span>
               </Button>
@@ -325,40 +281,26 @@ const Index = () => {
           </div>
         </motion.div>
 
-        {/* Market & Settings — hidden until first report for progressive disclosure */}
+        {/* Market & Settings */}
         {hasCreatedReport && (
-          <motion.div 
-            className="max-w-4xl mx-auto mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
+          <motion.div className="max-w-4xl mx-auto mb-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
             <h3 className="text-xs font-sans font-semibold uppercase tracking-widest text-muted-foreground mb-3 px-1">Market & Settings</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Link to="/market-intelligence" className="block">
                 <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
-                  <span className="flex items-center w-full">
-                    <TrendingUp className="mr-2 h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">Market Intelligence</span>
-                  </span>
+                  <span className="flex items-center w-full"><TrendingUp className="mr-2 h-4 w-4 flex-shrink-0" /><span className="truncate">Market Intelligence</span></span>
                   <span className="text-[10px] text-muted-foreground font-normal pl-6">Scenarios & location profiles</span>
                 </Button>
               </Link>
               <Link to="/market-data" className="block">
                 <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
-                  <span className="flex items-center w-full">
-                    <Database className="mr-2 h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">Market Data</span>
-                  </span>
+                  <span className="flex items-center w-full"><Database className="mr-2 h-4 w-4 flex-shrink-0" /><span className="truncate">Market Data</span></span>
                   <span className="text-[10px] text-muted-foreground font-normal pl-6">Area-level pricing and trend profiles</span>
                 </Button>
               </Link>
               <Link to="/agent-profile" className="block">
                 <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
-                  <span className="flex items-center w-full">
-                    <User className="mr-2 h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">Agent Profile</span>
-                  </span>
+                  <span className="flex items-center w-full"><User className="mr-2 h-4 w-4 flex-shrink-0" /><span className="truncate">Agent Profile</span></span>
                   <span className="text-[10px] text-muted-foreground font-normal pl-6">Your branding and contact info</span>
                 </Button>
               </Link>
@@ -367,20 +309,12 @@ const Index = () => {
         )}
 
         {/* Help & Info */}
-        <motion.div 
-          className="max-w-4xl mx-auto"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
+        <motion.div className="max-w-4xl mx-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
           <h3 className="text-xs font-sans font-semibold uppercase tracking-widest text-muted-foreground mb-3 px-1">Help & Info</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Link to="/methodology" className="block">
               <Button variant="outline" size="lg" className="w-full justify-start flex-col items-start h-auto py-3 gap-0.5">
-                <span className="flex items-center w-full">
-                  <BookOpen className="mr-2 h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">Data & Methodology</span>
-                </span>
+                <span className="flex items-center w-full"><BookOpen className="mr-2 h-4 w-4 flex-shrink-0" /><span className="truncate">Data & Methodology</span></span>
                 <span className="text-[10px] text-muted-foreground font-normal pl-6">How scores and likelihoods are calculated</span>
               </Button>
             </Link>
@@ -390,7 +324,7 @@ const Index = () => {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 mt-16">
+      <footer className="mt-16" style={{ borderTop: '1px solid hsl(0 0% 100% / 0.08)' }}>
         <div className="gold-line w-full" />
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
@@ -399,17 +333,16 @@ const Index = () => {
               <span className="font-serif font-semibold text-foreground/80">Market Compass</span>
             </div>
             <p className="text-xs text-center max-w-md">
-              Uses public market trend research and transaction logic. 
-              Does not use MLS data or provide valuations.
+              Uses public market trend research and transaction logic. Does not use MLS data or provide valuations.
             </p>
             <div className="flex items-center gap-4 text-xs">
               <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-              <span className="text-border">·</span>
+              <span className="opacity-30">·</span>
               <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
-              <span className="text-border">·</span>
+              <span className="opacity-30">·</span>
               <a href="mailto:support@market-compass.com" className="hover:text-primary transition-colors">Contact</a>
             </div>
-            <p className="text-xs text-muted-foreground/60">© {new Date().getFullYear()} Market Compass. All rights reserved.</p>
+            <p className="text-xs text-muted-foreground/50">© {new Date().getFullYear()} Market Compass. All rights reserved.</p>
           </div>
         </div>
       </footer>
