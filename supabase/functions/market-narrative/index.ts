@@ -10,25 +10,24 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { stats, tone, audience } = await req.json();
+    const { stats, tone, audience, copyTypePrompt, copyTypeLabel } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are a senior real estate copywriter who creates polished, client-ready market narratives for real estate agents.
+    const systemPrompt = `You are a senior real estate copywriter who creates polished, client-ready market content for real estate agents.
 
-Your job: take raw market statistics and transform them into compelling, professional market commentary that agents can share directly with clients, post on social media, or include in listing presentations.
+Your job: take raw market statistics and transform them into compelling, professional content that agents can share directly with clients, post on social media, or use in listing presentations.
 
 Rules:
 - Write in a confident, authoritative but approachable tone
 - Always cite the specific numbers provided
 - Never fabricate data — only use what's given
-- Structure with clear sections using markdown headers
-- Include a short executive summary at the top
-- Add a "Key Takeaways" bullet list at the end
 - Adapt language to the specified audience and tone
-- Keep it between 300-500 words unless the data warrants more`;
+- Keep it concise and actionable`;
 
-    const userPrompt = `Generate a client-ready market narrative from these stats:
+    const userPrompt = `Generate the following type of content: **${copyTypeLabel || "Market Update"}**
+
+${copyTypePrompt || "Write a polished market update email for clients."}
 
 **Market Statistics:**
 ${stats}
@@ -36,7 +35,7 @@ ${stats}
 **Tone:** ${tone || "Professional and confident"}
 **Target Audience:** ${audience || "Home sellers and buyers"}
 
-Write the narrative now.`;
+Write the content now.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
