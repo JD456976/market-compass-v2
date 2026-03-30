@@ -41,12 +41,12 @@
     /* Sidebar */
     --sidebar-background: 222 47% 9%;
     --sidebar-foreground: 214 32% 91%;
-    --sidebar-primary: 38 72% 58%;
-    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-primary: 240 65% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 30% 19%;
     --sidebar-accent-foreground: 214 25% 82%;
-    --sidebar-border: 217 20% 20%;
-    --sidebar-ring: 38 72% 58%;
+    --sidebar-border: 0 0% 100% / 0.08;
+    --sidebar-ring: 240 65% 60%;
 
     /* Gradients & shadows */
     --gradient-hero: linear-gradient(145deg, hsl(222 47% 9%) 0%, hsl(217 33% 15%) 50%, hsl(222 47% 11%) 100%);
