@@ -466,7 +466,7 @@ const Index = () => {
           <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <AppLogo size="sm" />
-              <span className="font-serif font-semibold text-foreground/80">Market Compass</span>
+              <span className="font-sans font-semibold text-foreground/80">Market Compass</span>
             </div>
             <p className="text-xs text-center max-w-md">
               Uses public market trend research and transaction logic. Does not use MLS data or provide valuations.
