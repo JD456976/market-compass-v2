@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Plus, Trash2, Sparkles, Flame, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Users, Plus, Trash2, Sparkles, Flame, ChevronDown, ChevronUp, X, Mail, Copy, Check, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -61,13 +62,8 @@ function saveBuyers(buyers: BuyerProfile[]) {
 function emptyBuyer(): BuyerProfile {
   return {
     id: crypto.randomUUID(),
-    name: '',
-    budgetMax: '',
-    minBedrooms: '',
-    preferredAreas: '',
-    mustHaveFeatures: '',
-    timeline: 'Flexible',
-    notes: '',
+    name: '', budgetMax: '', minBedrooms: '', preferredAreas: '',
+    mustHaveFeatures: '', timeline: 'Flexible', notes: '',
   };
 }
 
@@ -77,14 +73,14 @@ function ScoreRing({ score, isHot }: { score: number; isHot: boolean }) {
   const r = 28;
   const circumference = 2 * Math.PI * r;
   const offset = circumference - (score / 100) * circumference;
-  const color = score >= 80 ? 'hsl(var(--chart-2))' : score >= 60 ? 'hsl(var(--primary))' : score >= 40 ? 'hsl(210 80% 55%)' : 'hsl(var(--muted-foreground))';
+  const ringColor = score >= 75 ? 'hsl(142 70% 45%)' : score >= 50 ? 'hsl(38 72% 58%)' : 'hsl(0 72% 51%)';
 
   return (
-    <div className="relative flex items-center justify-center">
+    <div className="relative flex items-center justify-center shrink-0">
       <svg width="72" height="72" className="-rotate-90">
         <circle cx="36" cy="36" r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth="5" />
         <motion.circle
-          cx="36" cy="36" r={r} fill="none" stroke={color} strokeWidth="5"
+          cx="36" cy="36" r={r} fill="none" stroke={ringColor} strokeWidth="5"
           strokeLinecap="round"
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: offset }}
@@ -92,9 +88,9 @@ function ScoreRing({ score, isHot }: { score: number; isHot: boolean }) {
           strokeDasharray={circumference}
         />
       </svg>
-      <span className="absolute text-lg font-bold" style={{ color }}>{score}</span>
+      <span className="absolute text-lg font-bold tabular-nums" style={{ color: ringColor }}>{score}</span>
       {isHot && (
-        <Flame className="absolute -top-1 -right-1 h-5 w-5 text-orange-400 drop-shadow" />
+        <Star className="absolute -top-1 -right-1 h-5 w-5 text-primary fill-primary drop-shadow" />
       )}
     </div>
   );
@@ -166,6 +162,116 @@ function BuyerCard({ buyer, onChange, onRemove }: { buyer: BuyerProfile; onChang
   );
 }
 
+// ─── Match Result Card ────────────────────────────────────────────────────────
+
+function MatchResultCard({
+  result: r,
+  index,
+  listing,
+  buyers,
+}: {
+  result: MatchResult;
+  index: number;
+  listing: ListingDetails;
+  buyers: BuyerProfile[];
+}) {
+  const [email, setEmail] = useState<string | null>(null);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const draftEmail = async () => {
+    setEmailLoading(true);
+    try {
+      const buyer = buyers.find(b => b.name === r.buyerName);
+      const { data, error } = await supabase.functions.invoke('buyer-match', {
+        body: {
+          action: 'draft-email',
+          listing,
+          buyer: buyer || { name: r.buyerName },
+          matchScore: r.score,
+          matchReason: r.reason,
+        },
+      });
+      if (error) throw error;
+      setEmail(data?.email || 'Could not generate email.');
+    } catch (err: any) {
+      toast({ title: 'Email draft failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!email) return;
+    await navigator.clipboard.writeText(email);
+    setCopied(true);
+    toast({ title: 'Email copied' });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.08 }}>
+      <Card className={cn(
+        'transition-all',
+        r.isHotMatch && 'ring-1 ring-primary/30 bg-primary/5'
+      )}>
+        <CardContent className="py-4 space-y-3">
+          <div className="flex items-center gap-4">
+            <ScoreRing score={r.score} isHot={r.isHotMatch} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-semibold text-sm">{r.buyerName}</span>
+                {r.isHotMatch && (
+                  <Badge className="bg-primary/15 text-primary border-primary/20 text-[10px] gap-1">
+                    <Star className="h-3 w-3 fill-primary" />
+                    Hot Match
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground mt-0.5">{r.reason}</p>
+            </div>
+          </div>
+
+          {/* Draft Email button / output */}
+          {email ? (
+            <div className="bg-secondary/50 rounded-lg p-3 space-y-2" style={{ borderLeft: '3px solid hsl(38 72% 58%)' }}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5" /> Draft Outreach Email
+                </span>
+                <Button variant="ghost" size="sm" className="h-7 px-2" onClick={handleCopy}>
+                  {copied ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
+                </Button>
+              </div>
+              <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{email}</p>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs border-primary/20 text-primary hover:bg-primary/10"
+              onClick={draftEmail}
+              disabled={emailLoading}
+            >
+              {emailLoading ? (
+                <>
+                  <span className="h-3.5 w-3.5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  Drafting…
+                </>
+              ) : (
+                <>
+                  <Mail className="h-3.5 w-3.5" />
+                  Draft Email
+                </>
+              )}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function BuyerMatch() {
@@ -186,7 +292,7 @@ export default function BuyerMatch() {
   const runMatch = useCallback(async () => {
     const validBuyers = buyers.filter(b => b.name.trim());
     if (!listing.address.trim() || !listing.price.trim()) {
-      toast({ title: 'Missing listing info', description: 'Please enter at least the address and price.', variant: 'destructive' });
+      toast({ title: 'Missing listing info', description: 'Enter at least the address and price.', variant: 'destructive' });
       return;
     }
     if (validBuyers.length === 0) {
@@ -198,16 +304,13 @@ export default function BuyerMatch() {
     setResults(null);
     try {
       const { data, error } = await supabase.functions.invoke('buyer-match', {
-        body: { listing, buyers: validBuyers },
+        body: { action: 'match', listing, buyers: validBuyers },
       });
       if (error) throw error;
-
       const matches: MatchResult[] = data?.matches ?? data;
       if (!Array.isArray(matches)) throw new Error('Invalid response');
-
       setResults(matches.sort((a, b) => b.score - a.score));
     } catch (err: any) {
-      console.error('Buyer match error:', err);
       toast({ title: 'Match failed', description: err.message || 'Please try again.', variant: 'destructive' });
     } finally {
       setLoading(false);
@@ -218,32 +321,39 @@ export default function BuyerMatch() {
     <div className="container mx-auto px-4 py-6 max-w-3xl space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl md:text-3xl font-sans font-bold">Buyer Match</h1>
-        <p className="text-muted-foreground text-sm mt-1">AI-powered buyer-to-listing matching — an industry first.</p>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
+            <Users className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-sans font-bold text-foreground">Buyer Match</h1>
+            <p className="text-sm text-muted-foreground">AI-powered buyer-to-listing matching — an industry first</p>
+          </div>
+        </div>
       </motion.div>
 
       {/* Listing Form */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">New Listing Details</CardTitle>
+            <CardTitle className="text-base font-sans">New Listing Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <Label className="text-xs text-muted-foreground">Address</Label>
+              <Label className="text-xs text-muted-foreground">Address *</Label>
               <Input value={listing.address} onChange={e => setListing(l => ({ ...l, address: e.target.value }))} placeholder="123 Main St, Boston MA" />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Price ($)</Label>
-                <Input type="number" value={listing.price} onChange={e => setListing(l => ({ ...l, price: e.target.value }))} placeholder="650000" />
+                <Label className="text-xs text-muted-foreground">Price ($) *</Label>
+                <Input type="number" value={listing.price} onChange={e => setListing(l => ({ ...l, price: e.target.value }))} placeholder="650000" className="font-mono" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Bedrooms</Label>
+                <Label className="text-xs text-muted-foreground">Beds</Label>
                 <Input type="number" value={listing.bedrooms} onChange={e => setListing(l => ({ ...l, bedrooms: e.target.value }))} placeholder="3" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Bathrooms</Label>
+                <Label className="text-xs text-muted-foreground">Baths</Label>
                 <Input type="number" value={listing.bathrooms} onChange={e => setListing(l => ({ ...l, bathrooms: e.target.value }))} placeholder="2" />
               </div>
               <div>
@@ -251,7 +361,7 @@ export default function BuyerMatch() {
                 <Input type="number" value={listing.sqft} onChange={e => setListing(l => ({ ...l, sqft: e.target.value }))} placeholder="1800" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-muted-foreground">Neighborhood / Area</Label>
                 <Input value={listing.neighborhood} onChange={e => setListing(l => ({ ...l, neighborhood: e.target.value }))} placeholder="Back Bay" />
@@ -271,7 +381,7 @@ export default function BuyerMatch() {
               <Textarea value={listing.keyFeatures} onChange={e => setListing(l => ({ ...l, keyFeatures: e.target.value }))} rows={2} placeholder="e.g. garage, yard, updated kitchen, near top schools" className="resize-none" />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Description</Label>
+              <Label className="text-xs text-muted-foreground">Brief Description</Label>
               <Textarea value={listing.description} onChange={e => setListing(l => ({ ...l, description: e.target.value }))} rows={2} placeholder="Brief listing description..." className="resize-none" />
             </div>
           </CardContent>
@@ -282,7 +392,7 @@ export default function BuyerMatch() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-sans font-semibold">Your Buyers</h2>
-          <Button variant="outline" size="sm" onClick={addBuyer} className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={addBuyer} className="gap-1.5 border-primary/20 text-primary hover:bg-primary/10">
             <Plus className="h-4 w-4" /> Add Buyer
           </Button>
         </div>
@@ -320,27 +430,7 @@ export default function BuyerMatch() {
               </button>
             </div>
             {results.map((r, i) => (
-              <motion.div key={r.buyerName} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}>
-                <Card className={cn(
-                  'transition-all',
-                  r.isHotMatch && 'ring-1 ring-orange-400/40 bg-orange-500/5'
-                )}>
-                  <CardContent className="py-4 flex items-center gap-4">
-                    <ScoreRing score={r.score} isHot={r.isHotMatch} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm truncate">{r.buyerName}</span>
-                        {r.isHotMatch && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400">
-                            Hot Match
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-0.5">{r.reason}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              <MatchResultCard key={r.buyerName} result={r} index={i} listing={listing} buyers={buyers} />
             ))}
           </motion.div>
         )}
