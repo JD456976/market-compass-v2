@@ -339,15 +339,6 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
               </Link>
             );
           })}
-          {/* Reports tab — opens drawer */}
-          <button
-            onClick={() => setReportsOpen(true)}
-            className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] transition-colors"
-            style={{ color: reportsOpen ? '#D4A853' : '#94A3B8' }}
-          >
-            <FileText className="h-5 w-5" />
-            <span className="text-[10px] font-medium leading-none">Reports</span>
-          </button>
         </div>
       </nav>
 
