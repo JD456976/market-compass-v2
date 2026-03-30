@@ -7,13 +7,13 @@
 @layer base {
   :root {
     /* ── Deal Pilot dark palette ── */
-    /* #0F172A */
-    --background: 222 47% 11%;
-    /* #E2E8F0 */
-    --foreground: 214 32% 91%;
+    /* Deeper dark background ~hsl(222,47%,5%) */
+    --background: 222 47% 5%;
+    /* Brighter foreground ~hsl(210,40%,92%) */
+    --foreground: 210 40% 92%;
 
-    /* #1E293B */
-    --card: 217 33% 17%;
+    /* Richer card ~hsl(220,40%,13%) */
+    --card: 220 40% 13%;
     --card-foreground: 214 32% 91%;
 
     --popover: 217 33% 17%;
