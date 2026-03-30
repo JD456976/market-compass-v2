@@ -67,10 +67,10 @@
 
   /* Dark mode mirrors root — dark-first design */
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 214 32% 91%;
-    --card: 217 33% 17%;
-    --card-foreground: 214 32% 91%;
+    --background: 222 47% 5%;
+    --foreground: 210 40% 92%;
+    --card: 220 40% 13%;
+    --card-foreground: 210 40% 92%;
     --popover: 217 33% 17%;
     --popover-foreground: 214 32% 91%;
     --primary: 38 72% 58%;
