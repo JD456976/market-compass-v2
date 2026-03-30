@@ -6,43 +6,34 @@
 
 @layer base {
   :root {
-    /* ── Deal Pilot dark palette ── */
-    /* Deeper dark background ~hsl(222,47%,5%) */
+    /* ── Market Compass dark palette ── */
     --background: 222 47% 5%;
-    /* Brighter foreground ~hsl(210,40%,92%) */
     --foreground: 210 40% 92%;
 
-    /* Richer card ~hsl(220,40%,13%) */
     --card: 220 40% 13%;
     --card-foreground: 210 40% 92%;
 
     --popover: 217 33% 17%;
     --popover-foreground: 214 32% 91%;
 
-    /* Gold primary */
-    --primary: 38 72% 58%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 240 65% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Elevated surface */
     --secondary: 217 30% 21%;
     --secondary-foreground: 214 25% 82%;
 
-    /* Muted */
-    --muted: 217 28% 19%;
-    --muted-foreground: 215 16% 52%;
+    --muted: 220 30% 18%;
+    --muted-foreground: 215 20% 60%;
 
-    /* Warm amber accent */
     --accent: 35 85% 55%;
     --accent-foreground: 222 47% 11%;
 
-    /* Error */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders — rgba(255,255,255,0.08) mapped to subtle white-tinted */
-    --border: 217 20% 22%;
-    --input: 217 20% 22%;
-    --ring: 38 72% 58%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.08;
+    --ring: 240 65% 60%;
 
     --radius: 0.75rem;
 
