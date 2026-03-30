@@ -123,6 +123,7 @@ function AppRoutes() {
           <Route path="/saved-playbooks" element={<RequireAuth><SavedPlaybooks /></RequireAuth>} />
           <Route path="/offer-tracker" element={<RequireAuth><OfferTracker /></RequireAuth>} />
           <Route path="/market-narrative" element={<RequireAuth><MarketNarrative /></RequireAuth>} />
+          <Route path="/ai-narrative" element={<RequireAuth><MarketNarrative /></RequireAuth>} />
           <Route path="/buyer-match" element={<RequireAuth><BuyerMatch /></RequireAuth>} />
           <Route path="/documents" element={<RequireAuth><Documents /></RequireAuth>} />
           <Route path="/documents/upload" element={<RequireAuth><UploadDocument /></RequireAuth>} />

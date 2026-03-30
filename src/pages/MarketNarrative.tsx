@@ -132,6 +132,26 @@ export default function MarketNarrative() {
               <CardTitle className="text-base font-sans">Market Stats</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {/* Neighborhood / ZIP */}
+              <div>
+                <label className="text-xs font-medium text-foreground mb-1 block">Neighborhood / ZIP</label>
+                <Input
+                  value={neighborhood}
+                  onChange={(e) => setNeighborhood(e.target.value)}
+                  placeholder="e.g. Brookline, MA or 02445"
+                />
+              </div>
+
+              {/* Report Month */}
+              <div>
+                <label className="text-xs font-medium text-foreground mb-1 block">Report Month</label>
+                <Input
+                  value={reportMonth}
+                  onChange={(e) => setReportMonth(e.target.value)}
+                  placeholder="e.g. March 2026"
+                />
+              </div>
+
               {/* Median Price */}
               <div>
                 <label className="text-xs font-medium text-foreground mb-1 block">Median Sale Price *</label>
