@@ -304,70 +304,45 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
       {/* All Reports Drawer */}
       <AllReportsDrawer open={reportsOpen} onClose={() => setReportsOpen(false)} />
 
-      {/* Bottom Tab Bar — Home | Leads | Reports | Listing | Menu */}
+      {/* Bottom Tab Bar — 5 fixed tabs */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 glass-effect"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)', borderTop: '1px solid rgba(255,255,255,0.08)' }}
+        className="fixed bottom-0 left-0 right-0 z-50"
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          background: '#1E293B',
+          height: 64,
+        }}
         aria-label="Main navigation"
       >
-        <div className="flex items-center justify-around h-16">
-          <NavLink
-            to="/"
-            end
-            className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] text-muted-foreground transition-colors"
-            activeClassName="text-primary"
-          >
-            <Home className="h-5 w-5" />
-            <span className="text-[10px] font-medium leading-none">Home</span>
-          </NavLink>
-          <NavLink
-            to="/lead-finder"
-            className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] text-muted-foreground transition-colors"
-            activeClassName="text-primary"
-          >
-            <Target className="h-5 w-5" />
-            <span className="text-[10px] font-medium leading-none">Leads</span>
-          </NavLink>
-          {/* Reports — opens AllReportsDrawer */}
+        <div className="flex items-center justify-around h-full">
+          {[
+            { to: '/', label: 'Home', icon: Home, end: true },
+            { to: '/lead-finder', label: 'Leads', icon: Users },
+            { to: '/listing-navigator', label: 'Listing', icon: Search },
+            { to: '/market-intelligence', label: 'Market', icon: TrendingUp },
+          ].map((tab) => (
+            <NavLink
+              key={tab.to}
+              to={tab.to}
+              end={tab.end}
+              className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] transition-colors"
+              style={{ color: '#94A3B8' }}
+              activeStyle={{ color: '#D4A853' }}
+              activeClassName=""
+            >
+              <tab.icon className="h-5 w-5" />
+              <span className="text-[10px] font-medium leading-none">{tab.label}</span>
+            </NavLink>
+          ))}
+          {/* Reports tab — opens drawer instead of navigating */}
           <button
             onClick={() => setReportsOpen(true)}
-            className={cn(
-              'flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] transition-colors',
-              reportsOpen ? 'text-primary' : 'text-muted-foreground'
-            )}
+            className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] transition-colors"
+            style={{ color: reportsOpen ? '#D4A853' : '#94A3B8' }}
           >
-            <LayoutList className="h-5 w-5" />
+            <FileText className="h-5 w-5" />
             <span className="text-[10px] font-medium leading-none">Reports</span>
-          </button>
-          <NavLink
-            to="/listing-navigator"
-            className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] text-muted-foreground transition-colors"
-            activeClassName="text-primary"
-          >
-            <Eye className="h-5 w-5" />
-            <span className="text-[10px] font-medium leading-none">Listing</span>
-          </NavLink>
-          {/* Avatar/Menu button opens drawer */}
-          <button
-            onClick={() => setDrawerOpen(true)}
-            aria-label="Open menu"
-            aria-expanded={drawerOpen}
-            className={cn(
-              'flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] transition-colors',
-              drawerOpen ? 'text-primary' : 'text-muted-foreground'
-            )}
-          >
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Agent avatar"
-                className="h-6 w-6 rounded-full object-cover ring-1 ring-border"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-              />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-            <span className="text-[10px] font-medium leading-none">Menu</span>
           </button>
         </div>
       </nav>
