@@ -71,6 +71,8 @@ export default function MarketNarrative() {
     try {
       const { data, error } = await supabase.functions.invoke("market-narrative", {
         body: {
+          neighborhood: neighborhood || undefined,
+          reportMonth: reportMonth || undefined,
           medianPrice,
           priceChange: PRICE_CHANGES.find(p => p.value === priceChange)?.label ?? priceChange,
           dom,
