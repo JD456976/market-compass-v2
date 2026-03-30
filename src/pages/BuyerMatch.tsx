@@ -218,7 +218,7 @@ export default function BuyerMatch() {
     <div className="container mx-auto px-4 py-6 max-w-3xl space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl md:text-3xl font-serif font-bold">Buyer Match</h1>
+        <h1 className="text-2xl md:text-3xl font-sans font-bold">Buyer Match</h1>
         <p className="text-muted-foreground text-sm mt-1">AI-powered buyer-to-listing matching — an industry first.</p>
       </motion.div>
 
