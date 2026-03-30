@@ -320,6 +320,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
             { to: '/', label: 'Home', icon: Home, exact: true },
             { to: '/lead-finder', label: 'Leads', icon: Users, exact: false },
             { to: '/listing-navigator', label: 'Listing', icon: Search, exact: false },
+            { to: '/market-narrative', label: 'Narrative', icon: PenLine, exact: false },
             { to: '/market-intelligence', label: 'Market', icon: TrendingUp, exact: false },
           ] as const).map((tab) => {
             const isActive = tab.exact
@@ -330,7 +331,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
               <Link
                 key={tab.to}
                 to={tab.to}
-                className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] transition-colors"
+                className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[48px] min-h-[44px] transition-colors"
                 style={{ color: isActive ? '#D4A853' : '#94A3B8' }}
               >
                 <Icon className="h-5 w-5" />
@@ -338,15 +339,6 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
               </Link>
             );
           })}
-          {/* Reports tab — opens drawer */}
-          <button
-            onClick={() => setReportsOpen(true)}
-            className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] transition-colors"
-            style={{ color: reportsOpen ? '#D4A853' : '#94A3B8' }}
-          >
-            <FileText className="h-5 w-5" />
-            <span className="text-[10px] font-medium leading-none">Reports</span>
-          </button>
         </div>
       </nav>
 
