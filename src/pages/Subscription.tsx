@@ -416,12 +416,6 @@ export default function Subscription() {
             </div>
           </div>
         </div>
-        {/* Wave */}
-        <div className="relative h-8 -mb-1">
-          <svg className="absolute bottom-0 w-full h-8" preserveAspectRatio="none" viewBox="0 0 1440 32">
-            <path fill="hsl(var(--background))" d="M0,16L120,18.7C240,21,480,27,720,26.7C960,27,1200,21,1320,18.7L1440,16L1440,32L1320,32C1200,32,960,32,720,32C480,32,240,32,120,32L0,32Z" />
-          </svg>
-        </div>
       </div>
 
       <div className="container mx-auto px-4 py-8 max-w-3xl -mt-2 space-y-6">

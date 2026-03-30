@@ -189,7 +189,7 @@ const Index = () => {
             <div className="flex items-center justify-center gap-3 mb-6">
               <AppLogo size="lg" />
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-tight text-foreground">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-sans font-bold mb-4 tracking-tight text-foreground">
               Market <span className="text-gradient">Compass</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
@@ -237,17 +237,21 @@ const Index = () => {
           <motion.div variants={fadeInUp}>
             <Link to="/seller" className="block h-full">
               <Card className="h-full cursor-pointer group">
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300" style={{ borderColor: 'hsl(38 72% 58% / 0.1)', borderWidth: 1 }}>
-                    <Building2 className="h-10 w-10 text-primary" />
+                <CardHeader className="pb-3 pt-5 px-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300" style={{ borderColor: 'hsl(38 72% 58% / 0.1)', borderWidth: 1 }}>
+                      <Building2 className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <CardTitle className="text-lg font-sans font-semibold">Seller Report</CardTitle>
+                      <CardDescription className="text-xs mt-0.5">
+                        Analyze listing strategy, pricing & sale likelihood
+                      </CardDescription>
+                    </div>
                   </div>
-                  <CardTitle className="text-2xl">Seller Report</CardTitle>
-                  <CardDescription className="text-base">
-                    Analyze listing strategy, pricing, and sale likelihood across timeframes
-                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Button className="w-full" size="lg">
+                <CardContent className="pt-0 pb-4 px-5">
+                  <Button className="w-full accent-gradient text-primary-foreground font-semibold hover:opacity-90 transition-opacity" size="sm">
                     Start Seller Analysis
                     <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                   </Button>
@@ -260,17 +264,21 @@ const Index = () => {
           <motion.div variants={fadeInUp}>
             <Link to="/buyer" className="block h-full">
               <Card className="h-full cursor-pointer group">
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300" style={{ borderColor: 'hsl(38 72% 58% / 0.1)', borderWidth: 1 }}>
-                    <Users className="h-10 w-10 text-primary" />
+                <CardHeader className="pb-3 pt-5 px-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300" style={{ borderColor: 'hsl(38 72% 58% / 0.1)', borderWidth: 1 }}>
+                      <Users className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <CardTitle className="text-lg font-sans font-semibold">Buyer Report</CardTitle>
+                      <CardDescription className="text-xs mt-0.5">
+                        Evaluate offer competitiveness & risk tradeoffs
+                      </CardDescription>
+                    </div>
                   </div>
-                  <CardTitle className="text-2xl">Buyer Report</CardTitle>
-                  <CardDescription className="text-base">
-                    Evaluate offer competitiveness, acceptance likelihood, and risk tradeoffs
-                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Button className="w-full" size="lg">
+                <CardContent className="pt-0 pb-4 px-5">
+                  <Button className="w-full accent-gradient text-primary-foreground font-semibold hover:opacity-90 transition-opacity" size="sm">
                     Start Buyer Analysis
                     <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                   </Button>
@@ -458,7 +466,7 @@ const Index = () => {
           <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <AppLogo size="sm" />
-              <span className="font-serif font-semibold text-foreground/80">Market Compass</span>
+              <span className="font-sans font-semibold text-foreground/80">Market Compass</span>
             </div>
             <p className="text-xs text-center max-w-md">
               Uses public market trend research and transaction logic. Does not use MLS data or provide valuations.
