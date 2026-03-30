@@ -440,7 +440,7 @@ const BuyerReport = () => {
                   <Users className="h-5 w-5 text-accent" />
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-xl sm:text-2xl font-serif font-bold">Buyer Report</h1>
+                  <h1 className="text-xl sm:text-2xl font-sans font-bold">Buyer Report</h1>
                   <p className="text-sm text-primary-foreground/70 truncate">{session.client_name} • {formatLocation(session.location)}</p>
                 </div>
               </div>
@@ -550,22 +550,22 @@ const BuyerReport = () => {
                 <div className={`grid ${inputs.financing_type === 'Cash' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'} gap-3 mb-4 likelihood-cards-mobile`}>
                   <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-xs sm:text-sm text-muted-foreground mb-1">Offer Price</p>
-                    <p className="text-base sm:text-lg font-serif font-bold break-words">{formatCurrency(inputs.offer_price)}</p>
+                    <p className="text-base sm:text-lg font-sans font-bold break-words">{formatCurrency(inputs.offer_price)}</p>
                   </div>
                   <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-xs sm:text-sm text-muted-foreground mb-1"><EducationalTooltip termKey="financing">Financing</EducationalTooltip></p>
-                    <p className="text-base sm:text-lg font-serif font-bold">{inputs.financing_type}</p>
+                    <p className="text-base sm:text-lg font-sans font-bold">{inputs.financing_type}</p>
                   </div>
                   {/* Hide Down Payment for Cash offers */}
                   {inputs.financing_type !== 'Cash' && (
                     <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-xs sm:text-sm text-muted-foreground mb-1">Down Payment</p>
-                      <p className="text-base sm:text-lg font-serif font-bold">{inputs.down_payment_percent}</p>
+                      <p className="text-base sm:text-lg font-sans font-bold">{inputs.down_payment_percent}</p>
                     </div>
                   )}
                   <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-xs sm:text-sm text-muted-foreground mb-1">Closing</p>
-                    <p className="text-base sm:text-lg font-serif font-bold">{inputs.closing_timeline} days</p>
+                    <p className="text-base sm:text-lg font-sans font-bold">{inputs.closing_timeline} days</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

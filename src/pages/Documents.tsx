@@ -59,7 +59,7 @@ const Documents = () => {
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-serif font-bold">Property Documents</h1>
+          <h1 className="text-2xl font-sans font-bold">Property Documents</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Upload and manage listing PDFs for property intelligence.
           </p>

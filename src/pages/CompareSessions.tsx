@@ -139,7 +139,7 @@ const CompareSessions = () => {
                   <GitCompare className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-serif font-bold">Compare Sessions</h1>
+                  <h1 className="text-2xl font-sans font-bold">Compare Sessions</h1>
                   <p className="text-sm text-muted-foreground">Side-by-side analysis (Agent View)</p>
                 </div>
               </div>
@@ -169,7 +169,7 @@ const CompareSessions = () => {
                 <div className={`inline-flex p-2 rounded-lg ${isSellerA ? 'bg-primary/10' : 'bg-accent/10'} mb-2`}>
                   {isSellerA ? <Building2 className="h-5 w-5 text-primary" /> : <Users className="h-5 w-5 text-accent" />}
                 </div>
-                <h3 className="font-serif font-semibold">{sessionA.client_name}</h3>
+                <h3 className="font-sans font-semibold">{sessionA.client_name}</h3>
                 <p className="text-sm text-muted-foreground">{formatLocation(sessionA.location)}</p>
                 <Badge variant={isSellerA ? 'default' : 'accent'} className="mt-2">{sessionA.session_type}</Badge>
               </CardContent>
@@ -179,7 +179,7 @@ const CompareSessions = () => {
                 <div className={`inline-flex p-2 rounded-lg ${isSellerB ? 'bg-primary/10' : 'bg-accent/10'} mb-2`}>
                   {isSellerB ? <Building2 className="h-5 w-5 text-primary" /> : <Users className="h-5 w-5 text-accent" />}
                 </div>
-                <h3 className="font-serif font-semibold">{sessionB.client_name}</h3>
+                <h3 className="font-sans font-semibold">{sessionB.client_name}</h3>
                 <p className="text-sm text-muted-foreground">{formatLocation(sessionB.location)}</p>
                 <Badge variant={isSellerB ? 'default' : 'accent'} className="mt-2">{sessionB.session_type}</Badge>
               </CardContent>

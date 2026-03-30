@@ -251,7 +251,7 @@ export function NeighborhoodMomentumMap({ primaryZip }: { primaryZip?: string })
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold font-serif">{z.score}</div>
+                  <div className="text-lg font-bold font-sans">{z.score}</div>
                   <div className="text-[10px] text-muted-foreground">score</div>
                 </div>
                 <div className="h-12 w-20 relative">

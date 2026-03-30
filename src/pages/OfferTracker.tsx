@@ -143,7 +143,7 @@ export default function OfferTracker() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="font-serif text-3xl font-semibold">Offer Tracker</h1>
+            <h1 className="font-sans text-3xl font-semibold">Offer Tracker</h1>
             <p className="text-muted-foreground mt-1 text-sm">
               Log every offer to build your personal win-rate model.
             </p>
@@ -192,7 +192,7 @@ export default function OfferTracker() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{stat.label}</p>
-                      <p className={cn('text-2xl font-bold mt-1 font-serif', stat.highlight && 'text-primary')}>{stat.value}</p>
+                      <p className={cn('text-2xl font-bold mt-1 font-sans', stat.highlight && 'text-primary')}>{stat.value}</p>
                       <p className="text-[11px] text-muted-foreground mt-0.5">{stat.sub}</p>
                     </div>
                     <div className={cn('h-9 w-9 rounded-lg flex items-center justify-center shrink-0', stat.highlight ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground')}>
@@ -216,7 +216,7 @@ export default function OfferTracker() {
               <Target className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h3 className="font-serif text-xl font-semibold">No offers logged yet</h3>
+              <h3 className="font-sans text-xl font-semibold">No offers logged yet</h3>
               <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
                 Every offer you log builds your personal win-rate model. Start with your most recent one.
               </p>
@@ -301,7 +301,7 @@ export default function OfferTracker() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-serif text-xl">Log an Offer</DialogTitle>
+            <DialogTitle className="font-sans text-xl">Log an Offer</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">

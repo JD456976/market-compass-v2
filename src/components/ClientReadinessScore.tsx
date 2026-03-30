@@ -231,7 +231,7 @@ export function ClientReadinessScore({ clientName }: ClientReadinessScoreProps) 
                   ) : (
                     <div className="space-y-3">
                       <div className="text-center py-4">
-                        <div className={cn('text-5xl font-bold font-serif', tier.color)}>{score}</div>
+                        <div className={cn('text-5xl font-bold font-sans', tier.color)}>{score}</div>
                         <div className="text-xs text-muted-foreground mt-1">out of 100</div>
                         <Badge variant="outline" className={cn('mt-2 text-sm', tier.color)}>{tier.label}</Badge>
                         <p className="text-xs text-muted-foreground mt-2 max-w-xs mx-auto">{tier.description}</p>

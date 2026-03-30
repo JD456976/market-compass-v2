@@ -24,7 +24,7 @@ export function BetaCodeRedemption({ onSuccess, betaExpired, expiresAt }: BetaCo
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <AppLogo size="lg" className="mx-auto mb-3" />
-          <h1 className="text-2xl font-serif font-bold text-foreground">Market Compass</h1>
+          <h1 className="text-2xl font-sans font-bold text-foreground">Market Compass</h1>
         </div>
 
         {betaExpired && expiresAt && (
@@ -44,7 +44,7 @@ export function BetaCodeRedemption({ onSuccess, betaExpired, expiresAt }: BetaCo
 
         <Card>
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-serif">Get Access</CardTitle>
+            <CardTitle className="text-lg font-sans">Get Access</CardTitle>
             <CardDescription>
               Subscribe to get started, or contact your administrator for beta access.
             </CardDescription>

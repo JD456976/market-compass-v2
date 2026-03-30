@@ -36,7 +36,7 @@ export class ErrorBoundary extends React.Component<
             <div className="mx-auto w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center">
               <AlertTriangle className="h-8 w-8 text-destructive" />
             </div>
-            <h1 className="text-2xl font-serif font-bold text-foreground">Something went wrong</h1>
+            <h1 className="text-2xl font-sans font-bold text-foreground">Something went wrong</h1>
             <p className="text-sm text-muted-foreground">
               An unexpected error occurred. Please try refreshing the page.
             </p>

@@ -139,7 +139,7 @@ function ClientDesktopNav() {
         <div className="flex items-center justify-between h-14">
           <NavLink to="/my-reports" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
             <AppLogo size="sm" />
-            <span className="font-serif font-semibold text-lg">Market Compass</span>
+            <span className="font-sans font-semibold text-lg">Market Compass</span>
           </NavLink>
           <nav className="flex items-center gap-1">
             <NavLink
@@ -609,7 +609,7 @@ function DesktopNav({ items }: { items: NavItem[] }) {
           <div className="flex items-center justify-between h-14 gap-4">
             <NavLink to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors shrink-0">
               <AppLogo size="sm" />
-              <span className="font-serif font-semibold text-base">Market Compass</span>
+              <span className="font-sans font-semibold text-base">Market Compass</span>
             </NavLink>
 
             <nav className="flex items-center gap-0.5 flex-1">

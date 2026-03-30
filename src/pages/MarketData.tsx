@@ -287,7 +287,7 @@ const MarketData = () => {
                 </Button>
               </Link>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl font-serif font-bold truncate">Market Data</h1>
+                <h1 className="text-lg sm:text-2xl font-sans font-bold truncate">Market Data</h1>
                 <p className="text-xs sm:text-sm text-primary-foreground/70 truncate">
                   {snapshots.length} market{snapshots.length !== 1 ? 's' : ''} · {seededCount} built-in, {customCount} custom
                 </p>

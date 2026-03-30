@@ -183,7 +183,7 @@ const ReviewDocument = () => {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-serif font-bold">Review Extracted Data</h1>
+          <h1 className="text-2xl font-sans font-bold">Review Extracted Data</h1>
           <p className="text-muted-foreground text-sm mt-1 flex items-center gap-2">
             <FileText className="h-4 w-4" />
             {document?.filename}

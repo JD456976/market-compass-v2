@@ -86,7 +86,7 @@ export default function ClientPropertyComparison() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-serif font-bold flex items-center gap-2">
+            <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
               <GitCompare className="h-5 w-5 text-accent" />
               Compare Properties
             </h1>
@@ -125,7 +125,7 @@ export default function ClientPropertyComparison() {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-serif font-medium text-sm truncate">{report.client_name}</span>
+                        <span className="font-sans font-medium text-sm truncate">{report.client_name}</span>
                         <Badge variant="outline" className="text-[10px] shrink-0">
                           {report.session_type}
                         </Badge>
@@ -156,7 +156,7 @@ export default function ClientPropertyComparison() {
                         <tr className="border-b">
                           <th className="text-left py-2 pr-4 text-muted-foreground font-normal text-xs w-28" />
                           {selectedReports.map(r => (
-                            <th key={r.id} className="text-left py-2 px-3 font-serif font-semibold">
+                            <th key={r.id} className="text-left py-2 px-3 font-sans font-semibold">
                               <div className="flex items-center gap-1.5">
                                 {r.session_type === 'Seller' 
                                   ? <Building2 className="h-3.5 w-3.5 text-primary" />

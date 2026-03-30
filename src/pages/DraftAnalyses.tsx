@@ -157,7 +157,7 @@ const DraftAnalyses = () => {
                   <FileEdit className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-serif font-bold">Draft Analyses</h1>
+                  <h1 className="text-xl sm:text-2xl font-sans font-bold">Draft Analyses</h1>
                   <p className="text-xs sm:text-sm text-muted-foreground">{sessions.length} draft{sessions.length !== 1 ? 's' : ''}</p>
                 </div>
               </div>
@@ -267,7 +267,7 @@ const DraftAnalyses = () => {
                   <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                     <FileEdit className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="font-serif text-xl font-semibold mb-2">No drafts yet</h3>
+                  <h3 className="font-sans text-xl font-semibold mb-2">No drafts yet</h3>
                   <p className="text-muted-foreground mb-6">Generate a report and save it as a draft.</p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center pb-safe">
                     <Link to="/seller" className="w-full sm:w-auto">
@@ -346,7 +346,7 @@ const DraftAnalyses = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <h3 className="font-serif font-semibold truncate">{session.client_name}</h3>
+                                <h3 className="font-sans font-semibold truncate">{session.client_name}</h3>
                                 <Badge variant={session.session_type === 'Seller' ? 'default' : 'accent'} className="text-xs shrink-0">
                                   {session.session_type === 'touring_brief' ? 'Touring Brief' : session.session_type}
                                 </Badge>

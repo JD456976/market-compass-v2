@@ -8,7 +8,7 @@ const ClientsPage = () => {
         <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
           ← Back to Home
         </Link>
-        <h1 className="text-2xl font-serif font-bold mt-2">Client Management</h1>
+        <h1 className="text-2xl font-sans font-bold mt-2">Client Management</h1>
         <p className="text-muted-foreground text-sm mt-1">
           Invite clients to collaborate on property analysis.
         </p>

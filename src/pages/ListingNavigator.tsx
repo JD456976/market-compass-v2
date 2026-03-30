@@ -84,7 +84,7 @@ function ScoreRing({ score }: { score: number }) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center rotate-0">
-          <span className="text-3xl font-bold font-serif">{score}</span>
+          <span className="text-3xl font-bold font-sans">{score}</span>
           <span className="text-xs text-muted-foreground">/100</span>
         </div>
       </div>
@@ -535,7 +535,7 @@ function ResultsPanel({
                   <div className="flex-1 space-y-3 w-full">
                     <div className="flex items-start justify-between gap-2 flex-wrap">
                       <div>
-                        <h2 className="font-serif text-xl font-semibold">Listing Audit Score</h2>
+                        <h2 className="font-sans text-xl font-semibold">Listing Audit Score</h2>
                         {runMeta?.address && (
                           <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
                             <MapPin className="h-3.5 w-3.5" /> {runMeta.address}
@@ -1265,7 +1265,7 @@ export default function ListingNavigator() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="font-serif text-2xl font-semibold flex items-center gap-2">
+              <h1 className="font-sans text-2xl font-semibold flex items-center gap-2">
                 <Eye className="h-6 w-6 text-primary" />
                 Listing Navigator
               </h1>

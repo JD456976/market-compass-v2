@@ -66,7 +66,7 @@ export default function Pricing() {
           <div className="mx-auto w-16 h-16">
             <AppLogo size="lg" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight font-serif">Market Compass Pro</h1>
+          <h1 className="text-3xl font-bold tracking-tight font-sans">Market Compass Pro</h1>
           <p className="text-muted-foreground text-lg">Win more offers. Close faster.</p>
         </div>
 

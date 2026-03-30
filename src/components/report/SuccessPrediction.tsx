@@ -198,7 +198,7 @@ export function SuccessPrediction({ type, likelihood, session, snapshot }: Succe
       <CardContent className="pt-4 space-y-4">
         {/* Gauge */}
         <div className="text-center">
-          <p className={`text-4xl font-serif font-bold ${gaugeColor}`}>
+          <p className={`text-4xl font-sans font-bold ${gaugeColor}`}>
             {percent.display}
           </p>
           <p className="text-xs text-muted-foreground mt-1">

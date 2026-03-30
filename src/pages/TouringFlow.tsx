@@ -178,7 +178,7 @@ const TouringFlow = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl md:text-3xl font-serif font-bold">Touring Brief</h1>
+              <h1 className="text-2xl md:text-3xl font-sans font-bold">Touring Brief</h1>
               <p className="text-sm text-primary-foreground/70 mt-0.5">Pre-showing property intelligence for your client</p>
             </div>
           </div>

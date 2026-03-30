@@ -197,7 +197,7 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
           {/* Mobile Layout: Stacked */}
           <div className="flex flex-col gap-3 md:hidden">
             <div className="flex items-center justify-between w-full">
-              <h1 className="text-lg font-serif font-semibold">Admin</h1>
+              <h1 className="text-lg font-sans font-semibold">Admin</h1>
               <Link to="/">
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4" />
@@ -227,7 +227,7 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-xl font-serif font-semibold">Admin Dashboard</h1>
+                <h1 className="text-xl font-sans font-semibold">Admin Dashboard</h1>
                 <p className="text-sm text-muted-foreground">{userEmail}</p>
               </div>
             </div>

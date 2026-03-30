@@ -55,7 +55,7 @@ export function SplashScreen({ onFinished }: { onFinished: () => void }) {
         />
 
         <motion.h1
-          className="mt-6 text-3xl font-serif font-bold tracking-tight relative z-10"
+          className="mt-6 text-3xl font-sans font-bold tracking-tight relative z-10"
           style={{ color: '#E2E8F0' }}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

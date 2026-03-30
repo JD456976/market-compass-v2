@@ -391,7 +391,7 @@ export default function Subscription() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h1 className="text-xl font-serif font-bold leading-tight">
+                <h1 className="text-xl font-sans font-bold leading-tight">
                   {profile?.agent_name || 'Agent Dashboard'}
                 </h1>
                 <p className="text-sm text-primary-foreground/70">
@@ -491,7 +491,7 @@ export default function Subscription() {
                 <Card className="cursor-pointer hover:border-accent/40 hover:shadow-sm transition-all duration-200 group">
                   <CardContent className="pt-4 pb-4 text-center">
                     <stat.icon className="h-4 w-4 mx-auto mb-1.5 text-muted-foreground group-hover:text-accent transition-colors" />
-                    <p className="text-2xl font-serif font-bold">{stat.value}</p>
+                    <p className="text-2xl font-sans font-bold">{stat.value}</p>
                     <p className="text-[10px] text-muted-foreground">{stat.label}</p>
                   </CardContent>
                 </Card>
@@ -812,18 +812,18 @@ export default function Subscription() {
                     { label: 'Client Feedback', value: analytics.feedbackCount },
                   ].map((stat, i) => (
                     <div key={i} className="text-center p-2 rounded-lg bg-secondary/30">
-                      <p className="text-xl font-serif font-bold">{stat.value}</p>
+                      <p className="text-xl font-sans font-bold">{stat.value}</p>
                       <p className="text-[10px] text-muted-foreground">{stat.label}</p>
                     </div>
                   ))}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="text-center p-2 rounded-lg bg-secondary/30">
-                    <p className="text-lg font-serif font-bold">{analytics.messageCount}</p>
+                    <p className="text-lg font-sans font-bold">{analytics.messageCount}</p>
                     <p className="text-[10px] text-muted-foreground">Messages</p>
                   </div>
                   <div className="text-center p-2 rounded-lg bg-secondary/30">
-                    <p className="text-lg font-serif font-bold">{analytics.scenarioCount}</p>
+                    <p className="text-lg font-sans font-bold">{analytics.scenarioCount}</p>
                     <p className="text-[10px] text-muted-foreground">Scenarios Submitted</p>
                   </div>
                 </div>

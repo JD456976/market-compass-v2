@@ -32,7 +32,7 @@ export function SellerRegretRiskMeter({ result, className }: SellerRegretRiskMet
       <CardContent className="space-y-4 pb-5">
         {/* Score */}
         <div className="flex items-baseline gap-2 mb-1">
-          <span className="text-3xl font-serif font-bold text-foreground">{Math.round(result.score)}</span>
+          <span className="text-3xl font-sans font-bold text-foreground">{Math.round(result.score)}</span>
           <span className="text-sm text-muted-foreground font-medium">/ 100</span>
           <span className={cn(
             'ml-auto text-sm font-semibold',

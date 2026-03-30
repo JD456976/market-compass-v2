@@ -171,35 +171,26 @@ const Index = () => {
       <AgentOnboarding />
       <AllReportsDrawer open={allReportsOpen} onClose={() => setAllReportsOpen(false)} />
 
-      {/* Hero */}
-      <div className="hero-gradient text-foreground relative overflow-hidden">
-        {/* Subtle grid */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: 'linear-gradient(hsl(0 0% 100%) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 100%) 1px, transparent 1px)',
-          backgroundSize: '60px 60px'
-        }} />
-        
-        <div className="container mx-auto px-4 py-20 md:py-28 relative z-10">
+      {/* Compact Hero */}
+      <div className="bg-background border-b border-border">
+        <div className="container mx-auto px-4 py-10 md:py-14">
           <motion.div 
-            className="text-center max-w-3xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
+            className="flex items-center gap-4 max-w-3xl mx-auto"
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.4 }}
           >
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <AppLogo size="lg" />
+            <AppLogo size="lg" />
+            <div>
+              <h1 className="text-2xl md:text-3xl font-sans font-bold tracking-tight text-foreground">
+                Market <span className="text-gradient">Compass</span>
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Agent decision-support for Seller &amp; Buyer scenarios
+              </p>
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-sans font-bold mb-4 tracking-tight text-foreground">
-              Market <span className="text-gradient">Compass</span>
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Agent decision-support tool for navigating Seller and Buyer scenarios 
-              with confidence and clarity.
-            </p>
           </motion.div>
         </div>
-        
-        <div className="gold-line w-full" />
       </div>
 
       {/* Main Content */}

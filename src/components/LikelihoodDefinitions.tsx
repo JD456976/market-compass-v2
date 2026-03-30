@@ -131,7 +131,7 @@ export function LikelihoodDefinitions() {
         </DrawerTrigger>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle className="text-center font-serif">What These Ratings Mean</DrawerTitle>
+            <DrawerTitle className="text-center font-sans">What These Ratings Mean</DrawerTitle>
           </DrawerHeader>
           <div className="px-4 pb-6">
             <DefinitionsContent />
@@ -148,7 +148,7 @@ export function LikelihoodDefinitions() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-serif">What These Ratings Mean</DialogTitle>
+          <DialogTitle className="font-sans">What These Ratings Mean</DialogTitle>
         </DialogHeader>
         <DefinitionsContent />
       </DialogContent>

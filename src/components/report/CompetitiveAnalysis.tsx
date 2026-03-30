@@ -55,19 +55,19 @@ export function BuyerCompetitiveAnalysis({ session, snapshot, isGenericBaseline 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="p-3 rounded-xl bg-secondary/50 text-center">
             <p className="text-xs text-muted-foreground mb-1">Est. Competing Offers</p>
-            <p className="text-xl font-serif font-bold">{competing.min}–{competing.max}</p>
+            <p className="text-xl font-sans font-bold">{competing.min}–{competing.max}</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">{competing.label}</p>
           </div>
           <div className="p-3 rounded-xl bg-secondary/50 text-center">
             <p className="text-xs text-muted-foreground mb-1">Avg. Winning Premium</p>
-            <p className="text-xl font-serif font-bold">
+            <p className="text-xl font-sans font-bold">
               {premium.percent > 0 ? `+${premium.percent}%` : premium.percent === 0 ? '~0%' : `${premium.percent}%`}
             </p>
             <p className="text-[10px] text-muted-foreground mt-0.5">{premium.label}</p>
           </div>
           <div className="p-3 rounded-xl bg-secondary/50 text-center">
             <p className="text-xs text-muted-foreground mb-1">Recommended Range</p>
-            <p className="text-base font-serif font-bold break-words">
+            <p className="text-base font-sans font-bold break-words">
               {formatCurrency(recommendedMin)} – {formatCurrency(recommendedMax)}
             </p>
             <p className="text-[10px] text-muted-foreground mt-0.5">Based on market data</p>

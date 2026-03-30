@@ -7,14 +7,14 @@
 @layer base {
   :root {
     /* ── Deal Pilot dark palette ── */
-    /* #0F172A */
-    --background: 222 47% 11%;
-    /* #E2E8F0 */
-    --foreground: 214 32% 91%;
+    /* Deeper dark background ~hsl(222,47%,5%) */
+    --background: 222 47% 5%;
+    /* Brighter foreground ~hsl(210,40%,92%) */
+    --foreground: 210 40% 92%;
 
-    /* #1E293B */
-    --card: 217 33% 17%;
-    --card-foreground: 214 32% 91%;
+    /* Richer card ~hsl(220,40%,13%) */
+    --card: 220 40% 13%;
+    --card-foreground: 210 40% 92%;
 
     --popover: 217 33% 17%;
     --popover-foreground: 214 32% 91%;
@@ -67,10 +67,10 @@
 
   /* Dark mode mirrors root — dark-first design */
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 214 32% 91%;
-    --card: 217 33% 17%;
-    --card-foreground: 214 32% 91%;
+    --background: 222 47% 5%;
+    --foreground: 210 40% 92%;
+    --card: 220 40% 13%;
+    --card-foreground: 210 40% 92%;
     --popover: 217 33% 17%;
     --popover-foreground: 214 32% 91%;
     --primary: 38 72% 58%;
@@ -271,7 +271,7 @@
 .template-snapshot .report-info-block { gap: 0.5rem; }
 .template-snapshot p, .template-snapshot li, .template-snapshot span:not([class*="CardTitle"]) { font-size: 0.75rem; line-height: 1.45; }
 .template-snapshot [class*="Card"] { border-color: hsl(0 0% 100% / 0.04); box-shadow: none; }
-.template-snapshot .font-serif.font-bold { font-size: 1rem; }
+.template-snapshot .font-sans.font-bold { font-size: 1rem; }
 .template-snapshot .grid { gap: 0.5rem; }
 
 /* ============================================
@@ -396,7 +396,7 @@ p, span, h1, h2, h3, h4, h5, h6, label {
   .pdf-section .p-4, .pdf-section .p-6 { padding: 1rem !important; }
   .grid.md\:grid-cols-2.gap-6 { gap: 1rem; }
   .contingencies-list { white-space: normal; overflow-wrap: anywhere; hyphens: none; line-height: 1.5; }
-  .font-serif.font-bold { font-size: clamp(0.875rem, 3.5vw, 1.125rem); overflow-wrap: anywhere; }
+  .font-sans.font-bold { font-size: clamp(0.875rem, 3.5vw, 1.125rem); overflow-wrap: anywhere; }
 }
 
 @media (max-width: 480px) {

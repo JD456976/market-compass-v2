@@ -98,19 +98,19 @@ export function BuyerCompetingOffersCard({ inputs, snapshot, className, isGeneri
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-3 rounded-xl bg-secondary/50 text-center">
               <p className="text-xs text-muted-foreground mb-1">Est. Competing Offers</p>
-              <p className="text-xl font-serif font-bold">{marketStats.competing.min}–{marketStats.competing.max}</p>
+              <p className="text-xl font-sans font-bold">{marketStats.competing.min}–{marketStats.competing.max}</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">{marketStats.competing.label}</p>
             </div>
             <div className="p-3 rounded-xl bg-secondary/50 text-center">
               <p className="text-xs text-muted-foreground mb-1">Avg. Winning Premium</p>
-              <p className="text-xl font-serif font-bold">
+              <p className="text-xl font-sans font-bold">
                 {marketStats.premium.percent > 0 ? `+${marketStats.premium.percent}%` : marketStats.premium.percent === 0 ? '~0%' : `${marketStats.premium.percent}%`}
               </p>
               <p className="text-[10px] text-muted-foreground mt-0.5">{marketStats.premium.label}</p>
             </div>
             <div className="p-3 rounded-xl bg-secondary/50 text-center">
               <p className="text-xs text-muted-foreground mb-1">Recommended Range</p>
-              <p className="text-base font-serif font-bold break-words">
+              <p className="text-base font-sans font-bold break-words">
                 {formatCurrency(marketStats.recommendedMin)} – {formatCurrency(marketStats.recommendedMax)}
               </p>
               <p className="text-[10px] text-muted-foreground mt-0.5">Based on market data</p>
@@ -189,7 +189,7 @@ export function BuyerCompetingOffersCard({ inputs, snapshot, className, isGeneri
             <div className="p-3 rounded-lg bg-accent/10 border border-accent/20">
               <p className="text-sm">
                 <span className="text-muted-foreground">Estimated price to compete: </span>
-                <span className="font-serif font-bold">{formatCurrency(result.neededPriceToCompete)}</span>
+                <span className="font-sans font-bold">{formatCurrency(result.neededPriceToCompete)}</span>
                 <span className="text-xs text-muted-foreground ml-1">(+{result.priceGapPercent.toFixed(1)}%)</span>
               </p>
             </div>
@@ -298,7 +298,7 @@ export function SellerCompetingOffersCard({ inputs, likelihood30, snapshot, clas
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
               <p className="text-xs text-muted-foreground mb-1">Expected Offers</p>
-              <p className="text-xl font-serif font-bold">{result.expectedOffers.toFixed(1)}</p>
+              <p className="text-xl font-sans font-bold">{result.expectedOffers.toFixed(1)}</p>
             </div>
             <div className="p-3 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
               <p className="text-xs text-muted-foreground mb-1">Demand Level</p>
@@ -311,9 +311,9 @@ export function SellerCompetingOffersCard({ inputs, likelihood30, snapshot, clas
           <div className="p-3 rounded-lg bg-accent/10 border border-accent/20">
             <p className="text-sm">
               <span className="text-muted-foreground">Expected offer range: </span>
-              <span className="font-serif font-bold">{formatCurrency(result.offerRange.low)}</span>
+              <span className="font-sans font-bold">{formatCurrency(result.offerRange.low)}</span>
               <span className="text-muted-foreground"> – </span>
-              <span className="font-serif font-bold">{formatCurrency(result.offerRange.high)}</span>
+              <span className="font-sans font-bold">{formatCurrency(result.offerRange.high)}</span>
             </p>
           </div>
 

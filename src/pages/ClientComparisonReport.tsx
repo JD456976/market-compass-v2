@@ -238,7 +238,7 @@ const ClientComparisonReport = () => {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-2xl font-serif font-bold">Comparison Report</h1>
+                <h1 className="text-2xl font-sans font-bold">Comparison Report</h1>
                 <p className="text-sm text-muted-foreground">
                   {formatLocation(sessionA.location)}
                 </p>
@@ -326,7 +326,7 @@ const ClientComparisonReport = () => {
                 <Card className="border-primary/20">
                   <CardContent className="p-4 text-center">
                     <Scale className="h-6 w-6 mx-auto mb-2 text-primary" />
-                    <h3 className="font-serif font-semibold">{optionA.label}</h3>
+                    <h3 className="font-sans font-semibold">{optionA.label}</h3>
                     {optionA.labelDescription && (
                       <p className="text-xs text-muted-foreground mt-2">{optionA.labelDescription}</p>
                     )}
@@ -335,7 +335,7 @@ const ClientComparisonReport = () => {
                 <Card className="border-primary/20">
                   <CardContent className="p-4 text-center">
                     <Scale className="h-6 w-6 mx-auto mb-2 text-primary" />
-                    <h3 className="font-serif font-semibold">{optionB.label}</h3>
+                    <h3 className="font-sans font-semibold">{optionB.label}</h3>
                     {optionB.labelDescription && (
                       <p className="text-xs text-muted-foreground mt-2">{optionB.labelDescription}</p>
                     )}
@@ -386,7 +386,7 @@ const ClientComparisonReport = () => {
 
             {/* PDF Section: Who Each Option Fits */}
             <div className="pdf-section">
-              <h2 className="text-lg font-serif font-semibold mb-4">Who Each Option Tends to Fit</h2>
+              <h2 className="text-lg font-sans font-semibold mb-4">Who Each Option Tends to Fit</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <OptionFitCard option={optionA} />
                 <OptionFitCard option={optionB} />

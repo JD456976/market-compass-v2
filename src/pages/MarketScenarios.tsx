@@ -288,7 +288,7 @@ const MarketScenarios = () => {
                 </Button>
               </Link>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl font-serif font-bold truncate">Market Scenarios</h1>
+                <h1 className="text-lg sm:text-2xl font-sans font-bold truncate">Market Scenarios</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">Pre-populated market conditions</p>
               </div>
             </div>
@@ -311,7 +311,7 @@ const MarketScenarios = () => {
             {/* Built-in Scenarios */}
             <div className="mb-8 sm:mb-10">
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-base sm:text-lg font-serif font-semibold">Built-in Scenarios</h2>
+                <h2 className="text-base sm:text-lg font-sans font-semibold">Built-in Scenarios</h2>
                 <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
                   <Lock className="mr-0.5 h-2.5 w-2.5" />
                   Read-only
@@ -337,7 +337,7 @@ const MarketScenarios = () => {
 
             {/* Custom Scenarios */}
             <div>
-              <h2 className="text-base sm:text-lg font-serif font-semibold mb-4">Custom Scenarios</h2>
+              <h2 className="text-base sm:text-lg font-sans font-semibold mb-4">Custom Scenarios</h2>
               <AnimatePresence mode="wait">
                 {customScenarios.length === 0 ? (
                   <motion.div
@@ -389,7 +389,7 @@ const MarketScenarios = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-serif text-lg sm:text-xl">
+            <DialogTitle className="font-sans text-lg sm:text-xl">
               {editingScenario ? 'Edit Scenario' : 'Create Custom Scenario'}
             </DialogTitle>
           </DialogHeader>

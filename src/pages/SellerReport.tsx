@@ -403,7 +403,7 @@ const SellerReport = () => {
                   <Building2 className="h-5 w-5 text-accent" />
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-xl sm:text-2xl font-serif font-bold">Seller Report</h1>
+                  <h1 className="text-xl sm:text-2xl font-sans font-bold">Seller Report</h1>
                   <p className="text-sm text-primary-foreground/70 truncate">{session.client_name} • {formatLocation(session.location)}</p>
                 </div>
               </div>
@@ -514,15 +514,15 @@ const SellerReport = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 likelihood-cards-mobile">
                   <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-xs sm:text-sm text-muted-foreground mb-1"><EducationalTooltip termKey="listPrice">List Price</EducationalTooltip></p>
-                    <p className="text-base sm:text-xl font-serif font-bold break-words">{formatCurrency(inputs.seller_selected_list_price)}</p>
+                    <p className="text-base sm:text-xl font-sans font-bold break-words">{formatCurrency(inputs.seller_selected_list_price)}</p>
                   </div>
                   <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                     <p className="text-xs sm:text-sm text-muted-foreground mb-1">Timeframe</p>
-                    <p className="text-base sm:text-xl font-serif font-bold">{inputs.desired_timeframe} days</p>
+                    <p className="text-base sm:text-xl font-sans font-bold">{inputs.desired_timeframe} days</p>
                   </div>
                   <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile col-span-2 sm:col-span-1">
                     <p className="text-xs sm:text-sm text-muted-foreground mb-1">Strategy</p>
-                    <p className="text-base sm:text-xl font-serif font-bold">{inputs.strategy_preference}</p>
+                    <p className="text-base sm:text-xl font-sans font-bold">{inputs.strategy_preference}</p>
                   </div>
                 </div>
                 {/* Client Notes - visible in PDF/Share */}

@@ -327,7 +327,7 @@ export default function SavedPlaybooks() {
               <BookmarkCheck className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="font-serif text-2xl font-bold leading-tight">Saved Playbooks</h1>
+              <h1 className="font-sans text-2xl font-bold leading-tight">Saved Playbooks</h1>
               <p className="text-xs text-muted-foreground">Your library of market-grounded prospecting assets</p>
             </div>
           </div>
@@ -401,7 +401,7 @@ export default function SavedPlaybooks() {
               <BookmarkCheck className="h-8 w-8 text-primary/50" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-serif text-xl font-semibold">No saved playbooks yet</h3>
+              <h3 className="font-sans text-xl font-semibold">No saved playbooks yet</h3>
               <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                 After running a ZIP analysis in the Lead Finder, scroll to the Prospecting Playbook section and click <strong>Save</strong> to add it here.
               </p>

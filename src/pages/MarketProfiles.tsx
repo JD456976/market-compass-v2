@@ -97,7 +97,7 @@ const MarketProfiles = () => {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-2xl font-serif font-bold">Market Profiles</h1>
+                <h1 className="text-2xl font-sans font-bold">Market Profiles</h1>
                 <p className="text-sm text-muted-foreground">Define market conditions for accurate analysis</p>
               </div>
             </div>
@@ -110,7 +110,7 @@ const MarketProfiles = () => {
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle className="font-serif text-xl">{editingProfile ? 'Edit' : 'Create'} Market Profile</DialogTitle>
+                  <DialogTitle className="font-sans text-xl">{editingProfile ? 'Edit' : 'Create'} Market Profile</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
@@ -224,7 +224,7 @@ const MarketProfiles = () => {
                   <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                     <MapPin className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="font-serif text-xl font-semibold mb-2">No market profiles yet</h3>
+                  <h3 className="font-sans text-xl font-semibold mb-2">No market profiles yet</h3>
                   <p className="text-muted-foreground mb-6">Create your first market profile to get started with accurate analysis.</p>
                   <Button variant="accent" onClick={() => setDialogOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />

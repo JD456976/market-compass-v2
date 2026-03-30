@@ -154,7 +154,7 @@ const TouringReport = () => {
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h1 className="text-xl sm:text-2xl font-serif font-bold">Touring Brief</h1>
+                    <h1 className="text-xl sm:text-2xl font-sans font-bold">Touring Brief</h1>
                     <Badge variant="outline" className="bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground text-[10px]">Pre-Showing</Badge>
                   </div>
                   <p className="text-sm text-primary-foreground/70 truncate">{session.client_name} • {formatLocation(session.location)}</p>
@@ -242,17 +242,17 @@ const TouringReport = () => {
                     <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <div className="p-3 rounded-xl bg-secondary/50 text-center">
                         <p className="text-xs text-muted-foreground mb-1">List Price</p>
-                        <p className="text-lg font-serif font-bold">{formatCurrency(inputs.reference_price!)}</p>
+                        <p className="text-lg font-sans font-bold">{formatCurrency(inputs.reference_price!)}</p>
                       </div>
                       {inputs.days_on_market !== undefined && inputs.days_on_market > 0 && (
                         <div className="p-3 rounded-xl bg-secondary/50 text-center">
                           <p className="text-xs text-muted-foreground mb-1">Days on Market</p>
-                          <p className="text-lg font-serif font-bold">{inputs.days_on_market}</p>
+                          <p className="text-lg font-sans font-bold">{inputs.days_on_market}</p>
                         </div>
                       )}
                       <div className="p-3 rounded-xl bg-secondary/50 text-center">
                         <p className="text-xs text-muted-foreground mb-1">Market</p>
-                        <p className="text-lg font-serif font-bold">{inputs.market_conditions || 'Balanced'}</p>
+                        <p className="text-lg font-sans font-bold">{inputs.market_conditions || 'Balanced'}</p>
                       </div>
                     </div>
                   )}
