@@ -14,7 +14,7 @@
 
     /* Richer card ~hsl(220,40%,13%) */
     --card: 220 40% 13%;
-    --card-foreground: 214 32% 91%;
+    --card-foreground: 210 40% 92%;
 
     --popover: 217 33% 17%;
     --popover-foreground: 214 32% 91%;
