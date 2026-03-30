@@ -189,7 +189,7 @@ const Index = () => {
             <div className="flex items-center justify-center gap-3 mb-6">
               <AppLogo size="lg" />
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-tight text-foreground">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-sans font-bold mb-4 tracking-tight text-foreground">
               Market <span className="text-gradient">Compass</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
