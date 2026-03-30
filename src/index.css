@@ -197,7 +197,7 @@
 .report-styled h2,
 .report-styled h3,
 .report-styled [class*="CardTitle"] {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .report-h1 {
