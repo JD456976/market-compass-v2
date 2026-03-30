@@ -42,6 +42,8 @@ function wordCount(text: string) {
 }
 
 export default function MarketNarrative() {
+  const [neighborhood, setNeighborhood] = useState("");
+  const [reportMonth, setReportMonth] = useState("");
   const [medianPrice, setMedianPrice] = useState("");
   const [priceChange, setPriceChange] = useState("");
   const [dom, setDom] = useState("");
