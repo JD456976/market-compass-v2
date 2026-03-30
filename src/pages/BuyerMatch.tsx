@@ -218,7 +218,7 @@ export default function BuyerMatch() {
     <div className="container mx-auto px-4 py-6 max-w-3xl space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl md:text-3xl font-serif font-bold">Buyer Match</h1>
+        <h1 className="text-2xl md:text-3xl font-sans font-bold">Buyer Match</h1>
         <p className="text-muted-foreground text-sm mt-1">AI-powered buyer-to-listing matching — an industry first.</p>
       </motion.div>
 
@@ -281,7 +281,7 @@ export default function BuyerMatch() {
       {/* Buyers */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-serif font-semibold">Your Buyers</h2>
+          <h2 className="text-lg font-sans font-semibold">Your Buyers</h2>
           <Button variant="outline" size="sm" onClick={addBuyer} className="gap-1.5">
             <Plus className="h-4 w-4" /> Add Buyer
           </Button>
@@ -303,7 +303,7 @@ export default function BuyerMatch() {
 
       {/* Run Match */}
       <div className="flex justify-center pt-2">
-        <Button onClick={runMatch} disabled={loading} size="lg" className="gap-2 px-8">
+        <Button onClick={runMatch} disabled={loading} size="lg" className="gap-2 px-8 accent-gradient text-primary-foreground font-semibold hover:opacity-90 transition-opacity">
           <Sparkles className="h-4 w-4" />
           {loading ? 'Matching…' : 'Run Buyer Match'}
         </Button>
@@ -314,7 +314,7 @@ export default function BuyerMatch() {
         {results && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-serif font-semibold">Match Results</h2>
+              <h2 className="text-lg font-sans font-semibold">Match Results</h2>
               <button onClick={() => setResults(null)} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
                 <X className="h-3 w-3" /> Clear
               </button>
