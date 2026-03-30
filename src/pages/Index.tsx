@@ -264,17 +264,21 @@ const Index = () => {
           <motion.div variants={fadeInUp}>
             <Link to="/buyer" className="block h-full">
               <Card className="h-full cursor-pointer group">
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300" style={{ borderColor: 'hsl(38 72% 58% / 0.1)', borderWidth: 1 }}>
-                    <Users className="h-10 w-10 text-primary" />
+                <CardHeader className="pb-3 pt-5 px-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300" style={{ borderColor: 'hsl(38 72% 58% / 0.1)', borderWidth: 1 }}>
+                      <Users className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <CardTitle className="text-lg font-sans font-semibold">Buyer Report</CardTitle>
+                      <CardDescription className="text-xs mt-0.5">
+                        Evaluate offer competitiveness & risk tradeoffs
+                      </CardDescription>
+                    </div>
                   </div>
-                  <CardTitle className="text-2xl">Buyer Report</CardTitle>
-                  <CardDescription className="text-base">
-                    Evaluate offer competitiveness, acceptance likelihood, and risk tradeoffs
-                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Button className="w-full" size="lg">
+                <CardContent className="pt-0 pb-4 px-5">
+                  <Button className="w-full accent-gradient text-primary-foreground font-semibold hover:opacity-90 transition-opacity" size="sm">
                     Start Buyer Analysis
                     <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                   </Button>
