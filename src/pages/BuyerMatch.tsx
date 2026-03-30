@@ -281,7 +281,7 @@ export default function BuyerMatch() {
       {/* Buyers */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-serif font-semibold">Your Buyers</h2>
+          <h2 className="text-lg font-sans font-semibold">Your Buyers</h2>
           <Button variant="outline" size="sm" onClick={addBuyer} className="gap-1.5">
             <Plus className="h-4 w-4" /> Add Buyer
           </Button>
