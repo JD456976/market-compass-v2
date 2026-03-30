@@ -321,7 +321,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
             { to: '/lead-finder', label: 'Leads', icon: Users, exact: false },
             { to: '/listing-navigator', label: 'Listing', icon: Search, exact: false },
             { to: '/market-intelligence', label: 'Market', icon: TrendingUp, exact: false },
-            { to: '/market-narrative', label: 'Narrative', icon: Sparkles, exact: false },
+            { to: '/ai-narrative', label: 'Narrative', icon: Sparkles, exact: false },
           ] as const).map((tab) => {
             const isActive = tab.exact
               ? location.pathname === tab.to
