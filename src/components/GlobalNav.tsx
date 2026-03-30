@@ -316,26 +316,29 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
         aria-label="Main navigation"
       >
         <div className="flex items-center justify-around h-full">
-          {[
-            { to: '/', label: 'Home', icon: Home, end: true },
-            { to: '/lead-finder', label: 'Leads', icon: Users },
-            { to: '/listing-navigator', label: 'Listing', icon: Search },
-            { to: '/market-intelligence', label: 'Market', icon: TrendingUp },
-          ].map((tab) => (
-            <NavLink
-              key={tab.to}
-              to={tab.to}
-              end={tab.end}
-              className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] transition-colors"
-              style={{ color: '#94A3B8' }}
-              activeStyle={{ color: '#D4A853' }}
-              activeClassName=""
-            >
-              <tab.icon className="h-5 w-5" />
-              <span className="text-[10px] font-medium leading-none">{tab.label}</span>
-            </NavLink>
-          ))}
-          {/* Reports tab — opens drawer instead of navigating */}
+          {([
+            { to: '/', label: 'Home', icon: Home, exact: true },
+            { to: '/lead-finder', label: 'Leads', icon: Users, exact: false },
+            { to: '/listing-navigator', label: 'Listing', icon: Search, exact: false },
+            { to: '/market-intelligence', label: 'Market', icon: TrendingUp, exact: false },
+          ] as const).map((tab) => {
+            const isActive = tab.exact
+              ? location.pathname === tab.to
+              : location.pathname.startsWith(tab.to);
+            const Icon = tab.icon;
+            return (
+              <Link
+                key={tab.to}
+                to={tab.to}
+                className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] transition-colors"
+                style={{ color: isActive ? '#D4A853' : '#94A3B8' }}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-[10px] font-medium leading-none">{tab.label}</span>
+              </Link>
+            );
+          })}
+          {/* Reports tab — opens drawer */}
           <button
             onClick={() => setReportsOpen(true)}
             className="flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-[56px] min-h-[44px] transition-colors"
