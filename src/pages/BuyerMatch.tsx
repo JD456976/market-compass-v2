@@ -303,7 +303,7 @@ export default function BuyerMatch() {
 
       {/* Run Match */}
       <div className="flex justify-center pt-2">
-        <Button onClick={runMatch} disabled={loading} size="lg" className="gap-2 px-8">
+        <Button onClick={runMatch} disabled={loading} size="lg" className="gap-2 px-8 accent-gradient text-primary-foreground font-semibold hover:opacity-90 transition-opacity">
           <Sparkles className="h-4 w-4" />
           {loading ? 'Matching…' : 'Run Buyer Match'}
         </Button>
