@@ -314,7 +314,7 @@ export default function BuyerMatch() {
         {results && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-serif font-semibold">Match Results</h2>
+              <h2 className="text-lg font-sans font-semibold">Match Results</h2>
               <button onClick={() => setResults(null)} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
                 <X className="h-3 w-3" /> Clear
               </button>
