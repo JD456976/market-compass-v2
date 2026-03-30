@@ -38,7 +38,7 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl font-serif">
+          <DialogTitle className="text-xl font-sans">
             Win more offers. Close faster.
           </DialogTitle>
           <DialogDescription className="text-sm mt-2">

@@ -107,7 +107,7 @@ const Signup = () => {
             <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center">
               <Mail className="h-8 w-8 text-emerald-600" />
             </div>
-            <h2 className="text-xl font-serif font-bold">Verify Your Email</h2>
+            <h2 className="text-xl font-sans font-bold">Verify Your Email</h2>
             <p className="text-muted-foreground text-sm">
               We sent a verification link to <strong>{email}</strong>.
               Please check your inbox and click the link to verify your account.
@@ -136,7 +136,7 @@ const Signup = () => {
           <div className="inline-flex items-center gap-2 mb-2">
             <AppLogo size="md" />
           </div>
-          <h1 className="text-2xl font-serif font-bold">
+          <h1 className="text-2xl font-sans font-bold">
             {isClientInvite ? 'Create Your Client Account' : 'Create Your Account'}
           </h1>
         </div>

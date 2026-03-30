@@ -273,7 +273,7 @@ const SharedReports = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <h3 className="font-serif font-semibold truncate">{session.client_name}</h3>
+                  <h3 className="font-sans font-semibold truncate">{session.client_name}</h3>
                   <Badge variant={session.session_type === 'Seller' ? 'default' : 'accent'} className="text-xs shrink-0">
                     {session.session_type === 'touring_brief' ? 'Touring Brief' : session.session_type}
                   </Badge>
@@ -393,7 +393,7 @@ const SharedReports = () => {
           <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
             {isArchived ? <Archive className="h-8 w-8 text-muted-foreground" /> : <Send className="h-8 w-8 text-muted-foreground" />}
           </div>
-          <h3 className="font-serif text-xl font-semibold mb-2">
+          <h3 className="font-sans text-xl font-semibold mb-2">
             {isArchived ? 'No archived reports' : 'No shared reports yet'}
           </h3>
           <p className="text-muted-foreground">
@@ -427,7 +427,7 @@ const SharedReports = () => {
                   <Send className="h-5 w-5 text-accent" />
                 </div>
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-serif font-bold">Shared Reports</h1>
+                  <h1 className="text-xl sm:text-2xl font-sans font-bold">Shared Reports</h1>
                   <p className="text-xs sm:text-sm text-muted-foreground">Loading...</p>
                 </div>
               </div>
@@ -457,7 +457,7 @@ const SharedReports = () => {
                 <Send className="h-5 w-5 text-accent" />
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-serif font-bold">Shared Reports</h1>
+                <h1 className="text-xl sm:text-2xl font-sans font-bold">Shared Reports</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground">
                   {activeSessions.length} active · {archivedSessions.length} archived
                 </p>

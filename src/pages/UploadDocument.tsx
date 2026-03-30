@@ -127,7 +127,7 @@ const UploadDocument = () => {
         Back to Dashboard
       </Link>
 
-      <h1 className="text-2xl font-serif font-bold mb-1">Upload Listing Document</h1>
+      <h1 className="text-2xl font-sans font-bold mb-1">Upload Listing Document</h1>
       <p className="text-muted-foreground text-sm mb-6">
         Upload an MLSPIN listing sheet to extract property data automatically.
       </p>

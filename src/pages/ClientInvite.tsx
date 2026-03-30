@@ -78,7 +78,7 @@ const ClientInvite = () => {
         <Card className="w-full max-w-md">
           <CardContent className="py-12 text-center space-y-4">
             <XCircle className="h-12 w-12 text-destructive mx-auto" />
-            <h2 className="text-xl font-serif font-bold">Invalid Invitation</h2>
+            <h2 className="text-xl font-sans font-bold">Invalid Invitation</h2>
             <p className="text-muted-foreground text-sm">
               This invitation link is invalid or has been revoked.
             </p>
@@ -97,7 +97,7 @@ const ClientInvite = () => {
         <Card className="w-full max-w-md">
           <CardContent className="py-12 text-center space-y-4">
             <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
-            <h2 className="text-xl font-serif font-bold">Already Accepted</h2>
+            <h2 className="text-xl font-sans font-bold">Already Accepted</h2>
             <p className="text-muted-foreground text-sm">
               This invitation has already been accepted. Sign in to access your reports.
             </p>
@@ -116,7 +116,7 @@ const ClientInvite = () => {
         <CardContent className="py-10 text-center space-y-6">
           <div className="flex items-center justify-center gap-2">
             <AppLogo size="md" />
-            <span className="text-2xl font-serif font-bold">Market Compass</span>
+            <span className="text-2xl font-sans font-bold">Market Compass</span>
           </div>
 
           <div className="space-y-2">

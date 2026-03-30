@@ -279,7 +279,7 @@ const SharedReportContent = () => {
         <Card className="max-w-md w-full text-center">
           <CardContent className="pt-8 pb-6">
             <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-serif font-bold mb-2">Report Not Available</h2>
+            <h2 className="text-xl font-sans font-bold mb-2">Report Not Available</h2>
             <p className="text-muted-foreground mb-4">
               {getReportErrorMessage(error)}
             </p>
@@ -352,7 +352,7 @@ const SharedReportContent = () => {
                 {session.session_type === 'touring_brief' ? <Compass className="h-5 w-5 text-accent" /> : isSeller ? <Building2 className="h-5 w-5 text-accent" /> : <Users className="h-5 w-5 text-accent" />}
               </div>
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-serif font-bold">
+                <h1 className="text-xl sm:text-2xl font-sans font-bold">
                   {session.session_type === 'touring_brief' ? 'Touring Brief' : isSeller ? 'Seller Report' : 'Buyer Report'}
                   {session.session_type === 'touring_brief' && (
                     <Badge variant="outline" className="ml-2 bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground text-[10px] align-middle">Pre-Showing</Badge>
@@ -492,15 +492,15 @@ const SharedReportContent = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 likelihood-cards-mobile">
                     <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-sm text-muted-foreground mb-1">List Price</p>
-                      <p className="text-lg sm:text-xl font-serif font-bold break-words">{formatCurrency(whatIfSellerInputs?.seller_selected_list_price || session.seller_inputs.seller_selected_list_price)}</p>
+                      <p className="text-lg sm:text-xl font-sans font-bold break-words">{formatCurrency(whatIfSellerInputs?.seller_selected_list_price || session.seller_inputs.seller_selected_list_price)}</p>
                     </div>
                     <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-sm text-muted-foreground mb-1">Timeframe</p>
-                      <p className="text-lg sm:text-xl font-serif font-bold">{whatIfSellerInputs?.desired_timeframe || session.seller_inputs.desired_timeframe} days</p>
+                      <p className="text-lg sm:text-xl font-sans font-bold">{whatIfSellerInputs?.desired_timeframe || session.seller_inputs.desired_timeframe} days</p>
                     </div>
                     <div className="p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile col-span-2 sm:col-span-1">
                       <p className="text-sm text-muted-foreground mb-1">Strategy</p>
-                      <p className="text-lg sm:text-xl font-serif font-bold">{whatIfSellerInputs?.strategy_preference || session.seller_inputs.strategy_preference}</p>
+                      <p className="text-lg sm:text-xl font-sans font-bold">{whatIfSellerInputs?.strategy_preference || session.seller_inputs.strategy_preference}</p>
                     </div>
                   </div>
                   {/* Only show client notes - NEVER agent notes */}
@@ -725,17 +725,17 @@ const SharedReportContent = () => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <div className="p-3 rounded-xl bg-secondary/50 text-center">
                         <p className="text-xs text-muted-foreground mb-1">List Price</p>
-                        <p className="text-lg font-serif font-bold">{formatCurrency(session.buyer_inputs.reference_price)}</p>
+                        <p className="text-lg font-sans font-bold">{formatCurrency(session.buyer_inputs.reference_price)}</p>
                       </div>
                       {session.buyer_inputs.days_on_market !== undefined && session.buyer_inputs.days_on_market > 0 && (
                         <div className="p-3 rounded-xl bg-secondary/50 text-center">
                           <p className="text-xs text-muted-foreground mb-1">Days on Market</p>
-                          <p className="text-lg font-serif font-bold">{session.buyer_inputs.days_on_market}</p>
+                          <p className="text-lg font-sans font-bold">{session.buyer_inputs.days_on_market}</p>
                         </div>
                       )}
                       <div className="p-3 rounded-xl bg-secondary/50 text-center">
                         <p className="text-xs text-muted-foreground mb-1">Market</p>
-                        <p className="text-lg font-serif font-bold">{session.buyer_inputs.market_conditions || 'Balanced'}</p>
+                        <p className="text-lg font-sans font-bold">{session.buyer_inputs.market_conditions || 'Balanced'}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -899,27 +899,27 @@ const SharedReportContent = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 likelihood-cards-mobile">
                     <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-xs sm:text-sm text-muted-foreground mb-1">Offer Price</p>
-                      <p className="text-base sm:text-xl font-serif font-bold break-words">{formatCurrency(whatIfInputs?.offer_price || session.buyer_inputs.offer_price)}</p>
+                      <p className="text-base sm:text-xl font-sans font-bold break-words">{formatCurrency(whatIfInputs?.offer_price || session.buyer_inputs.offer_price)}</p>
                     </div>
                     <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-xs sm:text-sm text-muted-foreground mb-1">Financing</p>
-                      <p className="text-base sm:text-xl font-serif font-bold">{whatIfInputs?.financing_type || session.buyer_inputs.financing_type}</p>
+                      <p className="text-base sm:text-xl font-sans font-bold">{whatIfInputs?.financing_type || session.buyer_inputs.financing_type}</p>
                     </div>
                     <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-xs sm:text-sm text-muted-foreground mb-1">Down Payment</p>
-                      <p className="text-base sm:text-xl font-serif font-bold">{whatIfInputs?.down_payment_percent || session.buyer_inputs.down_payment_percent}%</p>
+                      <p className="text-base sm:text-xl font-sans font-bold">{whatIfInputs?.down_payment_percent || session.buyer_inputs.down_payment_percent}%</p>
                     </div>
                     <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-xs sm:text-sm text-muted-foreground mb-1">Contingencies</p>
-                      <p className="text-sm sm:text-lg font-serif font-bold break-words">{(whatIfInputs?.contingencies || session.buyer_inputs.contingencies).join(', ') || 'None'}</p>
+                      <p className="text-sm sm:text-lg font-sans font-bold break-words">{(whatIfInputs?.contingencies || session.buyer_inputs.contingencies).join(', ') || 'None'}</p>
                     </div>
                     <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-xs sm:text-sm text-muted-foreground mb-1">Close Timeline</p>
-                      <p className="text-base sm:text-xl font-serif font-bold">{whatIfInputs?.closing_timeline || session.buyer_inputs.closing_timeline} days</p>
+                      <p className="text-base sm:text-xl font-sans font-bold">{whatIfInputs?.closing_timeline || session.buyer_inputs.closing_timeline} days</p>
                     </div>
                     <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 text-center pdf-stat-tile">
                       <p className="text-xs sm:text-sm text-muted-foreground mb-1">Strategy</p>
-                      <p className="text-sm sm:text-lg font-serif font-bold break-words">{whatIfInputs?.buyer_preference || session.buyer_inputs.buyer_preference}</p>
+                      <p className="text-sm sm:text-lg font-sans font-bold break-words">{whatIfInputs?.buyer_preference || session.buyer_inputs.buyer_preference}</p>
                     </div>
                   </div>
                   {/* Only show client notes - NEVER agent notes */}

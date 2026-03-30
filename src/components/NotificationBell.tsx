@@ -244,7 +244,7 @@ export function NotificationBell({ role, viewerId }: NotificationBellProps) {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0 max-h-[400px] overflow-hidden">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <p className="text-sm font-serif font-semibold">Notifications</p>
+          <p className="text-sm font-sans font-semibold">Notifications</p>
           {count > 0 && (
             <div className="flex items-center gap-1">
               <Button

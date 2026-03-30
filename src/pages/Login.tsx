@@ -87,7 +87,7 @@ const Login = () => {
         <div className="text-center">
           <div className="inline-flex items-center gap-2 mb-2">
             <AppLogo size="md" />
-            <span className="text-2xl font-serif font-bold text-foreground">Market Compass</span>
+            <span className="text-2xl font-sans font-bold text-foreground">Market Compass</span>
           </div>
           <p className="text-muted-foreground text-sm">Sign in to your account</p>
         </div>

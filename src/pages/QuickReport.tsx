@@ -81,7 +81,7 @@ const QuickReport = () => {
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-serif font-bold flex items-center gap-2">
+              <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
                 <Zap className="h-5 w-5 text-accent" />
                 Quick Report
               </h1>

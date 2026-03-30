@@ -41,7 +41,7 @@ export function BrandedReportHeader({
               className="h-10 w-auto max-w-[120px] object-contain"
             />
           )}
-          <h2 className="text-xl font-serif font-bold text-foreground">{reportType} Report</h2>
+          <h2 className="text-xl font-sans font-bold text-foreground">{reportType} Report</h2>
         </div>
         {showTimestamp && (
           <p className="text-xs text-muted-foreground whitespace-nowrap">

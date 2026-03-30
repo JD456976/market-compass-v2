@@ -166,7 +166,7 @@ export function LeadFinderOnboarding({ onComplete, forceShow = false }: LeadFind
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <h2 className="text-xl sm:text-2xl font-serif font-bold leading-snug">{step.title}</h2>
+              <h2 className="text-xl sm:text-2xl font-sans font-bold leading-snug">{step.title}</h2>
               <p className="text-primary-foreground/80 mt-1.5 text-sm leading-relaxed">{step.description}</p>
             </div>
 

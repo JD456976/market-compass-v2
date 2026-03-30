@@ -487,7 +487,7 @@ const BuyerFlow = () => {
                   <Users className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-serif font-bold">Buyer Analysis</h1>
+                  <h1 className="text-2xl font-sans font-bold">Buyer Analysis</h1>
                   <div className="flex items-center gap-2">
                     <p className="text-sm text-muted-foreground">Step {step + 1} of {STEPS.length} — {STEPS[step].label}</p>
                     {hasMeaningfulInput && <AutoSaveIndicator deps={[clientName, location, offerPrice, referencePrice, agentNotes, clientNotes]} />}

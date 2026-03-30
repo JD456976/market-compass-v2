@@ -135,7 +135,7 @@ export default function MarketIntelEmbed() {
           </div>
           <div className="flex items-center gap-3 mt-1">
             <div className="flex flex-col items-center">
-              <span className={cn('text-4xl font-bold font-serif', col.text)}>{data.score}</span>
+              <span className={cn('text-4xl font-bold font-sans', col.text)}>{data.score}</span>
               <span className="text-[10px] text-muted-foreground">/ 100</span>
             </div>
             <div className="flex-1 space-y-1.5">

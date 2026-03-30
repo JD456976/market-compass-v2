@@ -68,7 +68,7 @@ function RegretRiskBadge({ level, score }: { level: string; score: number }) {
   const color = idx >= 3 ? 'text-destructive' : idx >= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400';
   return (
     <div className="flex items-center gap-2">
-      <span className={cn('text-lg font-serif font-bold', color)}>{Math.round(score)}</span>
+      <span className={cn('text-lg font-sans font-bold', color)}>{Math.round(score)}</span>
       <span className="text-xs text-muted-foreground">/100</span>
       <span className={cn('text-xs font-medium', color)}>{level}</span>
     </div>
@@ -528,7 +528,7 @@ export function SellerScenarioExplorer({ originalInputs, onInputsChange, current
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                   <Compass className="h-5 w-5 text-accent shrink-0" />
-                  <DrawerTitle className="font-serif text-lg truncate">Listing Scenario Explorer</DrawerTitle>
+                  <DrawerTitle className="font-sans text-lg truncate">Listing Scenario Explorer</DrawerTitle>
                   {hasChanges && <Badge variant="secondary" className="text-xs shrink-0">Modified</Badge>}
                 </div>
                 <DrawerClose asChild>
@@ -554,7 +554,7 @@ export function SellerScenarioExplorer({ originalInputs, onInputsChange, current
         <SheetHeader className="border-b px-6 py-4 shrink-0">
           <div className="flex items-center gap-2">
             <Compass className="h-5 w-5 text-accent" />
-            <SheetTitle className="font-serif text-lg">Listing Scenario Explorer</SheetTitle>
+            <SheetTitle className="font-sans text-lg">Listing Scenario Explorer</SheetTitle>
             {hasChanges && <Badge variant="secondary" className="text-xs">Modified</Badge>}
           </div>
           <SheetDescription className="text-sm text-muted-foreground">

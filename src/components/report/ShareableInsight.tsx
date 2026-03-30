@@ -83,7 +83,7 @@ export function ShareableInsight({ insights, location, reportType, className = '
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{insight.title}</p>
-                  <p className="text-lg font-serif font-bold">{insight.value}</p>
+                  <p className="text-lg font-sans font-bold">{insight.value}</p>
                   <p className="text-xs text-muted-foreground">{insight.subtitle}</p>
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

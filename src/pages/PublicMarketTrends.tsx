@@ -55,7 +55,7 @@ export default function PublicMarketTrends() {
                 Public Market Data
               </Badge>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-serif font-bold mb-3">
+            <h1 className="text-3xl sm:text-4xl font-sans font-bold mb-3">
               Real Estate Market Trends
             </h1>
             <p className="text-primary-foreground/70 max-w-lg mx-auto">
@@ -85,7 +85,7 @@ export default function PublicMarketTrends() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-accent" />
-                        <CardTitle className="text-base font-serif">{market.city}</CardTitle>
+                        <CardTitle className="text-base font-sans">{market.city}</CardTitle>
                       </div>
                       <Badge variant="outline" className={`text-xs ${temp.color}`}>
                         {temp.label}
@@ -96,7 +96,7 @@ export default function PublicMarketTrends() {
                     <div className="grid grid-cols-3 gap-3">
                       <div className="text-center p-2 rounded-lg bg-secondary/50">
                         <p className="text-[10px] text-muted-foreground mb-0.5">Median DOM</p>
-                        <p className="text-lg font-serif font-bold">{market.snapshot.medianDOM}</p>
+                        <p className="text-lg font-sans font-bold">{market.snapshot.medianDOM}</p>
                         <p className="text-[10px] text-muted-foreground">days</p>
                       </div>
                       <div className="text-center p-2 rounded-lg bg-secondary/50">
@@ -104,7 +104,7 @@ export default function PublicMarketTrends() {
                           <p className="text-[10px] text-muted-foreground mb-0.5">Sale/List</p>
                           <TrendIndicator trend={saleTrend} />
                         </div>
-                        <p className="text-lg font-serif font-bold">
+                        <p className="text-lg font-sans font-bold">
                           {(market.snapshot.saleToListRatio * 100).toFixed(1)}%
                         </p>
                       </div>

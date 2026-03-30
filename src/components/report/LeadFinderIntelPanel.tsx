@@ -153,7 +153,7 @@ function MetricRow({ metric, invertTrend = false }: { metric: MetricData; invert
           {metric.flagged && <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" />}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-sm font-bold font-serif">{formatValue(metric.current, metric.unit)}</span>
+          <span className="text-sm font-bold font-sans">{formatValue(metric.current, metric.unit)}</span>
           <TrendChip trend={metric.trend} />
         </div>
         <p className="text-[10px] text-muted-foreground/70 mt-0.5 leading-tight line-clamp-2">{metric.note}</p>
@@ -413,7 +413,7 @@ export function LeadFinderIntelPanel({ location, reportType, onResult }: LeadFin
         <div className="flex items-center gap-4 flex-wrap">
           {/* Score meter */}
           <div className="flex flex-col items-center shrink-0">
-            <span className={cn('text-5xl font-bold font-serif tracking-tight leading-none', c.text)}>
+            <span className={cn('text-5xl font-bold font-sans tracking-tight leading-none', c.text)}>
               {result.opportunityScore}
             </span>
             <span className="text-[10px] text-muted-foreground mt-0.5">/ 100</span>
@@ -439,7 +439,7 @@ export function LeadFinderIntelPanel({ location, reportType, onResult }: LeadFin
             <span className={ltColors.text}>{ltc.icon}</span>
             <div>
               <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">{ltc.badge} Market</p>
-              <p className={cn('text-xs font-bold font-serif', ltColors.text)}>{ltc.title}</p>
+              <p className={cn('text-xs font-bold font-sans', ltColors.text)}>{ltc.title}</p>
             </div>
           </div>
         </div>
@@ -489,7 +489,7 @@ export function LeadFinderIntelPanel({ location, reportType, onResult }: LeadFin
             <div className={cn('rounded-xl p-4 space-y-2 border', ltColors.bg, ltColors.border)}>
               <div className="flex items-center gap-2">
                 <span className={ltColors.text}>{ltc.icon}</span>
-                <p className="text-sm font-bold font-serif">{ltc.badge} {ltc.title}</p>
+                <p className="text-sm font-bold font-sans">{ltc.badge} {ltc.title}</p>
               </div>
               <p className="text-xs text-foreground/80 leading-relaxed">{ltc.description}</p>
             </div>

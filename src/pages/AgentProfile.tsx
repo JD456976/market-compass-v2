@@ -120,7 +120,7 @@ const AgentProfile = () => {
                 <User className="h-5 w-5 text-accent" />
               </div>
               <div>
-                <h1 className="text-2xl font-serif font-bold">Agent Profile & Branding</h1>
+                <h1 className="text-2xl font-sans font-bold">Agent Profile & Branding</h1>
                 <p className="text-sm text-primary-foreground/70">Configure your contact info and report branding</p>
               </div>
             </div>

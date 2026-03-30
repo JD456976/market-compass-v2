@@ -58,7 +58,7 @@ const Admin = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-serif font-semibold">Not Authorized</h1>
+          <h1 className="text-2xl font-sans font-semibold">Not Authorized</h1>
           <p className="text-muted-foreground">
             {userEmail} is not authorized to access admin.
           </p>

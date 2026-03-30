@@ -129,7 +129,7 @@ export function ListingNavigatorOnboarding() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{current.subtitle}</p>
-                    <h2 className="font-serif text-xl font-semibold mt-0.5">{current.title}</h2>
+                    <h2 className="font-sans text-xl font-semibold mt-0.5">{current.title}</h2>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">{current.description}</p>
                 </motion.div>
@@ -199,7 +199,7 @@ export function ListingNavigatorOnboardingTrigger() {
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{current.subtitle}</p>
-                      <h2 className="font-serif text-xl font-semibold mt-0.5">{current.title}</h2>
+                      <h2 className="font-sans text-xl font-semibold mt-0.5">{current.title}</h2>
                     </div>
                     <p className="text-sm text-muted-foreground leading-relaxed">{current.description}</p>
                   </motion.div>

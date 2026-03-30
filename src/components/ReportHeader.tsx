@@ -50,7 +50,7 @@ export function ReportHeader({ reportType, clientName, snapshotTimestamp, showTi
                 />
               )}
               <div>
-                <h2 className="text-xl font-serif font-bold text-foreground">{reportType} Report</h2>
+                <h2 className="text-xl font-sans font-bold text-foreground">{reportType} Report</h2>
                 {showTimestamp && (
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {new Date(snapshotTimestamp).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}

@@ -17,7 +17,7 @@ const TermsOfService = () => {
               <div className="p-2 rounded-lg bg-primary/10">
                 <FileText className="h-5 w-5 text-primary" />
               </div>
-              <h1 className="text-xl sm:text-2xl font-serif font-bold">Terms of Service</h1>
+              <h1 className="text-xl sm:text-2xl font-sans font-bold">Terms of Service</h1>
             </div>
           </div>
         </div>

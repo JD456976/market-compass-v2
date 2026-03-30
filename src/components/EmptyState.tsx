@@ -140,7 +140,7 @@ export function EmptyState({ icon: Icon = FileText, title, description, action, 
             <Icon className="h-8 w-8 text-muted-foreground/60" />
           </div>
         )}
-        <h3 className="text-base font-serif font-semibold text-foreground mb-1">{title}</h3>
+        <h3 className="text-base font-sans font-semibold text-foreground mb-1">{title}</h3>
         <p className="text-sm text-muted-foreground max-w-sm mx-auto">{description}</p>
         {action && (
           <div className="mt-5">

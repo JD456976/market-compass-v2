@@ -196,7 +196,7 @@ const MarketIntelligence = () => {
               </Button>
             </Link>
             <div className="min-w-0">
-              <h1 className="text-lg sm:text-2xl font-serif font-bold truncate">Market Intelligence</h1>
+              <h1 className="text-lg sm:text-2xl font-sans font-bold truncate">Market Intelligence</h1>
               <p className="text-xs sm:text-sm text-muted-foreground truncate">Scenarios & location profiles for analysis</p>
             </div>
           </div>
@@ -228,7 +228,7 @@ const MarketIntelligence = () => {
                 {/* Built-in */}
                 <div>
                   <div className="flex items-center gap-2 mb-4">
-                    <h2 className="text-base font-serif font-semibold">Built-in Scenarios</h2>
+                    <h2 className="text-base font-sans font-semibold">Built-in Scenarios</h2>
                     <Badge variant="secondary" className="text-[10px] h-5 px-1.5"><Lock className="mr-0.5 h-2.5 w-2.5" />Read-only</Badge>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -241,7 +241,7 @@ const MarketIntelligence = () => {
                 </div>
                 {/* Custom */}
                 <div>
-                  <h2 className="text-base font-serif font-semibold mb-4">Custom Scenarios</h2>
+                  <h2 className="text-base font-sans font-semibold mb-4">Custom Scenarios</h2>
                   {customScenarios.length === 0 ? (
                     <Card className="border-dashed border-2">
                       <CardContent className="py-10 text-center">
@@ -271,7 +271,7 @@ const MarketIntelligence = () => {
                   <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                     <MapPin className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="font-serif text-xl font-semibold mb-2">No market profiles yet</h3>
+                  <h3 className="font-sans text-xl font-semibold mb-2">No market profiles yet</h3>
                   <p className="text-muted-foreground mb-6">Create your first market profile for accurate analysis.</p>
                   <Button variant="accent" onClick={openProfileCreate}><Plus className="mr-2 h-4 w-4" />Create First Profile</Button>
                 </CardContent>
@@ -315,7 +315,7 @@ const MarketIntelligence = () => {
       {/* ── Scenario Dialog ── */}
       <Dialog open={scenarioDialogOpen} onOpenChange={setScenarioDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="font-serif text-lg">{editingScenario ? 'Edit Scenario' : 'Create Custom Scenario'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-sans text-lg">{editingScenario ? 'Edit Scenario' : 'Create Custom Scenario'}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5"><Label className="text-xs font-medium">Name *</Label><Input value={sName} onChange={e => setSName(e.target.value)} placeholder="e.g., Spring 2024 Seller's Market" /></div>
             <div className="space-y-1.5"><Label className="text-xs font-medium">Summary *</Label><Textarea value={sSummary} onChange={e => setSSummary(e.target.value)} placeholder="1-2 sentences..." rows={3} className="resize-none text-sm" /></div>
@@ -334,7 +334,7 @@ const MarketIntelligence = () => {
       {/* ── Profile Dialog ── */}
       <Dialog open={profileDialogOpen} onOpenChange={(open) => { setProfileDialogOpen(open); if (!open) { setEditingProfile(null); setProfileForm(emptyProfile); } }}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle className="font-serif text-xl">{editingProfile ? 'Edit' : 'Create'} Market Profile</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-sans text-xl">{editingProfile ? 'Edit' : 'Create'} Market Profile</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2"><Label>Profile Name</Label><Input value={profileForm.label} onChange={e => setProfileForm({ ...profileForm, label: e.target.value })} placeholder="e.g., Downtown Seattle Hot" /></div>
             <div className="space-y-2"><Label>Location</Label><Input value={profileForm.location} onChange={e => setProfileForm({ ...profileForm, location: e.target.value })} placeholder="e.g., Seattle, WA" /></div>

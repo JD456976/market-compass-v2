@@ -21,7 +21,7 @@ const Methodology = () => {
                 <BookOpen className="h-5 w-5 text-accent" />
               </div>
               <div>
-                <h1 className="text-2xl font-serif font-bold">Data & Methodology</h1>
+                <h1 className="text-2xl font-sans font-bold">Data & Methodology</h1>
                 <p className="text-sm text-primary-foreground/70">How Market Compass works</p>
               </div>
             </div>

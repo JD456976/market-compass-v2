@@ -50,7 +50,7 @@ const ResetPassword = () => {
             <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center">
               <CheckCircle2 className="h-8 w-8 text-emerald-600" />
             </div>
-            <h2 className="text-xl font-serif font-bold">Password Reset Successful</h2>
+            <h2 className="text-xl font-sans font-bold">Password Reset Successful</h2>
             <p className="text-muted-foreground text-sm">Your password has been updated.</p>
             <Button onClick={() => navigate('/login', { replace: true })} className="mt-4">
               Continue to Sign In
@@ -66,7 +66,7 @@ const ResetPassword = () => {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <AppLogo size="md" className="mx-auto mb-4" />
-          <h1 className="text-2xl font-serif font-bold">Create New Password</h1>
+          <h1 className="text-2xl font-sans font-bold">Create New Password</h1>
         </div>
 
         <Card className="border-border/50 shadow-lg">

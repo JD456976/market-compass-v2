@@ -39,7 +39,7 @@ const ForgotPassword = () => {
             <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
               <Mail className="h-8 w-8 text-primary" />
             </div>
-            <h2 className="text-xl font-serif font-bold">Check Your Email</h2>
+            <h2 className="text-xl font-sans font-bold">Check Your Email</h2>
             <p className="text-muted-foreground text-sm">
               If an account exists for <strong>{email}</strong>, we sent password reset instructions.
             </p>
@@ -65,7 +65,7 @@ const ForgotPassword = () => {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <AppLogo size="md" className="mx-auto mb-4" />
-          <h1 className="text-2xl font-serif font-bold">Reset Your Password</h1>
+          <h1 className="text-2xl font-sans font-bold">Reset Your Password</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Enter the email address associated with your account.
           </p>

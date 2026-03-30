@@ -294,7 +294,7 @@ export default function BetaAccess() {
           <div className="mx-auto mb-4">
             <AppLogo size="lg" />
           </div>
-          <CardTitle className="text-2xl font-serif">Market Compass</CardTitle>
+          <CardTitle className="text-2xl font-sans">Market Compass</CardTitle>
           <CardDescription className="text-base">
             {step === 'email' 
               ? 'Enter your email to continue'

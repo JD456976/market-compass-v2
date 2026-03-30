@@ -123,7 +123,7 @@ export function AdminLogin() {
           <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
             <Shield className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-serif">Admin Login</CardTitle>
+          <CardTitle className="text-2xl font-sans">Admin Login</CardTitle>
           <CardDescription>
             Sign in to access the admin dashboard
           </CardDescription>

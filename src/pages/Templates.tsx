@@ -258,7 +258,7 @@ const Templates = () => {
                   <FileText className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-serif font-bold">Templates</h1>
+                  <h1 className="text-2xl font-sans font-bold">Templates</h1>
                   <p className="text-sm text-muted-foreground">{templates.length} template{templates.length !== 1 ? 's' : ''} saved</p>
                 </div>
               </div>
@@ -293,7 +293,7 @@ const Templates = () => {
                   <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                     <FileText className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="font-serif text-xl font-semibold mb-2">No templates yet</h3>
+                  <h3 className="font-sans text-xl font-semibold mb-2">No templates yet</h3>
                   <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                     Templates save your preferred defaults for new reports. Create one to speed up your workflow.
                   </p>
@@ -336,7 +336,7 @@ const Templates = () => {
                           </div>
                           <div>
                             <div className="flex items-center gap-3 mb-1">
-                              <h3 className="font-serif text-lg font-semibold">{template.name}</h3>
+                              <h3 className="font-sans text-lg font-semibold">{template.name}</h3>
                               <Badge variant={template.session_type === 'Seller' ? 'default' : 'accent'}>
                                 {template.session_type}
                               </Badge>
@@ -385,7 +385,7 @@ const Templates = () => {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-serif text-xl">
+            <DialogTitle className="font-sans text-xl">
               {editingTemplate ? 'Edit Template' : `Create ${currentType} Template`}
             </DialogTitle>
           </DialogHeader>

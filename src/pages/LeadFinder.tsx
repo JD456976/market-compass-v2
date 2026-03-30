@@ -214,7 +214,7 @@ function MetricCard({ metric, invertTrend = false }: { metric: MetricData; inver
       </CardHeader>
       <CardContent className="space-y-2 flex-1 flex flex-col">
         <div className="flex items-end gap-2">
-          <span className="text-2xl font-bold font-serif tracking-tight">
+          <span className="text-2xl font-bold font-sans tracking-tight">
             {formatValue(metric.current, metric.unit)}
           </span>
           <div className={cn('flex items-center gap-1 mb-0.5 text-xs font-medium', trendColorClass(metric.trend, invertTrend))}>
@@ -293,7 +293,7 @@ function ScoreMeter({
       <CardContent className="space-y-6">
         <div className="flex items-center gap-6 flex-wrap">
           <div className="flex flex-col items-center">
-            <span className={cn('text-7xl font-bold font-serif tracking-tight', c.text)}>{score}</span>
+            <span className={cn('text-7xl font-bold font-sans tracking-tight', c.text)}>{score}</span>
             <span className="text-sm text-muted-foreground">out of 100</span>
           </div>
           <div className="flex-1 min-w-48 space-y-3">
@@ -427,7 +427,7 @@ function LeadTypeCard({ leadType, metrics }: { leadType: string; metrics: LeadFi
               <span className={cn('p-2 rounded-lg', c.bg, c.text)}>{cfg.icon}</span>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{cfg.badge} Market Type</p>
-                <h3 className={cn('text-lg font-serif font-bold', c.text)}>{cfg.title}</h3>
+                <h3 className={cn('text-lg font-sans font-bold', c.text)}>{cfg.title}</h3>
               </div>
             </div>
             <p className="text-sm text-foreground/80 leading-relaxed">{cfg.description}</p>
@@ -582,7 +582,7 @@ function SavedMarketsPanel({
         </div>
         {m.opportunity_score != null && (
           <div className="flex flex-col items-end gap-1">
-            <span className={cn('text-lg font-bold font-serif', c.text)}>{m.opportunity_score}</span>
+            <span className={cn('text-lg font-bold font-sans', c.text)}>{m.opportunity_score}</span>
             <Badge variant="outline" className={cn('text-[9px] px-1 py-0 capitalize', c.text, c.border)}>
               {m.lead_type}
             </Badge>
@@ -974,7 +974,7 @@ export default function LeadFinder() {
                 </div>
                 <LeadFinderOnboardingTrigger />
               </div>
-              <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight">
+              <h1 className="font-sans text-3xl sm:text-4xl font-bold tracking-tight">
                 Find Your Next Listing Opportunity
               </h1>
               <p className="text-base text-muted-foreground max-w-2xl leading-relaxed">
@@ -1116,7 +1116,7 @@ export default function LeadFinder() {
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">2</div>
-                    <h2 className="font-serif text-xl font-semibold">Current Market Conditions</h2>
+                    <h2 className="font-sans text-xl font-semibold">Current Market Conditions</h2>
                   </div>
                   <p className="text-xs text-muted-foreground">Live FRED data. Each source code links to the Federal Reserve for independent verification.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1132,7 +1132,7 @@ export default function LeadFinder() {
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">3</div>
-                    <h2 className="font-serif text-xl font-semibold">Opportunity Score</h2>
+                    <h2 className="font-sans text-xl font-semibold">Opportunity Score</h2>
                   </div>
                   <ScoreMeter
                     score={result.opportunityScore}
@@ -1147,7 +1147,7 @@ export default function LeadFinder() {
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">4</div>
-                    <h2 className="font-serif text-xl font-semibold">Recommendation & Action Plan</h2>
+                    <h2 className="font-sans text-xl font-semibold">Recommendation & Action Plan</h2>
                   </div>
                   <LeadTypeCard leadType={result.leadType} metrics={result.metrics} />
                 </section>
@@ -1156,7 +1156,7 @@ export default function LeadFinder() {
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">5</div>
-                    <h2 className="font-serif text-xl font-semibold">Shareable Market Brief</h2>
+                    <h2 className="font-sans text-xl font-semibold">Shareable Market Brief</h2>
                   </div>
                   <MarketBrief result={result} cityState={cityState} />
                 </section>
@@ -1165,7 +1165,7 @@ export default function LeadFinder() {
                 <section id="crm-hub-section" className="space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">6</div>
-                    <h2 className="font-serif text-xl font-semibold">Push to Your CRM</h2>
+                    <h2 className="font-sans text-xl font-semibold">Push to Your CRM</h2>
                   </div>
                   <CrmIntegrationHub
                     pendingPush={{
@@ -1193,7 +1193,7 @@ export default function LeadFinder() {
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">7</div>
-                    <h2 className="font-serif text-xl font-semibold">Prospecting Playbook</h2>
+                    <h2 className="font-sans text-xl font-semibold">Prospecting Playbook</h2>
                   </div>
                   <ProspectingPlaybook
                     analysisId={currentAnalysisId}
@@ -1217,7 +1217,7 @@ export default function LeadFinder() {
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">8</div>
-                    <h2 className="font-serif text-xl font-semibold">Score Your Lead List</h2>
+                    <h2 className="font-sans text-xl font-semibold">Score Your Lead List</h2>
                   </div>
                   <CsvUpload currentResult={result} />
                 </section>
@@ -1231,7 +1231,7 @@ export default function LeadFinder() {
                   <Target className="h-8 w-8 text-primary" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-serif text-xl font-semibold">Enter a ZIP Code to Begin</h3>
+                  <h3 className="font-sans text-xl font-semibold">Enter a ZIP Code to Begin</h3>
                   <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                     The Lead Finder will pull live federal data and calculate your market's opportunity score in seconds.
                   </p>

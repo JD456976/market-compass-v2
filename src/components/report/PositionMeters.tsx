@@ -41,7 +41,7 @@ function MeterBar<T extends string>({ levels, activeLevel, score, className }: M
     <div className={cn('space-y-3', className)}>
       {/* Score display */}
       <div className="flex items-baseline gap-2 mb-1">
-        <span className="text-3xl font-serif font-bold text-foreground">{Math.round(score)}</span>
+        <span className="text-3xl font-sans font-bold text-foreground">{Math.round(score)}</span>
         <span className="text-sm text-muted-foreground font-medium">/ 100</span>
         <span className="ml-auto text-sm font-semibold text-accent">{activeLevel}</span>
       </div>

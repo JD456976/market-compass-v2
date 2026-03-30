@@ -169,7 +169,7 @@ export default function ClientDashboard() {
               <AppLogo size="sm" />
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-serif font-bold">
+              <h1 className="text-2xl font-sans font-bold">
                 {clientName ? `Welcome, ${clientName.split(' ')[0]}` : 'My Reports'}
               </h1>
               <p className="text-sm text-primary-foreground/70">
@@ -207,21 +207,21 @@ export default function ClientDashboard() {
             <Card>
               <CardContent className="pt-4 pb-4 text-center">
                 <FileText className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                <p className="text-2xl font-serif font-bold">{reports.length}</p>
+                <p className="text-2xl font-sans font-bold">{reports.length}</p>
                 <p className="text-[10px] text-muted-foreground">Reports</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-4 pb-4 text-center">
                 <MessageSquare className="h-4 w-4 mx-auto mb-1 text-accent" />
-                <p className="text-2xl font-serif font-bold">{totalUnread}</p>
+                <p className="text-2xl font-sans font-bold">{totalUnread}</p>
                 <p className="text-[10px] text-muted-foreground">Unread</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-4 pb-4 text-center">
                 <Layers className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                <p className="text-2xl font-serif font-bold">{reports.reduce((acc, r) => acc + r.scenario_count, 0)}</p>
+                <p className="text-2xl font-sans font-bold">{reports.reduce((acc, r) => acc + r.scenario_count, 0)}</p>
                 <p className="text-[10px] text-muted-foreground">Scenarios</p>
               </CardContent>
             </Card>
@@ -306,7 +306,7 @@ export default function ClientDashboard() {
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-serif font-semibold truncate">{report.client_name}</h3>
+                          <h3 className="font-sans font-semibold truncate">{report.client_name}</h3>
                           <Badge variant="outline" className="text-[10px] shrink-0">
                             {report.session_type === 'buyer' ? 'Buyer' : 'Seller'}
                           </Badge>

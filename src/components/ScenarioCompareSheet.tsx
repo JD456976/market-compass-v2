@@ -150,7 +150,7 @@ export function ScenarioCompareSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg overflow-y-auto">
         <SheetHeader className="pb-4">
-          <SheetTitle className="font-serif">
+          <SheetTitle className="font-sans">
             {scenarioTitle || 'Client Scenario'}
           </SheetTitle>
           <SheetDescription>
