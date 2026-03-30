@@ -209,7 +209,7 @@
 }
 
 .report-h2 {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 1.125rem;
   font-weight: 600;
   line-height: 1.3;
