@@ -42,6 +42,8 @@ function wordCount(text: string) {
 }
 
 export default function MarketNarrative() {
+  const [neighborhood, setNeighborhood] = useState("");
+  const [reportMonth, setReportMonth] = useState("");
   const [medianPrice, setMedianPrice] = useState("");
   const [priceChange, setPriceChange] = useState("");
   const [dom, setDom] = useState("");
@@ -69,6 +71,8 @@ export default function MarketNarrative() {
     try {
       const { data, error } = await supabase.functions.invoke("market-narrative", {
         body: {
+          neighborhood: neighborhood || undefined,
+          reportMonth: reportMonth || undefined,
           medianPrice,
           priceChange: PRICE_CHANGES.find(p => p.value === priceChange)?.label ?? priceChange,
           dom,
@@ -128,6 +132,26 @@ export default function MarketNarrative() {
               <CardTitle className="text-base font-sans">Market Stats</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {/* Neighborhood / ZIP */}
+              <div>
+                <label className="text-xs font-medium text-foreground mb-1 block">Neighborhood / ZIP</label>
+                <Input
+                  value={neighborhood}
+                  onChange={(e) => setNeighborhood(e.target.value)}
+                  placeholder="e.g. Brookline, MA or 02445"
+                />
+              </div>
+
+              {/* Report Month */}
+              <div>
+                <label className="text-xs font-medium text-foreground mb-1 block">Report Month</label>
+                <Input
+                  value={reportMonth}
+                  onChange={(e) => setReportMonth(e.target.value)}
+                  placeholder="e.g. March 2026"
+                />
+              </div>
+
               {/* Median Price */}
               <div>
                 <label className="text-xs font-medium text-foreground mb-1 block">Median Sale Price *</label>

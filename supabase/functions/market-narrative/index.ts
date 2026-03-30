@@ -10,13 +10,13 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { medianPrice, priceChange, dom, listToSale, activeListings, monthsSupply, marketCondition, audience } = await req.json();
+    const { neighborhood, reportMonth, medianPrice, priceChange, dom, listToSale, activeListings, monthsSupply, marketCondition, audience } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const systemPrompt = `You are a senior real estate copywriter. You receive market statistics and produce exactly 3 pieces of content in a single JSON response. Never fabricate data — only cite the numbers given.`;
 
-    const userPrompt = `Market stats:
+    const userPrompt = `Market stats${neighborhood ? ` for ${neighborhood}` : ""}${reportMonth ? ` — ${reportMonth}` : ""}:
 - Median Sale Price: $${medianPrice}
 - Price Change (YoY): ${priceChange}
 - Days on Market: ${dom}

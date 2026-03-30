@@ -226,7 +226,7 @@ const DRAWER_REPORTS: DrawerLink[] = [
 // Tools group
 const DRAWER_TOOLS: DrawerLink[] = [
   { to: '/buyer-match', label: 'Buyer Match', icon: <Users className="h-5 w-5" /> },
-  { to: '/market-narrative', label: 'Market Narrative', icon: <PenLine className="h-5 w-5" /> },
+  { to: '/ai-narrative', label: 'Market Narrative', icon: <Sparkles className="h-5 w-5" /> },
   { to: '/saved-playbooks', label: 'Saved Playbooks', icon: <BookmarkCheck className="h-5 w-5" /> },
   { to: '/market-intelligence', label: 'Market Intelligence', icon: <TrendingUp className="h-5 w-5" /> },
   { to: '/market-data', label: 'Market Data', icon: <Database className="h-5 w-5" /> },
@@ -321,7 +321,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
             { to: '/lead-finder', label: 'Leads', icon: Users, exact: false },
             { to: '/listing-navigator', label: 'Listing', icon: Search, exact: false },
             { to: '/market-intelligence', label: 'Market', icon: TrendingUp, exact: false },
-            { to: '/market-narrative', label: 'Narrative', icon: Sparkles, exact: false },
+            { to: '/ai-narrative', label: 'Narrative', icon: Sparkles, exact: false },
           ] as const).map((tab) => {
             const isActive = tab.exact
               ? location.pathname === tab.to
@@ -438,7 +438,7 @@ const PRIMARY_NAV: NavItem[] = [
   { to: '/lead-finder', label: 'Lead Finder', icon: <Target className="h-4 w-4" /> },
   { to: '/listing-navigator', label: 'Listing Nav', icon: <Eye className="h-4 w-4" /> },
   { to: '/buyer-match', label: 'Buyer Match', icon: <Users className="h-4 w-4" /> },
-  { to: '/market-narrative', label: 'Narrative', icon: <PenLine className="h-4 w-4" /> },
+  { to: '/ai-narrative', label: 'Narrative', icon: <Sparkles className="h-4 w-4" /> },
   { to: '/market-intelligence', label: 'Market Intel', icon: <TrendingUp className="h-4 w-4" /> },
 ];
 
