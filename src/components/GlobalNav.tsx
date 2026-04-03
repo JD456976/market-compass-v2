@@ -8,7 +8,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  Home, FolderOpen, Send, Settings, Sparkles, Menu,
+  Home, FolderOpen, Send, Settings, Sparkles, Menu, DollarSign,
   TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield,
   Settings as SettingsIcon, LayoutDashboard, LogOut, Target, BookmarkCheck, Trophy, Eye,
   LayoutList, PenLine, Users, Search,

@@ -62,6 +62,7 @@ import TouringFlow from "./pages/TouringFlow";
 import TouringReport from "./pages/TouringReport";
 import MarketNarrative from "./pages/MarketNarrative";
 import BuyerMatch from "./pages/BuyerMatch";
+import NetSheet from "./pages/NetSheet";
 
 const queryClient = new QueryClient();
 
