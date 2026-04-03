@@ -129,6 +129,7 @@ function AppRoutes() {
           <Route path="/documents" element={<RequireAuth><Documents /></RequireAuth>} />
           <Route path="/documents/upload" element={<RequireAuth><UploadDocument /></RequireAuth>} />
           <Route path="/documents/:documentId/review" element={<RequireAuth><ReviewDocument /></RequireAuth>} />
+          <Route path="/net-sheet" element={<RequireAuth><NetSheet /></RequireAuth>} />
           <Route path="/settings" element={<RequireAuth><AccountSettings /></RequireAuth>} />
 
           <Route path="*" element={<NotFound />} />
