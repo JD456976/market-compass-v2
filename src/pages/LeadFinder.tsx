@@ -878,24 +878,12 @@ export default function LeadFinder() {
     setError(null);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
+    const timeout = setTimeout(() => controller.abort(), 25000);
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      const resp = await fetch(
-        `${supabaseUrl}/functions/v1/fred-lead-finder?zip=${encodeURIComponent(trimmedZip)}`,
-        {
-          signal: controller.signal,
-          headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
-        }
-      );
+      // Direct browser fetch to FRED API — no edge functions, no Supabase
+      const fredData = await fetchLeadFinderData(trimmedZip, controller.signal);
       clearTimeout(timeout);
-
-      if (!resp.ok) throw new Error(`Failed to fetch market data (${resp.status})`);
-      const fredData: LeadFinderResult = await resp.json();
-      if ((fredData as any).error) throw new Error((fredData as any).error);
 
       // Track previous score for FUB score-change alerts
       if (result?.zip === trimmedZip) {
@@ -903,7 +891,7 @@ export default function LeadFinder() {
       } else {
         setPreviousScore(null);
       }
-      setResult(fredData);
+      setResult(fredData as any);
       setRetryCount(0);
 
       if (user) {
