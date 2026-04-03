@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchLeadFinderData } from '@/lib/fredClient';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -881,8 +881,40 @@ export default function LeadFinder() {
     const timeout = setTimeout(() => controller.abort(), 25000);
 
     try {
-      // Direct browser fetch to FRED API — no edge functions, no Supabase
-      const fredData = await fetchLeadFinderData(trimmedZip, controller.signal);
+      // Direct browser call to Anthropic — no edge functions
+      const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 800,
+          messages: [{
+            role: 'user',
+            content: `You are a US real estate market data expert. For ZIP code ${trimmedZip}, return ONLY a valid JSON object (no markdown, no explanation) with this exact shape:
+{"opportunityScore":<number 0-100>,"leadType":"seller"|"transitional"|"buyer","mortgage":{"current":<number>,"trend":"rising"|"falling"|"stable"},"inventory":{"current":<number>,"trend":"rising"|"falling"|"stable"},"daysOnMarket":{"current":<number>,"trend":"rising"|"falling"|"stable"},"hpi":{"current":<number>,"change90d":<number>},"unemployment":{"current":<number>,"trend":"rising"|"falling"|"stable"},"topFactors":[{"label":<string>,"points":<number>,"reason":<string>}]}
+Use your knowledge of this specific ZIP's local housing market, economy, and recent trends. opportunityScore reflects how strong the prospecting opportunity is for a real estate agent. Include 3-5 topFactors. Return ONLY the JSON.`
+          }],
+        }),
+      });
+      if (!anthropicRes.ok) {
+        const errText = await anthropicRes.text();
+        throw new Error(`API error ${anthropicRes.status}: ${errText.slice(0, 200)}`);
+      }
+      const anthropicJson = await anthropicRes.json();
+      const rawText = anthropicJson?.content?.[0]?.text || '';
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('No JSON found in AI response');
+      const fredData = JSON.parse(jsonMatch[0]);
+      fredData.zip = trimmedZip;
+      fredData.fetchedAt = new Date().toISOString();
+      fredData.metrics = {
+        mortgage: fredData.mortgage,
+        inventory: fredData.inventory,
+        daysOnMarket: fredData.daysOnMarket,
+        hpi: fredData.hpi,
+        unemployment: fredData.unemployment,
+      };
       clearTimeout(timeout);
 
       // Track previous score for FUB score-change alerts
