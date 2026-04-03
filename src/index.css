@@ -55,6 +55,8 @@
     --shadow-elegant: 0 4px 24px -6px hsl(0 0% 0% / 0.6);
     --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.35), 0 4px 16px hsl(0 0% 0% / 0.3);
     --shadow-card-hover: 0 8px 32px hsl(0 0% 0% / 0.45), 0 0 0 1px hsl(240 65% 60% / 0.1);
+
+    color-scheme: dark;
   }
 
   /* Dark mode mirrors root — dark-first design */
