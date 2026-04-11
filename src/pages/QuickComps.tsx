@@ -475,6 +475,15 @@ Suggested range: $${summary?.low.toLocaleString() ?? '?'} – $${summary?.high.t
         )}
       </AnimatePresence>
 
+      {/* PDF Download Button */}
+      <Button
+        className="w-full h-12 text-base font-semibold"
+        style={{ background: '#D4A853', color: '#0F172A' }}
+        onClick={generatePdf}
+      >
+        <Download className="h-5 w-5 mr-2" /> Download Comp Report PDF
+      </Button>
+
       <p className="text-xs text-muted-foreground text-center pb-8">
         For comparative purposes only. Verify all data with MLS records before presenting to clients.
       </p>
