@@ -65,6 +65,7 @@ import BuyerMatch from "./pages/BuyerMatch";
 import NetSheet from "./pages/NetSheet";
 import SellerNetSheet from "./pages/SellerNetSheet";
 import OfferStrategy from "./pages/OfferStrategy";
+import QuickComps from "./pages/QuickComps";
 
 const queryClient = new QueryClient();
 
@@ -134,6 +135,7 @@ function AppRoutes() {
           <Route path="/net-sheet" element={<RequireAuth><NetSheet /></RequireAuth>} />
           <Route path="/seller-net-sheet" element={<RequireAuth><SellerNetSheet /></RequireAuth>} />
           <Route path="/offer-strategy" element={<RequireAuth><OfferStrategy /></RequireAuth>} />
+          <Route path="/quick-comps" element={<RequireAuth><QuickComps /></RequireAuth>} />
           <Route path="/settings" element={<RequireAuth><AccountSettings /></RequireAuth>} />
 
           <Route path="*" element={<NotFound />} />
