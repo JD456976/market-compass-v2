@@ -11,7 +11,7 @@ import {
   Home, FolderOpen, Send, Settings, Sparkles, Menu, DollarSign, Crosshair,
   TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield,
   Settings as SettingsIcon, LayoutDashboard, LogOut, Target, BookmarkCheck, Trophy, Eye,
-  LayoutList, PenLine, Users, Search,
+  LayoutList, PenLine, Users, Search, BarChart2,
 } from 'lucide-react';
 import { MarketShiftAlertBell } from '@/components/MarketShiftAlerts';
 import { AppLogo } from '@/components/AppLogo';
@@ -322,6 +322,7 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
             { to: '/listing-navigator', label: 'Listing', icon: Search, exact: false },
             { to: '/market-intelligence', label: 'Market', icon: TrendingUp, exact: false },
             { to: '/ai-narrative', label: 'Narrative', icon: Sparkles, exact: false },
+            { to: '/quick-comps', label: 'Comps', icon: BarChart2, exact: false },
           ] as const).map((tab) => {
             const isActive = tab.exact
               ? location.pathname === tab.to
@@ -444,6 +445,7 @@ const PRIMARY_NAV: NavItem[] = [
 
 // More dropdown: Offers | Drafts | Shared | Playbooks | Pro Plan | Admin
 const SECONDARY_NAV: NavItem[] = [
+  { to: '/quick-comps', label: 'Quick Comps', icon: <BarChart2 className="h-4 w-4" /> },
   { to: '/offer-strategy', label: 'Offer Strategy', icon: <Crosshair className="h-4 w-4" /> },
   { to: '/seller-net-sheet', label: 'Seller Net Sheet', icon: <DollarSign className="h-4 w-4" /> },
   { to: '/offer-tracker', label: 'Offer Tracker', icon: <Trophy className="h-4 w-4" /> },
