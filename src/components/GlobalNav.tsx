@@ -8,7 +8,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  Home, FolderOpen, Send, Settings, Sparkles, Menu, DollarSign,
+  Home, FolderOpen, Send, Settings, Sparkles, Menu, DollarSign, Crosshair,
   TrendingUp, Database, User, BookOpen, FileText, X, ChevronRight, Shield,
   Settings as SettingsIcon, LayoutDashboard, LogOut, Target, BookmarkCheck, Trophy, Eye,
   LayoutList, PenLine, Users, Search,
@@ -444,8 +444,8 @@ const PRIMARY_NAV: NavItem[] = [
 
 // More dropdown: Offers | Drafts | Shared | Playbooks | Pro Plan | Admin
 const SECONDARY_NAV: NavItem[] = [
+  { to: '/offer-strategy', label: 'Offer Strategy', icon: <Crosshair className="h-4 w-4" /> },
   { to: '/seller-net-sheet', label: 'Seller Net Sheet', icon: <DollarSign className="h-4 w-4" /> },
-  { to: '/net-sheet', label: 'Net Sheet', icon: <DollarSign className="h-4 w-4" /> },
   { to: '/offer-tracker', label: 'Offer Tracker', icon: <Trophy className="h-4 w-4" /> },
   { to: '/drafts', label: 'Draft Analyses', icon: <FolderOpen className="h-4 w-4" /> },
   { to: '/shared-reports', label: 'Shared Reports', icon: <Send className="h-4 w-4" /> },
