@@ -411,3 +411,25 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 /* Auto-scroll */
 [data-radix-scroll-area-viewport], [data-radix-select-viewport], [data-radix-dropdown-menu-content], .scroll-area-viewport { scroll-behavior: smooth; }
 [data-vaul-drawer-content], [data-radix-dialog-content] { scroll-behavior: smooth; }
+
+/* ============================================
+   NUCLEAR DARK THEME — cannot be overridden
+   ============================================ */
+html, body, #root, main, [data-radix-portal], .min-h-screen {
+  background-color: #0F172A !important;
+  color: #F1F5F9 !important;
+}
+
+.bg-background,
+[class*="bg-white"],
+[class*="bg-gray-50"],
+[class*="bg-slate-50"] {
+  background-color: #1E293B !important;
+}
+
+.card,
+[class*="card"],
+[data-radix-collection-item] {
+  background-color: #1E293B !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
