@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { BarChart2, Plus, Trash2, Copy, Loader2 } from 'lucide-react';
+import { BarChart2, Plus, Trash2, Copy, Loader2, Download } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import jsPDF from 'jspdf';
 import { formatPriceDisplay, parsePriceValue, stripCurrencyChars } from '@/lib/currencyFormat';
 
 interface Comp {
@@ -136,6 +137,195 @@ Suggested range: $${summary?.low.toLocaleString() ?? '?'} – $${summary?.high.t
     } finally {
       setLoading(false);
     }
+  };
+
+  const generatePdf = () => {
+    const pdf = new jsPDF('p', 'mm', 'letter');
+    const pw = 215.9;
+    const ph = 279.4;
+    const m = 16;
+    const cw = pw - m * 2;
+    let y = m;
+
+    const navy = [15, 23, 42] as const;
+    const gold = [212, 168, 83] as const;
+    const darkCard = [30, 41, 59] as const;
+    const white = [241, 245, 249] as const;
+    const muted = [148, 163, 184] as const;
+
+    // Header bar
+    pdf.setFillColor(...navy);
+    pdf.rect(0, 0, pw, 28, 'F');
+    pdf.setFillColor(...gold);
+    pdf.rect(0, 28, pw, 1.5, 'F');
+
+    pdf.setFontSize(18);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...white);
+    pdf.text('Comparative Market Analysis', m, 13);
+
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(...muted);
+    pdf.text('Jason Craig | Chinatti Realty', m, 19);
+    pdf.text(`Generated ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, m, 24);
+
+    pdf.setFontSize(8);
+    pdf.setTextColor(...gold);
+    pdf.text('Market Compass', pw - m, 19, { align: 'right' });
+
+    y = 36;
+
+    // Subject Property section
+    pdf.setFillColor(...darkCard);
+    pdf.roundedRect(m, y, cw, 32, 2, 2, 'F');
+
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...gold);
+    pdf.text('SUBJECT PROPERTY', m + 5, y + 7);
+
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(...white);
+    const subAddr = address || 'Not specified';
+    pdf.text(subAddr, m + 5, y + 14);
+
+    pdf.setTextColor(...muted);
+    pdf.setFontSize(8);
+    pdf.text(`${beds} Bed / ${baths} Bath  •  ${parseInt(sqft).toLocaleString() || '—'} sqft  •  List Price: $${parsePriceValue(listPrice).toLocaleString()}  •  $${subjectPpsf.toFixed(0)}/sqft`, m + 5, y + 21);
+
+    y += 38;
+
+    // Comparable Sales table
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...gold);
+    pdf.text('COMPARABLE SALES', m, y);
+    y += 6;
+
+    // Table header
+    const cols = [m, m + 55, m + 85, m + 105, m + 130, m + 155];
+    const colLabels = ['Address', 'Sale Price', 'SqFt', '$/SqFt', 'DOM', 'Sale Date'];
+    pdf.setFillColor(...navy);
+    pdf.rect(m, y, cw, 7, 'F');
+    pdf.setFontSize(7);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...muted);
+    colLabels.forEach((l, i) => pdf.text(l, cols[i] + 2, y + 5));
+    y += 7;
+
+    // Table rows
+    const validComps = comps.filter((_, i) => compStats[i].valid);
+    validComps.forEach((c, i) => {
+      const s = compStats[comps.indexOf(c)];
+      const rowBg = i % 2 === 0 ? darkCard : [24, 34, 50] as const;
+      pdf.setFillColor(...(rowBg as readonly [number, number, number]));
+      pdf.rect(m, y, cw, 7, 'F');
+
+      pdf.setFontSize(7.5);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(...white);
+      pdf.text((c.address || `Comp ${i + 1}`).substring(0, 30), cols[0] + 2, y + 5);
+      pdf.text(`$${parsePriceValue(c.salePrice).toLocaleString()}`, cols[1] + 2, y + 5);
+      pdf.text(c.sqft || '—', cols[2] + 2, y + 5);
+      pdf.text(`$${s.ppsf.toFixed(0)}`, cols[3] + 2, y + 5);
+      pdf.text(c.dom || '—', cols[4] + 2, y + 5);
+      pdf.text(c.saleDate || '—', cols[5] + 2, y + 5);
+      y += 7;
+    });
+
+    if (validComps.length === 0) {
+      pdf.setFontSize(8);
+      pdf.setTextColor(...muted);
+      pdf.text('No comparable sales entered.', m + 5, y + 5);
+      y += 10;
+    }
+
+    y += 6;
+
+    // Pricing Recommendation
+    if (summary) {
+      pdf.setFillColor(...darkCard);
+      pdf.roundedRect(m, y, cw, 28, 2, 2, 'F');
+
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...gold);
+      pdf.text('PRICING RECOMMENDATION', m + 5, y + 7);
+
+      pdf.setFontSize(9);
+      pdf.setTextColor(...white);
+      pdf.text(`Suggested Range: $${summary.low.toLocaleString()} – $${summary.high.toLocaleString()}`, m + 5, y + 14);
+
+      pdf.setFontSize(8);
+      pdf.setTextColor(...muted);
+      pdf.text(`Average Comp $/sqft: $${summary.avgPpsf.toFixed(0)}  •  Subject vs Avg: ${summary.diffPct > 0 ? '+' : ''}${summary.diffPct.toFixed(1)}%`, m + 5, y + 20);
+
+      // Simple bar visualization
+      const barX = m + 5;
+      const barW = cw - 10;
+      const barY2 = y + 24;
+      pdf.setFillColor(50, 60, 80);
+      pdf.rect(barX, barY2, barW, 2, 'F');
+
+      // Subject position on bar (clamp 0.1 to 0.9)
+      const pos = Math.max(0.1, Math.min(0.9, 0.5 + (summary.diffPct / 20)));
+      pdf.setFillColor(...gold);
+      pdf.circle(barX + barW * pos, barY2 + 1, 2, 'F');
+
+      // Labels
+      pdf.setFontSize(6);
+      pdf.setTextColor(...muted);
+      pdf.text('Low', barX, barY2 - 1);
+      pdf.text('High', barX + barW - 6, barY2 - 1);
+
+      y += 34;
+    }
+
+    // AI Narrative
+    if (narrative) {
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...gold);
+      pdf.text('PRICING NARRATIVE', m, y);
+      y += 5;
+
+      pdf.setFillColor(...darkCard);
+      // Gold left border
+      pdf.setFillColor(...gold);
+      pdf.rect(m, y, 1.5, 1, 'F'); // placeholder height, will adjust
+
+      pdf.setFillColor(...darkCard);
+      const narrativeLines = pdf.splitTextToSize(narrative, cw - 12);
+      const narrativeH = narrativeLines.length * 4 + 6;
+      pdf.roundedRect(m, y, cw, narrativeH, 2, 2, 'F');
+      pdf.setFillColor(...gold);
+      pdf.rect(m, y, 1.5, narrativeH, 'F');
+
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(...white);
+      pdf.text(narrativeLines, m + 6, y + 5);
+      y += narrativeH + 6;
+    }
+
+    // Footer
+    const footY = ph - 14;
+    pdf.setDrawColor(...gold);
+    pdf.line(m, footY, pw - m, footY);
+
+    pdf.setFontSize(7);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(...muted);
+    pdf.text('Report generated by Market Compass | Chinatti Realty', m, footY + 5);
+    pdf.setFontSize(6);
+    pdf.text('This CMA is for informational purposes only and does not constitute an appraisal.', m, footY + 9);
+
+    const date = new Date().toISOString().split('T')[0];
+    const safeName = (address || 'CMA').replace(/[^a-zA-Z0-9]/g, '-').substring(0, 30);
+    pdf.save(`CMA-${safeName}-${date}.pdf`);
+    toast.success('PDF downloaded!');
   };
 
   const fmt = (n: number) => '$' + n.toLocaleString();
@@ -284,6 +474,15 @@ Suggested range: $${summary?.low.toLocaleString() ?? '?'} – $${summary?.high.t
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* PDF Download Button */}
+      <Button
+        className="w-full h-12 text-base font-semibold"
+        style={{ background: '#D4A853', color: '#0F172A' }}
+        onClick={generatePdf}
+      >
+        <Download className="h-5 w-5 mr-2" /> Download Comp Report PDF
+      </Button>
 
       <p className="text-xs text-muted-foreground text-center pb-8">
         For comparative purposes only. Verify all data with MLS records before presenting to clients.
