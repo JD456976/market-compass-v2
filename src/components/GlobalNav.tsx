@@ -444,6 +444,7 @@ const PRIMARY_NAV: NavItem[] = [
 
 // More dropdown: Offers | Drafts | Shared | Playbooks | Pro Plan | Admin
 const SECONDARY_NAV: NavItem[] = [
+  { to: '/seller-net-sheet', label: 'Seller Net Sheet', icon: <DollarSign className="h-4 w-4" /> },
   { to: '/net-sheet', label: 'Net Sheet', icon: <DollarSign className="h-4 w-4" /> },
   { to: '/offer-tracker', label: 'Offer Tracker', icon: <Trophy className="h-4 w-4" /> },
   { to: '/drafts', label: 'Draft Analyses', icon: <FolderOpen className="h-4 w-4" /> },

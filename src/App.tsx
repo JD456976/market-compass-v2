@@ -63,6 +63,7 @@ import TouringReport from "./pages/TouringReport";
 import MarketNarrative from "./pages/MarketNarrative";
 import BuyerMatch from "./pages/BuyerMatch";
 import NetSheet from "./pages/NetSheet";
+import SellerNetSheet from "./pages/SellerNetSheet";
 
 const queryClient = new QueryClient();
 
@@ -130,6 +131,7 @@ function AppRoutes() {
           <Route path="/documents/upload" element={<RequireAuth><UploadDocument /></RequireAuth>} />
           <Route path="/documents/:documentId/review" element={<RequireAuth><ReviewDocument /></RequireAuth>} />
           <Route path="/net-sheet" element={<RequireAuth><NetSheet /></RequireAuth>} />
+          <Route path="/seller-net-sheet" element={<RequireAuth><SellerNetSheet /></RequireAuth>} />
           <Route path="/settings" element={<RequireAuth><AccountSettings /></RequireAuth>} />
 
           <Route path="*" element={<NotFound />} />
