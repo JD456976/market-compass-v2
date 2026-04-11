@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { BarChart2, Plus, Trash2, Copy, Loader2 } from 'lucide-react';
+import { BarChart2, Plus, Trash2, Copy, Loader2, Download } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import jsPDF from 'jspdf';
 import { formatPriceDisplay, parsePriceValue, stripCurrencyChars } from '@/lib/currencyFormat';
 
 interface Comp {
