@@ -171,21 +171,23 @@ const Index = () => {
       <AgentOnboarding />
       <AllReportsDrawer open={allReportsOpen} onClose={() => setAllReportsOpen(false)} />
 
-      {/* Compact Hero */}
-      <div className="bg-background border-b border-border">
-        <div className="container mx-auto px-4 py-10 md:py-14">
+      {/* Compact Hero — 140px max, no waves */}
+      <div className="border-b border-border" style={{ background: 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)' }}>
+        <div className="container mx-auto px-4 py-6 md:py-8" style={{ maxHeight: '140px' }}>
           <motion.div 
-            className="flex items-center gap-4 max-w-3xl mx-auto"
+            className="flex items-center gap-3 max-w-3xl mx-auto"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <AppLogo size="lg" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(212,168,83,0.15)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A853" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-sans font-bold tracking-tight text-foreground">
-                Market <span className="text-gradient">Compass</span>
+              <h1 className="text-[22px] font-sans font-semibold" style={{ color: '#F1F5F9' }}>
+                Market Compass
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-[13px]" style={{ color: '#94A3B8' }}>
                 Agent decision-support for Seller &amp; Buyer scenarios
               </p>
             </div>
@@ -194,7 +196,24 @@ const Index = () => {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-8" style={{ backgroundColor: '#0F172A' }}>
+        {/* Neighborhood Pulse Card */}
+        <motion.div
+          className="max-w-4xl mx-auto mb-6"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+        >
+          <div className="rounded-xl p-5 flex items-center gap-5" style={{ backgroundColor: '#1E293B', borderLeft: '4px solid #D4A853', border: '1px solid rgba(255,255,255,0.08)', borderLeftColor: '#D4A853', borderLeftWidth: '4px' }}>
+            <div className="text-center shrink-0">
+              <div className="text-4xl font-bold font-mono tabular-nums" style={{ color: '#D4A853' }}>72</div>
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold" style={{ color: '#F1F5F9' }}>Market Activity Score</p>
+              <p className="text-xs mt-0.5" style={{ color: '#94A3B8' }}>Based on current inventory, DOM, and pricing trends</p>
+            </div>
+          </div>
+        </motion.div>
         <motion.div 
           className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-16"
           variants={staggerContainer}
