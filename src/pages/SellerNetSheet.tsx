@@ -96,6 +96,8 @@ const SellerNetSheet = () => {
   const [commissionPct, setCommissionPct] = useState(5.0);
   const [closingPct, setClosingPct] = useState(2.0);
   const [copied, setCopied] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [address, setAddress] = useState('');
 
   const scenarios: Scenario[] = useMemo(() => {
     return [
