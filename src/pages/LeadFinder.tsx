@@ -26,6 +26,7 @@ import { toast } from '@/hooks/use-toast';
 import { CrmIntegrationHub } from '@/components/CrmIntegrationHub';
 import { ProspectingPlaybook } from '@/components/ProspectingPlaybook';
 import { LeadFinderOnboarding, LeadFinderOnboardingTrigger } from '@/components/LeadFinderOnboarding';
+import { BuyerReadinessScore } from '@/components/BuyerReadinessScore';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1234,10 +1235,19 @@ Use your knowledge of this specific ZIP's local housing market, economy, and rec
                   />
                 </section>
 
-                {/* CSV */}
+                {/* Buyer Readiness Score */}
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">8</div>
+                    <h2 className="font-sans text-xl font-semibold">Buyer Readiness Score</h2>
+                  </div>
+                  <BuyerReadinessScore leadZip={result.zip} />
+                </section>
+
+                {/* CSV */}
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">9</div>
                     <h2 className="font-sans text-xl font-semibold">Score Your Lead List</h2>
                   </div>
                   <CsvUpload currentResult={result} />
