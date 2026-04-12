@@ -1,9 +1,10 @@
 import { useState, useMemo, useCallback } from 'react';
-import { DollarSign, Copy, Check } from 'lucide-react';
+import { DollarSign, Copy, Check, Share2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartTooltip } from 'recharts';
 
 const fmt = (n: number) =>
   n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -95,6 +96,8 @@ const SellerNetSheet = () => {
   const [commissionPct, setCommissionPct] = useState(5.0);
   const [closingPct, setClosingPct] = useState(2.0);
   const [copied, setCopied] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [address, setAddress] = useState('');
 
   const scenarios: Scenario[] = useMemo(() => {
     return [
@@ -153,11 +156,24 @@ const SellerNetSheet = () => {
         {/* Input Card */}
         <Card className="mb-6" style={{ backgroundColor: '#1E293B', borderColor: 'rgba(255,255,255,0.08)' }}>
           <CardContent className="p-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <DollarInput label="List Price" value={listPrice} onChange={setListPrice} />
-              <DollarInput label="Mortgage Payoff Balance" value={mortgagePayoff} onChange={setMortgagePayoff} />
-              <PctSlider label="Total Commission %" value={commissionPct} onChange={setCommissionPct} min={1} max={8} step={0.1} />
-              <PctSlider label="Estimated Closing Costs %" value={closingPct} onChange={setClosingPct} min={0.5} max={5} step={0.1} sub="(title, escrow, transfer taxes, etc.)" />
+            <div className="space-y-5">
+              <div>
+                <label className="text-xs font-medium" style={{ color: '#94A3B8' }}>Property Address</label>
+                <input
+                  type="text"
+                  placeholder="123 Main St, City, State"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full rounded-lg px-3 py-2.5 text-sm mt-1.5 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  style={{ backgroundColor: '#0F172A', border: '1px solid rgba(255,255,255,0.1)', color: '#F1F5F9' }}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <DollarInput label="List Price" value={listPrice} onChange={setListPrice} />
+                <DollarInput label="Mortgage Payoff Balance" value={mortgagePayoff} onChange={setMortgagePayoff} />
+                <PctSlider label="Total Commission %" value={commissionPct} onChange={setCommissionPct} min={1} max={8} step={0.1} />
+                <PctSlider label="Estimated Closing Costs %" value={closingPct} onChange={setClosingPct} min={0.5} max={5} step={0.1} sub="(title, escrow, transfer taxes, etc.)" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -192,13 +208,11 @@ const SellerNetSheet = () => {
                       ))}
                     </tr>
                   ))}
-                  {/* Divider */}
                   <tr>
                     <td colSpan={4} className="py-0">
                       <div style={{ height: '1px', background: 'rgba(255,255,255,0.12)' }} />
                     </td>
                   </tr>
-                  {/* Net Proceeds */}
                   <tr>
                     <td className="py-3 px-4 text-sm font-bold" style={{ color: '#F1F5F9' }}>NET PROCEEDS</td>
                     {scenarios.map((s) => (
@@ -213,21 +227,120 @@ const SellerNetSheet = () => {
           </CardContent>
         </Card>
 
-        {/* Disclaimer & Copy */}
-        <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <p className="text-[11px] leading-relaxed max-w-lg" style={{ color: '#64748B' }}>
+        {/* Pie Chart Breakdown */}
+        {(() => {
+          const s = scenarios[0]; // Full Ask scenario for pie
+          const pieData = [
+            { name: 'Net to Seller', value: Math.max(s.net, 0), color: '#D4A853' },
+            { name: 'Commission', value: s.commission, color: '#334155' },
+            { name: 'Closing Costs', value: s.closing, color: '#475569' },
+            { name: 'Mortgage Payoff', value: s.mortgage, color: '#1E293B' },
+          ].filter(d => d.value > 0);
+
+          return (
+            <Card className="mt-6" style={{ backgroundColor: '#1E293B', borderColor: 'rgba(255,255,255,0.08)' }}>
+              <CardContent className="p-5">
+                <p className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: '#94A3B8' }}>
+                  Where the Money Goes (Full Ask)
+                </p>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="w-48 h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          dataKey="value"
+                          cx="50%" cy="50%"
+                          innerRadius={45}
+                          outerRadius={75}
+                          paddingAngle={2}
+                          stroke="none"
+                        >
+                          {pieData.map((entry, i) => (
+                            <Cell key={i} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <RechartTooltip
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null;
+                            const d = payload[0];
+                            return (
+                              <div className="rounded-md px-2.5 py-1.5 text-xs shadow-lg" style={{ backgroundColor: '#0F172A', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <span style={{ color: '#94A3B8' }}>{d.name}: </span>
+                                <span className="font-mono font-semibold" style={{ color: '#F1F5F9' }}>{fmt(d.value as number)}</span>
+                              </div>
+                            );
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    {pieData.map((d, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: d.color }} />
+                          <span className="text-sm" style={{ color: '#CBD5E1' }}>{d.name}</span>
+                        </div>
+                        <span className="font-mono text-sm" style={{ color: '#F1F5F9' }}>{fmt(d.value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
+
+        {/* Disclaimer & Buttons */}
+        <div className="mt-4 space-y-3">
+          <p className="text-[11px] leading-relaxed" style={{ color: '#64748B' }}>
             This is an estimate only. Actual closing costs vary. Consult your title company for a formal net sheet.
           </p>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={copyToClipboard}
-            className="shrink-0"
-            style={{ borderColor: 'rgba(255,255,255,0.12)', color: '#F1F5F9' }}
-          >
-            {copied ? <Check className="h-4 w-4 mr-1.5" /> : <Copy className="h-4 w-4 mr-1.5" />}
-            {copied ? 'Copied!' : 'Copy Summary'}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={copyToClipboard}
+              className="shrink-0"
+              style={{ borderColor: 'rgba(255,255,255,0.12)', color: '#F1F5F9' }}
+            >
+              {copied ? <Check className="h-4 w-4 mr-1.5" /> : <Copy className="h-4 w-4 mr-1.5" />}
+              {copied ? 'Copied!' : 'Copy Summary'}
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                const addrLine = address ? ` — ${address}` : '';
+                const s0 = scenarios[0];
+                const s1 = scenarios[1];
+                const s2 = scenarios[2];
+                const lines = [
+                  `📊 Seller Net Sheet${addrLine}`,
+                  `List Price: ${fmt(listPrice)}`,
+                  `Est. Agent Commission: ${fmt(s0.commission)}`,
+                  `Closing Costs: ${fmt(s0.closing)}`,
+                  `Mortgage Payoff: ${fmt(mortgagePayoff)}`,
+                  '---',
+                  'Net Proceeds:',
+                  `✅ Full Ask: ${fmt(s0.net)}`,
+                  `📊 Likely (97%): ${fmt(s1.net)}`,
+                  `⚠️ Conservative (93%): ${fmt(s2.net)}`,
+                  '',
+                  'Generated by Market Compass | Chinatti Realty',
+                ];
+                navigator.clipboard.writeText(lines.join('\n'));
+                setShareCopied(true);
+                toast({ title: 'Copied!', description: 'Formatted summary ready to share.' });
+                setTimeout(() => setShareCopied(false), 2000);
+              }}
+              style={{ backgroundColor: '#D4A853', color: '#0F172A' }}
+              className="shrink-0 hover:opacity-90"
+            >
+              {shareCopied ? <Check className="h-4 w-4 mr-1.5" /> : <Share2 className="h-4 w-4 mr-1.5" />}
+              {shareCopied ? 'Copied!' : 'Save & Share'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
