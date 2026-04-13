@@ -5,56 +5,48 @@
 @tailwind components;
 @tailwind utilities;
 
+/* MARKET COMPASS THEME — DO NOT CHANGE — dark navy #0F172A background, gold #D4A853 accents */
 @layer base {
   :root {
-    /* ── Market Compass dark palette ── */
-    --background: 222 47% 5%;
-    --foreground: 210 40% 92%;
-
-    --card: 220 40% 13%;
-    --card-foreground: 210 40% 92%;
-
-    --popover: 217 33% 17%;
-    --popover-foreground: 214 32% 91%;
-
-    --primary: 240 65% 60%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 217 30% 21%;
-    --secondary-foreground: 214 25% 82%;
-
-    --muted: 220 30% 18%;
-    --muted-foreground: 215 20% 60%;
-
-    --accent: 35 85% 55%;
-    --accent-foreground: 222 47% 11%;
-
+    --background: 215 28% 9%;
+    --foreground: 210 40% 96%;
+    --card: 215 25% 13%;
+    --card-foreground: 210 40% 96%;
+    --popover: 215 25% 13%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 43 65% 58%;
+    --primary-foreground: 215 28% 9%;
+    --secondary: 215 20% 18%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 215 20% 18%;
+    --muted-foreground: 215 15% 55%;
+    --accent: 43 65% 58%;
+    --accent-foreground: 215 28% 9%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 100% / 0.08;
-    --input: 0 0% 100% / 0.08;
-    --ring: 240 65% 60%;
+    --border: 215 20% 20%;
+    --input: 215 20% 18%;
+    --ring: 43 65% 58%;
 
     --radius: 0.75rem;
 
     /* Sidebar */
     --sidebar-background: 222 47% 9%;
     --sidebar-foreground: 214 32% 91%;
-    --sidebar-primary: 240 65% 60%;
+    --sidebar-primary: 43 65% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 30% 19%;
     --sidebar-accent-foreground: 214 25% 82%;
-    --sidebar-border: 0 0% 100% / 0.08;
-    --sidebar-ring: 240 65% 60%;
+    --sidebar-border: 215 20% 20%;
+    --sidebar-ring: 43 65% 58%;
 
     /* Gradients & shadows */
     --gradient-hero: linear-gradient(145deg, hsl(222 47% 5%) 0%, hsl(220 40% 13%) 50%, hsl(222 47% 7%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(240 65% 60%) 0%, hsl(240 65% 50%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(43 65% 58%) 0%, hsl(43 65% 50%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(220 40% 15%) 0%, hsl(220 40% 13%) 100%);
     --shadow-elegant: 0 4px 24px -6px hsl(0 0% 0% / 0.6);
     --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.35), 0 4px 16px hsl(0 0% 0% / 0.3);
-    --shadow-card-hover: 0 8px 32px hsl(0 0% 0% / 0.45), 0 0 0 1px hsl(240 65% 60% / 0.1);
+    --shadow-card-hover: 0 8px 32px hsl(0 0% 0% / 0.45), 0 0 0 1px hsl(43 65% 58% / 0.1);
 
     color-scheme: dark;
   }
