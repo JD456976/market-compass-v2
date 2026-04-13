@@ -717,21 +717,5 @@ function DesktopNav({ items }: { items: NavItem[] }) {
   );
 }
 
-// ─── Spacer ───────────────────────────────────────────────────────────────────
-
-export function MobileNavSpacer() {
-  const isMobile = useIsMobile();
-  const location = useLocation();
-
-  if (location.pathname.startsWith('/share/') || location.pathname === '/share') return null;
-  if (!isMobile) return null;
-
-  return (
-    <div
-      className="h-16"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      aria-hidden="true"
-    />
-  );
-}
+// ─── Spacer (deprecated - padding now handled in main layout) ─────────────────
 
