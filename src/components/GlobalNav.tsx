@@ -120,8 +120,9 @@ export function GlobalNav() {
     return isMobile ? <ClientMobileNav /> : <ClientDesktopNav />;
   }
 
+  // Use new simplified 5-tab bottom nav for mobile
   if (isMobile) {
-    return <MobileNav isAdmin={isAdmin} />;
+    return <MobileBottomNav />;
   }
 
   const visibleItems: NavItem[] = isAdmin
