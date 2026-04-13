@@ -120,8 +120,9 @@ export function GlobalNav() {
     return isMobile ? <ClientMobileNav /> : <ClientDesktopNav />;
   }
 
+  // Use new simplified 5-tab bottom nav for mobile
   if (isMobile) {
-    return <MobileNav isAdmin={isAdmin} />;
+    return <MobileBottomNav />;
   }
 
   const visibleItems: NavItem[] = isAdmin
@@ -281,6 +282,65 @@ function DrawerSection({ links, isAdmin, pathname, onAction }: { links: DrawerLi
   );
 }
 
+function MobileBottomNav() {
+  const location = useLocation();
+  const [reportsOpen, setReportsOpen] = useState(false);
+
+  const tabs = [
+    { to: '/', label: 'Home', icon: Home },
+    { to: '/lead-finder', label: 'Lead Finder', icon: Users },
+    { to: '/listing-navigator', label: 'Listing Nav', icon: Search },
+    { to: '/market-intelligence', label: 'Market Intel', icon: TrendingUp },
+    { to: '/shared-reports', label: 'Reports', icon: FileText },
+  ] as const;
+
+  return (
+    <>
+      {/* Reports Drawer */}
+      <AllReportsDrawer open={reportsOpen} onClose={() => setReportsOpen(false)} />
+
+      {/* Fixed Bottom Navigation - 5 tabs */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
+        style={{
+          background: '#0F172A',
+          borderTop: '1px solid rgba(212,168,83,0.2)',
+          height: '64px',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+        aria-label="Mobile navigation"
+      >
+        <div className="flex items-center justify-around h-full">
+          {tabs.map((tab) => {
+            const isActive = location.pathname === tab.to || 
+              (tab.to !== '/' && location.pathname.startsWith(tab.to));
+            const Icon = tab.icon;
+            return (
+              <Link
+                key={tab.to}
+                to={tab.to}
+                className="flex flex-col items-center justify-center gap-1 flex-1 py-2 min-h-[44px] transition-colors"
+              >
+                <Icon 
+                  className="h-5 w-5" 
+                  style={{ color: isActive ? '#D4A853' : '#64748B' }}
+                />
+                <span 
+                  className="text-[10px] font-medium leading-none"
+                  style={{ color: isActive ? '#D4A853' : '#64748B' }}
+                >
+                  {tab.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </>
+  );
+}
+
+// Legacy MobileNav - replaced by MobileBottomNav
 function MobileNav({ isAdmin }: { isAdmin: boolean }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
@@ -657,21 +717,5 @@ function DesktopNav({ items }: { items: NavItem[] }) {
   );
 }
 
-// ─── Spacer ───────────────────────────────────────────────────────────────────
-
-export function MobileNavSpacer() {
-  const isMobile = useIsMobile();
-  const location = useLocation();
-
-  if (location.pathname.startsWith('/share/') || location.pathname === '/share') return null;
-  if (!isMobile) return null;
-
-  return (
-    <div
-      className="h-16"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      aria-hidden="true"
-    />
-  );
-}
+// ─── Spacer (deprecated - padding now handled in main layout) ─────────────────
 

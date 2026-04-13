@@ -9,7 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { EntitlementProvider } from "@/contexts/EntitlementContext";
 import { BetaAccessGate } from "@/components/BetaAccessGate";
 import { RequireAuth } from "@/components/RequireAuth";
-import { GlobalNav, MobileNavSpacer } from "@/components/GlobalNav";
+import { GlobalNav } from "@/components/GlobalNav";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { PageTransition } from "@/components/PageTransition";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -159,10 +159,9 @@ function AppLayout() {
       <ScrollToTop />
       <GlobalNav />
       <TrialBanner />
-      <main className="flex-1">
+      <main className="flex-1 pb-16 md:pb-0">
         <AppRoutes />
       </main>
-      <MobileNavSpacer />
     </>
   );
 }
