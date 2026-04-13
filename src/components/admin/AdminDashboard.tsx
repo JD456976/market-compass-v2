@@ -26,7 +26,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDeviceId, setOwnerDevice, clearBetaAccessSession, clearOwnerDevice, isOwnerDevice as checkIsOwnerDevice } from '@/lib/betaAccess';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { MobileNavSpacer } from '@/components/GlobalNav';
 import { AdminUsersPanel } from './AdminUsersPanel';
 import { AdminReportsPanel } from './AdminReportsPanel';
 import { AdminAnalyticsPanel } from './AdminAnalyticsPanel';
@@ -409,8 +408,8 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
           </TabsContent>
         </Tabs>
         
-        {/* Mobile nav spacer */}
-        <MobileNavSpacer />
+        {/* Mobile bottom nav spacer */}
+        <div className="h-16 md:hidden" aria-hidden="true" />
       </main>
 
       {/* Logout Dialog */}
