@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Loader2, Copy, MessageSquare } from 'lucide-react';
+import { FileText, Loader2, Copy, MessageSquare, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -116,18 +116,21 @@ export default function ClientReport() {
 
       {/* Section 3 — Output */}
       {report && (
-        <Card className="border-primary/30">
+        <Card className="border-primary/30 client-report-printable">
           <CardContent className="pt-6 space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-foreground">Market Briefing for {clientName}</h2>
+              <h2 className="text-lg font-bold text-foreground print-title">Market Briefing for {clientName}</h2>
               <p className="text-xs text-muted-foreground">{today}</p>
             </div>
             <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap text-foreground/90 leading-relaxed">
               {report}
             </div>
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-2 print-hide">
               <Button onClick={copyReport} className="flex-1">
                 <Copy className="h-4 w-4 mr-2" /> Copy Report
+              </Button>
+              <Button onClick={() => window.print()} variant="outline" className="flex-1">
+                <Download className="h-4 w-4 mr-2" /> Download PDF
               </Button>
               <Button onClick={shareViaText} variant="outline" className="flex-1">
                 <MessageSquare className="h-4 w-4 mr-2" /> Share via Text
