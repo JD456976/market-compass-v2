@@ -67,6 +67,7 @@ import SellerNetSheet from "./pages/SellerNetSheet";
 import OfferStrategy from "./pages/OfferStrategy";
 import QuickComps from "./pages/QuickComps";
 import MortgageCalculator from "./pages/MortgageCalculator";
+import ClientReport from "./pages/ClientReport";
 
 const queryClient = new QueryClient();
 
@@ -138,6 +139,7 @@ function AppRoutes() {
           <Route path="/offer-strategy" element={<RequireAuth><OfferStrategy /></RequireAuth>} />
           <Route path="/quick-comps" element={<RequireAuth><QuickComps /></RequireAuth>} />
           <Route path="/mortgage-calculator" element={<RequireAuth><MortgageCalculator /></RequireAuth>} />
+          <Route path="/client-report" element={<RequireAuth><ClientReport /></RequireAuth>} />
           <Route path="/settings" element={<RequireAuth><AccountSettings /></RequireAuth>} />
 
           <Route path="*" element={<NotFound />} />
