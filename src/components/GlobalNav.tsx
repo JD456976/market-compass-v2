@@ -508,6 +508,7 @@ const SECONDARY_NAV: NavItem[] = [
   { to: '/quick-comps', label: 'Quick Comps', icon: <BarChart2 className="h-4 w-4" /> },
   { to: '/mortgage-calculator', label: 'Mortgage Calc', icon: <Calculator className="h-4 w-4" /> },
   { to: '/client-report', label: 'Client Report', icon: <FileText className="h-4 w-4" /> },
+  { to: '/quick-cma', label: 'Quick CMA', icon: <BarChart2 className="h-4 w-4" /> },
   { to: '/offer-strategy', label: 'Offer Strategy', icon: <Crosshair className="h-4 w-4" /> },
   { to: '/seller-net-sheet', label: 'Seller Net Sheet', icon: <DollarSign className="h-4 w-4" /> },
   { to: '/offer-tracker', label: 'Offer Tracker', icon: <Trophy className="h-4 w-4" /> },
