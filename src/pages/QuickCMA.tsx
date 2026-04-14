@@ -31,7 +31,6 @@ export default function QuickCMA() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': (window as any).__ANTHROPIC_KEY__ || '',
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },
@@ -126,19 +125,35 @@ export default function QuickCMA() {
 
       {/* Output */}
       {report && (
-        <Card className="border-border bg-card">
+        <Card className="border-primary/30 bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-foreground text-lg">CMA Results — {address}</CardTitle>
-            <p className="text-xs text-muted-foreground">{new Date().toLocaleDateString()}</p>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <CardTitle className="text-foreground text-lg">CMA Results</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">{address} · {beds}bd/{baths}ba · {sqft} sqft · {new Date().toLocaleDateString()}</p>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="prose prose-invert max-w-none text-foreground text-sm whitespace-pre-wrap leading-relaxed">
               {report}
             </div>
-            <Button onClick={copyReport} variant="outline" className="border-primary/40 text-primary hover:bg-primary/10">
-              {copied ? <><Check className="h-4 w-4 mr-2" /> Copied</> : <><Copy className="h-4 w-4 mr-2" /> Copy CMA</>}
-            </Button>
-            <p className="text-xs text-muted-foreground text-center pt-2">Powered by Market Compass</p>
+            <div className="flex gap-2 pt-1">
+              <Button onClick={copyReport} variant="outline" className="flex-1 border-primary/40 text-primary hover:bg-primary/10">
+                {copied ? <><Check className="h-4 w-4 mr-2" /> Copied</> : <><Copy className="h-4 w-4 mr-2" /> Copy CMA</>}
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 border-primary/40 text-primary hover:bg-primary/10"
+                onClick={() => {
+                  const summary = `CMA for ${address}\n${beds}bd/${baths}ba ${sqft}sqft\n\n${report}\n\n— via Market Compass`;
+                  window.open(`sms:?body=${encodeURIComponent(summary)}`);
+                }}
+              >
+                Share via Text
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">Powered by Market Compass</p>
           </CardContent>
         </Card>
       )}
