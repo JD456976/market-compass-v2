@@ -68,6 +68,7 @@ import OfferStrategy from "./pages/OfferStrategy";
 import QuickComps from "./pages/QuickComps";
 import MortgageCalculator from "./pages/MortgageCalculator";
 import ClientReport from "./pages/ClientReport";
+import QuickCMA from "./pages/QuickCMA";
 
 const queryClient = new QueryClient();
 
