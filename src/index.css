@@ -427,3 +427,41 @@ html, body, #root, main, [data-radix-portal], .min-h-screen {
   background-color: #1E293B !important;
   border-color: rgba(255,255,255,0.08) !important;
 }
+
+/* Client Report print styles */
+@media print {
+  body, html {
+    background: #fff !important;
+    color: #000 !important;
+    margin: 0;
+    padding: 0;
+  }
+  body * {
+    visibility: hidden !important;
+  }
+  .client-report-printable,
+  .client-report-printable * {
+    visibility: visible !important;
+    color: #000 !important;
+    border-color: #ccc !important;
+    background: #fff !important;
+  }
+  .client-report-printable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 40px;
+    box-shadow: none !important;
+  }
+  .client-report-printable .print-title {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+  .client-report-printable .print-hide {
+    display: none !important;
+  }
+  @page {
+    margin: 0.75in;
+  }
+}
