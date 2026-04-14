@@ -183,17 +183,23 @@ function MatchResultCard({
     setEmailLoading(true);
     try {
       const buyer = buyers.find(b => b.name === r.buyerName);
-      const { data, error } = await supabase.functions.invoke('buyer-match', {
-        body: {
-          action: 'draft-email',
-          listing,
-          buyer: buyer || { name: r.buyerName },
-          matchScore: r.score,
-          matchReason: r.reason,
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
         },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 400,
+          system: 'You are a real estate agent. Write a concise, warm email introducing a listing to a buyer. Keep it under 150 words.',
+          messages: [{ role: 'user', content: `Write an email to ${r.buyerName} about the listing at ${listing.address} listed at ${listing.price}. Match score: ${r.score}/100. Reason: ${r.reason}. Make it feel personal and highlight why this fits them.` }],
+        }),
       });
-      if (error) throw error;
-      setEmail(data?.email || 'Could not generate email.');
+      if (!resp.ok) throw new Error(`API ${resp.status}`);
+      const result = await resp.json();
+      setEmail(result?.content?.[0]?.text || 'Could not generate email.');
     } catch (err: any) {
       toast({ title: 'Email draft failed', description: err.message, variant: 'destructive' });
     } finally {
@@ -303,11 +309,43 @@ export default function BuyerMatch() {
     setLoading(true);
     setResults(null);
     try {
-      const { data, error } = await supabase.functions.invoke('buyer-match', {
-        body: { action: 'match', listing, buyers: validBuyers },
+      const buyerList = validBuyers.map(b =>
+        `- ${b.name}: budget ${b.budget || 'unspecified'}, wants ${b.bedrooms || '?'}bd/${b.bathrooms || '?'}ba, ${b.propertyType || 'any type'}, neighborhoods: ${b.neighborhoods || 'flexible'}, timeline: ${b.timeline || 'unknown'}, preapproved: ${b.preapproved ? 'yes' : 'no'}`
+      ).join('\n');
+      const prompt = `You are a real estate buyer-matching AI. Given this listing and buyers, score each buyer 0-100 for fit.
+
+LISTING:
+Address: ${listing.address}
+Price: ${listing.price}
+Beds: ${listing.bedrooms} | Baths: ${listing.bathrooms} | Sqft: ${listing.sqft}
+Type: ${listing.propertyType} | Neighborhood: ${listing.neighborhood}
+Features: ${listing.keyFeatures}
+
+BUYERS:
+${buyerList}
+
+Return ONLY valid JSON array, no markdown:
+[{"buyerName":"...","score":85,"isHotMatch":true,"reason":"2-3 sentence explanation","emailSubject":"suggested email subject"}]`;
+
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: 'You are a real estate buyer-matching assistant. Always respond with valid JSON only, no markdown or explanation.',
+          messages: [{ role: 'user', content: prompt }],
+        }),
       });
-      if (error) throw error;
-      const matches: MatchResult[] = data?.matches ?? data;
+      if (!resp.ok) throw new Error(`API ${resp.status}`);
+      const result = await resp.json();
+      const text = result?.content?.[0]?.text || '[]';
+      const clean = text.replace(/```json|```/g, '').trim();
+      const matches: MatchResult[] = JSON.parse(clean);
       if (!Array.isArray(matches)) throw new Error('Invalid response');
       setResults(matches.sort((a, b) => b.score - a.score));
     } catch (err: any) {

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Sparkles, Zap, Eye, Activity, Search } from 'lucide-react';
+import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Sparkles, Zap, Eye, Activity, Search, BarChart2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLogo } from '@/components/AppLogo';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
@@ -241,6 +241,42 @@ const Index = () => {
           {/* Pulse Score Widget */}
           <motion.div variants={fadeInUp} className="md:col-span-2">
             <PulseScoreWidget />
+          </motion.div>
+
+          {/* Quick CMA shortcut */}
+          <motion.div variants={fadeInUp}>
+            <Link to="/quick-cma" className="block h-full">
+              <Card className="h-full cursor-pointer group">
+                <CardContent className="flex items-center gap-4 py-4">
+                  <div className="p-2.5 rounded-full bg-primary/10">
+                    <BarChart2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-foreground">Quick CMA</p>
+                    <p className="text-xs text-muted-foreground">AI-powered comp analysis in seconds</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary transition-all" />
+                </CardContent>
+              </Card>
+            </Link>
+          </motion.div>
+
+          {/* Client Report shortcut */}
+          <motion.div variants={fadeInUp}>
+            <Link to="/client-report" className="block h-full">
+              <Card className="h-full cursor-pointer group">
+                <CardContent className="flex items-center gap-4 py-4">
+                  <div className="p-2.5 rounded-full bg-primary/10">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-foreground">Client Report</p>
+                    <p className="text-xs text-muted-foreground">Branded market briefing for any client</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary transition-all" />
+                </CardContent>
+              </Card>
+            </Link>
           </motion.div>
 
 

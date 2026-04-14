@@ -135,7 +135,8 @@ function AppRoutes() {
           <Route path="/documents" element={<RequireAuth><Documents /></RequireAuth>} />
           <Route path="/documents/upload" element={<RequireAuth><UploadDocument /></RequireAuth>} />
           <Route path="/documents/:documentId/review" element={<RequireAuth><ReviewDocument /></RequireAuth>} />
-          <Route path="/net-sheet" element={<RequireAuth><NetSheet /></RequireAuth>} />
+          <Route path="/seller-net-sheet" element={<RequireAuth><NetSheet /></RequireAuth>} />
+              <Route path="/net-sheet" element={<RequireAuth><NetSheet /></RequireAuth>} />
           <Route path="/seller-net-sheet" element={<RequireAuth><SellerNetSheet /></RequireAuth>} />
           <Route path="/offer-strategy" element={<RequireAuth><OfferStrategy /></RequireAuth>} />
           <Route path="/quick-comps" element={<RequireAuth><QuickComps /></RequireAuth>} />

@@ -69,25 +69,48 @@ export default function MarketNarrative() {
     setResult(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("market-narrative", {
-        body: {
-          neighborhood: neighborhood || undefined,
-          reportMonth: reportMonth || undefined,
-          medianPrice,
-          priceChange: PRICE_CHANGES.find(p => p.value === priceChange)?.label ?? priceChange,
-          dom,
-          listToSale: listToSale || "N/A",
-          activeListings: activeListings || "N/A",
-          monthsSupply: monthsSupply || "N/A",
-          marketCondition: MARKET_CONDITIONS.find(m => m.value === marketCondition)?.label ?? marketCondition,
-          audience,
-        },
-      });
+      const conditionLabel = MARKET_CONDITIONS.find(m => m.value === marketCondition)?.label ?? marketCondition;
+      const priceChangeLabel = PRICE_CHANGES.find(p => p.value === priceChange)?.label ?? priceChange;
+      const audienceLabel = audience === 'buyers' ? 'Buyers & Sellers' : audience === 'first-time' ? 'First-time Buyers' : audience === 'sellers' ? 'Potential Sellers' : 'Investors';
 
-      if (error) throw error;
-      if (!data?.email || !data?.social || !data?.summary) {
-        throw new Error("Incomplete response from AI");
-      }
+      const prompt = `Generate a real estate market narrative for ${neighborhood || 'the local market'} (${reportMonth || 'this month'}).
+
+Market data:
+- Median sale price: ${medianPrice} (${priceChangeLabel} vs last month)
+- Days on market: ${dom}
+- List-to-sale ratio: ${listToSale || 'N/A'}%
+- Active listings: ${activeListings || 'N/A'}
+- Months of supply: ${monthsSupply || 'N/A'}
+- Market condition: ${conditionLabel}
+- Audience: ${audienceLabel}
+
+Return ONLY valid JSON (no markdown):
+{
+  "email": "150-200 word professional email draft for agents to send clients",
+  "social": "80-100 word social media post with 3-4 relevant hashtags",
+  "summary": "3 key bullet points summarizing market conditions (use • bullets)"
+}`;
+
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: 'You are a real estate market analyst. Always respond with valid JSON only, no markdown fences.',
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+      if (!resp.ok) throw new Error(`API ${resp.status}`);
+      const result = await resp.json();
+      const text = result?.content?.[0]?.text || '{}';
+      const clean = text.replace(/```json|```/g, '').trim();
+      const data = JSON.parse(clean);
+      if (!data?.email || !data?.social || !data?.summary) throw new Error('Incomplete response from AI');
       setResult(data as NarrativeResult);
     } catch (e: any) {
       toast({ title: "Generation failed", description: e.message || "Try again.", variant: "destructive" });
