@@ -927,36 +927,39 @@ Use your knowledge of this specific ZIP's local housing market, economy, and rec
       setResult(fredData as any);
       setRetryCount(0);
 
+      // Cache to Supabase — wrapped silently so a paused backend never kills the result display
       if (user) {
-        // Upsert analysis cache and capture id
-        const { data: upsertedAnalysis } = await supabase
-          .from('lead_finder_analyses')
-          .upsert({
-            user_id: user.id,
-            zip_code: trimmedZip,
-            city_state: cityState.trim() || null,
-            fred_data: fredData as any,
-            opportunity_score: fredData.opportunityScore,
-            lead_type: fredData.leadType,
-            refreshed_at: new Date().toISOString(),
-          }, { onConflict: 'user_id,zip_code' })
-          .select('id')
-          .single();
-        if (upsertedAnalysis?.id) setCurrentAnalysisId(upsertedAnalysis.id);
+        try {
+          const { data: upsertedAnalysis } = await supabase
+            .from('lead_finder_analyses')
+            .upsert({
+              user_id: user.id,
+              zip_code: trimmedZip,
+              city_state: cityState.trim() || null,
+              fred_data: fredData as any,
+              opportunity_score: fredData.opportunityScore,
+              lead_type: fredData.leadType,
+              refreshed_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,zip_code' })
+            .select('id')
+            .single();
+          if (upsertedAnalysis?.id) setCurrentAnalysisId(upsertedAnalysis.id);
 
-        // Append to score history
-        await supabase
-          .from('lead_finder_score_history')
-          .insert({
-            user_id: user.id,
-            zip_code: trimmedZip,
-            city_state: cityState.trim() || null,
-            opportunity_score: fredData.opportunityScore,
-            lead_type: fredData.leadType,
-          });
+          await supabase
+            .from('lead_finder_score_history')
+            .insert({
+              user_id: user.id,
+              zip_code: trimmedZip,
+              city_state: cityState.trim() || null,
+              opportunity_score: fredData.opportunityScore,
+              lead_type: fredData.leadType,
+            });
 
-        queryClient.invalidateQueries({ queryKey: ['lead-finder-markets', user?.id] });
-        queryClient.invalidateQueries({ queryKey: ['lead-finder-score-history', user?.id, trimmedZip] });
+          queryClient.invalidateQueries({ queryKey: ['lead-finder-markets', user?.id] });
+          queryClient.invalidateQueries({ queryKey: ['lead-finder-score-history', user?.id, trimmedZip] });
+        } catch {
+          // Supabase unavailable — result already displayed, cache failure is non-fatal
+        }
       }
     } catch (err: any) {
       clearTimeout(timeout);

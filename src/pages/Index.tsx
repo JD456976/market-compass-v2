@@ -57,15 +57,35 @@ function PulseScoreWidget() {
     setResult(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('fred-lead-finder', {
-        body: { zipCode: cleaned },
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 300,
+          messages: [{
+            role: 'user',
+            content: `You are a real estate market analyst. Given ZIP code ${cleaned}, return a JSON object (no markdown, no backticks) with these exact keys:
+{
+  "score": <integer 0-100 representing market opportunity score>,
+  "cityState": "<City, ST>",
+  "leadType": "<"buyer" | "seller" | "transitional">",
+  "summary": "<one sentence market summary>"
+}
+Base your score on your knowledge of that ZIP's typical market conditions (inventory levels, days on market, price trends). Score above 65 = seller's market, 35-65 = balanced, below 35 = buyer's market.`
+          }],
+        }),
       });
-      if (fnError) throw fnError;
-      const score = data?.opportunityScore ?? data?.opportunity_score ?? null;
-      const cityState = data?.cityState ?? data?.city_state ?? cleaned;
-      const leadType = data?.leadType ?? data?.lead_type ?? 'transitional';
+      const raw = await response.json();
+      const text = raw.content?.[0]?.text ?? '';
+      const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+      const score = parsed?.score ?? null;
       if (score == null) throw new Error('No score returned');
-      setResult({ score: Math.round(score), cityState, leadType });
+      setResult({
+        score: Math.round(score),
+        cityState: parsed.cityState ?? cleaned,
+        leadType: parsed.leadType ?? 'transitional',
+      });
     } catch (e: any) {
       setError('Could not fetch market data. Try again.');
     } finally {
@@ -204,13 +224,13 @@ const Index = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.05 }}
         >
-          <div className="rounded-xl p-5 flex items-center gap-5" style={{ backgroundColor: '#1E293B', borderLeft: '4px solid #D4A853', border: '1px solid rgba(255,255,255,0.08)', borderLeftColor: '#D4A853', borderLeftWidth: '4px' }}>
-            <div className="text-center shrink-0">
-              <div className="text-4xl font-bold font-mono tabular-nums" style={{ color: '#D4A853' }}>72</div>
+          <div className="rounded-xl p-5 flex items-center gap-5" style={{ backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.08)', borderLeftColor: '#D4A853', borderLeftWidth: '4px' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(212,168,83,0.15)' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A853" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold" style={{ color: '#F1F5F9' }}>Market Activity Score</p>
-              <p className="text-xs mt-0.5" style={{ color: '#94A3B8' }}>Based on current inventory, DOM, and pricing trends</p>
+              <p className="text-sm font-semibold" style={{ color: '#F1F5F9' }}>Neighborhood Pulse Score</p>
+              <p className="text-xs mt-0.5" style={{ color: '#94A3B8' }}>Enter a ZIP below to get a live 0–100 market health score based on inventory, DOM, and pricing trends</p>
             </div>
           </div>
         </motion.div>
