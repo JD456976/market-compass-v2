@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Sparkles, Zap, Eye, Activity, Search, BarChart2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { callClaude } from '@/lib/aiError';
 import { AppLogo } from '@/components/AppLogo';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
 import { AllReportsDrawer } from '@/components/AllReportsDrawer';
@@ -57,15 +58,12 @@ function PulseScoreWidget() {
     setResult(null);
 
     try {
-      const response = await fetch('/api/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 300,
-          messages: [{
-            role: 'user',
-            content: `You are a real estate market analyst. Given ZIP code ${cleaned}, return a JSON object (no markdown, no backticks) with these exact keys:
+      const raw = await callClaude({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: `You are a real estate market analyst. Given ZIP code ${cleaned}, return a JSON object (no markdown, no backticks) with these exact keys:
 {
   "score": <integer 0-100 representing market opportunity score>,
   "cityState": "<City, ST>",
@@ -73,10 +71,8 @@ function PulseScoreWidget() {
   "summary": "<one sentence market summary>"
 }
 Base your score on your knowledge of that ZIP's typical market conditions (inventory levels, days on market, price trends). Score above 65 = seller's market, 35-65 = balanced, below 35 = buyer's market.`
-          }],
-        }),
+        }],
       });
-      const raw = await response.json();
       const text = raw.content?.[0]?.text ?? '';
       const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
       const score = parsed?.score ?? null;
@@ -87,7 +83,7 @@ Base your score on your knowledge of that ZIP's typical market conditions (inven
         leadType: parsed.leadType ?? 'transitional',
       });
     } catch (e: any) {
-      setError('Could not fetch market data. Try again.');
+      setError(e.message || 'Could not fetch market data. Try again.');
     } finally {
       setLoading(false);
     }

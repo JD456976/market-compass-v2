@@ -964,7 +964,7 @@ Use your knowledge of this specific ZIP's local housing market, economy, and rec
     } catch (err: any) {
       clearTimeout(timeout);
       if (err.name === 'AbortError') {
-        setError('Request timed out. The FRED API may be slow — please try again.');
+        setError(e?.message || 'Request timed out. The FRED API may be slow — please try again.');
       } else {
         setError(err.message || 'Failed to fetch market data. Please try again.');
       }
