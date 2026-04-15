@@ -883,7 +883,7 @@ export default function LeadFinder() {
 
     try {
       // Direct browser call to Anthropic — no edge functions
-      const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+      const anthropicRes = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,

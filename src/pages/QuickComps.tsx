@@ -120,7 +120,7 @@ ${compText}
 Average comp $/sqft: $${summary?.avgPpsf.toFixed(0) ?? 'N/A'}
 Suggested range: $${summary?.low.toLocaleString() ?? '?'} – $${summary?.high.toLocaleString() ?? '?'}`;
 
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -183,7 +183,7 @@ function MatchResultCard({
     setEmailLoading(true);
     try {
       const buyer = buyers.find(b => b.name === r.buyerName);
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      const resp = await fetch('/api/claude', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -327,7 +327,7 @@ ${buyerList}
 Return ONLY valid JSON array, no markdown:
 [{"buyerName":"...","score":85,"isHotMatch":true,"reason":"2-3 sentence explanation","emailSubject":"suggested email subject"}]`;
 
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      const resp = await fetch('/api/claude', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

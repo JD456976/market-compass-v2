@@ -91,7 +91,7 @@ Return ONLY valid JSON (no markdown):
   "summary": "3 key bullet points summarizing market conditions (use • bullets)"
 }`;
 
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      const resp = await fetch('/api/claude', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
