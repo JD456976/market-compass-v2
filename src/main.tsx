@@ -4,6 +4,10 @@ import App from "./App.tsx";
 import { SplashScreen } from "./components/SplashScreen.tsx";
 import "./index.css";
 
+// Market Compass is dark-only — ensure the dark class is always present
+// regardless of OS preference or any other theme logic
+document.documentElement.classList.add('dark');
+
 function Root() {
   const [splashDone, setSplashDone] = useState(() => {
     // Only show splash once per browser session
