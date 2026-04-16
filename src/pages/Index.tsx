@@ -164,6 +164,99 @@ Base your score on your knowledge of that ZIP's typical market conditions (inven
   );
 }
 
+
+// ─── ZIP Comparison Widget ─────────────────────────────────────────
+function ZipCompareWidget() {
+  const [zips, setZips] = useState<[string, string]>(['', '']);
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<Array<{ zip: string; score: number; cityState: string; summary: string } | null>>([null, null]);
+  const [error, setError] = useState('');
+
+  const getLabel = (score: number) => {
+    if (score >= 70) return { text: "Seller's Market", color: '#22c55e' };
+    if (score >= 40) return { text: 'Balanced', color: '#60a5fa' };
+    return { text: "Buyer's Market", color: '#f59e0b' };
+  };
+
+  const compare = async () => {
+    const valid = zips.filter(z => /^\d{5}$/.test(z.trim()));
+    if (valid.length < 2) { setError('Enter two valid 5-digit ZIP codes'); return; }
+    setError(''); setLoading(true); setResults([null, null]);
+    try {
+      const fetches = valid.map(zip =>
+        fetch('/api/claude', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 200,
+            messages: [{ role: 'user', content: `For ZIP ${zip} return ONLY JSON (no markdown): {"score":<0-100>,"cityState":"<City, ST>","summary":"<one sentence market summary>"}` }],
+          }),
+        }).then(r => r.json()).then(d => {
+          const text = d?.content?.[0]?.text || '';
+          const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+          return { zip, score: Math.round(parsed.score ?? 50), cityState: parsed.cityState ?? zip, summary: parsed.summary ?? '' };
+        })
+      );
+      const res = await Promise.all(fetches);
+      setResults([res[0] ?? null, res[1] ?? null]);
+    } catch (e: any) {
+      setError(e.message || 'Could not compare markets.');
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <Card className="overflow-hidden">
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold text-foreground">Compare Markets</span>
+          <Badge variant="secondary" className="text-[10px]">Side by Side</Badge>
+        </div>
+        <div className="flex gap-2">
+          {([0, 1] as const).map(i => (
+            <Input key={i} value={zips[i]}
+              onChange={e => { const u: [string,string] = [...zips]; u[i] = e.target.value.replace(/\D/g, '').slice(0, 5); setZips(u); }}
+              onKeyDown={e => e.key === 'Enter' && compare()}
+              placeholder={`ZIP ${i + 1}`} className="max-w-[110px] font-mono text-center" maxLength={5}
+            />
+          ))}
+          <Button size="sm" onClick={compare} disabled={loading || zips.filter(z => z.length === 5).length < 2} className="flex-1">
+            {loading
+              ? <span className="flex items-center gap-1.5"><span className="h-3.5 w-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />Analyzing</span>
+              : 'Compare'}
+          </Button>
+        </div>
+        {error && <p className="text-xs text-destructive">{error}</p>}
+        {(results[0] || results[1]) ? (
+          <div className="grid grid-cols-2 gap-3">
+            {results.map((r, i) => r ? (
+              <div key={i} className="rounded-lg p-3 space-y-1.5" style={{ backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <p className="text-[10px] font-mono text-muted-foreground">{r.zip}</p>
+                <p className="text-xs font-semibold text-foreground truncate">{r.cityState}</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-2xl font-bold font-mono tabular-nums" style={{ color: getLabel(r.score).color }}>{r.score}</span>
+                  <span className="text-[10px] font-semibold" style={{ color: getLabel(r.score).color }}>{getLabel(r.score).text}</span>
+                </div>
+                <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full" style={{ width: `${r.score}%`, backgroundColor: getLabel(r.score).color }} />
+                </div>
+                <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{r.summary}</p>
+              </div>
+            ) : (
+              <div key={i} className="rounded-lg p-3 flex items-center justify-center" style={{ backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.08)', minHeight: 100 }}>
+                <span className="text-xs text-muted-foreground">Analyzing…</span>
+              </div>
+            ))}
+          </div>
+        ) : !loading && (
+          <p className="text-[11px] text-muted-foreground text-center">Enter two ZIP codes to compare market conditions</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Index Page ───────────────────────────────────────────────────────────────
 
 const Index = () => {
@@ -256,6 +349,11 @@ const Index = () => {
           {/* Pulse Score Widget */}
           <motion.div variants={fadeInUp} className="md:col-span-2">
             <PulseScoreWidget />
+          </motion.div>
+
+          {/* ZIP Comparison Widget */}
+          <motion.div variants={fadeInUp} className="md:col-span-2">
+            <ZipCompareWidget />
           </motion.div>
 
           {/* Quick CMA shortcut */}
