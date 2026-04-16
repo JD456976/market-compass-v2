@@ -17,22 +17,24 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       includeAssets: ["favicon.ico", "pwa-icon-192.png", "pwa-icon-512.png"],
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         navigateFallbackDenylist: [/^\/~oauth/],
       },
       manifest: {
         name: "Market Compass",
         short_name: "Market Compass",
-        description: "Real estate decision-support tool for Seller and Buyer scenarios",
-        theme_color: "#2d3a4f",
-        background_color: "#faf9f7",
+        description: "Real estate market intelligence and decision-support tool",
+        theme_color: "#0F172A",
+        background_color: "#0F172A",
         display: "standalone",
         orientation: "portrait",
         scope: "/",
         start_url: "/",
+        categories: ["business", "productivity", "finance"],
         icons: [
           {
             src: "/pwa-icon-192.png",
