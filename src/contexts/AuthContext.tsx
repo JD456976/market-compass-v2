@@ -26,6 +26,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      // Track last active for admin dashboard metrics
+      if (session?.user) {
+        supabase.from('profiles').update({ last_active_at: new Date().toISOString() })
+          .eq('user_id', session.user.id).then(() => {}).catch(() => {});
+      }
     });
 
     // THEN check for existing session

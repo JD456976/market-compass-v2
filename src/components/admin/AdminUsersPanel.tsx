@@ -90,35 +90,62 @@ export function AdminUsersPanel() {
     }
   };
 
-  const handleToggleBeta = async (profile: Profile) => {
-    const newActive = !profile.beta_access_active;
-    setTogglingBeta(profile.id);
-    
-    const updateData: Record<string, any> = {
-      beta_access_active: newActive,
-      beta_access_source: newActive ? 'admin_grant' : profile.beta_access_source,
-    };
+  // ── Grant duration modal state ──────────────────────────────────────────────
+  const [grantTarget, setGrantTarget] = useState<Profile | null>(null);
+  const [grantDays, setGrantDays] = useState(30);
+  const [grantCustom, setGrantCustom] = useState('');
+  const [grantUseCustom, setGrantUseCustom] = useState(false);
+  const [granting, setGranting] = useState(false);
 
-    // When granting, set a 30-day expiry if none exists
-    if (newActive && !profile.beta_access_expires_at) {
-      const expires = new Date();
-      expires.setDate(expires.getDate() + 30);
-      updateData.beta_access_expires_at = expires.toISOString();
-    }
+  const GRANT_OPTS = [
+    { label: '7d', days: 7 }, { label: '14d', days: 14 }, { label: '30d', days: 30 },
+    { label: '60d', days: 60 }, { label: '90d', days: 90 },
+  ];
 
-    const { error } = await supabase
-      .from('profiles')
-      .update(updateData)
-      .eq('id', profile.id);
+  const effectiveDays = grantUseCustom ? (parseInt(grantCustom) || 0) : grantDays;
 
+  const handleGrantAccess = async () => {
+    if (!grantTarget || effectiveDays < 1) return;
+    const expires = new Date();
+    expires.setDate(expires.getDate() + effectiveDays);
+    setGranting(true);
+    const { error } = await supabase.from('profiles').update({
+      beta_access_active: true,
+      beta_access_source: 'admin_grant',
+      beta_access_expires_at: expires.toISOString(),
+    }).eq('id', grantTarget.id);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: newActive ? 'Beta access granted' : 'Beta access revoked' });
+      toast({ title: `Access granted — ${effectiveDays} days`, description: `Expires ${expires.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}` });
       fetchData();
-      if (selectedUser?.id === profile.id) {
-        setSelectedUser({ ...profile, beta_access_active: newActive });
-      }
+      setGrantTarget(null);
+      setSelectedUser(null);
+    }
+    setGranting(false);
+  };
+
+  const handleToggleBeta = async (profile: Profile) => {
+    if (!profile.beta_access_active) {
+      // Open grant modal instead of immediate toggle
+      setGrantTarget(profile);
+      setGrantDays(30);
+      setGrantCustom('');
+      setGrantUseCustom(false);
+      return;
+    }
+    // Revoking
+    setTogglingBeta(profile.id);
+    const { error } = await supabase.from('profiles').update({
+      beta_access_active: false,
+      beta_access_source: 'admin_revoked',
+    }).eq('id', profile.id);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Access revoked' });
+      fetchData();
+      if (selectedUser?.id === profile.id) setSelectedUser(null);
     }
     setTogglingBeta(null);
   };
@@ -300,5 +327,58 @@ export function AdminUsersPanel() {
         </DialogContent>
       </Dialog>
     </>
+
+      {/* Grant Duration Modal */}
+      {grantTarget && (
+        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-card border border-border rounded-2xl p-5 space-y-4 shadow-2xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-semibold">Grant Beta Access</h3>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[240px]">{grantTarget.email}</p>
+              </div>
+              <button onClick={() => setGrantTarget(null)} className="text-muted-foreground hover:text-foreground p-0.5">
+                <span className="text-lg leading-none">×</span>
+              </button>
+            </div>
+            <div className="space-y-2">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Access Duration</p>
+              <div className="grid grid-cols-5 gap-1.5">
+                {GRANT_OPTS.map(o => (
+                  <button key={o.days} onClick={() => { setGrantDays(o.days); setGrantUseCustom(false); }}
+                    className={`py-2 rounded-lg text-xs font-semibold border transition-colors ${!grantUseCustom && grantDays === o.days ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground hover:border-primary/50'}`}>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setGrantUseCustom(true)}
+                className={`w-full py-2 rounded-lg text-xs font-semibold border transition-colors ${grantUseCustom ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}>
+                Custom
+              </button>
+              {grantUseCustom && (
+                <div className="flex items-center gap-2">
+                  <Input type="number" min="1" max="365" value={grantCustom}
+                    onChange={e => setGrantCustom(e.target.value.replace(/\D/g, ''))}
+                    placeholder="Days" className="w-24 bg-muted/30 text-sm" autoFocus />
+                  <span className="text-sm text-muted-foreground">days</span>
+                </div>
+              )}
+              {effectiveDays > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Expires <span className="font-medium text-foreground">
+                    {new Date(Date.now() + effectiveDays * 86400000).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
+                  </span>
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setGrantTarget(null)} className="flex-1" disabled={granting}>Cancel</Button>
+              <Button onClick={handleGrantAccess} className="flex-1" disabled={granting || effectiveDays < 1}>
+                {granting ? 'Saving…' : 'Grant Access'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
