@@ -13,7 +13,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { loadAgentBranding, saveAgentBranding, uploadAgentAsset, AgentBranding } from '@/lib/agentBranding';
 import { ReportTemplateSelector, ReportTemplate } from '@/components/report/ReportTemplateSelector';
 import { getBetaAccessSession, getDeviceId } from '@/lib/betaAccess';
-import { supabase } from '@/integrations/supabase/client';
 
 const AgentProfile = () => {
   const { toast } = useToast();

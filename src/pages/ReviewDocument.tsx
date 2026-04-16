@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getExtractionConfidence, type ExtractedField, type PropertyFactor } from '@/lib/mlspinParser';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';

@@ -11,7 +11,6 @@ import { useSearchParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { supabase } from '@/integrations/supabase/client';
 import {
   TrendingUp, TrendingDown, Minus, Target, ExternalLink, Loader2, AlertTriangle,
 } from 'lucide-react';

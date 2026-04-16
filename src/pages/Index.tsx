@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Sparkles, Zap, Eye, Activity, Search, BarChart2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { callClaude } from '@/lib/aiError';
 import { AppLogo } from '@/components/AppLogo';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';

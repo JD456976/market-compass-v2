@@ -1,12 +1,14 @@
 /**
  * Loads property intelligence factors from approved documents linked to a session.
+ * Gracefully returns [] when Supabase is unavailable.
  */
-import { supabase } from '@/integrations/supabase/client';
 import type { PropertyFactor } from '@/types';
 import type { PropertyFactor as ParserPropertyFactor } from '@/lib/mlspinParser';
 import { parseMLSPINText } from '@/lib/mlspinParser';
+import { supabase } from '@/integrations/supabase/client';
 
 export async function loadPropertyFactorsForSession(sessionId: string): Promise<PropertyFactor[]> {
+  try {
   const { data: docs } = await supabase
     .from('property_documents')
     .select('raw_text, extracted_fields, status')
@@ -43,6 +45,10 @@ export async function loadPropertyFactorsForSession(sessionId: string): Promise<
   }
 
   return Array.from(deduped.values());
+  } catch {
+    // Supabase unavailable — return empty factors rather than crashing the report
+    return [];
+  }
 }
 
 function confidenceRank(c: 'high' | 'medium' | 'low'): number {

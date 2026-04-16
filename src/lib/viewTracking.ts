@@ -1,4 +1,3 @@
-import { supabase } from '@/integrations/supabase/client';
 
 const VIEWER_ID_KEY = 'mc_viewer_id';
 const VIEW_COOLDOWN_KEY = 'mc_view_cooldowns';
