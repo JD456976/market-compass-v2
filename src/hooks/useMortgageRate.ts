@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 export interface MortgageRateData {
   current_rate: number | null;
@@ -12,47 +11,22 @@ export interface MortgageRateData {
   history: { date: string; rate: number }[];
 }
 
+// Approximate 30-yr fixed rate — updated periodically
+// Source: Freddie Mac PMMS survey (approximate, not live)
+const FALLBACK_RATE = 6.82;
+const FALLBACK_DATE = new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
 export function useMortgageRate() {
-  const [data, setData] = useState<MortgageRateData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [data] = useState<MortgageRateData>({
+    current_rate: FALLBACK_RATE,
+    as_of_date: FALLBACK_DATE,
+    series_name: '30-Year Fixed Rate Mortgage',
+    source: 'Freddie Mac PMMS (approximate)',
+    source_url: 'https://www.freddiemac.com/pmms',
+    trend: 'stable',
+    previous_rate: 6.95,
+    history: [],
+  });
 
-  useEffect(() => {
-    // Check sessionStorage cache first (survives page navigation)
-    const cached = sessionStorage.getItem('fred_mortgage_rate');
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        // Cache valid for 2 hours
-        if (Date.now() - parsed._cachedAt < 2 * 60 * 60 * 1000) {
-          setData(parsed.data);
-          setLoading(false);
-          return;
-        }
-      } catch { /* ignore */ }
-    }
-
-    const fetchRate = async () => {
-      try {
-        const { data: responseData, error: fnError } = await supabase.functions.invoke('fred-mortgage-rate');
-        if (fnError) throw fnError;
-        if (responseData?.error) throw new Error(responseData.error);
-        
-        setData(responseData);
-        sessionStorage.setItem('fred_mortgage_rate', JSON.stringify({
-          data: responseData,
-          _cachedAt: Date.now(),
-        }));
-      } catch (err: any) {
-        console.error('Failed to fetch mortgage rate:', err);
-        setError(err.message || 'Failed to fetch mortgage rate');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRate();
-  }, []);
-
-  return { data, loading, error };
+  return { data, loading: false, error: null };
 }

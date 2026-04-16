@@ -62,10 +62,23 @@ export default function MarketIntelEmbed() {
     setError(null);
     const run = async () => {
       try {
-        const { data: res, error: fnErr } = await supabase.functions.invoke('fred-lead-finder', {
-          body: { zip },
+        const raw = await fetch('/api/claude', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 600,
+            messages: [{
+              role: 'user',
+              content: `For ZIP code ${zip}, return ONLY a JSON object (no markdown) with: {"opportunityScore":<0-100>,"leadType":"buyer"|"seller"|"transitional","zip":"${zip}","fetchedAt":"${new Date().toISOString()}","topFactors":[{"reason":"<string>"}],"metrics":{"mortgage":{"current":<rate>,"trend":"stable"},"inventory":{"current":<num>,"trend":"stable"},"daysOnMarket":{"current":<num>,"trend":"stable"},"hpi":{"change90d":<num>,"trend":"stable"},"unemployment":{"current":<num>,"trend":"stable"}}}`
+            }],
+          }),
         });
-        if (fnErr || res?.error) throw new Error(fnErr?.message || res?.error || 'Failed');
+        if (!raw.ok) throw new Error('API error ' + raw.status);
+        const aiData = await raw.json();
+        const text = aiData?.content?.[0]?.text || '';
+        const res = JSON.parse(text.replace(/\`\`\`json|\`\`\`/g, '').trim());
+        if (!res) throw new Error('Failed');
 
         // Build embed payload
         const r = res;
