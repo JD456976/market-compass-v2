@@ -97,7 +97,7 @@ Return ONLY valid JSON (no markdown):
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 1000,
           system: 'You are a real estate market analyst. Always respond with valid JSON only, no markdown fences.',
           messages: [{ role: 'user', content: prompt }],

@@ -326,7 +326,6 @@ export function AdminUsersPanel() {
           )}
         </DialogContent>
       </Dialog>
-    </>
 
       {/* Grant Duration Modal */}
       {grantTarget && (
@@ -380,5 +379,6 @@ export function AdminUsersPanel() {
           </div>
         </div>
       )}
+    </>
   );
 }

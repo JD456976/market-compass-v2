@@ -188,7 +188,7 @@ function MatchResultCard({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 400,
           system: 'You are a real estate agent. Write a concise, warm email introducing a listing to a buyer. Keep it under 150 words.',
           messages: [{ role: 'user', content: `Write an email to ${r.buyerName} about the listing at ${listing.address} listed at ${listing.price}. Match score: ${r.score}/100. Reason: ${r.reason}. Make it feel personal and highlight why this fits them.` }],
@@ -330,7 +330,7 @@ Return ONLY valid JSON array, no markdown:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 1000,
           system: 'You are a real estate buyer-matching assistant. Always respond with valid JSON only, no markdown or explanation.',
           messages: [{ role: 'user', content: prompt }],

@@ -29,7 +29,7 @@ export default function ClientReport() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 1000,
           system: 'You are a real estate market analyst. Write a concise, professional market briefing an agent can share with a client. Use clear sections. Be specific and data-driven in tone.',
           messages: [{
