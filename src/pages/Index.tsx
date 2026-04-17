@@ -151,6 +151,12 @@ Base your score on your knowledge of that ZIP's typical market conditions (inven
                   Full analysis →
                 </Link>
               </div>
+            ) : loading ? (
+              <div className="text-center space-y-2 w-full">
+                <div className="h-12 w-16 bg-muted/60 rounded-lg animate-pulse mx-auto" />
+                <div className="h-3 bg-muted/60 rounded animate-pulse w-20 mx-auto" />
+                <div className="h-1.5 w-full rounded-full bg-muted/40" />
+              </div>
             ) : (
               <div className="text-center">
                 <div className="text-4xl font-bold font-mono text-muted-foreground/20">—</div>
