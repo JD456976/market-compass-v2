@@ -147,9 +147,24 @@ Base your score on your knowledge of that ZIP's typical market conditions (inven
                     transition={{ duration: 0.8, ease: 'easeOut' }}
                   />
                 </div>
-                <Link to="/lead-finder" className="text-[10px] text-primary hover:underline">
-                  Full analysis →
-                </Link>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <Link to="/lead-finder" className="text-[10px] text-primary hover:underline">
+                    Full analysis →
+                  </Link>
+                  <button
+                    onClick={() => {
+                      const msg = `Market update for ${result!.cityState}: Pulse Score ${result!.score}/100 — ${pulse!.label}. ${result!.score >= 65 ? "Seller's market" : result!.score >= 35 ? "Balanced market" : "Buyer's market"} conditions. Powered by Market Compass.`;
+                      if (navigator.share) {
+                        navigator.share({ text: msg }).catch(() => {});
+                      } else {
+                        window.open(`sms:?body=${encodeURIComponent(msg)}`);
+                      }
+                    }}
+                    className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Share →
+                  </button>
+                </div>
               </div>
             ) : loading ? (
               <div className="text-center space-y-2 w-full">
