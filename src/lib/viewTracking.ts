@@ -196,3 +196,4 @@ export async function getBatchReportViewStats(
     return result;
   }
 }
+import { supabase } from '@/integrations/supabase/client';

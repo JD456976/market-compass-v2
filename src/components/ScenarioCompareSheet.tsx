@@ -141,7 +141,7 @@ export function ScenarioCompareSheet({
       onOpenChange(false);
     } catch (err) {
       console.error('Error handling action:', err);
-      toast({ title: 'Something went wrong', variant: 'destructive' });
+      toast({ title: 'Could not complete that action. Please try again.' });
     }
     setSending(false);
   };

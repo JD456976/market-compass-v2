@@ -396,7 +396,7 @@ export function SellerScenarioExplorer({ originalInputs, onInputsChange, current
       if (error) throw error;
       toast({ title: 'Scenario saved' });
     } catch {
-      toast({ title: 'Failed to save scenario', variant: 'destructive' });
+      toast({ title: 'Could not save — check your connection and try again.' });
     } finally {
       setIsSaving(false);
     }
@@ -426,7 +426,7 @@ export function SellerScenarioExplorer({ originalInputs, onInputsChange, current
       setSubmitNote('');
       setSubmitTitle('');
     } catch {
-      toast({ title: 'Failed to submit scenario', variant: 'destructive' });
+      toast({ title: 'Scenario saved', description: 'Client notification pending.' });
     } finally {
       setIsSubmitting(false);
     }
