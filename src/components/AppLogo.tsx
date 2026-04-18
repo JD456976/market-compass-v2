@@ -17,7 +17,7 @@ export function AppLogo({ size = 'md', className }: AppLogoProps) {
     <img
       src={appIcon}
       alt="Market Compass"
-      className={cn(sizeMap[size], 'rounded-lg object-cover', className)}
+      className={cn(sizeMap[size], 'object-contain', className)}
     />
   );
 }

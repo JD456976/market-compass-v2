@@ -16,6 +16,7 @@ import { useDraftSessions, useSharedSessions } from '@/hooks/useSessions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useProfessionalAccess } from '@/hooks/useProfessionalAccess';
+import { fetchLeadFinderData } from '@/lib/fredClient';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -58,29 +59,12 @@ function PulseScoreWidget() {
     setResult(null);
 
     try {
-      const raw = await callClaude({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 300,
-        messages: [{
-          role: 'user',
-          content: `You are a real estate market analyst. Given ZIP code ${cleaned}, return a JSON object (no markdown, no backticks) with these exact keys:
-{
-  "score": <integer 0-100 representing market opportunity score>,
-  "cityState": "<City, ST>",
-  "leadType": "<"buyer" | "seller" | "transitional">",
-  "summary": "<one sentence market summary>"
-}
-Base your score on your knowledge of that ZIP's typical market conditions (inventory levels, days on market, price trends). Score above 65 = seller's market, 35-65 = balanced, below 35 = buyer's market.`
-        }],
-      });
-      const text = raw.content?.[0]?.text ?? '';
-      const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-      const score = parsed?.score ?? null;
-      if (score == null) throw new Error('No score returned');
+      // Use real FRED economic data — same engine as Lead Finder, no AI guessing
+      const data = await fetchLeadFinderData(cleaned);
       setResult({
-        score: Math.round(score),
-        cityState: parsed.cityState ?? cleaned,
-        leadType: parsed.leadType ?? 'transitional',
+        score: data.opportunityScore,
+        cityState: data.state ? `${cleaned} (${data.state})` : cleaned,
+        leadType: data.leadType,
       });
     } catch (e: any) {
       setError(e.message || 'Could not fetch market data. Try again.');
@@ -195,8 +179,8 @@ function ZipCompareWidget() {
   const [error, setError] = useState('');
 
   const getLabel = (score: number) => {
-    if (score >= 70) return { text: "Seller's Market", color: '#22c55e' };
-    if (score >= 40) return { text: 'Balanced', color: '#60a5fa' };
+    if (score >= 71) return { text: "Seller's Market", color: '#22c55e' };
+    if (score >= 41) return { text: 'Balanced', color: '#60a5fa' };
     return { text: "Buyer's Market", color: '#f59e0b' };
   };
 
@@ -205,20 +189,18 @@ function ZipCompareWidget() {
     if (valid.length < 2) { setError('Enter two valid 5-digit ZIP codes'); return; }
     setError(''); setLoading(true); setResults([null, null]);
     try {
+      // Use real FRED economic data — same deterministic engine as Lead Finder
       const fetches = valid.map(zip =>
-        fetch('/api/claude', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 200,
-            messages: [{ role: 'user', content: `For ZIP ${zip} return ONLY JSON (no markdown): {"score":<0-100>,"cityState":"<City, ST>","summary":"<one sentence market summary>"}` }],
-          }),
-        }).then(r => r.json()).then(d => {
-          const text = d?.content?.[0]?.text || '';
-          const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-          return { zip, score: Math.round(parsed.score ?? 50), cityState: parsed.cityState ?? zip, summary: parsed.summary ?? '' };
-        })
+        fetchLeadFinderData(zip).then(data => ({
+          zip,
+          score: data.opportunityScore,
+          cityState: data.state ? `${zip} (${data.state})` : zip,
+          summary: data.topFactors.length > 0
+            ? data.topFactors.map(f => f.label).join(' · ')
+            : (data.leadType === 'seller' ? "Seller conditions based on live FRED data"
+               : data.leadType === 'buyer' ? "Buyer conditions based on live FRED data"
+               : "Balanced market based on live FRED data"),
+        }))
       );
       const res = await Promise.all(fetches);
       setResults([res[0] ?? null, res[1] ?? null]);
