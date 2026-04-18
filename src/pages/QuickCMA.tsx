@@ -44,6 +44,7 @@ export default function QuickCMA() {
       });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = await res.json();
+      if (data?.type === 'error') throw new Error(data?.error?.message || 'Could not generate response.');
       const text = data.content?.[0]?.text || 'No response received.';
       setReport(text);
     } catch (e: any) {

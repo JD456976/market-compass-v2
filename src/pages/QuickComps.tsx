@@ -130,6 +130,7 @@ Suggested range: $${summary?.low.toLocaleString() ?? '?'} – $${summary?.high.t
         }),
       });
       const data = await res.json();
+      if (data?.type === 'error') throw new Error(data?.error?.message || 'Could not generate response.');
       const text = data?.content?.[0]?.text ?? 'Unable to generate narrative.';
       setNarrative(text);
     } catch {

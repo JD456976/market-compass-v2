@@ -117,6 +117,7 @@ Here is the situation:
       }
 
       const json = await res.json();
+      if (json?.type === 'error') throw new Error(json?.error?.message || 'Could not generate response.');
       const rawText = json?.content?.[0]?.text || '';
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error('No JSON found in AI response');

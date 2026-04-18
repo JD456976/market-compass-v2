@@ -39,6 +39,7 @@ export default function ClientReport() {
         }),
       });
       const data = await res.json();
+      if (data?.type === 'error') throw new Error(data?.error?.message || 'Could not generate response.');
       const text = data?.content?.[0]?.text ?? 'Unable to generate report.';
       setReport(text);
     } catch {

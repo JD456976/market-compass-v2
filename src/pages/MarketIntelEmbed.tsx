@@ -75,6 +75,7 @@ export default function MarketIntelEmbed() {
         });
         if (!raw.ok) throw new Error('API error ' + raw.status);
         const aiData = await raw.json();
+        if (aiData?.type === 'error') throw new Error(aiData?.error?.message || 'Could not generate response.');
         const text = aiData?.content?.[0]?.text || '';
         const res = JSON.parse(text.replace(/\`\`\`json|\`\`\`/g, '').trim());
         if (!res) throw new Error('Failed');

@@ -196,6 +196,7 @@ function MatchResultCard({
       });
       if (!resp.ok) throw new Error(`API ${resp.status}`);
       const result = await resp.json();
+      if (result?.type === 'error') throw new Error(result?.error?.message || 'Could not generate response.');
       setEmail(result?.content?.[0]?.text || 'Could not generate email.');
     } catch (err: any) {
       toast({ title: 'Email draft failed', description: err.message, variant: 'destructive' });

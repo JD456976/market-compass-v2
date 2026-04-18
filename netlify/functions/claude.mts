@@ -1,7 +1,13 @@
 import type { Config } from "@netlify/functions";
 
+// Model aliases — old strings that were sent by previous bundle versions
+const MODEL_ALIASES: Record<string, string> = {
+  "claude-sonnet-4-20250514": "claude-sonnet-4-6",
+  "claude-haiku-4-5-20251001": "claude-haiku-4-5",
+  "claude-opus-4-20250514": "claude-opus-4-6",
+};
+
 export default async (req: Request) => {
-  // Only allow POST
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
@@ -19,6 +25,11 @@ export default async (req: Request) => {
 
   try {
     const body = await req.json();
+
+    // Rewrite stale model strings — protects against cached frontend bundles
+    if (body.model && MODEL_ALIASES[body.model]) {
+      body.model = MODEL_ALIASES[body.model];
+    }
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",

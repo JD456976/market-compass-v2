@@ -903,6 +903,7 @@ Use your knowledge of this specific ZIP's local housing market, economy, and rec
         throw new Error(`API error ${anthropicRes.status}: ${errText.slice(0, 200)}`);
       }
       const anthropicJson = await anthropicRes.json();
+      if (anthropicJson?.type === 'error') throw new Error(anthropicJson?.error?.message || 'Could not generate response.');
       const rawText = anthropicJson?.content?.[0]?.text || '';
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error('No JSON found in AI response');
