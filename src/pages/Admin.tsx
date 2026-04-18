@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { isAllowedAdmin } from '@/lib/adminConfig';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { getBetaAccessSession, clearBetaAccessSession } from '@/lib/betaAccess';
+import { useAuth } from '@/contexts/AuthContext';
 
 type AuthState = 'loading' | 'unauthorized' | 'authorized';
 
@@ -11,32 +12,30 @@ const Admin = () => {
   const [authState, setAuthState] = useState<AuthState>('loading');
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const session = getBetaAccessSession();
-      
-      if (!session) {
-        // No session - redirect to beta access
-        navigate('/beta', { replace: true });
-        return;
-      }
+    if (authLoading) return;
 
-      const email = session.email;
-      setUserEmail(email);
+    // Priority 1: Supabase-authenticated admin (no beta code needed)
+    if (user?.email && isAllowedAdmin(user.email)) {
+      setUserEmail(user.email);
+      setAuthState('authorized');
+      return;
+    }
 
-      // Check if admin
-      if (session.role === 'admin' && isAllowedAdmin(email)) {
-        setAuthState('authorized');
-      } else {
-        // Not an admin - redirect to home
-        setAuthState('unauthorized');
-        setTimeout(() => navigate('/', { replace: true }), 2000);
-      }
-    };
+    // Priority 2: Legacy beta access session with admin role
+    const session = getBetaAccessSession();
+    if (session?.role === 'admin' && isAllowedAdmin(session.email)) {
+      setUserEmail(session.email);
+      setAuthState('authorized');
+      return;
+    }
 
-    checkAuth();
-  }, [navigate]);
+    // No valid admin access
+    setAuthState('unauthorized');
+    setTimeout(() => navigate(user ? '/' : '/beta', { replace: true }), 1500);
+  }, [user, authLoading, navigate]);
 
   const handleSignOut = () => {
     clearBetaAccessSession();

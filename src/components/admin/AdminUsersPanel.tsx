@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Search, Loader2, Eye, Ban, UserCheck, Mail, Calendar, Building2, Shield } from 'lucide-react';
+import { Users, Search, Loader2, Eye, Ban, UserCheck, Mail, Calendar, Building2, Shield, Trash2, UserPlus, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Profile {
@@ -150,6 +150,57 @@ export function AdminUsersPanel() {
     setTogglingBeta(null);
   };
 
+  // ── Invite User ─────────────────────────────────────────────────────────────
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteDays, setInviteDays] = useState(30);
+  const [inviting, setInviting] = useState(false);
+
+  const handleInviteUser = async () => {
+    const email = inviteEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({ title: 'Enter a valid email address', variant: 'destructive' });
+      return;
+    }
+    setInviting(true);
+    try {
+      const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
+        data: { beta_access_days: inviteDays },
+      });
+      if (error) throw error;
+      toast({ title: 'Invite sent', description: `${email} will receive a sign-up link. Access: ${inviteDays} days.` });
+      setShowInvite(false);
+      setInviteEmail('');
+      fetchData();
+    } catch (e: any) {
+      toast({ title: 'Invite failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  // ── Delete User ──────────────────────────────────────────────────────────────
+  const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await supabase.from('profiles').delete().eq('id', deleteTarget.id);
+      const { error } = await supabase.auth.admin.deleteUser(deleteTarget.user_id);
+      if (error) throw error;
+      toast({ title: 'User deleted', description: `${deleteTarget.email} permanently removed.` });
+      setDeleteTarget(null);
+      setSelectedUser(null);
+      fetchData();
+    } catch (e: any) {
+      toast({ title: 'Delete failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -169,6 +220,9 @@ export function AdminUsersPanel() {
               <Users className="h-5 w-5" />
               Users ({profiles.length})
             </CardTitle>
+            <Button size="sm" className="gap-1.5" onClick={() => setShowInvite(true)}>
+              <UserPlus className="h-4 w-4" /> Invite User
+            </Button>
           </div>
           <div className="relative mt-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -231,9 +285,14 @@ export function AdminUsersPanel() {
                           {format(new Date(profile.created_at), 'MMM d, yyyy')}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedUser(profile)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedUser(profile)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteTarget(profile)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -321,6 +380,14 @@ export function AdminUsersPanel() {
                     <><Ban className="h-4 w-4 mr-1" /> Suspend</>
                   )}
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive ml-auto"
+                  onClick={() => { setDeleteTarget(selectedUser); setSelectedUser(null); }}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" /> Delete User
+                </Button>
               </div>
             </div>
           )}
@@ -374,6 +441,84 @@ export function AdminUsersPanel() {
               <Button variant="outline" onClick={() => setGrantTarget(null)} className="flex-1" disabled={granting}>Cancel</Button>
               <Button onClick={handleGrantAccess} className="flex-1" disabled={granting || effectiveDays < 1}>
                 {granting ? 'Saving…' : 'Grant Access'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Invite User Modal */}
+      {showInvite && (
+        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-card border border-border rounded-2xl p-5 space-y-4 shadow-2xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-semibold">Invite Tester</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">They'll get an email to set their own password.</p>
+              </div>
+              <button onClick={() => setShowInvite(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Email Address</label>
+                <Input
+                  type="email"
+                  placeholder="tester@example.com"
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleInviteUser()}
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Access Duration</p>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {[7, 14, 30, 60, 90].map(d => (
+                    <button key={d} onClick={() => setInviteDays(d)}
+                      className={`py-2 rounded-lg text-xs font-semibold border transition-colors ${inviteDays === d ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground hover:border-primary/50'}`}>
+                      {d}d
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Access expires <span className="font-medium text-foreground">
+                  {new Date(Date.now() + inviteDays * 86400000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </span>
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowInvite(false)} className="flex-1" disabled={inviting}>Cancel</Button>
+              <Button onClick={handleInviteUser} className="flex-1 gap-1.5" disabled={inviting || !inviteEmail.trim()}>
+                {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                {inviting ? 'Sending…' : 'Send Invite'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-card border border-destructive/30 rounded-2xl p-5 space-y-4 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                <Trash2 className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Delete User Permanently</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  This removes <span className="font-medium text-foreground">{deleteTarget.email}</span> from all systems. They will lose all access immediately. This cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" onClick={() => setDeleteTarget(null)} className="flex-1" disabled={deleting}>Cancel</Button>
+              <Button variant="destructive" onClick={handleDeleteUser} className="flex-1 gap-1.5" disabled={deleting}>
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                {deleting ? 'Deleting…' : 'Delete Permanently'}
               </Button>
             </div>
           </div>

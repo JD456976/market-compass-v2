@@ -16,7 +16,6 @@ import { useDraftSessions, useSharedSessions } from '@/hooks/useSessions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useProfessionalAccess } from '@/hooks/useProfessionalAccess';
-import { fetchLeadFinderData } from '@/lib/fredClient';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -59,8 +58,15 @@ function PulseScoreWidget() {
     setResult(null);
 
     try {
-      // Use real FRED economic data — same engine as Lead Finder, no AI guessing
-      const data = await fetchLeadFinderData(cleaned);
+      // Route through Netlify proxy to avoid CORS — real FRED data, no AI guessing
+      const res = await fetch('/api/fred', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zip: cleaned }),
+      });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
       setResult({
         score: data.opportunityScore,
         cityState: data.state ? `${cleaned} (${data.state})` : cleaned,
@@ -189,18 +195,25 @@ function ZipCompareWidget() {
     if (valid.length < 2) { setError('Enter two valid 5-digit ZIP codes'); return; }
     setError(''); setLoading(true); setResults([null, null]);
     try {
-      // Use real FRED economic data — same deterministic engine as Lead Finder
+      // Route through Netlify proxy — real FRED data, no AI guessing, no CORS
       const fetches = valid.map(zip =>
-        fetchLeadFinderData(zip).then(data => ({
-          zip,
-          score: data.opportunityScore,
-          cityState: data.state ? `${zip} (${data.state})` : zip,
-          summary: data.topFactors.length > 0
-            ? data.topFactors.map(f => f.label).join(' · ')
-            : (data.leadType === 'seller' ? "Seller conditions based on live FRED data"
-               : data.leadType === 'buyer' ? "Buyer conditions based on live FRED data"
-               : "Balanced market based on live FRED data"),
-        }))
+        fetch('/api/fred', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ zip }),
+        }).then(r => r.json()).then(data => {
+          if (data.error) throw new Error(data.error);
+          return {
+            zip,
+            score: data.opportunityScore,
+            cityState: data.state ? `${zip} (${data.state})` : zip,
+            summary: data.topFactors.length > 0
+              ? data.topFactors.join(' · ')
+              : (data.leadType === 'seller' ? 'Seller conditions — live FRED data'
+                 : data.leadType === 'buyer' ? 'Buyer conditions — live FRED data'
+                 : 'Balanced — live FRED data'),
+          };
+        })
       );
       const res = await Promise.all(fetches);
       setResults([res[0] ?? null, res[1] ?? null]);
