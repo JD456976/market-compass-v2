@@ -37,8 +37,25 @@ export async function callClaude(body: object): Promise<any> {
 
   const data = await response.json();
 
+  // Check HTTP error
   if (!response.ok) {
     throw new Error(parseAIError(response, data));
+  }
+
+  // Anthropic can return 200 with a body-level error (e.g. invalid model, overloaded)
+  if (data?.type === 'error') {
+    const msg: string = data?.error?.message || '';
+    const errType: string = data?.error?.type || '';
+    if (errType === 'not_found_error' || msg.includes('not found')) {
+      throw new Error('AI configuration error — invalid model. Contact your administrator.');
+    }
+    if (errType === 'overloaded_error') {
+      throw new Error('AI is temporarily overloaded. Try again in a moment.');
+    }
+    if (msg.toLowerCase().includes('credit balance') || msg.toLowerCase().includes('too low')) {
+      throw new Error('AI features are temporarily unavailable — credits need to be added.');
+    }
+    throw new Error(msg || 'Could not generate response. Please try again.');
   }
 
   return data;

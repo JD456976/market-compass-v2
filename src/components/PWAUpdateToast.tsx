@@ -10,9 +10,12 @@ export function PWAUpdateToast() {
   } = useRegisterSW({
     onRegisteredSW(_swUrl: string, registration: ServiceWorkerRegistration | undefined) {
       if (registration) {
-        setInterval(() => {
-          registration.update();
-        }, 30 * 60 * 1000);
+        // Check every 60s instead of 30min
+        setInterval(() => { registration.update(); }, 60 * 1000);
+        // Also check when user returns to the app (tab focus / iOS resume)
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') registration.update();
+        });
       }
     },
   });
