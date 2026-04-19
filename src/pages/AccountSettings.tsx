@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Settings, User, Shield, Trash2, Download, ExternalLink, Loader2, LogOut, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Settings, User, Shield, Trash2, Download, ExternalLink, Loader2, LogOut, CheckCircle2, Clock, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getBetaAccessSession, clearBetaAccessSession } from '@/lib/betaAccess';
 import { useSessions } from '@/hooks/useSessions';
@@ -23,6 +23,26 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { OWNER_EMAILS } from '@/contexts/EntitlementContext';
 import { format, differenceInDays } from 'date-fns';
+
+// Admin panel quick-access link — only rendered for admin emails
+function AdminPanelLink({ userEmail }: { userEmail: string | null }) {
+  if (!userEmail) return null;
+  const isAdmin = OWNER_EMAILS.some(e => e.toLowerCase() === userEmail.toLowerCase());
+  if (!isAdmin) return null;
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <Link to="/admin" className="w-full flex items-center justify-between min-h-[44px] group">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium">Admin Panel</span>
+          </div>
+          <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+        </Link>
+      </CardContent>
+    </Card>
+  );
+}
 
 function AccessStatusBadge({ userEmail }: { userEmail: string | null }) {
   const [expiry, setExpiry] = useState<string | null>(null);
@@ -285,6 +305,9 @@ const AccountSettings = () => {
             </Link>
           </CardContent>
         </Card>
+
+        {/* Admin Panel — only shown to admin users */}
+        <AdminPanelLink userEmail={user?.email || session?.email || null} />
 
         {/* Sign Out */}
         {user && (

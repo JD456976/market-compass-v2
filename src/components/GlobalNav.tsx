@@ -95,13 +95,16 @@ export function GlobalNav() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
+    if (loading) return; // wait for auth to resolve
     const session = getBetaAccessSession();
     if (session?.email && isAllowedAdmin(session.email)) {
       setIsAdmin(true);
     } else if (user?.email && isAllowedAdmin(user.email)) {
       setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
     }
-  }, [user?.email]);
+  }, [user?.email, loading]);
 
   if (location.pathname.startsWith('/share/') || location.pathname === '/share') return null;
 
@@ -285,6 +288,16 @@ function DrawerSection({ links, isAdmin, pathname, onAction }: { links: DrawerLi
 function MobileBottomNav() {
   const location = useLocation();
   const [reportsOpen, setReportsOpen] = useState(false);
+  const { user, loading } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (loading) return;
+    const session = getBetaAccessSession();
+    if ((session?.email && isAllowedAdmin(session.email)) || (user?.email && isAllowedAdmin(user.email))) {
+      setIsAdmin(true);
+    }
+  }, [user?.email, loading]);
 
   const tabs = [
     { to: '/', label: 'Home', icon: Home },
