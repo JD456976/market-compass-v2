@@ -204,15 +204,14 @@ function ZipCompareWidget() {
           body: JSON.stringify({ zip }),
         }).then(r => r.json()).then(data => {
           if (data.error) throw new Error(data.error);
+          const topTwo = (data.factors || []).slice(0, 2).map((f: any) => f.label).join(' · ');
           return {
             zip,
             score: data.opportunityScore,
-            cityState: data.state ? `${zip} (${data.state})` : zip,
-            summary: data.topFactors.length > 0
-              ? data.topFactors.join(' · ')
-              : (data.leadType === 'seller' ? 'Seller conditions — live FRED data'
-                 : data.leadType === 'buyer' ? 'Buyer conditions — live FRED data'
-                 : 'Balanced — live FRED data'),
+            cityState: data.state ? `${zip} · ${data.state}` : zip,
+            summary: topTwo || (data.leadType === 'seller' ? 'Seller conditions'
+                 : data.leadType === 'buyer' ? 'Buyer conditions' : 'Balanced market'),
+            stateNote: data.stateNote,
           };
         })
       );
@@ -260,6 +259,9 @@ function ZipCompareWidget() {
                   <div className="h-full rounded-full" style={{ width: `${r.score}%`, backgroundColor: getLabel(r.score).color }} />
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{r.summary}</p>
+                {'stateNote' in r && r.stateNote && (
+                  <p className="text-[9px] text-muted-foreground/50 leading-tight border-t border-border/30 pt-1">{(r as any).stateNote}</p>
+                )}
               </div>
             ) : (
               <div key={i} className="rounded-lg p-3 flex items-center justify-center" style={{ backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.08)', minHeight: 100 }}>

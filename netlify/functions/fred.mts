@@ -44,80 +44,29 @@ function latestAndTrend(obs: any[]) {
   return { current, previous, trend, asOfDate: obs[0].date };
 }
 
-function ninetyDayChange(obs: any[]) {
-  if (obs.length < 2) return null;
-  const current = parseFloat(obs[0].value);
-  const older = parseFloat(obs[Math.min(12, obs.length - 1)].value);
-  return ((current - older) / older) * 100;
-}
-
-// ZIP prefix → state code
-// Correct 3-digit ZIP prefix → USPS state code
-// ZIP prefix = zip.substring(0,3) e.g. "94110" → "941" → CA
+// ── Correct 3-digit ZIP prefix to USPS state code ────────────────────────────
 const ZIP3_TO_STATE: Record<string, string> = {};
 function addRange(lo: number, hi: number, st: string) {
   for (let i = lo; i <= hi; i++) ZIP3_TO_STATE[String(i).padStart(3, "0")] = st;
 }
-// New England
-addRange(10, 27, "MA");   // 010–027: Massachusetts
-addRange(28, 29, "RI");   // 028–029: Rhode Island
-addRange(30, 38, "NH");   // 030–038: New Hampshire
-addRange(39, 49, "ME");   // 039–049: Maine
-addRange(50, 59, "VT");   // 050–059: Vermont
-addRange(60, 69, "CT");   // 060–069: Connecticut
-addRange(70, 89, "NJ");   // 070–089: New Jersey
-// Mid-Atlantic
-addRange(100, 149, "NY"); // 100–149: New York
-addRange(150, 196, "PA"); // 150–196: Pennsylvania
-addRange(197, 199, "DE"); // 197–199: Delaware
-addRange(200, 205, "DC"); // 200–205: District of Columbia
-addRange(206, 219, "MD"); // 206–219: Maryland
-addRange(220, 246, "VA"); // 220–246: Virginia
-addRange(247, 269, "WV"); // 247–269: West Virginia
-// Southeast
-addRange(270, 289, "NC"); // 270–289: North Carolina
-addRange(290, 299, "SC"); // 290–299: South Carolina
-addRange(300, 319, "GA"); // 300–319: Georgia
-addRange(320, 349, "FL"); // 320–349: Florida
-addRange(350, 369, "AL"); // 350–369: Alabama
-addRange(370, 385, "TN"); // 370–385: Tennessee
-addRange(386, 397, "MS"); // 386–397: Mississippi
-addRange(398, 399, "GA"); // 398–399: Georgia (continued)
-// Border/Midwest
-addRange(400, 427, "KY"); // 400–427: Kentucky
-addRange(430, 459, "OH"); // 430–459: Ohio
-addRange(460, 479, "IN"); // 460–479: Indiana
-addRange(480, 499, "MI"); // 480–499: Michigan
-// Midwest
-addRange(500, 528, "IA"); // 500–528: Iowa
-addRange(530, 549, "WI"); // 530–549: Wisconsin
-addRange(550, 567, "MN"); // 550–567: Minnesota
-addRange(570, 577, "SD"); // 570–577: South Dakota
-addRange(580, 588, "ND"); // 580–588: North Dakota
-addRange(590, 599, "MT"); // 590–599: Montana
-addRange(600, 629, "IL"); // 600–629: Illinois
-addRange(630, 658, "MO"); // 630–658: Missouri
-addRange(660, 679, "KS"); // 660–679: Kansas
-addRange(680, 693, "NE"); // 680–693: Nebraska
-// South Central
-addRange(700, 714, "LA"); // 700–714: Louisiana
-addRange(716, 729, "AR"); // 716–729: Arkansas
-addRange(730, 749, "OK"); // 730–749: Oklahoma
-addRange(750, 799, "TX"); // 750–799: Texas
-// Mountain
-addRange(800, 816, "CO"); // 800–816: Colorado
-addRange(820, 831, "WY"); // 820–831: Wyoming
-addRange(832, 838, "ID"); // 832–838: Idaho
-addRange(840, 847, "UT"); // 840–847: Utah
-addRange(850, 865, "AZ"); // 850–865: Arizona
-addRange(870, 884, "NM"); // 870–884: New Mexico
-addRange(889, 899, "NV"); // 889–899: Nevada
-// West
-addRange(900, 961, "CA"); // 900–961: California
-addRange(967, 968, "HI"); // 967–968: Hawaii
-addRange(970, 979, "OR"); // 970–979: Oregon
-addRange(980, 994, "WA"); // 980–994: Washington
-addRange(995, 999, "AK"); // 995–999: Alaska
+addRange(10, 27, "MA");   addRange(28, 29, "RI");   addRange(30, 38, "NH");
+addRange(39, 49, "ME");   addRange(50, 59, "VT");   addRange(60, 69, "CT");
+addRange(70, 89, "NJ");   addRange(100, 149, "NY"); addRange(150, 196, "PA");
+addRange(197, 199, "DE"); addRange(200, 205, "DC"); addRange(206, 219, "MD");
+addRange(220, 246, "VA"); addRange(247, 269, "WV"); addRange(270, 289, "NC");
+addRange(290, 299, "SC"); addRange(300, 319, "GA"); addRange(320, 349, "FL");
+addRange(350, 369, "AL"); addRange(370, 385, "TN"); addRange(386, 397, "MS");
+addRange(398, 399, "GA"); addRange(400, 427, "KY"); addRange(430, 459, "OH");
+addRange(460, 479, "IN"); addRange(480, 499, "MI"); addRange(500, 528, "IA");
+addRange(530, 549, "WI"); addRange(550, 567, "MN"); addRange(570, 577, "SD");
+addRange(580, 588, "ND"); addRange(590, 599, "MT"); addRange(600, 629, "IL");
+addRange(630, 658, "MO"); addRange(660, 679, "KS"); addRange(680, 693, "NE");
+addRange(700, 714, "LA"); addRange(716, 729, "AR"); addRange(730, 749, "OK");
+addRange(750, 799, "TX"); addRange(800, 816, "CO"); addRange(820, 831, "WY");
+addRange(832, 838, "ID"); addRange(840, 847, "UT"); addRange(850, 865, "AZ");
+addRange(870, 884, "NM"); addRange(889, 899, "NV"); addRange(900, 961, "CA");
+addRange(967, 968, "HI"); addRange(970, 979, "OR"); addRange(980, 994, "WA");
+addRange(995, 999, "AK");
 
 function zipToState(zip: string): string | null {
   return ZIP3_TO_STATE[zip.substring(0, 3)] || null;
@@ -141,60 +90,143 @@ export default async (req: Request) => {
     const stateHpiSeries = state ? `${state}STHPI` : null;
     const stateUnemploySeries = state ? `${state}UR` : null;
 
+    // State HPI: limit=6 so obs[4] = 4 quarters (1 year) ago — true YoY comparison
     const [mortgageRes, inventoryRes, domRes, hpiRes, unemployRes] = await Promise.all([
-      fetchWithFallback(null, "MORTGAGE30US", 14),
-      fetchWithFallback(null, "ACTLISCOUUS", 14),
-      fetchWithFallback(null, "MEDDAYONMARUS", 14),
-      fetchWithFallback(stateHpiSeries, "CSUSHPISA", 14),
-      fetchWithFallback(stateUnemploySeries, "UNRATE", 14),
+      fetchWithFallback(null, "MORTGAGE30US", 4),
+      fetchWithFallback(null, "ACTLISCOUUS", 4),
+      fetchWithFallback(null, "MEDDAYONMARUS", 4),
+      fetchWithFallback(stateHpiSeries, "CSUSHPISA", 6),
+      fetchWithFallback(stateUnemploySeries, "UNRATE", 4),
     ]);
 
-    const mortgage = latestAndTrend(mortgageRes.obs);
+    const mortgage  = latestAndTrend(mortgageRes.obs);
     const inventory = latestAndTrend(inventoryRes.obs);
-    const dom = latestAndTrend(domRes.obs);
-    const hpi = latestAndTrend(hpiRes.obs);
-    const unemploy = latestAndTrend(unemployRes.obs);
-    const hpi90d = ninetyDayChange(hpiRes.obs);
+    const dom       = latestAndTrend(domRes.obs);
+    const unemploy  = latestAndTrend(unemployRes.obs);
 
-    // Deterministic scoring — same algorithm as fredClient.ts
+    // ── Market Health Score (0–100) ───────────────────────────────────────────
+    // Higher = seller's market (strong demand, fast sales, appreciating prices)
+    // Lower  = buyer's market  (weak demand, slow sales, flat/falling prices)
+    //
+    // State-level factors differentiate regions. National factors set the baseline.
+    // ZIPs in the same state share state indicators — FRED is state-level only.
+
     let score = 0;
-    const factors: string[] = [];
+    const factors: Array<{ label: string; points: number; description: string }> = [];
 
-    if (mortgage.current !== null && mortgage.current > 7 && mortgage.trend === "rising") {
-      score += 20; factors.push("Rising Borrowing Costs");
-    } else if (mortgage.current !== null && mortgage.current > 7) {
-      score += 12; factors.push("High Borrowing Costs");
+    // 1. State HPI year-over-year appreciation (0–38 pts)
+    //    obs[4] on quarterly state HPI = exactly 1 year ago
+    const hpiYoY = hpiRes.obs.length >= 5
+      ? ((parseFloat(hpiRes.obs[0].value) - parseFloat(hpiRes.obs[4].value))
+          / parseFloat(hpiRes.obs[4].value)) * 100
+      : null;
+
+    if (hpiYoY !== null) {
+      let pts = 4;
+      if      (hpiYoY > 8) pts = 38;
+      else if (hpiYoY > 6) pts = 32;
+      else if (hpiYoY > 4) pts = 26;
+      else if (hpiYoY > 2) pts = 18;
+      else if (hpiYoY > 0) pts = 10;
+      score += pts;
+      factors.push({
+        label: `${state || "National"} Home Price Index`,
+        points: pts,
+        description: `${hpiYoY >= 0 ? "+" : ""}${hpiYoY.toFixed(1)}% YoY appreciation`,
+      });
     }
 
-    const tight = inventory.current !== null && inventory.current < 700000;
-    if (tight) { score += 20; factors.push("Tight Inventory"); }
-    else if (inventory.trend === "falling") { score += 10; factors.push("Shrinking Supply"); }
-
-    if (dom.current !== null && dom.current > 45) { score += 15; factors.push("Expired Listing Pool"); }
-    else if (dom.current !== null && dom.current > 30) { score += 7; factors.push("Slowing Velocity"); }
-
-    if (hpi90d !== null && hpi90d < -1) { score += 15; factors.push("Softening Prices"); }
-    else if (hpi90d !== null && hpi90d < 0) { score += 8; factors.push("Price Cooling"); }
-
-    if (unemploy.current !== null && (unemploy.trend === "stable" || unemploy.trend === "falling")) {
-      score += 10; factors.push("Economic Stability");
-    } else if (unemploy.current !== null && unemploy.trend === "rising" && unemploy.current > 5) {
-      score += 5; factors.push("Economic Pressure");
+    // 2. State unemployment rate (0–28 pts)
+    //    Lower unemployment = stronger economy = more active buyers and sellers
+    if (unemploy.current !== null) {
+      const u = unemploy.current;
+      let pts = 4;
+      if      (u < 3)   pts = 28;
+      else if (u < 3.5) pts = 24;
+      else if (u < 4)   pts = 20;
+      else if (u < 4.5) pts = 17;
+      else if (u < 5)   pts = 14;
+      else if (u < 5.5) pts = 11;
+      else if (u < 6)   pts = 8;
+      else if (u < 6.5) pts = 6;
+      score += pts;
+      factors.push({
+        label: `${state || "US"} Unemployment Rate`,
+        points: pts,
+        description: `${u.toFixed(1)}% — ${u < 4 ? "very strong" : u < 5 ? "healthy" : u < 6 ? "moderate" : "elevated"} labor market`,
+      });
     }
 
-    const momentum = (mortgage.trend === "rising" ? 5 : 0) + (inventory.trend === "falling" ? 5 : 0)
-      + (dom.trend === "rising" ? 5 : 0) + (hpi.trend === "falling" ? 5 : 0);
-    score += momentum;
+    // 3. Median days on market (0–12 pts)
+    //    Lower DOM = faster sales = buyers competing = seller advantage
+    if (dom.current !== null) {
+      const d = dom.current;
+      let pts = 1;
+      if      (d < 25) pts = 12;
+      else if (d < 35) pts = 10;
+      else if (d < 45) pts = 8;
+      else if (d < 55) pts = 5;
+      else if (d < 65) pts = 3;
+      score += pts;
+      factors.push({
+        label: "Median Days on Market",
+        points: pts,
+        description: `${Math.round(d)} days — ${d < 35 ? "very fast" : d < 55 ? "moderate" : "slow"} market velocity`,
+      });
+    }
+
+    // 4. Active listings inventory (0–12 pts)
+    //    Low supply = buyers compete = upward price pressure
+    if (inventory.current !== null) {
+      const i = inventory.current;
+      let pts = 2;
+      if      (i < 600000)  pts = 12;
+      else if (i < 800000)  pts = 9;
+      else if (i < 1000000) pts = 5;
+      score += pts;
+      factors.push({
+        label: "Active Listings (National)",
+        points: pts,
+        description: `${(i / 1000).toFixed(0)}K listings — ${i < 700000 ? "very tight" : i < 900000 ? "below normal" : "elevated"} supply`,
+      });
+    }
+
+    // 5. 30-year mortgage rate (0–10 pts)
+    //    Lower rates = larger buyer pool = stronger demand
+    if (mortgage.current !== null) {
+      const m = mortgage.current;
+      let pts = 0;
+      if      (m < 5.5) pts = 10;
+      else if (m < 6)   pts = 8;
+      else if (m < 6.5) pts = 6;
+      else if (m < 7)   pts = 4;
+      else if (m < 7.5) pts = 2;
+      score += pts;
+      factors.push({
+        label: "30-Year Mortgage Rate",
+        points: pts,
+        description: `${m.toFixed(2)}% — ${m < 6.5 ? "accessible" : m < 7 ? "moderate" : "restrictive"} for buyers`,
+      });
+    }
+
     score = Math.min(100, Math.max(0, score));
-
-    const leadType = score >= 71 ? "seller" : score >= 41 ? "transitional" : "buyer";
+    const leadType: "seller" | "transitional" | "buyer" =
+      score >= 65 ? "seller" : score >= 40 ? "transitional" : "buyer";
+    const topFactors = [...factors]
+      .sort((a, b) => b.points - a.points)
+      .slice(0, 2)
+      .map(f => f.label);
 
     return new Response(JSON.stringify({
       zip,
       state,
       opportunityScore: score,
       leadType,
-      topFactors: factors.slice(0, 2),
+      topFactors,
+      factors,
+      stateNote: state
+        ? `Score uses ${state} state data. All ${state} ZIPs share state-level indicators.`
+        : "No state data — national indicators only.",
       metrics: {
         mortgageRate: mortgage.current,
         mortgageTrend: mortgage.trend,
@@ -202,16 +234,19 @@ export default async (req: Request) => {
         inventoryTrend: inventory.trend,
         daysOnMarket: dom.current,
         domTrend: dom.trend,
-        hpi90dChange: hpi90d,
+        hpiYoY,
+        hpiSeriesUsed: hpiRes.seriesUsed,
         unemploymentRate: unemploy.current,
         unemployTrend: unemploy.trend,
-        hpiSeriesUsed: hpiRes.seriesUsed,
         unemploySeriesUsed: unemployRes.seriesUsed,
       },
     }), { status: 200, headers: CORS });
 
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: e.message || "FRED fetch failed" }), { status: 500, headers: CORS });
+    return new Response(
+      JSON.stringify({ error: e.message || "FRED fetch failed" }),
+      { status: 500, headers: CORS }
+    );
   }
 };
 
