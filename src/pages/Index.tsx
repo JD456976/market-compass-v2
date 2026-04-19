@@ -44,7 +44,7 @@ function getPulseLabel(score: number) {
 function PulseScoreWidget() {
   const [zip, setZip] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ score: number; cityState: string; leadType: string } | null>(null);
+  const [result, setResult] = useState<{ score: number; zip: string; state: string | null; leadType: string } | null>(null);
   const [error, setError] = useState('');
 
   const lookup = useCallback(async () => {
@@ -69,7 +69,8 @@ function PulseScoreWidget() {
       if (data.error) throw new Error(data.error);
       setResult({
         score: data.opportunityScore,
-        cityState: data.state ? `${cleaned} (${data.state})` : cleaned,
+        zip: cleaned,
+        state: data.state,
         leadType: data.leadType,
       });
     } catch (e: any) {
@@ -127,7 +128,7 @@ function PulseScoreWidget() {
                 </div>
                 <div className="space-y-1">
                   <p className={`text-xs font-semibold ${pulse.color}`}>{pulse.label}</p>
-                  <p className="text-[10px] text-muted-foreground">{result.cityState}</p>
+                  <p className="text-[10px] text-muted-foreground">{result.zip}{result.state ? ` · ${result.state}` : ''}</p>
                 </div>
                 {/* Mini bar */}
                 <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
@@ -139,12 +140,12 @@ function PulseScoreWidget() {
                   />
                 </div>
                 <div className="flex items-center justify-center gap-2 flex-wrap">
-                  <Link to="/lead-finder" className="text-[10px] text-primary hover:underline">
+                  <Link to={`/lead-finder?zip=${result.zip}`} className="text-[10px] text-primary hover:underline">
                     Full analysis →
                   </Link>
                   <button
                     onClick={() => {
-                      const msg = `Market update for ${result!.cityState}: Pulse Score ${result!.score}/100 — ${pulse!.label}. ${result!.score >= 65 ? "Seller's market" : result!.score >= 35 ? "Balanced market" : "Buyer's market"} conditions. Powered by Market Compass.`;
+                      const msg = `Market update for ${result!.zip}${result!.state ? ` (${result!.state})` : ''}: Pulse Score ${result!.score}/100 — ${pulse!.label}. ${result!.score >= 65 ? "Seller's market" : result!.score >= 35 ? "Balanced market" : "Buyer's market"} conditions. Powered by Market Compass.`;
                       if (navigator.share) {
                         navigator.share({ text: msg }).catch(() => {});
                       } else {
@@ -269,6 +270,7 @@ function ZipCompareWidget() {
         ) : !loading && (
           <p className="text-[11px] text-muted-foreground text-center">Enter two ZIP codes to compare market conditions</p>
         )}
+        <p className="text-[10px] text-muted-foreground/60 text-center">Scores based on mortgage rate, inventory, days on market, state HPI, and state unemployment — all sourced from FRED</p>
       </CardContent>
     </Card>
   );

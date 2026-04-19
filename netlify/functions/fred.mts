@@ -52,24 +52,72 @@ function ninetyDayChange(obs: any[]) {
 }
 
 // ZIP prefix → state code
+// Correct 3-digit ZIP prefix → USPS state code
+// ZIP prefix = zip.substring(0,3) e.g. "94110" → "941" → CA
 const ZIP3_TO_STATE: Record<string, string> = {};
 function addRange(lo: number, hi: number, st: string) {
   for (let i = lo; i <= hi; i++) ZIP3_TO_STATE[String(i).padStart(3, "0")] = st;
 }
-addRange(1, 2, "MA"); addRange(3, 3, "NH"); addRange(4, 4, "ME"); addRange(5, 5, "VT");
-addRange(6, 6, "CT"); addRange(7, 8, "NJ"); addRange(10, 14, "NY"); addRange(15, 19, "PA");
-addRange(20, 20, "DC"); addRange(21, 21, "MD"); addRange(22, 24, "VA"); addRange(25, 26, "WV");
-addRange(27, 28, "NC"); addRange(29, 29, "SC"); addRange(30, 31, "GA"); addRange(32, 34, "FL");
-addRange(35, 36, "AL"); addRange(37, 38, "TN"); addRange(39, 39, "MS"); addRange(40, 42, "KY");
-addRange(43, 45, "OH"); addRange(46, 47, "IN"); addRange(48, 49, "MI"); addRange(50, 52, "IA");
-addRange(53, 54, "WI"); addRange(55, 56, "MN"); addRange(57, 57, "SD"); addRange(58, 58, "ND");
-addRange(59, 59, "MT"); addRange(60, 62, "IL"); addRange(63, 65, "MO"); addRange(66, 67, "KS");
-addRange(68, 69, "NE"); addRange(70, 71, "LA"); addRange(72, 72, "AR"); addRange(73, 74, "OK");
-addRange(75, 79, "TX"); addRange(80, 81, "CO"); addRange(82, 82, "WY"); addRange(83, 83, "ID");
-addRange(84, 84, "UT"); addRange(85, 86, "AZ"); addRange(87, 88, "NM"); addRange(89, 89, "NV");
-addRange(90, 96, "CA"); addRange(97, 97, "OR"); addRange(98, 99, "WA");
-["967", "968"].forEach(z => ZIP3_TO_STATE[z] = "HI");
-["995","996","997","998","999"].forEach(z => ZIP3_TO_STATE[z] = "AK");
+// New England
+addRange(10, 27, "MA");   // 010–027: Massachusetts
+addRange(28, 29, "RI");   // 028–029: Rhode Island
+addRange(30, 38, "NH");   // 030–038: New Hampshire
+addRange(39, 49, "ME");   // 039–049: Maine
+addRange(50, 59, "VT");   // 050–059: Vermont
+addRange(60, 69, "CT");   // 060–069: Connecticut
+addRange(70, 89, "NJ");   // 070–089: New Jersey
+// Mid-Atlantic
+addRange(100, 149, "NY"); // 100–149: New York
+addRange(150, 196, "PA"); // 150–196: Pennsylvania
+addRange(197, 199, "DE"); // 197–199: Delaware
+addRange(200, 205, "DC"); // 200–205: District of Columbia
+addRange(206, 219, "MD"); // 206–219: Maryland
+addRange(220, 246, "VA"); // 220–246: Virginia
+addRange(247, 269, "WV"); // 247–269: West Virginia
+// Southeast
+addRange(270, 289, "NC"); // 270–289: North Carolina
+addRange(290, 299, "SC"); // 290–299: South Carolina
+addRange(300, 319, "GA"); // 300–319: Georgia
+addRange(320, 349, "FL"); // 320–349: Florida
+addRange(350, 369, "AL"); // 350–369: Alabama
+addRange(370, 385, "TN"); // 370–385: Tennessee
+addRange(386, 397, "MS"); // 386–397: Mississippi
+addRange(398, 399, "GA"); // 398–399: Georgia (continued)
+// Border/Midwest
+addRange(400, 427, "KY"); // 400–427: Kentucky
+addRange(430, 459, "OH"); // 430–459: Ohio
+addRange(460, 479, "IN"); // 460–479: Indiana
+addRange(480, 499, "MI"); // 480–499: Michigan
+// Midwest
+addRange(500, 528, "IA"); // 500–528: Iowa
+addRange(530, 549, "WI"); // 530–549: Wisconsin
+addRange(550, 567, "MN"); // 550–567: Minnesota
+addRange(570, 577, "SD"); // 570–577: South Dakota
+addRange(580, 588, "ND"); // 580–588: North Dakota
+addRange(590, 599, "MT"); // 590–599: Montana
+addRange(600, 629, "IL"); // 600–629: Illinois
+addRange(630, 658, "MO"); // 630–658: Missouri
+addRange(660, 679, "KS"); // 660–679: Kansas
+addRange(680, 693, "NE"); // 680–693: Nebraska
+// South Central
+addRange(700, 714, "LA"); // 700–714: Louisiana
+addRange(716, 729, "AR"); // 716–729: Arkansas
+addRange(730, 749, "OK"); // 730–749: Oklahoma
+addRange(750, 799, "TX"); // 750–799: Texas
+// Mountain
+addRange(800, 816, "CO"); // 800–816: Colorado
+addRange(820, 831, "WY"); // 820–831: Wyoming
+addRange(832, 838, "ID"); // 832–838: Idaho
+addRange(840, 847, "UT"); // 840–847: Utah
+addRange(850, 865, "AZ"); // 850–865: Arizona
+addRange(870, 884, "NM"); // 870–884: New Mexico
+addRange(889, 899, "NV"); // 889–899: Nevada
+// West
+addRange(900, 961, "CA"); // 900–961: California
+addRange(967, 968, "HI"); // 967–968: Hawaii
+addRange(970, 979, "OR"); // 970–979: Oregon
+addRange(980, 994, "WA"); // 980–994: Washington
+addRange(995, 999, "AK"); // 995–999: Alaska
 
 function zipToState(zip: string): string | null {
   return ZIP3_TO_STATE[zip.substring(0, 3)] || null;

@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -837,7 +838,9 @@ function CsvUpload({ currentResult }: { currentResult: LeadFinderResult | null }
 export default function LeadFinder() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [zip, setZip] = useState('');
+  const [searchParams] = useSearchParams();
+  const initialZip = searchParams.get('zip') || '';
+  const [zip, setZip] = useState(initialZip);
   const [cityState, setCityState] = useState('');
   const [result, setResult] = useState<LeadFinderResult | null>(null);
   const [previousScore, setPreviousScore] = useState<number | null>(null);
@@ -868,6 +871,19 @@ export default function LeadFinder() {
     setZip(selectedZip);
     if (selectedCityState) setCityState(selectedCityState);
   }, []);
+
+  // Auto-run analysis when navigated here with ?zip= param (e.g. from Pulse Score widget)
+  const autoRanRef = useRef(false);
+  useEffect(() => {
+    if (initialZip && /^\d{5}$/.test(initialZip) && !autoRanRef.current) {
+      autoRanRef.current = true;
+      // Small delay to allow auth + UI to settle
+      const t = setTimeout(() => {
+        document.getElementById('lf-analyze-btn')?.click();
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [initialZip]);
 
   const analyze = async () => {
     const trimmedZip = zip.trim();
@@ -1026,7 +1042,7 @@ Use your knowledge of this specific ZIP's local housing market, economy, and rec
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="flex-1">
+                  <div className="flex-1 max-w-[200px]">
                     <label className="text-xs font-medium text-muted-foreground mb-1.5 block">ZIP Code</label>
                     <Input
                       placeholder="e.g. 90210"
@@ -1038,18 +1054,8 @@ Use your knowledge of this specific ZIP's local housing market, economy, and rec
                       inputMode="numeric"
                     />
                   </div>
-                  <div className="flex-1">
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">City / State (optional)</label>
-                    <Input
-                      placeholder="e.g. Beverly Hills, CA"
-                      value={cityState}
-                      onChange={e => setCityState(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="h-12 text-base"
-                    />
-                  </div>
                   <div className="sm:self-end">
-                    <Button onClick={analyze} disabled={loading || zip.length < 5} className="h-12 px-8 w-full sm:w-auto">
+                    <Button id="lf-analyze-btn" onClick={analyze} disabled={loading || zip.length < 5} className="h-12 px-8 w-full sm:w-auto">
                       {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Analyzing…</> : <><Search className="h-4 w-4 mr-2" />Analyze This Market</>}
                     </Button>
                   </div>
