@@ -291,7 +291,7 @@ function MobileBottomNav() {
     { to: '/lead-finder', label: 'Lead Finder', icon: Users },
     { to: '/listing-navigator', label: 'Listing Nav', icon: Search },
     { to: '/market-intelligence', label: 'Market Intel', icon: TrendingUp },
-    { to: '/shared-reports', label: 'Reports', icon: FileText },
+    { to: '/settings', label: 'Profile', icon: User },
   ] as const;
 
   return (

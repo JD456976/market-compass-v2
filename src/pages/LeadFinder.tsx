@@ -898,40 +898,64 @@ export default function LeadFinder() {
     const timeout = setTimeout(() => controller.abort(), 25000);
 
     try {
-      // Direct browser call to Anthropic — no edge functions
-      const anthropicRes = await fetch('/api/claude', {
+      // Route through Netlify FRED proxy — real data, no AI guessing
+      const fredRes = await fetch('/api/fred', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 800,
-          messages: [{
-            role: 'user',
-            content: `You are a US real estate market data expert. For ZIP code ${trimmedZip}, return ONLY a valid JSON object (no markdown, no explanation) with this exact shape:
-{"opportunityScore":<number 0-100>,"leadType":"seller"|"transitional"|"buyer","mortgage":{"current":<number>,"trend":"rising"|"falling"|"stable"},"inventory":{"current":<number>,"trend":"rising"|"falling"|"stable"},"daysOnMarket":{"current":<number>,"trend":"rising"|"falling"|"stable"},"hpi":{"current":<number>,"change90d":<number>},"unemployment":{"current":<number>,"trend":"rising"|"falling"|"stable"},"topFactors":[{"label":<string>,"points":<number>,"reason":<string>}]}
-Use your knowledge of this specific ZIP's local housing market, economy, and recent trends. opportunityScore reflects how strong the prospecting opportunity is for a real estate agent. Include 3-5 topFactors. Return ONLY the JSON.`
-          }],
-        }),
+        body: JSON.stringify({ zip: trimmedZip }),
       });
-      if (!anthropicRes.ok) {
-        const errText = await anthropicRes.text();
-        throw new Error(`API error ${anthropicRes.status}: ${errText.slice(0, 200)}`);
+      if (!fredRes.ok) {
+        const errText = await fredRes.text();
+        throw new Error(`Market data error ${fredRes.status}: ${errText.slice(0, 200)}`);
       }
-      const anthropicJson = await anthropicRes.json();
-      if (anthropicJson?.type === 'error') throw new Error(anthropicJson?.error?.message || 'Could not generate response.');
-      const rawText = anthropicJson?.content?.[0]?.text || '';
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON found in AI response');
-      const fredData = JSON.parse(jsonMatch[0]);
-      fredData.zip = trimmedZip;
-      fredData.fetchedAt = new Date().toISOString();
-      fredData.metrics = {
-        mortgage: fredData.mortgage,
-        inventory: fredData.inventory,
-        daysOnMarket: fredData.daysOnMarket,
-        hpi: fredData.hpi,
-        unemployment: fredData.unemployment,
+      const fredJson = await fredRes.json();
+      if (fredJson.error) throw new Error(fredJson.error);
+
+      // Map /api/fred response to LeadFinder shape
+      const fredData: any = {
+        zip: trimmedZip,
+        fetchedAt: new Date().toISOString(),
+        opportunityScore: fredJson.opportunityScore,
+        leadType: fredJson.leadType,
+        topFactors: (fredJson.factors || []).map((f: any) => ({ label: f.label, points: f.points, reason: f.description })),
+        scoreBreakdown: fredJson.factors || [],
+        metrics: {
+          mortgage: {
+            current: fredJson.metrics.mortgageRate, trend: fredJson.metrics.mortgageTrend,
+            label: '30-Year Mortgage Rate', sublabel: 'MORTGAGE30US', unit: '%',
+            note: `${fredJson.metrics.mortgageRate?.toFixed(2)}% — ${fredJson.metrics.mortgageTrend === 'falling' ? 'rates easing' : fredJson.metrics.mortgageTrend === 'rising' ? 'rates rising' : 'rates stable'}`,
+            flagged: (fredJson.metrics.mortgageRate || 0) > 7,
+          },
+          inventory: {
+            current: fredJson.metrics.inventoryCount, trend: fredJson.metrics.inventoryTrend,
+            label: 'Active Listings', sublabel: 'ACTLISCOUUS', unit: 'listings',
+            note: `${fredJson.metrics.inventoryCount ? Math.round(fredJson.metrics.inventoryCount / 1000) + 'K' : '—'} nationally`,
+            flagged: (fredJson.metrics.inventoryCount || 999999) < 700000,
+          },
+          daysOnMarket: {
+            current: fredJson.metrics.daysOnMarket, trend: fredJson.metrics.domTrend,
+            label: 'Median Days on Market', sublabel: 'MEDDAYONMARUS', unit: 'days',
+            note: `${fredJson.metrics.daysOnMarket ? Math.round(fredJson.metrics.daysOnMarket) + ' days' : '—'} nationally`,
+            flagged: (fredJson.metrics.daysOnMarket || 0) > 45,
+          },
+          hpi: {
+            current: null, change90d: fredJson.metrics.hpiYoY,
+            label: `${fredJson.state || 'State'} Home Price Index`,
+            sublabel: fredJson.metrics.hpiSeriesUsed || 'CSUSHPISA', unit: 'index',
+            note: `${fredJson.metrics.hpiYoY != null ? (fredJson.metrics.hpiYoY >= 0 ? '+' : '') + fredJson.metrics.hpiYoY.toFixed(1) + '% YoY' : 'Data unavailable'}`,
+            flagged: (fredJson.metrics.hpiYoY || 0) < -1,
+          },
+          unemployment: {
+            current: fredJson.metrics.unemploymentRate, trend: fredJson.metrics.unemployTrend,
+            label: `${fredJson.state || 'US'} Unemployment Rate`,
+            sublabel: fredJson.metrics.unemploySeriesUsed || 'UNRATE', unit: '%',
+            note: `${fredJson.metrics.unemploymentRate?.toFixed(1)}% — ${fredJson.metrics.unemployTrend === 'falling' ? 'improving' : fredJson.metrics.unemployTrend === 'rising' ? 'rising' : 'stable'}`,
+            flagged: (fredJson.metrics.unemploymentRate || 0) > 5.5,
+          },
+        },
+        state: fredJson.state,
+        stateNote: fredJson.stateNote,
       };
       clearTimeout(timeout);
 
@@ -981,7 +1005,7 @@ Use your knowledge of this specific ZIP's local housing market, economy, and rec
     } catch (err: any) {
       clearTimeout(timeout);
       if (err.name === 'AbortError') {
-        setError(e?.message || 'Request timed out. The FRED API may be slow — please try again.');
+        setError(err?.message || 'Request timed out. Try again.');
       } else {
         setError(err.message || 'Failed to fetch market data. Please try again.');
       }

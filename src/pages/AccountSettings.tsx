@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DealPilotConnectionCard } from '@/components/DealPilotButton';
 import { Button } from '@/components/ui/button';
@@ -15,12 +15,69 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Settings, User, Shield, Trash2, Download, ExternalLink, Loader2, LogOut } from 'lucide-react';
+import { ArrowLeft, Settings, User, Shield, Trash2, Download, ExternalLink, Loader2, LogOut, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getBetaAccessSession, clearBetaAccessSession } from '@/lib/betaAccess';
 import { useSessions } from '@/hooks/useSessions';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { OWNER_EMAILS } from '@/contexts/EntitlementContext';
+import { format, differenceInDays } from 'date-fns';
+
+function AccessStatusBadge({ userEmail }: { userEmail: string | null }) {
+  const [expiry, setExpiry] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userEmail) { setLoading(false); return; }
+    // Owners always have full access — no expiry needed
+    if (OWNER_EMAILS.some(e => e.toLowerCase() === userEmail.toLowerCase())) {
+      setLoading(false); return;
+    }
+    supabase.from('profiles').select('beta_access_expires_at').eq('email', userEmail).maybeSingle()
+      .then(({ data }) => { setExpiry(data?.beta_access_expires_at || null); setLoading(false); });
+  }, [userEmail]);
+
+  if (loading) return null;
+
+  // Owner — full access
+  if (userEmail && OWNER_EMAILS.some(e => e.toLowerCase() === userEmail.toLowerCase())) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+        <div>
+          <p className="text-sm font-medium text-emerald-400">Full Access</p>
+          <p className="text-xs text-muted-foreground">Owner account — all features unlocked</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!expiry) return (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
+      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+      <p className="text-sm text-primary font-medium">Active Access</p>
+    </div>
+  );
+
+  const daysLeft = differenceInDays(new Date(expiry), new Date());
+  const expired = daysLeft < 0;
+  const urgent = daysLeft <= 7 && !expired;
+
+  return (
+    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${expired ? 'bg-destructive/10 border-destructive/20' : urgent ? 'bg-warning/10 border-warning/20' : 'bg-primary/10 border-primary/20'}`}>
+      {expired ? <AlertTriangle className="h-4 w-4 text-destructive shrink-0" /> : <Clock className={`h-4 w-4 shrink-0 ${urgent ? 'text-warning' : 'text-primary'}`} />}
+      <div>
+        <p className={`text-sm font-medium ${expired ? 'text-destructive' : urgent ? 'text-warning' : 'text-primary'}`}>
+          {expired ? 'Access Expired' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining`}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {expired ? `Expired ${format(new Date(expiry), 'MMM d, yyyy')}` : `Access until ${format(new Date(expiry), 'MMM d, yyyy')}`}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 const AccountSettings = () => {
   const navigate = useNavigate();
@@ -168,6 +225,8 @@ const AccountSettings = () => {
               <Label>Email</Label>
               <Input value={user?.email || session?.email || ''} disabled className="h-11 bg-muted" />
             </div>
+            {/* Access status */}
+            <AccessStatusBadge userEmail={user?.email || session?.email || null} />
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="p-3 rounded-lg bg-muted/50">
                 <p className="text-muted-foreground">Drafts</p>
