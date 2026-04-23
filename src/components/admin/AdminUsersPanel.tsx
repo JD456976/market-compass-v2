@@ -102,11 +102,16 @@ export function AdminUsersPanel() {
     { label: '60d', days: 60 }, { label: '90d', days: 90 },
   ];
 
+  const [extendFromCurrent, setExtendFromCurrent] = useState(false);
   const effectiveDays = grantUseCustom ? (parseInt(grantCustom) || 0) : grantDays;
 
   const handleGrantAccess = async () => {
     if (!grantTarget || effectiveDays < 1) return;
-    const expires = new Date();
+    // If extending from current expiry and user has future expiry, add days to that
+    const base = extendFromCurrent && grantTarget.beta_access_active && grantTarget.beta_access_expires_at
+      ? new Date(Math.max(Date.now(), new Date(grantTarget.beta_access_expires_at).getTime()))
+      : new Date();
+    const expires = new Date(base);
     expires.setDate(expires.getDate() + effectiveDays);
     setGranting(true);
     const { error } = await supabase.from('profiles').update({
@@ -132,6 +137,7 @@ export function AdminUsersPanel() {
       setGrantDays(30);
       setGrantCustom('');
       setGrantUseCustom(false);
+      setExtendFromCurrent(profile.beta_access_active && !!profile.beta_access_expires_at && new Date(profile.beta_access_expires_at) > new Date());
       return;
     }
     // Revoking
@@ -153,6 +159,7 @@ export function AdminUsersPanel() {
   // ── Invite User ─────────────────────────────────────────────────────────────
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
   const [inviteDays, setInviteDays] = useState(30);
   const [inviting, setInviting] = useState(false);
 
@@ -164,13 +171,17 @@ export function AdminUsersPanel() {
     }
     setInviting(true);
     try {
-      const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
-        data: { beta_access_days: inviteDays },
+      const res = await fetch('/api/invite-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name: inviteName.trim(), days: inviteDays }),
       });
-      if (error) throw error;
-      toast({ title: 'Invite sent', description: `${email} will receive a sign-up link. Access: ${inviteDays} days.` });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Invite failed');
+      toast({ title: data.existing_user ? 'Access updated' : 'Invite sent', description: data.message });
       setShowInvite(false);
       setInviteEmail('');
+      setInviteName('');
       fetchData();
     } catch (e: any) {
       toast({ title: 'Invite failed', description: e.message, variant: 'destructive' });
@@ -429,13 +440,30 @@ export function AdminUsersPanel() {
                   <span className="text-sm text-muted-foreground">days</span>
                 </div>
               )}
-              {effectiveDays > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Expires <span className="font-medium text-foreground">
-                    {new Date(Date.now() + effectiveDays * 86400000).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
-                  </span>
-                </p>
+              {/* Extend-from-current toggle — only show if user already has future access */}
+              {grantTarget.beta_access_active && grantTarget.beta_access_expires_at && new Date(grantTarget.beta_access_expires_at) > new Date() && (
+                <button
+                  onClick={() => setExtendFromCurrent(v => !v)}
+                  className={`w-full py-2 rounded-lg text-xs font-semibold border transition-colors flex items-center justify-between px-3 ${extendFromCurrent ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-700' : 'border-border text-muted-foreground hover:text-foreground'}`}
+                >
+                  <span>Extend from current expiry</span>
+                  <span className="font-mono text-[10px]">{new Date(grantTarget.beta_access_expires_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+                </button>
               )}
+              {effectiveDays > 0 && (() => {
+                const base = extendFromCurrent && grantTarget.beta_access_active && grantTarget.beta_access_expires_at && new Date(grantTarget.beta_access_expires_at) > new Date()
+                  ? new Date(grantTarget.beta_access_expires_at)
+                  : new Date();
+                const newExpiry = new Date(base);
+                newExpiry.setDate(newExpiry.getDate() + effectiveDays);
+                return (
+                  <p className="text-xs text-muted-foreground">
+                    New expiry <span className="font-medium text-foreground">
+                      {newExpiry.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
+                    </span>
+                  </p>
+                );
+              })()}
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setGrantTarget(null)} className="flex-1" disabled={granting}>Cancel</Button>
@@ -461,14 +489,22 @@ export function AdminUsersPanel() {
             </div>
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Email Address</label>
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Email Address *</label>
                 <Input
                   type="email"
                   placeholder="tester@example.com"
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleInviteUser()}
                   autoFocus
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Name <span className="normal-case text-muted-foreground/60">(optional)</span></label>
+                <Input
+                  placeholder="First Last or Company"
+                  value={inviteName}
+                  onChange={e => setInviteName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleInviteUser()}
                 />
               </div>
               <div className="space-y-1.5">

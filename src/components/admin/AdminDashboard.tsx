@@ -9,7 +9,6 @@ import {
   KeyRound, 
   Smartphone, 
   RefreshCw,
-  Plus,
   CheckCircle2,
   XCircle,
   Clock,
@@ -17,7 +16,6 @@ import {
   Monitor
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { IssueCodePanel } from './IssueCodePanel';
 import { BetaCodesTable, BetaCode } from './BetaCodesTable';
 import { ActivationsTable, BetaActivation } from './ActivationsTable';
 import { OwnerDevicesTable, OwnerDevice } from './OwnerDevicesTable';
@@ -48,7 +46,6 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
   const [activations, setActivations] = useState<BetaActivation[]>([]);
   const [ownerDevices, setOwnerDevices] = useState<OwnerDevice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showIssuePanel, setShowIssuePanel] = useState(false);
   const [isMarkingOwner, setIsMarkingOwner] = useState(false);
   const [isCurrentDeviceOwner, setIsCurrentDeviceOwner] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
@@ -315,20 +312,7 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3">
-          {showIssuePanel ? (
-            <IssueCodePanel 
-              adminEmail={userEmail || ''} 
-              onClose={() => setShowIssuePanel(false)}
-              onCreated={fetchData}
-            />
-          ) : (
-            <Button onClick={() => setShowIssuePanel(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Issue Access Code
-            </Button>
-          )}
-
+        <div className="flex flex-wrap gap-3 items-center">
           {!isCurrentDeviceOwner && (
             <Button 
               variant="outline" 
