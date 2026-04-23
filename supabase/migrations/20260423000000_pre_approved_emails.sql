@@ -11,9 +11,12 @@ CREATE TABLE IF NOT EXISTS public.pre_approved_emails (
   days        int         NOT NULL DEFAULT 30,
   expires_at  timestamptz NOT NULL,
   created_at  timestamptz NOT NULL DEFAULT now(),
-  created_by  uuid        REFERENCES auth.users(id),
-  CONSTRAINT pre_approved_emails_email_key UNIQUE (lower(email))
+  created_by  uuid        REFERENCES auth.users(id)
 );
+
+-- Expression-based unique index (Postgres requires this as a separate statement)
+CREATE UNIQUE INDEX IF NOT EXISTS pre_approved_emails_email_key
+  ON public.pre_approved_emails (lower(email));
 
 ALTER TABLE public.pre_approved_emails ENABLE ROW LEVEL SECURITY;
 
