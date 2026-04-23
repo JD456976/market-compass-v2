@@ -31,6 +31,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.from('profiles').update({ last_active_at: new Date().toISOString() })
           .eq('user_id', session.user.id).then(() => {}).catch(() => {});
       }
+      // On sign-in, claim any pre-approved beta access for this email
+      if (_event === 'SIGNED_IN' && session?.user) {
+        supabase.rpc('claim_pre_approved_access').then(() => {}).catch(() => {});
+      }
     });
 
     // THEN check for existing session

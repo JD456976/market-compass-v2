@@ -171,14 +171,33 @@ export function AdminUsersPanel() {
     }
     setInviting(true);
     try {
-      const res = await fetch('/api/invite-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name: inviteName.trim(), days: inviteDays }),
+      // 1. Store pre-approval in DB (sets expiry for future billing enforcement)
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + inviteDays);
+      const { data: rpcData, error: rpcError } = await supabase.rpc('upsert_pre_approved_email', {
+        p_email: email,
+        p_name: inviteName.trim() || null,
+        p_days: inviteDays,
+        p_expires_at: expiresAt.toISOString(),
       });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Invite failed');
-      toast({ title: data.existing_user ? 'Access updated' : 'Invite sent', description: data.message });
+      if (rpcError) throw rpcError;
+      const rpcResult = rpcData as { ok: boolean; error?: string };
+      if (!rpcResult.ok) throw new Error(rpcResult.error ?? 'Failed to pre-approve email');
+
+      // 2. Send magic link — user clicks it, lands on the app already authenticated
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: window.location.origin,
+        },
+      });
+      if (otpError) throw otpError;
+
+      toast({
+        title: 'Invite sent',
+        description: `${email} will receive a sign-in link. Access granted for ${inviteDays} days once they click it.`,
+      });
       setShowInvite(false);
       setInviteEmail('');
       setInviteName('');
