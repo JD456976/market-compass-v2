@@ -933,6 +933,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pre_approved_emails: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          days: number
+          email: string
+          expires_at: string
+          id: string
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          days?: number
+          email: string
+          expires_at: string
+          id?: string
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          days?: number
+          email?: string
+          expires_at?: string
+          id?: string
+          name?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1503,6 +1533,7 @@ export type Database = {
         Returns: Json
       }
       check_owner_device: { Args: { p_device_id: string }; Returns: Json }
+      claim_pre_approved_access: { Args: never; Returns: Json }
       claim_shared_reports: {
         Args: { p_email: string; p_session_id?: string; p_user_id: string }
         Returns: Json
@@ -1593,6 +1624,15 @@ export type Database = {
       }
       revoke_beta_access_code: { Args: { p_code_id: string }; Returns: Json }
       revoke_owner_device: { Args: { p_device_id: string }; Returns: Json }
+      upsert_pre_approved_email: {
+        Args: {
+          p_days?: number
+          p_email: string
+          p_expires_at?: string
+          p_name?: string
+        }
+        Returns: Json
+      }
       validate_beta_code: {
         Args: {
           p_code_hash: string
