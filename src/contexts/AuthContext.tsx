@@ -28,12 +28,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       // Track last active for admin dashboard metrics
       if (session?.user) {
-        supabase.from('profiles').update({ last_active_at: new Date().toISOString() })
-          .eq('user_id', session.user.id).then(() => {}).catch(() => {});
+        Promise.resolve(
+          supabase.from('profiles').update({ last_active_at: new Date().toISOString() })
+            .eq('user_id', session.user.id)
+        ).then(() => {}, () => {});
       }
       // On sign-in, claim any pre-approved beta access for this email
       if (_event === 'SIGNED_IN' && session?.user) {
-        supabase.rpc('claim_pre_approved_access').then(() => {}).catch(() => {});
+        Promise.resolve(supabase.rpc('claim_pre_approved_access')).then(() => {}, () => {});
       }
     });
 

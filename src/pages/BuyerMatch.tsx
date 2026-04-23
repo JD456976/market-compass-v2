@@ -308,7 +308,7 @@ export default function BuyerMatch() {
     setResults(null);
     try {
       const buyerList = validBuyers.map(b =>
-        `- ${b.name}: budget ${b.budget || 'unspecified'}, wants ${b.bedrooms || '?'}bd/${b.bathrooms || '?'}ba, ${b.propertyType || 'any type'}, neighborhoods: ${b.neighborhoods || 'flexible'}, timeline: ${b.timeline || 'unknown'}, preapproved: ${b.preapproved ? 'yes' : 'no'}`
+        `- ${b.name}: budget ${b.budgetMax || 'unspecified'}, wants ${b.minBedrooms || '?'}bd, neighborhoods: ${b.preferredAreas || 'flexible'}, must-haves: ${b.mustHaveFeatures || 'none'}, timeline: ${b.timeline || 'unknown'}, notes: ${b.notes || 'none'}`
       ).join('\n');
       const prompt = `You are a real estate buyer-matching AI. Given this listing and buyers, score each buyer 0-100 for fit.
 
