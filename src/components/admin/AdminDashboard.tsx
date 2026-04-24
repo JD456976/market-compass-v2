@@ -6,20 +6,13 @@ import { Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
   LogOut, 
-  KeyRound, 
   Smartphone, 
   RefreshCw,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Ban,
   Monitor
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { BetaCodesTable, BetaCode } from './BetaCodesTable';
 import { ActivationsTable, BetaActivation } from './ActivationsTable';
 import { OwnerDevicesTable, OwnerDevice } from './OwnerDevicesTable';
-import { AdminBetaCodesPanel } from './AdminBetaCodesPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDeviceId, setOwnerDevice, clearBetaAccessSession, clearOwnerDevice, isOwnerDevice as checkIsOwnerDevice } from '@/lib/betaAccess';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -42,7 +35,6 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
-  const [codes, setCodes] = useState<BetaCode[]>([]);
   const [activations, setActivations] = useState<BetaActivation[]>([]);
   const [ownerDevices, setOwnerDevices] = useState<OwnerDevice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -117,19 +109,11 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Calculate stats from new data model
-  const getCodeStatus = (code: BetaCode): string => {
-    if (code.revoked_at) return 'revoked';
-    if (code.used_at) return 'used';
-    if (code.expires_at && new Date(code.expires_at) < new Date()) return 'expired';
-    return 'active';
-  };
-
   const stats = {
-    active: codes.filter(c => getCodeStatus(c) === 'active').length,
-    used: codes.filter(c => getCodeStatus(c) === 'used').length,
-    revoked: codes.filter(c => getCodeStatus(c) === 'revoked').length,
-    expired: codes.filter(c => getCodeStatus(c) === 'expired').length,
+    active: 0,
+    used: 0,
+    revoked: 0,
+    expired: 0,
     activations: activations.length,
     ownerDevices: ownerDevices.filter(d => !d.revoked_at).length,
   };
@@ -243,55 +227,16 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
 
       <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  <Monitor className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold">{stats.active}</p>
-                  <p className="text-xs text-muted-foreground">Active Codes</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-accent/10 rounded-lg">
-                  <KeyRound className="h-5 w-5 text-accent" />
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold">{stats.used}</p>
-                  <p className="text-xs text-muted-foreground">Used Codes</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-destructive/10 rounded-lg">
-                  <Ban className="h-5 w-5 text-destructive" />
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold">{stats.revoked}</p>
-                  <p className="text-xs text-muted-foreground">Revoked</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-muted rounded-lg">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold">{stats.expired}</p>
-                  <p className="text-xs text-muted-foreground">Expired</p>
+                  <p className="text-2xl font-semibold">{stats.ownerDevices}</p>
+                  <p className="text-xs text-muted-foreground">Owner Devices</p>
                 </div>
               </div>
             </CardContent>
@@ -304,7 +249,7 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
                 </div>
                 <div>
                   <p className="text-2xl font-semibold">{stats.activations}</p>
-                  <p className="text-xs text-muted-foreground">Activations</p>
+                  <p className="text-xs text-muted-foreground">Legacy Activations</p>
                 </div>
               </div>
             </CardContent>
@@ -333,12 +278,11 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
         </div>
 
         {/* Tables */}
-        <Tabs defaultValue="beta-codes" className="space-y-4">
+        <Tabs defaultValue="users" className="space-y-4">
           <div className="overflow-x-auto -mx-4 px-4">
             <TabsList className="inline-flex w-auto min-w-full h-auto gap-1">
-              <TabsTrigger value="beta-codes" className="text-xs px-3 py-2 whitespace-nowrap">
-                <KeyRound className="h-3.5 w-3.5 mr-1" />
-                Beta Codes
+              <TabsTrigger value="users" className="text-xs px-3 py-2 whitespace-nowrap">
+                Users
               </TabsTrigger>
               <TabsTrigger value="activations" className="text-xs px-3 py-2 whitespace-nowrap">
                 <Smartphone className="h-3.5 w-3.5 mr-1" />
@@ -347,9 +291,6 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
               <TabsTrigger value="owner-devices" className="text-xs px-3 py-2 whitespace-nowrap">
                 <Monitor className="h-3.5 w-3.5 mr-1" />
                 Devices ({stats.ownerDevices})
-              </TabsTrigger>
-              <TabsTrigger value="users" className="text-xs px-3 py-2 whitespace-nowrap">
-                Users
               </TabsTrigger>
               <TabsTrigger value="reports" className="text-xs px-3 py-2 whitespace-nowrap">
                 Reports
@@ -363,8 +304,8 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
             </TabsList>
           </div>
 
-          <TabsContent value="beta-codes">
-            <AdminBetaCodesPanel />
+          <TabsContent value="users">
+            <AdminUsersPanel />
           </TabsContent>
 
           <TabsContent value="activations">
@@ -373,10 +314,6 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
 
           <TabsContent value="owner-devices">
             <OwnerDevicesTable devices={ownerDevices} onRefresh={fetchData} />
-          </TabsContent>
-
-          <TabsContent value="users">
-            <AdminUsersPanel />
           </TabsContent>
 
           <TabsContent value="reports">
