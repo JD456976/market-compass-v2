@@ -93,6 +93,7 @@ export type Database = {
           code: string
           created_at: string
           created_by: string
+          email: string | null
           expires_at: string | null
           id: string
           issued_to: string | null
@@ -108,6 +109,7 @@ export type Database = {
           code: string
           created_at?: string
           created_by: string
+          email?: string | null
           expires_at?: string | null
           id?: string
           issued_to?: string | null
@@ -123,6 +125,7 @@ export type Database = {
           code?: string
           created_at?: string
           created_by?: string
+          email?: string | null
           expires_at?: string | null
           id?: string
           issued_to?: string | null
