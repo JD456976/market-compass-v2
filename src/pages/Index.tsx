@@ -178,6 +178,164 @@ function PulseScoreWidget() {
 }
 
 
+
+// ─── Daily Market Brief ───────────────────────────────────────────────────────
+const BRIEF_CACHE_KEY = 'mc_daily_brief';
+const BRIEF_CACHE_DATE_KEY = 'mc_daily_brief_date';
+
+function MarketBriefCard() {
+  const [brief, setBrief] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const cached = localStorage.getItem(BRIEF_CACHE_KEY);
+    const cachedDate = localStorage.getItem(BRIEF_CACHE_DATE_KEY);
+    if (cached && cachedDate === today) {
+      try { setBrief(JSON.parse(cached)); setLoading(false); return; } catch { /* fall through */ }
+    }
+
+    (async () => {
+      try {
+        const res = await fetch('/api/claude', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 300,
+            messages: [{
+              role: 'user',
+              content: `You are a real estate market intelligence assistant. Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}. Generate exactly 3 brief, specific market insights for US real estate agents. Each insight should be 1 concise sentence — tactical, data-grounded, actionable. Cover: (1) current mortgage rate environment, (2) national inventory or buyer/seller market trend, (3) one actionable agent tip for today's conditions. Return ONLY a JSON array of 3 strings, no markdown, no explanation.`
+            }],
+          }),
+        });
+        const data = await res.json();
+        const text = data?.content?.[0]?.text?.trim() || '[]';
+        const match = text.match(/\[[\s\S]*\]/);
+        if (match) {
+          const items: string[] = JSON.parse(match[0]);
+          setBrief(items.slice(0, 3));
+          localStorage.setItem(BRIEF_CACHE_KEY, JSON.stringify(items.slice(0, 3)));
+          localStorage.setItem(BRIEF_CACHE_DATE_KEY, today);
+        }
+      } catch { /* silent */ } finally { setLoading(false); }
+    })();
+  }, []);
+
+  const icons = ['📊', '🏠', '💡'];
+
+  return (
+    <motion.div className="max-w-4xl mx-auto mb-6" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.02 }}>
+      <div className="rounded-xl p-4" style={{ backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4" style={{ color: '#D4A853' }} />
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#94A3B8' }}>
+              Today's Market Brief
+            </span>
+          </div>
+          <span className="text-[10px]" style={{ color: '#475569' }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </span>
+        </div>
+        {loading ? (
+          <div className="space-y-2">
+            {[1,2,3].map(i => <div key={i} className="h-3.5 rounded animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.06)', width: `${70 + i * 8}%` }} />)}
+          </div>
+        ) : brief.length > 0 ? (
+          <div className="space-y-2">
+            {brief.map((item, i) => (
+              <div key={i} className="flex items-start gap-2.5">
+                <span className="text-sm leading-none mt-0.5">{icons[i]}</span>
+                <p className="text-[12px] leading-relaxed" style={{ color: '#CBD5E1' }}>{item}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </motion.div>
+  );
+}
+
+
+// ─── Daily Market Brief ───────────────────────────────────────────────────────
+const BRIEF_CACHE_KEY = 'mc_daily_brief';
+const BRIEF_CACHE_DATE_KEY = 'mc_daily_brief_date';
+
+function MarketBriefCard() {
+  const [brief, setBrief] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const cached = localStorage.getItem(BRIEF_CACHE_KEY);
+    const cachedDate = localStorage.getItem(BRIEF_CACHE_DATE_KEY);
+    if (cached && cachedDate === today) {
+      try { setBrief(JSON.parse(cached)); setLoading(false); return; } catch { /* fall through */ }
+    }
+
+    (async () => {
+      try {
+        const res = await fetch('/api/claude', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 300,
+            messages: [{
+              role: 'user',
+              content: `You are a real estate market intelligence assistant. Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}. Generate exactly 3 brief, specific market insights for US real estate agents. Each insight should be 1 concise sentence — tactical, data-grounded, actionable. Cover: (1) current mortgage rate environment, (2) national inventory or buyer/seller market trend, (3) one actionable agent tip for today's conditions. Return ONLY a JSON array of 3 strings, no markdown, no explanation.`
+            }],
+          }),
+        });
+        const data = await res.json();
+        const text = data?.content?.[0]?.text?.trim() || '[]';
+        const match = text.match(/\[[\s\S]*\]/);
+        if (match) {
+          const items: string[] = JSON.parse(match[0]);
+          setBrief(items.slice(0, 3));
+          localStorage.setItem(BRIEF_CACHE_KEY, JSON.stringify(items.slice(0, 3)));
+          localStorage.setItem(BRIEF_CACHE_DATE_KEY, today);
+        }
+      } catch { /* silent */ } finally { setLoading(false); }
+    })();
+  }, []);
+
+  const icons = ['📊', '🏠', '💡'];
+
+  return (
+    <motion.div className="max-w-4xl mx-auto mb-6" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.02 }}>
+      <div className="rounded-xl p-4" style={{ backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4" style={{ color: '#D4A853' }} />
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#94A3B8' }}>
+              Today's Market Brief
+            </span>
+          </div>
+          <span className="text-[10px]" style={{ color: '#475569' }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </span>
+        </div>
+        {loading ? (
+          <div className="space-y-2">
+            {[1,2,3].map(i => <div key={i} className="h-3.5 rounded animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.06)', width: `${70 + i * 8}%` }} />)}
+          </div>
+        ) : brief.length > 0 ? (
+          <div className="space-y-2">
+            {brief.map((item, i) => (
+              <div key={i} className="flex items-start gap-2.5">
+                <span className="text-sm leading-none mt-0.5">{icons[i]}</span>
+                <p className="text-[12px] leading-relaxed" style={{ color: '#CBD5E1' }}>{item}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── ZIP Comparison Widget ─────────────────────────────────────────
 function ZipCompareWidget() {
   const [zips, setZips] = useState<[string, string]>(['', '']);
@@ -326,6 +484,12 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8" style={{ backgroundColor: '#0F172A' }}>
+        {/* Daily Market Brief */}
+        <MarketBriefCard />
+
+        {/* Daily Market Brief */}
+        <MarketBriefCard />
+
         {/* Neighborhood Pulse Card */}
         <motion.div
           className="max-w-4xl mx-auto mb-6"
@@ -561,7 +725,13 @@ const Index = () => {
                   <span className="truncate">Draft Analyses</span>
                   {drafts.length > 0 && <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">{drafts.length}</Badge>}
                 </span>
-                <span className="text-[10px] text-muted-foreground font-normal pl-6">In-progress reports not yet shared</span>
+                {drafts.length > 0 ? (
+                  <span className="text-[10px] text-muted-foreground font-normal pl-6 truncate w-full">
+                    Last: {drafts[0]?.client_name ? `${drafts[0].client_name} · ${drafts[0].location || ''}`.trim().replace(/· $/, '') : 'Untitled'} &middot; {drafts[0]?.updated_at ? new Date(drafts[0].updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground font-normal pl-6">In-progress reports not yet shared</span>
+                )}
               </Button>
             </Link>
             <Link to="/templates" className="block">
@@ -580,7 +750,13 @@ const Index = () => {
                   <span className="truncate">Shared Reports</span>
                   {shared.length > 0 && <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">{shared.length}</Badge>}
                 </span>
-                <span className="text-[10px] text-muted-foreground font-normal pl-6">Reports sent to clients</span>
+                {shared.length > 0 ? (
+                  <span className="text-[10px] text-muted-foreground font-normal pl-6 truncate w-full">
+                    Last: {shared[0]?.client_name ? `${shared[0].client_name} · ${shared[0].location || ''}`.trim().replace(/· $/, '') : 'Untitled'} &middot; {shared[0]?.updated_at ? new Date(shared[0].updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground font-normal pl-6">Reports sent to clients</span>
+                )}
               </Button>
             </Link>
             {user && isAgent && (

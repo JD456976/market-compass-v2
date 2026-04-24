@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { BarChart2, Plus, Trash2, Copy, Loader2, Download } from 'lucide-react';
+import { BarChart2, Plus, Trash2, Copy, Loader2, Download, Clipboard, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import jsPDF from 'jspdf';
@@ -52,6 +53,54 @@ export default function QuickComps() {
 
   const [narrative, setNarrative] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mlsPasteOpen, setMlsPasteOpen] = useState(false);
+  const [mlsText, setMlsText] = useState('');
+  const [mlsParsing, setMlsParsing] = useState(false);
+
+  const parseMlsText = async () => {
+    if (!mlsText.trim()) return;
+    setMlsParsing(true);
+    try {
+      const res = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 600,
+          messages: [{
+            role: 'user',
+            content: `Extract comparable sale data from this MLS text. Return ONLY a JSON array of objects, no markdown, no explanation. Each object must have these exact keys: address (string), salePrice (number, no commas), sqft (number), dom (number or null), saleDate (string like "Jan 2025" or ""). Extract up to 5 comps. If a field is not found, use null. MLS text:\n\n${mlsText}`
+          }],
+        }),
+      });
+      const data = await res.json();
+      const text = data?.content?.[0]?.text?.trim() || '[]';
+      const match = text.match(/\[[\s\S]*\]/);
+      if (!match) throw new Error('No data found');
+      const parsed: Array<{ address?: string; salePrice?: number; sqft?: number; dom?: number | null; saleDate?: string }> = JSON.parse(match[0]);
+      if (!parsed.length) { toast.error('No comps found in that text'); return; }
+      const newComps: Comp[] = parsed.slice(0, 5).map(p => ({
+        id: crypto.randomUUID(),
+        address: p.address || '',
+        salePrice: p.salePrice ? String(p.salePrice) : '',
+        sqft: p.sqft ? String(p.sqft) : '',
+        dom: p.dom != null ? String(p.dom) : '',
+        saleDate: p.saleDate || '',
+      }));
+      setComps(prev => {
+        const empty = prev.filter(c => !c.address && !c.salePrice);
+        const filled = [...newComps, ...prev.filter(c => c.address || c.salePrice)].slice(0, 5);
+        return filled.length > 0 ? filled : prev;
+      });
+      setMlsText('');
+      setMlsPasteOpen(false);
+      toast.success(`Filled ${newComps.length} comp${newComps.length > 1 ? 's' : ''} from MLS text`);
+    } catch (e: any) {
+      toast.error('Could not parse MLS text — check format and try again');
+    } finally {
+      setMlsParsing(false);
+    }
+  };
 
   const subjectPpsf = useMemo(() => {
     const p = parsePriceValue(listPrice);
@@ -377,12 +426,58 @@ Suggested range: $${summary?.low.toLocaleString() ?? '?'} – $${summary?.high.t
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Comparable Sales</h2>
-          {comps.length < 5 && (
-            <Button variant="outline" size="sm" onClick={addComp} style={{ borderColor: '#D4A853', color: '#D4A853' }}>
-              <Plus className="h-4 w-4 mr-1" /> Add Comp
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMlsPasteOpen(v => !v)}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+              style={{
+                backgroundColor: mlsPasteOpen ? 'rgba(212,168,83,0.15)' : 'rgba(255,255,255,0.05)',
+                color: mlsPasteOpen ? '#D4A853' : '#94A3B8',
+                border: `1px solid ${mlsPasteOpen ? 'rgba(212,168,83,0.3)' : 'rgba(255,255,255,0.08)'}`,
+              }}
+            >
+              <Clipboard className="h-3.5 w-3.5" />
+              Paste MLS
+              {mlsPasteOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </button>
+            {comps.length < 5 && (
+              <Button variant="outline" size="sm" onClick={addComp} style={{ borderColor: '#D4A853', color: '#D4A853' }}>
+                <Plus className="h-4 w-4 mr-1" /> Add Comp
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* MLS Paste Panel */}
+        <AnimatePresence>
+          {mlsPasteOpen && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+              <Card style={{ background: '#1E293B', borderColor: 'rgba(212,168,83,0.2)' }}>
+                <CardContent className="p-4 space-y-3">
+                  <p className="text-xs" style={{ color: '#94A3B8' }}>
+                    Paste raw MLS text for one or more comps — AI will extract address, price, sqft, DOM, and sale date automatically.
+                  </p>
+                  <Textarea
+                    placeholder="Paste MLS listing text here... e.g. '45 Oak St, Foxboro MA — Sold $520,000, 1,850 sqft, 3 bed/2 bath, 18 DOM, closed March 2025'"
+                    value={mlsText}
+                    onChange={e => setMlsText(e.target.value)}
+                    rows={4}
+                    className="text-sm resize-none"
+                    style={{ backgroundColor: '#0F172A', borderColor: 'rgba(255,255,255,0.1)', color: '#F1F5F9' }}
+                  />
+                  <Button
+                    onClick={parseMlsText}
+                    disabled={mlsParsing || !mlsText.trim()}
+                    size="sm"
+                    style={{ background: '#D4A853', color: '#0F172A' }}
+                  >
+                    {mlsParsing ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Extracting...</> : '✨ Extract Comps'}
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {comps.map((comp, idx) => {
           const stat = compStats[idx];

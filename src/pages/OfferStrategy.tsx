@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
-import { Crosshair, Loader2, DollarSign, TrendingUp, Shield, Lightbulb } from 'lucide-react';
+import { Crosshair, Loader2, DollarSign, TrendingUp, Shield, Lightbulb, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 
@@ -56,10 +57,27 @@ const OfferStrategy = () => {
   // Inputs
   const [listPrice, setListPrice] = useState('');
   const [maxBudget, setMaxBudget] = useState('');
+  const [zip, setZip] = useState('');
+  const [pulseData, setPulseData] = useState<{ score: number; leadType: string; state: string | null } | null>(null);
+  const [pulseLoading, setPulseLoading] = useState(false);
   const [competing, setCompeting] = useState('');
   const [financing, setFinancing] = useState('');
   const [priorities, setPriorities] = useState<string[]>([]);
   const [escalation, setEscalation] = useState('ask-ai');
+
+  const fetchPulse = useCallback(async (z: string) => {
+    if (!/^\d{5}$/.test(z)) return;
+    setPulseLoading(true);
+    try {
+      const res = await fetch('/api/fred', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zip: z }),
+      });
+      const data = await res.json();
+      if (!data.error) setPulseData({ score: data.opportunityScore, leadType: data.leadType, state: data.state });
+    } catch { /* silent */ } finally { setPulseLoading(false); }
+  }, []);
 
   // State
   const [loading, setLoading] = useState(false);
@@ -86,6 +104,10 @@ const OfferStrategy = () => {
     setLoading(true);
     setResult(null);
 
+    const pulseContext = pulseData
+      ? `\n- Local Market Pulse Score: ${pulseData.score}/100 (${pulseData.leadType === 'seller' ? "Seller's market" : pulseData.leadType === 'buyer' ? "Buyer's market" : 'Balanced'})${pulseData.state ? `, ${pulseData.state}` : ''}`
+      : '';
+
     const prompt = `You are a real estate offer strategy advisor. Analyze the buyer's situation and generate a specific, data-grounded offer recommendation. Be direct and tactical. Return ONLY a raw JSON object (no markdown, no code fences) with these exact keys:
 - recommendedOffer: number (the dollar amount to offer)
 - escalationAdvice: string (escalation clause recommendation with reasoning, or "Not needed" if inappropriate)
@@ -98,7 +120,7 @@ Here is the situation:
 - Expected Competing Offers: ${competing}
 - Financing Type: ${financing}
 - Seller's Priorities: ${priorities.length > 0 ? priorities.join(', ') : 'Not specified'}
-- Include Escalation Clause: ${escalation}`;
+- Include Escalation Clause: ${escalation}${pulseContext}`;
 
     try {
       const res = await fetch('/api/claude', {
@@ -165,6 +187,38 @@ Here is the situation:
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <DollarInput label="List Price" value={listPrice} onChange={setListPrice} />
                 <DollarInput label="Your Buyer's Max Budget" value={maxBudget} onChange={setMaxBudget} />
+              </div>
+              {/* ZIP + Pulse row */}
+              <div className="mt-3 flex items-end gap-3">
+                <div className="space-y-1.5 flex-1 max-w-[140px]">
+                  <label className="text-xs font-medium" style={{ color: '#94A3B8' }}>Property ZIP</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: '#64748B' }} />
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={5}
+                      placeholder="02048"
+                      value={zip}
+                      onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 5); setZip(v); if (v.length === 5) fetchPulse(v); }}
+                      className="w-full rounded-lg pl-8 pr-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      style={{ backgroundColor: '#0F172A', border: '1px solid rgba(255,255,255,0.1)', color: '#F1F5F9' }}
+                    />
+                  </div>
+                </div>
+                {pulseLoading && <div className="h-10 w-32 rounded-lg animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />}
+                {pulseData && !pulseLoading && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'rgba(212,168,83,0.1)', border: '1px solid rgba(212,168,83,0.25)' }}>
+                    <span className="text-lg font-bold font-mono" style={{ color: '#D4A853' }}>{pulseData.score}</span>
+                    <div>
+                      <p className="text-[10px] font-semibold" style={{ color: '#D4A853' }}>Pulse Score</p>
+                      <p className="text-[10px]" style={{ color: '#94A3B8' }}>
+                        {pulseData.leadType === 'seller' ? "Seller's market" : pulseData.leadType === 'buyer' ? "Buyer's market" : 'Balanced'}
+                        {pulseData.state ? ` · ${pulseData.state}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

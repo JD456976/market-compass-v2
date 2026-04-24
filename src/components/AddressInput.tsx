@@ -4,7 +4,6 @@ import { Label } from '@/components/ui/label';
 import { MapPin, Info, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { supabase } from '@/integrations/supabase/client';
 
 export type LocationMode = 'address';
 
@@ -100,24 +99,44 @@ export function AddressInput({
   }, []);
 
   const fetchAddressSuggestions = useCallback(async (query: string) => {
-    if (query.trim().length < 3) {
+    if (query.trim().length < 5) {
       setAddressSuggestions([]);
       setShowSuggestions(false);
       return;
     }
-    
     setIsLoadingSuggestions(true);
     try {
-      const { data, error } = await supabase.functions.invoke('address-autocomplete', {
-        body: { query },
+      // Use Census Geocoding API — free, no key, no CORS issues
+      const encoded = encodeURIComponent(query);
+      const res = await fetch(
+        `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encoded}&benchmark=Public_AR_Current&format=json`,
+        { signal: AbortSignal.timeout(4000) }
+      );
+      if (!res.ok) throw new Error('geocode failed');
+      const data = await res.json();
+      const matches = (data?.result?.addressMatches || []).slice(0, 5);
+      const suggestions = matches.map((m: any) => {
+        const addr = m.matchedAddress || '';
+        const parts = addr.split(',').map((p: string) => p.trim());
+        const city = parts[1] || '';
+        const stateZip = parts[2] || '';
+        const zipMatch = stateZip.match(/\d{5}/);
+        const stateMatch = stateZip.match(/^([A-Z]{2})/);
+        const town = stateMatch ? `${city}, ${stateMatch[1]}` : city;
+        return {
+          fullAddress: addr,
+          town,
+          zip: zipMatch ? zipMatch[0] : undefined,
+        };
       });
-      
-      if (!error && data?.suggestions) {
-        setAddressSuggestions(data.suggestions);
-        setShowSuggestions(data.suggestions.length > 0);
+      if (suggestions.length > 0) {
+        setAddressSuggestions(suggestions);
+        setShowSuggestions(true);
       }
     } catch {
-      // Silent fail
+      // Silent fail — just let the user type freely
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
     } finally {
       setIsLoadingSuggestions(false);
     }
