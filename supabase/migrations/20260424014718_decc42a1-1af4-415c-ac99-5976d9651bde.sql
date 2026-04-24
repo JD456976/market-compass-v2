@@ -1,0 +1,1 @@
+ALTER TABLE public.beta_access_codes ADD COLUMN IF NOT EXISTS email text;
