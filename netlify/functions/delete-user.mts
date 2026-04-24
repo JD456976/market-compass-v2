@@ -23,14 +23,15 @@ export default async (req: Request) => {
     const { userId, profileId } = await req.json();
     if (!userId) return new Response(JSON.stringify({ error: "userId required" }), { status: 400, headers: CORS });
 
-    // Verify caller is admin
-    const callerClient = createClient(supabaseUrl!, anonKey!, { auth: { autoRefreshToken: false, persistSession: false } });
-    const { data: { user: caller }, error: callerError } = await callerClient.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (callerError || !caller) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: CORS });
-
-    // Check admin status
-    const { data: callerProfile } = await callerClient.from("profiles").select("is_admin").eq("user_id", caller.id).single();
-    if (!callerProfile?.is_admin) return new Response(JSON.stringify({ error: "Admin access required" }), { status: 403, headers: CORS });
+    // Verify caller is admin via Supabase RPC
+    const callerClient = createClient(supabaseUrl!, anonKey!, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: authHeader } }
+    });
+    const { data: isAdmin, error: adminError } = await callerClient.rpc('is_admin_user');
+    if (adminError || !isAdmin) {
+      return new Response(JSON.stringify({ error: "Admin access required" }), { status: 403, headers: CORS });
+    }
 
     // If we have service role key, do a full delete
     if (serviceRoleKey) {
@@ -46,10 +47,12 @@ export default async (req: Request) => {
       return new Response(JSON.stringify({ ok: true, full_delete: true }), { status: 200, headers: CORS });
     }
 
-    // Fallback: no service role key — hard-revoke access instead
-    // This blocks the user from the app even if auth record persists
-    const anonClient = createClient(supabaseUrl!, anonKey!, { auth: { autoRefreshToken: false, persistSession: false } });
-    await anonClient.from("profiles").update({
+    // Fallback: no service role key — hard-revoke access
+    const revokeClient = createClient(supabaseUrl!, anonKey!, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: authHeader } }
+    });
+    await revokeClient.from("profiles").update({
       beta_access_active: false,
       beta_access_expires_at: new Date(0).toISOString(),
       is_deleted: true,

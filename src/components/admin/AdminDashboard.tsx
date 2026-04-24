@@ -47,15 +47,6 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch codes from new table
-      const { data: codesData, error: codesError } = await supabase
-        .from('beta_codes')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (codesError) throw codesError;
-      setCodes(codesData || []);
-
       // Fetch activations
       const { data: activationsData, error: activationsError } = await supabase
         .from('beta_activations')
