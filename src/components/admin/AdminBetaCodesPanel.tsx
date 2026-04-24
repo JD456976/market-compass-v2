@@ -107,8 +107,8 @@ export function AdminBetaCodesPanel() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.issuedTo.trim() || !form.code.trim()) {
-      toast({ title: 'Missing fields', description: 'Code and Issued To are required.', variant: 'destructive' });
+    if (!form.issuedTo.trim() || !form.code.trim() || !form.email.trim()) {
+      toast({ title: 'Missing fields', description: 'Code, Issued To, and Email are required.', variant: 'destructive' });
       return;
     }
     setIsCreating(true);
@@ -273,8 +273,8 @@ export function AdminBetaCodesPanel() {
                     <Input id="bc-issued" placeholder="Name or Company" value={form.issuedTo} onChange={e => setForm(f => ({ ...f, issuedTo: e.target.value }))} required />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="bc-email">Email (optional)</Label>
-                    <Input id="bc-email" type="email" placeholder="name@example.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                    <Label htmlFor="bc-email">Email Address *</Label>
+                    <Input id="bc-email" type="email" placeholder="name@example.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="bc-exp">Expiration</Label>
