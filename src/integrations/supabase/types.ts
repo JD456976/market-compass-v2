@@ -99,6 +99,7 @@ export type Database = {
           issued_to: string | null
           max_uses: number
           note: string | null
+          notes: string | null
           revoked_at: string | null
           status: Database["public"]["Enums"]["beta_code_status"]
           used_at: string | null
@@ -115,6 +116,7 @@ export type Database = {
           issued_to?: string | null
           max_uses?: number
           note?: string | null
+          notes?: string | null
           revoked_at?: string | null
           status?: Database["public"]["Enums"]["beta_code_status"]
           used_at?: string | null
@@ -131,6 +133,7 @@ export type Database = {
           issued_to?: string | null
           max_uses?: number
           note?: string | null
+          notes?: string | null
           revoked_at?: string | null
           status?: Database["public"]["Enums"]["beta_code_status"]
           used_at?: string | null
