@@ -217,10 +217,18 @@ export function AdminUsersPanel() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await supabase.from('profiles').delete().eq('id', deleteTarget.id);
-      const { error } = await supabase.auth.admin.deleteUser(deleteTarget.user_id);
-      if (error) throw error;
-      toast({ title: 'User deleted', description: `${deleteTarget.email} permanently removed.` });
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/delete-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify({ userId: deleteTarget.user_id, profileId: deleteTarget.id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Delete failed');
+      toast({ title: 'User removed', description: `${deleteTarget.email} has been permanently removed.` });
       setDeleteTarget(null);
       setSelectedUser(null);
       fetchData();
