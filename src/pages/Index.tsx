@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Sparkles, Zap, Eye, Activity, Search, BarChart2 } from 'lucide-react';
+import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText, Send, Database, BookOpen, UserPlus, Sparkles, Zap, Eye, Activity, Search, BarChart2, ClipboardList } from 'lucide-react';
 // market-compass-v2
 import { callClaude } from '@/lib/aiError';
 import { AppLogo } from '@/components/AppLogo';
@@ -182,81 +182,6 @@ function PulseScoreWidget() {
 // ─── Daily Market Brief ───────────────────────────────────────────────────────
 const BRIEF_CACHE_KEY = 'mc_daily_brief';
 const BRIEF_CACHE_DATE_KEY = 'mc_daily_brief_date';
-
-function MarketBriefCard() {
-  const [brief, setBrief] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    const cached = localStorage.getItem(BRIEF_CACHE_KEY);
-    const cachedDate = localStorage.getItem(BRIEF_CACHE_DATE_KEY);
-    if (cached && cachedDate === today) {
-      try { setBrief(JSON.parse(cached)); setLoading(false); return; } catch { /* fall through */ }
-    }
-
-    (async () => {
-      try {
-        const res = await fetch('/api/claude', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 300,
-            messages: [{
-              role: 'user',
-              content: `You are a real estate market intelligence assistant. Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}. Generate exactly 3 brief, specific market insights for US real estate agents. Each insight should be 1 concise sentence — tactical, data-grounded, actionable. Cover: (1) current mortgage rate environment, (2) national inventory or buyer/seller market trend, (3) one actionable agent tip for today's conditions. Return ONLY a JSON array of 3 strings, no markdown, no explanation.`
-            }],
-          }),
-        });
-        const data = await res.json();
-        const text = data?.content?.[0]?.text?.trim() || '[]';
-        const match = text.match(/\[[\s\S]*\]/);
-        if (match) {
-          const items: string[] = JSON.parse(match[0]);
-          setBrief(items.slice(0, 3));
-          localStorage.setItem(BRIEF_CACHE_KEY, JSON.stringify(items.slice(0, 3)));
-          localStorage.setItem(BRIEF_CACHE_DATE_KEY, today);
-        }
-      } catch { /* silent */ } finally { setLoading(false); }
-    })();
-  }, []);
-
-  const icons = ['📊', '🏠', '💡'];
-
-  return (
-    <motion.div className="max-w-4xl mx-auto mb-6" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.02 }}>
-      <div className="rounded-xl p-4" style={{ backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4" style={{ color: '#D4A853' }} />
-            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#94A3B8' }}>
-              Today's Market Brief
-            </span>
-          </div>
-          <span className="text-[10px]" style={{ color: '#475569' }}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-          </span>
-        </div>
-        {loading ? (
-          <div className="space-y-2">
-            {[1,2,3].map(i => <div key={i} className="h-3.5 rounded animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.06)', width: `${70 + i * 8}%` }} />)}
-          </div>
-        ) : brief.length > 0 ? (
-          <div className="space-y-2">
-            {brief.map((item, i) => (
-              <div key={i} className="flex items-start gap-2.5">
-                <span className="text-sm leading-none mt-0.5">{icons[i]}</span>
-                <p className="text-[12px] leading-relaxed" style={{ color: '#CBD5E1' }}>{item}</p>
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    </motion.div>
-  );
-}
-
 
 // ─── Daily Market Brief ───────────────────────────────────────────────────────
 const BRIEF_CACHE_KEY = 'mc_daily_brief';
@@ -561,6 +486,21 @@ const Index = () => {
 
           {/* Client Report shortcut */}
           <motion.div variants={fadeInUp}>
+            
+            <Link to="/listing-prep" className="block h-full">
+              <Card className="h-full cursor-pointer hover:border-primary/40 transition-all group bg-card/60">
+                <CardContent className="p-4 flex flex-col h-full gap-2">
+                  <div className="flex items-center gap-2.5 mb-1">
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <ClipboardList className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="text-sm font-semibold text-foreground">Listing Prep</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed flex-1">AI playbook for your next listing appointment — talking points, objections, and your closing ask.</p>
+                  <span className="text-[10px] text-primary font-medium flex items-center gap-1 mt-auto">Open tool <ChevronRight className="h-3 w-3" /></span>
+                </CardContent>
+              </Card>
+            </Link>
             <Link to="/client-report" className="block h-full">
               <Card className="h-full cursor-pointer group">
                 <CardContent className="flex items-center gap-4 py-4">

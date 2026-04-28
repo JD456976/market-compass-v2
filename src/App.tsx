@@ -18,6 +18,7 @@ import { TrialBanner } from "@/components/TrialBanner";
 import { PWAUpdateToast } from "@/components/PWAUpdateToast";
 import Index from "./pages/Index";
 import MarketIntelligence from "./pages/MarketIntelligence";
+import ListingPrep from '@/pages/ListingPrep';
 import QuickReport from "./pages/QuickReport";
 import MarketData from "./pages/MarketData";
 import Methodology from "./pages/Methodology";
@@ -143,6 +144,7 @@ function AppRoutes() {
           <Route path="/mortgage-calculator" element={<RequireAuth><MortgageCalculator /></RequireAuth>} />
           <Route path="/client-report" element={<RequireAuth><ClientReport /></RequireAuth>} />
           <Route path="/quick-cma" element={<RequireAuth><QuickCMA /></RequireAuth>} />
+          <Route path="/listing-prep" element={<RequireAuth><ListingPrep /></RequireAuth>} />
           <Route path="/settings" element={<RequireAuth><AccountSettings /></RequireAuth>} />
 
           <Route path="*" element={<NotFound />} />
