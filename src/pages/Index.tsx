@@ -183,10 +183,6 @@ function PulseScoreWidget() {
 const BRIEF_CACHE_KEY = 'mc_daily_brief';
 const BRIEF_CACHE_DATE_KEY = 'mc_daily_brief_date';
 
-// ─── Daily Market Brief ───────────────────────────────────────────────────────
-const BRIEF_CACHE_KEY = 'mc_daily_brief';
-const BRIEF_CACHE_DATE_KEY = 'mc_daily_brief_date';
-
 function MarketBriefCard() {
   const [brief, setBrief] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -409,9 +405,6 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8" style={{ backgroundColor: '#0F172A' }}>
-        {/* Daily Market Brief */}
-        <MarketBriefCard />
-
         {/* Daily Market Brief */}
         <MarketBriefCard />
 
