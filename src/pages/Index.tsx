@@ -11,6 +11,7 @@ import { Users, Building2, FolderOpen, ChevronRight, TrendingUp, User, FileText,
 import { callClaude } from '@/lib/aiError';
 import { AppLogo } from '@/components/AppLogo';
 import { AgentOnboarding, OnboardingTrigger } from '@/components/AgentOnboarding';
+import { RecentZipsWidget } from '@/components/RecentZipsWidget';
 import { AllReportsDrawer } from '@/components/AllReportsDrawer';
 import { useDraftSessions, useSharedSessions } from '@/hooks/useSessions';
 import { useAuth } from '@/contexts/AuthContext';
@@ -421,6 +422,9 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8" style={{ backgroundColor: '#0F172A' }}>
         {/* Daily Market Brief */}
         <MarketBriefCard />
+
+        {/* Recent ZIPs — My Markets */}
+        <RecentZipsWidget />
 
         {/* Neighborhood Pulse Card */}
         <motion.div

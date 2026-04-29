@@ -968,6 +968,22 @@ export default function LeadFinder() {
       setResult(fredData as any);
       setRetryCount(0);
 
+      // Save to recent ZIPs in localStorage for home screen widget
+      try {
+        const recentKey = 'mc_recent_zips';
+        const existing: Array<{ zip: string; cityState: string; score: number; leadType: string; at: string }> =
+          JSON.parse(localStorage.getItem(recentKey) || '[]');
+        const filtered = existing.filter(r => r.zip !== trimmedZip);
+        filtered.unshift({
+          zip: trimmedZip,
+          cityState: cityState.trim() || trimmedZip,
+          score: (fredData as any).opportunityScore,
+          leadType: (fredData as any).leadType,
+          at: new Date().toISOString(),
+        });
+        localStorage.setItem(recentKey, JSON.stringify(filtered.slice(0, 6)));
+      } catch { /* non-fatal */ }
+
       // Cache to Supabase — wrapped silently so a paused backend never kills the result display
       if (user) {
         try {
