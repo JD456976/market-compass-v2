@@ -161,6 +161,7 @@ export function AdminUsersPanel() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteDays, setInviteDays] = useState(30);
+  const [inviteAlsoDP, setInviteAlsoDP] = useState(true);
   const [inviting, setInviting] = useState(false);
 
   const handleInviteUser = async () => {
@@ -171,32 +172,34 @@ export function AdminUsersPanel() {
     }
     setInviting(true);
     try {
-      // 1. Store pre-approval in DB (sets expiry for future billing enforcement)
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + inviteDays);
-      const { data: rpcData, error: rpcError } = await supabase.rpc('upsert_pre_approved_email', {
-        p_email: email,
-        p_name: inviteName.trim() || null,
-        p_days: inviteDays,
-        p_expires_at: expiresAt.toISOString(),
+      // Route through Netlify serverless function (handles Supabase admin invite)
+      const res = await fetch('/api/invite-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name: inviteName.trim() || undefined, days: inviteDays }),
       });
-      if (rpcError) throw rpcError;
-      const rpcResult = rpcData as { ok: boolean; error?: string };
-      if (!rpcResult.ok) throw new Error(rpcResult.error ?? 'Failed to pre-approve email');
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Invite failed');
 
-      // 2. Send magic link — user clicks it, lands on the app already authenticated
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: window.location.origin,
-        },
-      });
-      if (otpError) throw otpError;
+      // Optionally also invite to Deal Pilot
+      let dpResult = '';
+      if (inviteAlsoDP) {
+        try {
+          const dpRes = await fetch('https://deal-pilot-app.netlify.app/api/invite-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, name: inviteName.trim() || undefined, days: inviteDays }),
+          });
+          const dpData = await dpRes.json();
+          dpResult = dpData.ok ? ' + Deal Pilot ✓' : ' (Deal Pilot invite failed — try manually)';
+        } catch {
+          dpResult = ' (Deal Pilot invite failed — try manually)';
+        }
+      }
 
       toast({
         title: 'Invite sent',
-        description: `${email} will receive a sign-in link. Access granted for ${inviteDays} days once they click it.`,
+        description: `${email} will receive a sign-in link. Access granted for ${inviteDays} days.${dpResult}`,
       });
       setShowInvite(false);
       setInviteEmail('');
@@ -507,8 +510,8 @@ export function AdminUsersPanel() {
           <div className="w-full max-w-sm bg-card border border-border rounded-2xl p-5 space-y-4 shadow-2xl">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-semibold">Invite Tester</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">They'll get an email to set their own password.</p>
+                <h3 className="font-semibold">Invite User</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">They'll receive a sign-in link via email.</p>
               </div>
               <button onClick={() => setShowInvite(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
@@ -550,6 +553,16 @@ export function AdminUsersPanel() {
                   {new Date(Date.now() + inviteDays * 86400000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                 </span>
               </p>
+              {/* Deal Pilot cross-invite */}
+              <button
+                onClick={() => setInviteAlsoDP(v => !v)}
+                className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold border transition-colors flex items-center justify-between ${inviteAlsoDP ? 'bg-blue-500/10 border-blue-500/40 text-blue-700 dark:text-blue-400' : 'border-border text-muted-foreground hover:text-foreground'}`}
+              >
+                <span>Also invite to Deal Pilot</span>
+                <span className={`h-4 w-4 rounded border-2 flex items-center justify-center ${inviteAlsoDP ? 'bg-blue-500 border-blue-500' : 'border-muted-foreground'}`}>
+                  {inviteAlsoDP && <span className="text-white text-[10px] leading-none">✓</span>}
+                </span>
+              </button>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setShowInvite(false)} className="flex-1" disabled={inviting}>Cancel</Button>

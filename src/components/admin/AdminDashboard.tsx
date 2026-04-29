@@ -8,7 +8,9 @@ import {
   LogOut, 
   Smartphone, 
   RefreshCw,
-  Monitor
+  Monitor,
+  CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ActivationsTable, BetaActivation } from './ActivationsTable';
@@ -42,6 +44,7 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
   const [isCurrentDeviceOwner, setIsCurrentDeviceOwner] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [clearOwnerOnLogout, setClearOwnerOnLogout] = useState(false);
+  const [dbOffline, setDbOffline] = useState(false);
   const { toast } = useToast();
 
   const fetchData = async () => {
@@ -54,6 +57,7 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
         .order('activated_at', { ascending: false });
 
       if (activationsError) throw activationsError;
+      setDbOffline(false);
       setActivations(activationsData || []);
 
       // Fetch owner devices via RPC (bypasses RLS)
@@ -80,11 +84,7 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
       setIsCurrentDeviceOwner(isOwner);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast({
-        title: 'Error loading data',
-        description: 'Failed to load admin data. Please try again.',
-        variant: 'destructive',
-      });
+      setDbOffline(true);
     } finally {
       setIsLoading(false);
     }
@@ -217,6 +217,16 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* DB Offline Banner */}
+        {dbOffline && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-sm">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <div>
+              <span className="font-medium">Database offline.</span>{' '}
+              Supabase may be paused — user tables and beta codes are unavailable. Invite flow is limited until the database is back online.
+            </div>
+          </div>
+        )}
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-4">
           <Card>
