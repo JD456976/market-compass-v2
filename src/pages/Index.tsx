@@ -365,6 +365,20 @@ const Index = () => {
   const { user } = useAuth();
   const { isAgent } = useUserRole();
   const { isProfessionalUser } = useProfessionalAccess();
+
+  // Personalized greeting ─────────────────────────────────────────────────────
+  const firstName = (() => {
+    const fromAuth = (user?.user_metadata?.full_name as string | undefined)?.split(' ')[0]?.trim();
+    if (fromAuth) return fromAuth;
+    return localStorage.getItem('mc_user_firstname')?.trim() || '';
+  })();
+
+  const timeGreeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  })();
   const [proBannerDismissed, setProBannerDismissed] = useState(
     () => localStorage.getItem('pro_banner_dismissed') === 'true'
   );
@@ -393,10 +407,10 @@ const Index = () => {
             </div>
             <div>
               <h1 className="text-[22px] font-sans font-semibold" style={{ color: '#F1F5F9' }}>
-                Market Compass
+                {firstName ? `${timeGreeting}, ${firstName}` : 'Market Compass'}
               </h1>
               <p className="text-[13px]" style={{ color: '#94A3B8' }}>
-                Agent decision-support for Seller &amp; Buyer scenarios
+                {firstName ? 'Your market intelligence dashboard' : 'Agent decision-support for Seller & Buyer scenarios'}
               </p>
             </div>
           </motion.div>
