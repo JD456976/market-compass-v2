@@ -107,14 +107,21 @@ export default async (req: Request) => {
 
     // ── Fallback: no service role key ─────────────────────────────────────────
     // Try 1: hard DELETE using caller's JWT (works if RLS policy allows admin delete)
+    // NOTE: Supabase RLS silently blocks deletes (no error, just 0 rows affected)
+    // We use the Prefer: return=representation header to detect 0 rows deleted
     let hardDeleteWorked = false;
     try {
       const deleteQuery = profileId
-        ? callerClient.from("profiles" as any).delete().eq("id", profileId)
-        : callerClient.from("profiles" as any).delete().eq("user_id", userId);
-      const { error: delErr } = await (deleteQuery as any);
-      if (!delErr) hardDeleteWorked = true;
-      else console.log("Hard DELETE failed (RLS likely):", delErr.message);
+        ? callerClient.from("profiles" as any).delete().eq("id", profileId).select("id")
+        : callerClient.from("profiles" as any).delete().eq("user_id", userId).select("id");
+      const { data: deleted, error: delErr } = await (deleteQuery as any);
+      if (!delErr && deleted && (deleted as any[]).length > 0) {
+        hardDeleteWorked = true;
+      } else if (!delErr) {
+        console.log("Hard DELETE: no error but 0 rows deleted (RLS silently blocked)");
+      } else {
+        console.log("Hard DELETE failed:", delErr.message);
+      }
     } catch (e) {
       console.log("Hard DELETE threw:", e);
     }
