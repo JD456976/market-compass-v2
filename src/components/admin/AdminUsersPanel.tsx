@@ -44,7 +44,7 @@ export function AdminUsersPanel() {
     setLoading(true);
     try {
       const [profilesRes, rolesRes] = await Promise.all([
-        supabase.from('profiles').select('*').not('beta_access_source', 'eq', 'admin_deleted').order('created_at', { ascending: false }),
+        supabase.from('profiles').select('*').or('beta_access_source.is.null,beta_access_source.neq.admin_deleted').order('created_at', { ascending: false }),
         supabase.from('user_roles').select('user_id, role'),
       ]);
 
