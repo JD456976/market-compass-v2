@@ -44,7 +44,7 @@ export function AdminUsersPanel() {
     setLoading(true);
     try {
       const [profilesRes, rolesRes] = await Promise.all([
-        supabase.from('profiles').select('*').or('beta_access_source.is.null,beta_access_source.neq.admin_deleted').order('created_at', { ascending: false }),
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
         supabase.from('user_roles').select('user_id, role'),
       ]);
 
@@ -62,9 +62,11 @@ export function AdminUsersPanel() {
   useEffect(() => { fetchData(); }, []);
 
   const filteredProfiles = useMemo(() => {
-    if (!searchTerm) return profiles;
+    // Filter out admin-deleted users client-side (avoids Supabase null-handling edge cases)
+    const active = profiles.filter(p => p.beta_access_source !== 'admin_deleted');
+    if (!searchTerm) return active;
     const term = searchTerm.toLowerCase();
-    return profiles.filter(p =>
+    return active.filter(p =>
       (p.full_name?.toLowerCase().includes(term)) ||
       (p.email?.toLowerCase().includes(term)) ||
       (p.brokerage?.toLowerCase().includes(term))
