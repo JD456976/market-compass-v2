@@ -44,7 +44,7 @@ export function AdminUsersPanel() {
     setLoading(true);
     try {
       const [profilesRes, rolesRes] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+        supabase.from('profiles').select('*').not('beta_access_source', 'eq', 'admin_deleted').order('created_at', { ascending: false }),
         supabase.from('user_roles').select('user_id, role'),
       ]);
 
@@ -231,10 +231,11 @@ export function AdminUsersPanel() {
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || 'Delete failed');
-      toast({ title: 'User removed', description: `${deleteTarget.email} has been permanently removed.` });
+      // Optimistically remove from UI immediately — don't wait for re-fetch
+      setProfiles(prev => prev.filter(p => p.user_id !== deleteTarget.user_id));
       setDeleteTarget(null);
       setSelectedUser(null);
-      fetchData();
+      toast({ title: 'User deleted', description: `${deleteTarget.email} has been permanently removed.` });
     } catch (e: any) {
       toast({ title: 'Delete failed', description: e.message, variant: 'destructive' });
     } finally {
