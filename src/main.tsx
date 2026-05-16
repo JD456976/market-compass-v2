@@ -8,6 +8,20 @@ import "./index.css";
 // regardless of OS preference or any other theme logic
 document.documentElement.classList.add('dark');
 
+// Force-clear stale service worker caches after Supabase migration (v2)
+const SW_BUST_KEY = 'mc_sw_busted_v2';
+if (!sessionStorage.getItem(SW_BUST_KEY)) {
+  sessionStorage.setItem(SW_BUST_KEY, '1');
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister());
+    });
+  }
+  if ('caches' in window) {
+    caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+  }
+}
+
 function Root() {
   const [splashDone, setSplashDone] = useState(() => {
     // Only show splash once per browser session
