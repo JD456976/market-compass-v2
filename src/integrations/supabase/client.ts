@@ -2,8 +2,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://iodskpvxyvrtfuhnxnne.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZHNrcHZ4eXZydGZ1aG54bm5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4OTIwMDcsImV4cCI6MjA5NDQ2ODAwN30.5RAHvPtzOGMT-_C6PEmyooQJ24ePTSBGOgA3_YIFjv0";
+// Market Compass — own Supabase project (migrated off Lovable 2026-05-16)
+const SUPABASE_URL = "https://iodskpvxyvrtfuhnxnne.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZHNrcHZ4eXZydGZ1aG54bm5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4OTIwMDcsImV4cCI6MjA5NDQ2ODAwN30.5RAHvPtzOGMT-_C6PEmyooQJ24ePTSBGOgA3_YIFjv0";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
