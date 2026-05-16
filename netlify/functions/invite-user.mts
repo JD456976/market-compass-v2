@@ -15,17 +15,24 @@ export default async (req: Request) => {
     return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: CORS });
   }
 
-  const supabaseUrl = Netlify.env.get("VITE_SUPABASE_URL") || process.env.VITE_SUPABASE_URL;
-  const serviceRoleKey = Netlify.env.get("SUPABASE_SERVICE_ROLE_KEY") || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl =
+    Netlify.env.get("VITE_SUPABASE_URL") || Netlify.env.get("SUPABASE_URL") ||
+    process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 
-  if (!supabaseUrl || !serviceRoleKey) {
+  const anonKey =
+    Netlify.env.get("VITE_SUPABASE_PUBLISHABLE_KEY") || Netlify.env.get("VITE_SUPABASE_ANON_KEY") ||
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !anonKey) {
     return new Response(
-      JSON.stringify({ error: "Server not configured — SUPABASE_SERVICE_ROLE_KEY missing from Netlify env vars" }),
+      JSON.stringify({ error: "Server not configured — VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY missing from Netlify env vars" }),
       { status: 500, headers: CORS }
     );
   }
 
-  const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+  // Uses anon key only — no service role key required.
+  // Profile upsert goes through admin_grant_beta_access() SECURITY DEFINER RPC.
+  const supabase = createClient(supabaseUrl, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
@@ -40,83 +47,38 @@ export default async (req: Request) => {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + accessDays);
 
-    // 1. Create user (or fetch existing) via admin API
-    const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      data: {
-        full_name: name || "",
-        beta_access_days: accessDays,
+    // 1. Send magic link (creates user if new, sends new link if existing)
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        data: {
+          full_name: name || "",
+          beta_access_days: accessDays,
+        },
       },
     });
 
-    if (inviteError) {
-      // If user already exists, just update their beta access
-      if (inviteError.message?.includes("already been registered") || inviteError.code === "email_exists") {
-        // Find the user and update access
-        const { data: listData, error: listError } = await adminClient.auth.admin.listUsers();
-        if (listError) throw listError;
-
-        const existingUser = listData.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-        if (!existingUser) {
-          return new Response(JSON.stringify({ error: "User exists but could not be found" }), { status: 400, headers: CORS });
-        }
-
-        // Update beta access on profile
-        const { error: profileError } = await adminClient
-          .from("profiles")
-          .update({
-            beta_access_active: true,
-            beta_access_expires_at: expiresAt.toISOString(),
-            beta_access_source: "admin_grant",
-            full_name: name || undefined,
-          })
-          .eq("user_id", existingUser.id);
-
-        if (profileError) throw profileError;
-
-        return new Response(
-          JSON.stringify({
-            ok: true,
-            existing_user: true,
-            message: `Beta access updated for existing user ${email} — expires ${expiresAt.toLocaleDateString()}`,
-          }),
-          { status: 200, headers: CORS }
-        );
-      }
-      throw inviteError;
+    if (otpError) {
+      throw otpError;
     }
 
-    const userId = inviteData.user?.id;
-    if (!userId) throw new Error("No user ID returned from invite");
+    // 2. Grant beta access via security definer RPC (bypasses RLS, no service role needed)
+    const { error: rpcError } = await supabase.rpc("admin_grant_beta_access", {
+      p_email: email.toLowerCase(),
+      p_name: name || "",
+      p_days: accessDays,
+    });
 
-    // 2. Set beta access on the profile (may need a small delay for profile trigger)
-    // Retry up to 3 times since the profile row is created by a DB trigger
-    let profileError: any = null;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      if (attempt > 0) await new Promise(r => setTimeout(r, 600));
-      const { error } = await adminClient
-        .from("profiles")
-        .upsert({
-          user_id: userId,
-          email: email.toLowerCase(),
-          full_name: name || "",
-          beta_access_active: true,
-          beta_access_expires_at: expiresAt.toISOString(),
-          beta_access_source: "admin_invite",
-        }, { onConflict: "user_id" });
-      profileError = error;
-      if (!error) break;
-    }
-
-    // Non-fatal if profile upsert fails — the user was still invited
-    // and can redeem a code, or we can grant access from the Users panel
-    if (profileError) {
-      console.error("Profile upsert failed (non-fatal):", profileError.message);
+    if (rpcError) {
+      // Non-fatal — magic link was already sent. Log and continue.
+      console.error("admin_grant_beta_access RPC error (non-fatal):", rpcError.message);
     }
 
     return new Response(
       JSON.stringify({
         ok: true,
-        message: `Invite sent to ${email}. They'll receive an email to set their password. Access: ${accessDays} days.`,
+        message: `Invite sent to ${email}. They'll receive a sign-in link via email. Access: ${accessDays} days.`,
         expires_at: expiresAt.toISOString(),
       }),
       { status: 200, headers: CORS }
