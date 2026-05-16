@@ -1530,6 +1530,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_grant_beta_access: {
+        Args: { p_days: number; p_email: string; p_name: string }
+        Returns: Json
+      }
       check_beta_access: {
         Args: { p_device_id: string; p_email: string }
         Returns: Json
