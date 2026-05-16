@@ -1532,7 +1532,7 @@ export type Database = {
     Functions: {
       admin_grant_beta_access: {
         Args: { p_days: number; p_email: string; p_name: string }
-        Returns: Json
+        Returns: undefined
       }
       check_beta_access: {
         Args: { p_device_id: string; p_email: string }
