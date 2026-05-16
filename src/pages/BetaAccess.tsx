@@ -96,9 +96,9 @@ export default function BetaAccess() {
       return;
     }
 
-    // Check if admin - immediate access
+    // Check if admin - send magic link for real Supabase auth session
     if (isAllowedAdmin(normalizedEmail)) {
-      handleAdminBypass(normalizedEmail);
+      handleAdminMagicLink(normalizedEmail);
       return;
     }
 
@@ -106,37 +106,35 @@ export default function BetaAccess() {
     setStep('code');
   };
 
-  const handleAdminBypass = async (adminEmail: string) => {
+  const handleAdminMagicLink = async (adminEmail: string) => {
     setIsLoading(true);
-    const deviceId = getDeviceId();
-    
     try {
-      // Record admin activation server-side
-      await supabase.rpc('record_admin_activation', {
-        p_email: adminEmail,
-        p_device_id: deviceId,
+      const { error } = await supabase.auth.signInWithOtp({
+        email: adminEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/admin`,
+          shouldCreateUser: true,
+        },
       });
-    } catch (error) {
-      console.error('Admin activation recording failed:', error);
-      // Continue anyway - local session is sufficient
+      if (error) throw error;
+      toast({
+        title: 'Check your email',
+        description: `Magic link sent to ${adminEmail}. Click it to sign in to admin.`,
+      });
+    } catch (error: any) {
+      console.error('Magic link error:', error);
+      // Fallback: local session if OTP fails (e.g. email rate limit)
+      const deviceId = getDeviceId();
+      setBetaAccessSession({
+        email: adminEmail,
+        activatedAt: new Date().toISOString(),
+        deviceId,
+        role: 'admin',
+      });
+      navigate('/admin', { replace: true });
+    } finally {
+      setIsLoading(false);
     }
-    
-    // Set local session as admin
-    setBetaAccessSession({
-      email: adminEmail,
-      activatedAt: new Date().toISOString(),
-      deviceId,
-      role: 'admin',
-    });
-    
-    toast({
-      title: 'Welcome, Admin',
-      description: 'Redirecting to admin dashboard...',
-    });
-    
-    // Redirect directly to admin area
-    navigate('/admin', { replace: true });
-    setIsLoading(false);
   };
 
   const handleCodeSubmit = async (e: React.FormEvent) => {
