@@ -25,10 +25,10 @@ export default async (req: Request) => {
 
   const supabaseUrl =
     Netlify.env.get("VITE_SUPABASE_URL") || Netlify.env.get("SUPABASE_URL") ||
-    process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://iodskpvxyvrtfuhnxnne.supabase.co";
   const serviceRoleKey =
     Netlify.env.get("SUPABASE_SERVICE_ROLE_KEY") || Netlify.env.get("SERVICE_ROLE_KEY") ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZHNrcHZ4eXZydGZ1aG54bm5lIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODg5MjAwNywiZXhwIjoyMDk0NDY4MDA3fQ.YafcDVMOz4sfhr3n7MHSgLknDkiWUrA7yDM4-rKDFb8";
   const anonKey =
     Netlify.env.get("VITE_SUPABASE_PUBLISHABLE_KEY") || Netlify.env.get("VITE_SUPABASE_ANON_KEY") ||
     Netlify.env.get("SUPABASE_ANON_KEY") ||
