@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { isAllowedAdmin } from '@/lib/adminConfig';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
-import { getBetaAccessSession, clearBetaAccessSession } from '@/lib/betaAccess';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 type AuthState = 'loading' | 'unauthorized' | 'authorized';
 
@@ -12,33 +12,22 @@ const Admin = () => {
   const [authState, setAuthState] = useState<AuthState>('loading');
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
 
   useEffect(() => {
     if (authLoading) return;
 
-    // Priority 1: Supabase-authenticated admin (no beta code needed)
     if (user?.email && isAllowedAdmin(user.email)) {
       setUserEmail(user.email);
       setAuthState('authorized');
       return;
     }
 
-    // Priority 2: Legacy beta access session with admin role
-    const session = getBetaAccessSession();
-    if (session?.role === 'admin' && isAllowedAdmin(session.email)) {
-      setUserEmail(session.email);
-      setAuthState('authorized');
-      return;
-    }
-
-    // No valid admin access
     setAuthState('unauthorized');
-    setTimeout(() => navigate(user ? '/' : '/beta', { replace: true }), 1500);
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading]);
 
-  const handleSignOut = () => {
-    clearBetaAccessSession();
+  const handleSignOut = async () => {
+    await signOut();
     navigate('/beta', { replace: true });
   };
 
@@ -59,9 +48,13 @@ const Admin = () => {
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-sans font-semibold">Not Authorized</h1>
           <p className="text-muted-foreground">
-            {userEmail} is not authorized to access admin.
+            {user?.email
+              ? `${user.email} is not in the admin list.`
+              : 'You must be signed in as an admin to access this page.'}
           </p>
-          <p className="text-sm text-muted-foreground">Redirecting...</p>
+          <Button onClick={() => navigate('/beta', { replace: true })} variant="outline">
+            Sign In
+          </Button>
         </div>
       </div>
     );
