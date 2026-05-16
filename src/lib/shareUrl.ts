@@ -4,7 +4,7 @@
  * Falls back to window.location.origin for local dev.
  */
 
-const PUBLISHED_ORIGIN = 'https://market-compass-v2.lovable.app';
+const PUBLISHED_ORIGIN = 'https://market-compass-app.netlify.app';
 
 export function getShareUrl(shareTokenOrId: string): string {
   // Always use the published origin so share links work for recipients

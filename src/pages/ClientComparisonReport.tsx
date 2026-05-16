@@ -205,7 +205,7 @@ const ClientComparisonReport = () => {
       return;
     }
     
-    const origin = import.meta.env.PROD ? 'https://market-compass-v2.lovable.app' : window.location.origin;
+    const origin = import.meta.env.PROD ? 'https://market-compass-app.netlify.app' : window.location.origin;
     const shareUrl = `${origin}/share/compare?a=${sessionIdA}&b=${sessionIdB}`;
     navigator.clipboard.writeText(shareUrl);
     toast({

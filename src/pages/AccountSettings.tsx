@@ -166,12 +166,13 @@ const AccountSettings = () => {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData?.session?.access_token;
         
-        const res = await supabase.functions.invoke('delete-account', {
+        const res = await fetch('/api/delete-user', { method: 'POST', headers: { 'Content-Type': 'application/json' },
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         
-        if (res.error || res.data?.error) {
-          throw new Error(res.data?.error || 'Deletion failed');
+        const resData = await res.json();
+        if (!res.ok || resData?.error) {
+          throw new Error(resData?.error || 'Deletion failed');
         }
       } else {
         // Fallback: delete local sessions for non-auth users

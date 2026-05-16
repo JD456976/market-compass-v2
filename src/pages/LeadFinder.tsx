@@ -682,8 +682,8 @@ function CsvUpload({ currentResult }: { currentResult: LeadFinderResult | null }
                 if (conn.crm_type === 'follow_up_boss') {
                   const { data: { session } } = await supabase.auth.getSession();
                   if (session) {
-                    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-                    await fetch(`${supabaseUrl}/functions/v1/follow-up-boss`, {
+                    // FUB push uses /api/fub Netlify function
+                    await fetch(`/api/fub`, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',

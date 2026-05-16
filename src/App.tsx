@@ -41,10 +41,6 @@ import Pricing from "./pages/Pricing";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import AccountSettings from "./pages/AccountSettings";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import PublicMarketTrends from "./pages/PublicMarketTrends";
 import ClientDashboard from "./pages/ClientDashboard";
@@ -86,10 +82,10 @@ function AppRoutes() {
       <PageTransition key={location.pathname}>
         <Routes location={location}>
           {/* Public routes - no auth required */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/login" element={<Navigate to="/beta" replace />} />
+          <Route path="/signup" element={<Navigate to="/beta" replace />} />
+          <Route path="/forgot-password" element={<Navigate to="/beta" replace />} />
+          <Route path="/reset-password" element={<Navigate to="/beta" replace />} />
           <Route path="/beta" element={<BetaAccess />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />

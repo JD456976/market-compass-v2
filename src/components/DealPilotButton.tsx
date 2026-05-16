@@ -128,7 +128,7 @@ export function DealPilotButton({
             <Label htmlFor="dpUrl">Deal Pilot URL</Label>
             <Input
               id="dpUrl"
-              placeholder="https://your-deal-pilot.lovable.app"
+              placeholder="https://deal-pilot-app.netlify.app"
               value={inputUrl}
               onChange={e => setInputUrl(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSaveUrl()}
@@ -187,7 +187,7 @@ export function DealPilotConnectionCard() {
       {editing && (
         <div className="space-y-2">
           <Input
-            placeholder="https://your-deal-pilot.lovable.app"
+            placeholder="https://deal-pilot-app.netlify.app"
             value={url}
             onChange={e => setUrl(e.target.value)}
             className="h-9 text-sm"

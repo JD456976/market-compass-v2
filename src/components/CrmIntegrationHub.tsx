@@ -156,7 +156,8 @@ const CRM_DEFINITIONS: CrmDefinition[] = [
 
 async function callFubFunction(session: any, body: Record<string, unknown>) {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const resp = await fetch(`${supabaseUrl}/functions/v1/follow-up-boss`, {
+  // FUB integration requires a deployed Netlify function — route to /api/fub when ready
+  const resp = await fetch(`/api/fub`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

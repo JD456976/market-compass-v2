@@ -276,7 +276,7 @@ export function LeadFinderIntelPanel({ location, reportType, onResult }: LeadFin
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 20000);
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fred-lead-finder?zip=${zipCode}`,
+        `/api/fred?zip=${zipCode}`,
         {
           headers: {
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,

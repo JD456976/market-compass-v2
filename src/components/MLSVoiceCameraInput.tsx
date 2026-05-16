@@ -384,7 +384,9 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
   const processImageInput = async (base64Image: string) => {
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('parse-mls-input', {
+      // parse-mls-input: not yet deployed as Netlify function — handled by client-side AI
+      throw new Error('MLS parsing via API not yet available — use manual entry.');
+      const { data, error } = await supabase.functions.invoke('parse-mls-input_DISABLED', {
         body: { type: 'image', content: base64Image, reportType },
       });
       if (error) throw error;
@@ -488,7 +490,9 @@ export function MLSVoiceCameraInput({ onDataExtracted, reportType }: MLSVoiceCam
 
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('scrape-listing-url', {
+      // scrape-listing-url: not yet deployed — return clear error
+        throw new Error('URL scraping not yet available — paste listing text manually.');
+        const { data, error } = await supabase.functions.invoke('scrape-listing-url_DISABLED', {
         body: { url: cleanUrl },
       });
 

@@ -138,7 +138,7 @@ export default function MarketIntelEmbed() {
               <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Market Intelligence</span>
             </div>
             <a
-              href={`https://market-compass-v2.lovable.app/lead-finder?zip=${data.zip}`}
+              href={`https://market-compass-app.netlify.app/lead-finder?zip=${data.zip}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"

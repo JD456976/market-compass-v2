@@ -75,11 +75,7 @@ async function fetchZipScore(zip: string, user_id: string): Promise<ZipResult> {
 
   // Fetch live
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  const res = await fetch(`https://${projectId}.supabase.co/functions/v1/fred-lead-finder`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-    body: JSON.stringify({ zip }),
-  });
+  const res = await fetch(`/api/fred?zip=${zip}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ zip }) });
   if (!res.ok) throw new Error('Failed to fetch');
   const data = await res.json();
 
