@@ -82,9 +82,13 @@ export function AdminDashboard({ userEmail, onSignOut }: AdminDashboardProps) {
         (d: OwnerDevice) => d.device_id === currentDeviceId && !d.revoked_at
       );
       setIsCurrentDeviceOwner(isOwner);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching data:', error);
-      setDbOffline(true);
+      // Only flag DB as offline for genuine network/connection failures.
+      // Auth errors (401/403) or RLS errors mean the DB is reachable — user just needs to sign in.
+      const isNetworkError = !error?.code || error?.message?.toLowerCase().includes('fetch') || error?.message?.toLowerCase().includes('network') || error?.message?.toLowerCase().includes('failed to fetch');
+      const isAuthError = error?.code === 'PGRST301' || error?.status === 401 || error?.status === 403 || error?.code === '42501';
+      setDbOffline(isNetworkError && !isAuthError);
     } finally {
       setIsLoading(false);
     }
